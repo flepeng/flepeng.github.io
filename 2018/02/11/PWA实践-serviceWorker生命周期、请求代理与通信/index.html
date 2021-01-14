@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <script data-ad-client="ca-pub-2488174175014870" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI">
+    <meta name="baidu-site-verification" content="093lY4ziMu" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="description" content="A hexo theme">
+    <meta name="keyword"  content="hexo, hexo-theme-lp">
+    <link rel="shortcut icon" href="/img/ironman-draw.png">
+    <!-- Place this tag in your head or just before your close body tag. -->
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <!--<link href='http://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>-->
+    <title>
+        
+          [PWA实践]serviceWorker生命周期、请求代理与通信 - Hexo-theme-lp
+        
+    </title>
+
+    <link rel="canonical" href="https://flepeng.github.io/2018/02/11/PWA实践-serviceWorker生命周期、请求代理与通信/">
+
+    <!-- Bootstrap Core CSS -->
+    
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+
+
+    <!-- Custom CSS --> 
+    
+        
+<link rel="stylesheet" href="/css/dusign-light.css">
+
+        
+<link rel="stylesheet" href="/css/dusign-common-light.css">
+
+        
+<link rel="stylesheet" href="/css/font-awesome.css">
+
+        
+<link rel="stylesheet" href="/css/toc.css">
+
+        <!-- background effects end -->
+    
+    
+    <!-- Pygments Highlight CSS -->
+    
+<link rel="stylesheet" href="/css/highlight.css">
+
+
+    
+<link rel="stylesheet" href="/css/widget.css">
+
+
+    
+<link rel="stylesheet" href="/css/rocket.css">
+
+
+    
+<link rel="stylesheet" href="/css/signature.css">
+
+
+    
+<link rel="stylesheet" href="/css/fonts.googleapis.css">
+
+
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+
+    <!-- photography -->
+    
+<link rel="stylesheet" href="/css/photography.css">
+
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- background effects start -->
+    
+    <!-- background effects end -->
+
+	<!-- Modified by Yu-Hsuan Yen -->
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        
+            
+                background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('')
+                /*post*/
+            
+        
+    }
+    
+    #signature{
+        background-image: url('/img/signature/dusign.png');
+    }
+    
+</style>
+
+<header class="intro-header" >
+    <!-- Signature -->
+    <div id="signature">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                
+                    <div class="post-heading">
+                        <div class="tags">
+                            
+                              <a class="tag" href="/tags/#PWA" title="PWA">PWA</a>
+                            
+                        </div>
+                        <h1>[PWA实践]serviceWorker生命周期、请求代理与通信</h1>
+                        <h2 class="subheading"></h2>
+                        <span class="meta">
+                            Posted by Lepeng on
+                            2018-02-11
+                        </span>
+
+                        
+                            <div class="blank_box"></div>
+                            <span class="meta">
+                                Words <span class="post-count">2.2k</span> and
+                                Reading Time <span class="post-count">9</span> Minutes
+                            </span>
+                            <div class="blank_box"></div>
+                            <!-- 不蒜子统计 start -->
+                            <span class="meta">
+                                Viewed <span id="busuanzi_value_page_pv"><i class="fa fa-spinner fa-spin"></i></span> Times
+                            </span>
+                            <!-- 不蒜子统计 end -->
+                        
+
+                    </div>
+                
+
+                </div>
+            </div>
+        </div>      
+    </div>
+
+    
+    <div class="waveWrapper">
+        <div class="wave wave_before" style="background-image: url('/img/wave-light.png')"></div>
+        <div class="wave wave_after" style="background-image: url('/img/wave-light.png')"></div>
+    </div>
+    
+</header>
+
+	
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Lepeng</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+
+                    
+
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/about/">About</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/categories/">Categories</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/archive/">Archives</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/tags/">Tags</a>
+                        </li>
+                        
+                    
+                    
+                    
+                    <li>
+                        <a href="http://flepeng.com" target="_blank">chinese_blog</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Main Content -->
+    <!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+            <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <p>本文主要讲 serviceWorker 生命周期和挂载、卸载等问题，适合对 serviceWorker 的作用有所了解但是具体细节不是特别清楚的读者</p>
+<p><strong>以下所有分析基于 Chrome V63</strong></p>
+<h3 id="serviceWorker的挂载"><a href="#serviceWorker的挂载" class="headerlink" title="serviceWorker的挂载"></a>serviceWorker的挂载</h3><p>先来一段代码感受serviceWorker注册:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">if (&#39;serviceWorker&#39; in navigator) &#123;</span><br><span class="line">      window.addEventListener(&#39;load&#39;, function () &#123;</span><br><span class="line">          navigator.serviceWorker.register(&#39;&#x2F;sw.js&#39;, &#123;scope: &#39;&#x2F;&#39;&#125;)</span><br><span class="line">              .then(function (registration) &#123;</span><br><span class="line">                  &#x2F;&#x2F; 注册成功</span><br><span class="line">                  console.log(&#39;ServiceWorker registration successful with scope: &#39;, registration.scope);</span><br><span class="line">              &#125;)</span><br><span class="line">              .catch(function (err) &#123;</span><br><span class="line">                  &#x2F;&#x2F; 注册失败:(</span><br><span class="line">                  console.log(&#39;ServiceWorker registration failed: &#39;, err);</span><br><span class="line">              &#125;);</span><br><span class="line">      &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过上述代码，我们定义在<code>/sw.js</code>里的内容就会生效(对于当前页面之前没有 serviceWorker 的情况而言，我们注册的 serviceWorker 肯定会生效，如果当前页面已经有了我们之前注册的 serviceWorker，这个时候涉及到 serviceWorker的更新机制，下文详述)</p>
+<p>如果我们在<code>sw.js</code>没有变化的情况下刷新这个页面，每次还是会有注册成功的回调以及相应的log输出，但是这个时候浏览器发现我们的 serviceWorker 并没有发生变化，并不会重置一遍 serviceWorker</p>
+<h3 id="serviceWorker更新"><a href="#serviceWorker更新" class="headerlink" title="serviceWorker更新"></a>serviceWorker更新</h3><p>我们如果想更新一个 serviceWorker，根据我们的一般web开发策略，可能会想到以下几种策略：</p>
+<ul>
+<li>仅变更文件名(比如把<code>sw.js</code>变成<code>sw-v2.js</code>或者加一个hash)</li>
+<li>仅变更文件内容(仅仅更新<code>sw.js</code>的内容，文件名不变)</li>
+<li>同时变更：同时执行以上两条</li>
+</ul>
+<p>在这里，我可以很负责的告诉你，<strong>变更serviceWorker文件名绝对不是一个好的实践</strong>，浏览器判断 serviceWorker 是否相同基本和文件名没有关系，甚至有可能还会造成浏览器抛出404异常(因为找不到原来的文件名对应的文件了)。</p>
+<p>所以我们只需要变更内容即可，实际上，我们每次打开或者刷新该页面，浏览器都会重新请求一遍 serviceWorker 的定义文件，如果发现文件内容和之前的不同了，这个时候:</p>
+<p>(<em>下文中，我们使用“有关 tab”来表示受 serviceWorker 控制的页面</em>，刷新均指普通刷新(F5/CommandR)并不指Hard Reload)</p>
+<ul>
+<li><p>这个新的 serviceWorker 就会进入到一个 “waiting to activate” 的状态，并且只要我们不关闭这个网站的所有tab(更准确地说，是这个 serviceWorker 控制的所有页面)，新的 serviceWorker 始终不会进入替换原有的进入到 running 状态(就算我们只打开了一个有关 tab，直接刷新也不会让新的替换旧的)。</p>
+</li>
+<li><p>如果我们多次更新了 serviceWorker 并且没有关闭当前的 tab 页面，那么新的 serviceWorker 就会挤掉原先处于第二顺位(waiting to activate)的serviceWorker，变成<code>waiting to activate</code>状态</p>
+</li>
+</ul>
+<p>也就是说，我们只有关闭当前旧的 serviceWorker 控制的所有页面 的所有tab，之后浏览器才会把旧的 serviveWorker 移除掉，换成新的，再打开相应的页面就会使用新的了。</p>
+<p>当然，也有一个特殊情况：如果我们在新的 serviceWorker 使用了<code>self.skipWaiting();</code>，像这样：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">self.addEventListener(&#39;install&#39;, function(event) &#123;</span><br><span class="line">    self.skipWaiting();</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>这个时候，要分为以下两种情况：</p>
+<ul>
+<li>如果当前我们只打开了一个有关 tab，这个时候，我们直接刷新，发现新的已经替换掉旧的了。</li>
+<li>如果我们当前打开了若干有关 tab，这个时候，无论我们刷新多少次，新的也不会替换掉旧的，只有我们一个一个关掉tab(或者跳转走)只剩下最后一个了，这个时候刷新，会让新的替换旧的(也就是上一种情况)</li>
+</ul>
+<p>Chrome 的这种机制，防止了同一个页面先后被新旧两个不同的 serviceWorker 接管的情况出现。</p>
+<h4 id="手动更新"><a href="#手动更新" class="headerlink" title="手动更新"></a>手动更新</h4><p>虽然说，在页面每次进入的时候浏览器都会检查一遍 serviceWorker 是否更新，但如果我们想要手动更新 serviceWorker 也没有问题：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">navigator.serviceWorker.register(&quot;&#x2F;sw.js&quot;).then(reg &#x3D;&gt; &#123;</span><br><span class="line">  reg.update();</span><br><span class="line">  &#x2F;&#x2F; 或者 一段时间之后更新</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>这个时候如果 serviceWorker 变化了，那么会重新触发 install 执行一遍 install 的回调函数，如果没有变，就不会触发这个生命周期。</p>
+<h4 id="install-生命周期钩子"><a href="#install-生命周期钩子" class="headerlink" title="install 生命周期钩子"></a>install 生命周期钩子</h4><p>我们一般会在 sw.js 中，添加<code>install</code>的回调，一般在回调中，我们会进行缓存处理操作，像这样：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">self.addEventListener(&#39;install&#39;, function(event) &#123;</span><br><span class="line">    console.log(&#39;[sw2] serviceWorker Installed successfully&#39;, event)</span><br><span class="line"></span><br><span class="line">    event.waitUntil(</span><br><span class="line">        caches.open(&#39;mysite-static-v1&#39;).then(function(cache) &#123;</span><br><span class="line">            return cache.addAll([</span><br><span class="line">                &#39;&#x2F;stylesheets&#x2F;style.css&#39;,</span><br><span class="line">                &#39;&#x2F;javascripts&#x2F;common.39c462651d449a73b5bb.js&#39;,</span><br><span class="line">            ]);</span><br><span class="line">        &#125;)</span><br><span class="line">    )</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果我们新打开一个页面，如果之前有 serviceWorker，那么会触发<code>install</code>，如果之前没有， 那么在 serviceWorker 装载后会触发 <code>install</code>。</p>
+<p>如果我们刷新页面，serviceWorker 和之前没有变化或者 serviceWorker 已经处在 <code>waiting to activate</code>，不会触发<code>install</code>，如果有变化，会触发<code>install</code>，但不会接管页面(上文中提到)。</p>
+<h4 id="activate-生命周期钩子"><a href="#activate-生命周期钩子" class="headerlink" title="activate 生命周期钩子"></a>activate 生命周期钩子</h4><p>activate 在什么时候被触发呢？</p>
+<p>如果当前页面没有 serviceworker ，那么会在 install 之后触发。</p>
+<p>如果当前页面有 serviceWorker，并且有 serviceWorker更新，新的 serviceWorker 只会触发 install ，不会触发 activate</p>
+<p>换句话说，当前变成 active 的 serviceWorker 才会被触发这个生命周期钩子</p>
+<h3 id="serviceWorker-代理请求"><a href="#serviceWorker-代理请求" class="headerlink" title="serviceWorker 代理请求"></a>serviceWorker 代理请求</h3><p>serviceWorker 代理请求相对来说比较好理解，以下是一个很简单的例子：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line">self.addEventListener(&#39;install&#39;, function(event) &#123;</span><br><span class="line">    console.log(&#39;[sw2] serviceWorker Installed successfully&#39;, event)</span><br><span class="line"></span><br><span class="line">    event.waitUntil(</span><br><span class="line">        caches.open(&#39;mysite-static-v1&#39;).then(function(cache) &#123;</span><br><span class="line">            return cache.addAll([</span><br><span class="line">                &#39;&#x2F;stylesheets&#x2F;style.css&#39;,</span><br><span class="line">                &#39;&#x2F;javascripts&#x2F;common.39c462651d449a73b5bb.js&#39;,</span><br><span class="line">            ]);</span><br><span class="line">        &#125;)</span><br><span class="line">    );</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">self.addEventListener(&#39;fetch&#39;, function(event) &#123;</span><br><span class="line">    console.log(&#39;Handling fetch event for&#39;, event.request.url);</span><br><span class="line">    &#x2F;&#x2F; console.log(&#39;[sw2]fetch but do nothing&#39;)</span><br><span class="line"></span><br><span class="line">    event.respondWith(</span><br><span class="line">        &#x2F;&#x2F; caches.match() will look for a cache entry in all of the caches available to the service worker.</span><br><span class="line">        &#x2F;&#x2F; It&#39;s an alternative to first opening a specific named cache and then matching on that.</span><br><span class="line">        caches.match(event.request).then(function(response) &#123;</span><br><span class="line">            if (response) &#123;</span><br><span class="line">                console.log(&#39;Found response in cache:&#39;, response);</span><br><span class="line"></span><br><span class="line">                return response;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            console.log(&#39;No response found in cache. About to fetch from network...&#39;);</span><br><span class="line"></span><br><span class="line">            &#x2F;&#x2F; event.request will always have the proper mode set (&#39;cors, &#39;no-cors&#39;, etc.) so we don&#39;t</span><br><span class="line">            &#x2F;&#x2F; have to hardcode &#39;no-cors&#39; like we do when fetch()ing in the install handler.</span><br><span class="line">            return fetch(event.request).then(function(response) &#123;</span><br><span class="line">                console.log(&#39;Response from network is:&#39;, response);</span><br><span class="line"></span><br><span class="line">                return response;</span><br><span class="line">            &#125;).catch(function(error) &#123;</span><br><span class="line">                &#x2F;&#x2F; This catch() will handle exceptions thrown from the fetch() operation.</span><br><span class="line">                &#x2F;&#x2F; Note that a HTTP error response (e.g. 404) will NOT trigger an exception.</span><br><span class="line">                &#x2F;&#x2F; It will return a normal response object that has the appropriate error code set.</span><br><span class="line">                console.error(&#39;Fetching failed:&#39;, error);</span><br><span class="line"></span><br><span class="line">                throw error;</span><br><span class="line">            &#125;);</span><br><span class="line">        &#125;)</span><br><span class="line">    );</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>有两点要注意的：</p>
+<p>我们如果这样代理了，哪怕没有 cache 命中，实际上也会在控制台写from serviceWorker，而那些真正由serviceWorker发出的请求也会显示，有一个齿轮图标，如下图：</p>
+<p><img src="https://www.10000h.top/images/sw_1.png" alt=""></p>
+<p>第二点就是我们如果在 fetch 的 listener 里面 do nothing， 也不会导致这个请求直接假死掉的。</p>
+<p>另外，通过上面的代码我们发现，实际上由于现在我们习惯给我们的文件资源加上 hash，所以我们基本上不可能手动输入需要缓存的文件列表，现在大多数情况下，我们都是借助 webpack 插件，完成这部分工作。</p>
+<h3 id="serviceWorker-和-页面之间的通信"><a href="#serviceWorker-和-页面之间的通信" class="headerlink" title="serviceWorker 和 页面之间的通信"></a>serviceWorker 和 页面之间的通信</h3><p>serviceWorker向页面发消息：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">sw.js:</span><br><span class="line"></span><br><span class="line">self.clients.matchAll().then(clients &#x3D;&gt; &#123;</span><br><span class="line">    clients.forEach(client &#x3D;&gt; &#123;</span><br><span class="line">        console.log(&#39;%c [sw message]&#39;, &#39;color:#00aa00&#39;, client)</span><br><span class="line">        client.postMessage(&quot;This message is from serviceWorker&quot;)</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line">主页面:</span><br><span class="line"></span><br><span class="line">navigator.serviceWorker.addEventListener(&#39;message&#39;, function (event) &#123;</span><br><span class="line">    console.log(&#39;[Main] receive from serviceWorker:&#39;, event.data, event)</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>当然，这里面是有坑的：</p>
+<ul>
+<li>主界面的事件监听需要等serviceWorker注册完毕后，所以一般<code>navigator.serviceWorker.register</code>的回调到来之后再进行注册(或者延迟足够的时间)。</li>
+<li>如果在主界面事件监听还没有注册成功的时候 serviceWorker 发送消息，自然是收不到的。如果我们把 serviceWorker 直接写在 install 的回调中，也是不能被正常收到的。</li>
+</ul>
+<p>从页面向 serviceWorker 发送消息：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">主页面:</span><br><span class="line"></span><br><span class="line">navigator.serviceWorker.controller &amp;&amp; navigator.serviceWorker.controller.postMessage(&#39;hello serviceWorker&#39;);</span><br><span class="line"></span><br><span class="line">sw.js:</span><br><span class="line">self.addEventListener(&#39;message&#39;, function (event) &#123;</span><br><span class="line">    console.log(&quot;[sw from main]&quot;,event.data); &#x2F;&#x2F; 输出：&#39;sw.updatedone&#39;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>同样的，这也要求主界面的代码需要等到serviceWorker注册完毕后触发，另外还有一点值得注意， serviceWorker 的事件绑定代码要求主界面的serviceWorker已经注册完毕后才可以。</p>
+<p>也就是说，如果当前页面没有该serviceWorker 第一次注册是不会收到主界面接收到的消息的。</p>
+<p>记住，只有当前已经在 active 的 serviceWorker， 才能和主页面收发消息等。</p>
+<p><strong>以上就是和 serviceWorker 有关的一些内容，在下一篇文章中，我会对PWA 添加至主屏幕等功能进行总结</strong></p>
+
+                
+                <hr>
+                <!-- Pager -->
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2018/03/05/wangfei910-github-io-2018-03-05-Java基础知识/" data-toggle="tooltip" data-placement="top" title="Java基础知识整理">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2017/12/15/CentOS安装node8-x版本/" data-toggle="tooltip" data-placement="top" title="CentOS安装node8.x版本">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+                <!-- tip start -->
+                
+
+                
+                <div class="comment_notes">
+                    <p>
+                        This is copyright.
+                    </p>
+                </div>
+                
+                <!-- tip end -->
+
+                <!-- Music start-->
+                
+                
+<link rel="stylesheet" href="/css/music-player/fonts/iconfont.css">
+
+
+<link rel="stylesheet" href="/css/music-player/css/reset.css">
+
+
+<link rel="stylesheet" href="/css/music-player/css/player.css">
+
+
+<div class="music-player">
+    <audio class="music-player__audio" ></audio>
+    <div class="music-player__main">
+        <div class="music-player__blur"></div>
+        <div class="music-player__disc">
+            <div class="music-player__image">
+                <img width="100%" src="" alt="">
+            </div>
+            <div class="music-player__pointer"><img width="100%" src="/img/cd_tou.png" alt=""></div>
+        </div>
+        <div class="music-player__controls">
+            <div class="music__info">
+                <h3 class="music__info--title">...</h3>
+                <p class="music__info--singer">...</p>
+            </div>
+            <div class="player-control">
+                <div class="player-control__content">
+                    <div class="player-control__btns">
+                        <div class="player-control__btn player-control__btn--prev"><i class="iconfont icon-prev"></i></div>
+                        <div class="player-control__btn player-control__btn--play"><i class="iconfont icon-play"></i></div>
+                        <div class="player-control__btn player-control__btn--next"><i class="iconfont icon-next"></i></div>
+                        <div class="player-control__btn player-control__btn--mode"><i class="iconfont icon-loop"></i></div>
+                    </div>
+                    <div class="player-control__volume">
+                        <div class="control__volume--icon player-control__btn"><i class="iconfont icon-volume"></i></div>
+                        <div class="control__volume--progress player_progress"></div>
+                    </div>
+                </div>
+                <div class="player-control__content">
+                    <div class="player__song--progress player_progress"></div>
+                    <div class="player__song--timeProgess nowTime">00:00</div>
+                    <div class="player__song--timeProgess totalTime">00:00</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="/js/music-player/utill.js"></script>
+
+
+<script src="/js/music-player/jquery.min.js"></script>
+
+<!-- netease; qqkg -->
+<!--
+<script src="/js/music-player/player.js?library=config.music.library.js"></script>
+-->
+<script src="../../../../js/music-player/player.js?library=netease&music=https://kg.qq.com/node/play?s=7deFpz7Z26Jmv7di&g_f=share_html"></script>
+                
+                <!-- Music end -->
+
+                <!-- Sharing -->
+                
+                <div class="social-share"  data-wechat-qrcode-helper="" align="center"></div>
+                <!--  css & js -->
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/css/share.min.css">
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/js/social-share.min.js"></script>
+                
+                <!-- Sharing -->
+
+                <!-- gitment start -->
+                
+                <!-- gitment end -->
+
+                <!-- 来必力City版安装代码 -->
+                
+                <!-- City版安装代码已完成 -->
+
+                <!-- disqus comment start -->
+                
+                <!-- disqus comment end -->
+            </div>
+            
+            <!-- Tabe of Content -->
+            <!-- Table of Contents -->
+
+                
+            <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <!-- no hr -->
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+                       
+                          <a class="tag" href="/tags/#PWA" title="PWA">PWA</a>
+                        
+                    </div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+
+                    
+                        <li><a href="www.flepeng.com" target="_blank">Feng Lepeng&#39;s Blog</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("https://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'hover',
+          placement: 'left',
+          icon: 'ℬ'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+
+
+<style  type="text/css">
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; Feng Lepeng 2021 
+                    <br>
+                    Powered by 
+                    <a href="https://github.com/dusign/hexo-theme-snail" target="_blank" rel="noopener">
+                        <i>hexo-theme-snail</i>
+                    </a> | 
+                    <iframe name="star" style="margin-left: 2px; margin-bottom:-5px;" frameborder="0" scrolling="0"
+                        width="100px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=flepeng&repo=hexo-theme-lp&type=star">
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+
+</footer>
+
+<!-- jQuery -->
+
+<script src="/js/jquery.min.js"></script>
+
+
+<!-- Bootstrap Core JavaScript -->
+
+<script src="/js/bootstrap.min.js"></script>
+
+
+<!-- Custom Theme JavaScript -->
+
+<script src="/js/hux-blog.min.js"></script>
+
+
+<!-- Search -->
+
+<script src="/js/search.js"></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("https://flepeng.github.io/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("https://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-XXXXXXXX-X';
+    var _gaDomain = 'yoursite';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+
+<!-- Baidu Tongji -->
+
+
+<!-- Search -->
+
+    <script type="text/javascript">      
+        var search_path = "search.xml";
+        if (search_path.length == 0) {
+            search_path = "search.xml";
+        }
+    var path = "/" + search_path;
+    searchFunc(path, 'local-search-input', 'local-search-result');
+    </script>
+
+
+<!-- busuanzi -->
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+
+	<a id="rocket" href="#top" class=""></a>
+	<script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+    <script type="text/javascript" src="/js/toc.js?v=1.0.0" async=""></script>
+
+    
+        <!-- background effects line -->
+        
+
+        
+            <script type="text/javascript" src="/js/mouse-click.js" content='[&#34;🌱&#34;,&#34;just do it&#34;,&#34;🍀&#34;]' color='[&#34;rgb(121,93,179)&#34; ,&#34;rgb(76,180,231)&#34; ,&#34;rgb(184,90,154)&#34;]'></script>
+        
+
+        <!-- background effects end -->
+    
+
+    <!--<script size="50" alpha='0.3' zIndex="-999" src="/js/ribbonStatic.js"></script>-->
+    
+        <script src="/js/ribbonDynamic.js"></script>
+    
+</body>
+
+</html>

@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <script data-ad-client="ca-pub-2488174175014870" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI">
+    <meta name="baidu-site-verification" content="093lY4ziMu" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="description" content="A hexo theme">
+    <meta name="keyword"  content="hexo, hexo-theme-lp">
+    <link rel="shortcut icon" href="/img/ironman-draw.png">
+    <!-- Place this tag in your head or just before your close body tag. -->
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <!--<link href='http://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>-->
+    <title>
+        
+          入门WebAssembly以及使用其进行图像卷积处理 - Hexo-theme-lp
+        
+    </title>
+
+    <link rel="canonical" href="https://flepeng.github.io/2019/02/16/入门WebAssembly以及使用其进行图像卷积处理/">
+
+    <!-- Bootstrap Core CSS -->
+    
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+
+
+    <!-- Custom CSS --> 
+    
+        
+<link rel="stylesheet" href="/css/dusign-light.css">
+
+        
+<link rel="stylesheet" href="/css/dusign-common-light.css">
+
+        
+<link rel="stylesheet" href="/css/font-awesome.css">
+
+        
+<link rel="stylesheet" href="/css/toc.css">
+
+        <!-- background effects end -->
+    
+    
+    <!-- Pygments Highlight CSS -->
+    
+<link rel="stylesheet" href="/css/highlight.css">
+
+
+    
+<link rel="stylesheet" href="/css/widget.css">
+
+
+    
+<link rel="stylesheet" href="/css/rocket.css">
+
+
+    
+<link rel="stylesheet" href="/css/signature.css">
+
+
+    
+<link rel="stylesheet" href="/css/fonts.googleapis.css">
+
+
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+
+    <!-- photography -->
+    
+<link rel="stylesheet" href="/css/photography.css">
+
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- background effects start -->
+    
+    <!-- background effects end -->
+
+	<!-- Modified by Yu-Hsuan Yen -->
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        
+            
+                background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('')
+                /*post*/
+            
+        
+    }
+    
+    #signature{
+        background-image: url('/img/signature/dusign.png');
+    }
+    
+</style>
+
+<header class="intro-header" >
+    <!-- Signature -->
+    <div id="signature">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                
+                    <div class="post-heading">
+                        <div class="tags">
+                            
+                              <a class="tag" href="/tags/#WebAssembly" title="WebAssembly">WebAssembly</a>
+                            
+                        </div>
+                        <h1>入门WebAssembly以及使用其进行图像卷积处理</h1>
+                        <h2 class="subheading"></h2>
+                        <span class="meta">
+                            Posted by Lepeng on
+                            2019-02-16
+                        </span>
+
+                        
+                            <div class="blank_box"></div>
+                            <span class="meta">
+                                Words <span class="post-count">1.9k</span> and
+                                Reading Time <span class="post-count">7</span> Minutes
+                            </span>
+                            <div class="blank_box"></div>
+                            <!-- 不蒜子统计 start -->
+                            <span class="meta">
+                                Viewed <span id="busuanzi_value_page_pv"><i class="fa fa-spinner fa-spin"></i></span> Times
+                            </span>
+                            <!-- 不蒜子统计 end -->
+                        
+
+                    </div>
+                
+
+                </div>
+            </div>
+        </div>      
+    </div>
+
+    
+    <div class="waveWrapper">
+        <div class="wave wave_before" style="background-image: url('/img/wave-light.png')"></div>
+        <div class="wave wave_after" style="background-image: url('/img/wave-light.png')"></div>
+    </div>
+    
+</header>
+
+	
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Lepeng</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+
+                    
+
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/about/">About</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/categories/">Categories</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/archive/">Archives</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/tags/">Tags</a>
+                        </li>
+                        
+                    
+                    
+                    
+                    <li>
+                        <a href="http://flepeng.com" target="_blank">chinese_blog</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Main Content -->
+    <!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+            <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <blockquote>
+<p>WebAssembly 出现有很长时间了，但是由于日常工作并无直接接触，因此一直疏于尝试，最近终于利用一些业余时间简单入门了一下，因此在此总结。</p>
+</blockquote>
+<h3 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h3><p>首先我们需要知道 WebAssembly 是一个什么东西，其实际是一个字节码编码方式，比较接近机器码（但是又无法直接执行），这样可以方便地做到跨平台同时省去像 JavaScript 等语言的解释时间，所以是有一定优势的，使用起来其实也比较灵活，凡是可以转化成字节码的，都是可以使用 WebAssembly。</p>
+<p>以下仅列举部分可以支持 WebAssembly 转化的语言：</p>
+<ul>
+<li><a href="https://github.com/AssemblyScript/assemblyscript" target="_blank" rel="noopener">AssemblyScript</a>: 语法和 TypeScript 一致(事实上，其是 Typescript 的一个子集)，对前端来说学习成本低，为前端编写 WebAssembly 最佳选择；</li>
+<li>c\c++: 官方推荐的方式，详细使用见<a href="http://webassembly.org.cn/getting-started/developers-guide/" target="_blank" rel="noopener">文档</a>;</li>
+<li><a href="https://www.rust-lang.org/" target="_blank" rel="noopener">Rust</a>: 语法复杂、学习成本高，对前端来说可能会不适应。详细使用见<a href="https://github.com/rust-lang-nursery/rust-wasm" target="_blank" rel="noopener">文档</a>;</li>
+<li><a href="http://kotlinlang.org/" target="_blank" rel="noopener">Kotlin</a>: 语法和 Java、JS 相似，语言学习成本低，详细使用见<a href="https://kotlinlang.org/docs/reference/native-overview.html" target="_blank" rel="noopener">文档</a>;</li>
+<li><a href="https://golang.org/" target="_blank" rel="noopener">Golang</a>: 语法简单学习成本低。但对 WebAssembly 的支持还处于未正式发布阶段，详细使用见<a href="https://blog.gopheracademy.com/advent-2017/go-wasm/" target="_blank" rel="noopener">文档</a>。</li>
+</ul>
+<p>尝试使用 WebAssembly 官方推荐的方式，我们首先可以在<a href="http://webassembly.org.cn/getting-started/developers-guide/" target="_blank" rel="noopener">这里</a>来下载。</p>
+<p>如果用腾讯内网有的文件是下载不下来的，这个时候我们可以给命令行增加一个代理（如果我们用的 Fiddler 或 Charles，开启的时候默认命令行也可以走代理，如果是 Whistle，我们需要手动设置代理），有些文件我们还可以下载好之后使用文件代理。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">export https_proxy&#x3D;&quot;http:&#x2F;&#x2F;127.0.0.1:8899&quot;</span><br><span class="line">export http_proxy&#x3D;&quot;http:&#x2F;&#x2F;127.0.0.1:8899&quot;</span><br><span class="line">&#x2F;&#x2F; 文件代理：</span><br><span class="line">https:&#x2F;&#x2F;s3.amazonaws.com&#x2F;mozilla-games&#x2F;emscripten&#x2F;packages&#x2F;node-v8.9.1-darwin-x64.tar.gz file:&#x2F;&#x2F;&#x2F;Users&#x2F;niexiaotao&#x2F;node-v8.9.1-darwin-x64.tar.gz</span><br></pre></td></tr></table></figure>
+<h2 id="初体验"><a href="#初体验" class="headerlink" title="初体验"></a>初体验</h2><p>这里考虑到前端同学的上手难度，我们先使用 AssemblyScript 写一个极小的例子，一个斐波那契函数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">export function f(x: i32): i32 &#123;</span><br><span class="line">    if (x &#x3D;&#x3D;&#x3D; 1 || x &#x3D;&#x3D;&#x3D; 2) &#123;</span><br><span class="line">        return 1;</span><br><span class="line">    &#125;</span><br><span class="line">    return f(x - 1) + f(x - 2)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过类似 <code>asc f.ts -o f.wasm</code> 这样的命令编译成 f.wasm 之后，我们可以分别在 Node 环境和浏览器环境来执行：</p>
+<p>Node：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">const fs &#x3D; require(&quot;fs&quot;);</span><br><span class="line">const wasm &#x3D; new WebAssembly.Module(</span><br><span class="line">    fs.readFileSync(__dirname + &quot;&#x2F;f.wasm&quot;), &#123;&#125;</span><br><span class="line">);</span><br><span class="line">const myModule &#x3D; new WebAssembly.Instance(wasm).exports;</span><br><span class="line">console.log(myModule.f(12));</span><br></pre></td></tr></table></figure>
+<p>浏览器：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">fetch(&#39;f.wasm&#39;) &#x2F;&#x2F; 网络加载 f.wasm 文件</span><br><span class="line">        .then(res &#x3D;&gt; res.arrayBuffer()) &#x2F;&#x2F; 转成 ArrayBuffer</span><br><span class="line">        .then( buffer &#x3D;&gt;</span><br><span class="line">            WebAssembly.compile(buffer)</span><br><span class="line">        )</span><br><span class="line">        .then(module &#x3D;&gt; &#123; &#x2F;&#x2F; 调用模块实例上的 f 函数计算</span><br><span class="line">            const instance &#x3D; new WebAssembly.Instance(module);</span><br><span class="line">            const &#123; f &#125; &#x3D; instance.exports;</span><br><span class="line">            console.log(&#39;instance:&#39;, instance.exports);</span><br><span class="line">            console.log(&#39;f(20):&#39;, f(20));</span><br><span class="line">        &#125;);</span><br></pre></td></tr></table></figure>
+<p>于是，我们完成了 WebAssembly 的初体验。</p>
+<p>当然，这个例子太简单了。</p>
+<h2 id="使用-WebAssembly-进行图像卷积处理"><a href="#使用-WebAssembly-进行图像卷积处理" class="headerlink" title="使用 WebAssembly 进行图像卷积处理"></a>使用 WebAssembly 进行图像卷积处理</h2><p>实际上，WebAssembly 的目的在于解决一些复杂的计算问题，优化 JavaScript 的执行效率。所以我们可以使用 WebAssembly 来处理一些图像或者矩阵的计算问题。</p>
+<p>接下来，我们通过 WebAssembly 来处理一些图像的卷积问题，用于图像的风格变换，我们最终的例子可以在<a href="http://assembly.niexiaotao.com/" target="_blank" rel="noopener">这里</a>体验。</p>
+<p>每次进行卷积处理，我们的整个流程是这样的：</p>
+<ul>
+<li>将原图像使用 canvas 绘制到屏幕上。</li>
+<li>使用 <code>getImageData</code> 获取图像像素内容，并转化成类型数组。</li>
+<li>将上述类型数组通过共享内存的方式传递给 WebAssembly 部分。</li>
+<li>WebAssembly 部分接收到数据，进行计算，并且通过共享内存的方式返回。</li>
+<li>将最终结果通过 canvas 画布更新。</li>
+</ul>
+<p>上述各个步骤中，绘制的部分集中在 JavaScript 端，而计算的部分集中在 WebAssembly，这两部分相互比较独立，可以分开编写，而双端数据通信是一个比较值得注意的地方，事实上，我们可以通过 ArrayBuffer 来实现双端通信，简单的说，JavaScript 端和 WebAssembly 可以共享一部分内存，并且都拥有读写能力，当一端写入新数据之后，另一段也可以读到，这样我们就可以进行通信了。</p>
+<p>关于数据通信的问题，这里还有一个比较直白的<a href="https://segmentfault.com/a/1190000010434237" target="_blank" rel="noopener">科普文章</a>，可以参考。</p>
+<p>在这里没有必要对整个项目代码进行展示，因此可以参考（<a href="https://github.com/aircloud/assemConvolution" target="_blank" rel="noopener">代码地址</a>），我们这里仅仅对部分关键代码进行说明。</p>
+<h3 id="共享内存"><a href="#共享内存" class="headerlink" title="共享内存"></a>共享内存</h3><p>首先，我们需要声明一块共享内存，这其实可以使用 WebAssembly 的 API 来完成：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">let memory &#x3D; new WebAssembly.Memory(&#123; initial: ((memSize + 0xffff) &amp; ~0xffff) &gt;&gt;&gt; 16 &#125;);</span><br></pre></td></tr></table></figure>
+<p>这里经过这样的比较复杂的计算是因为 initial 传入的是以 page 为单位，详细可以参考<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WebAssembly/Memory" target="_blank" rel="noopener">这里</a>，实际上 memSize 即我们共享内存的字节数。</p>
+<p>然后这里涉及到 memSize 的计算，我们主要需要存储三块数据：卷积前的数据、卷积后的数据（由于卷积算法的特殊性以及为了避免更多麻烦，这里我们不进行数据共用），还有卷积核作为参数需要传递。</p>
+<p>这里我们共享内存所传递的数据按照如下的规则进行设计：</p>
+<p><img src="http://niexiaotao.cn/img/ker1.jpg" alt=""></p>
+<p>传递给 WebAssembly 端的方式并不复杂，直接在 <code>WebAssembly.instantiate</code> 中声明即可。 </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">fetch(wasmPath)</span><br><span class="line">     .then(response &#x3D;&gt; response.arrayBuffer())</span><br><span class="line">     .then(buffer &#x3D;&gt; WebAssembly.instantiate(buffer, &#123;</span><br><span class="line">         env: &#123;</span><br><span class="line">             memory,</span><br><span class="line">             abort: function() &#123;&#125;</span><br><span class="line">         &#125;,</span><br><span class="line">         Math</span><br><span class="line">     &#125;)).then(module &#x3D;&gt; &#123;&#125;)</span><br></pre></td></tr></table></figure>
+<p>然后我们在 AssemblyScript 中就可以进行读写了：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;写：</span><br><span class="line">store&lt;u32&gt;(position, v) &#x2F;&#x2F; position 为位置</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F;读：</span><br><span class="line">load&lt;u32&gt;(position) &#x2F;&#x2F; position 为位置</span><br></pre></td></tr></table></figure>
+<p>而在 JavaScript 端，我们也可以通过 <code>memory.buffer</code> 拿到数据，并且转化成类型数组：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">let mem &#x3D; new Uint32Array(memory.buffer)</span><br><span class="line">&#x2F;&#x2F;通过 mem.set(data) 可以在 JavaScript 端进行写入操作</span><br></pre></td></tr></table></figure>
+<p>这样，我们在 JavaScript 端和 AssemblyScript 端的读写都明晰了。</p>
+<p>这里需要注意的是，<strong>JS端采用的是大端数据格式，而 AssemblyScript 中采用的是小端，因此其颜色数据格式为 AGBR</strong></p>
+<h3 id="卷积计算"><a href="#卷积计算" class="headerlink" title="卷积计算"></a>卷积计算</h3><p>我们所采用的卷积计算本身算法比较简单，并且不是本次的重点，但是这里需要注意的是：</p>
+<ul>
+<li>我们无法直接在 AssemblyScript 中声明数组并使用，因此除了 Kernel 通过共享内存的方式传递过来以外，我们应当尽量避免声明数组使用（虽然也有使用非共享内存数组的相关操作，但是使用起来比较繁琐）</li>
+<li>卷积应当对 R、G、B 三层单独进行，我这里 A 层不参与卷积。</li>
+</ul>
+<p>以上都在代码中有所体现，参考相关代码便可明了。</p>
+<p>卷积完成后，我们通过共享内存的方法写入类型数组，然后在 JavaScript 端合成数据，调用 <code>putImageData</code> 上屏即可。</p>
+<h3 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h3><p>当然，本次图像卷积程序仅仅是对 Webassembly 和 AssemblyScript 的初步尝试，笔者也在学习阶段，如果上述说法有问题或者你想和我交流，也欢迎留言或者提相关 issue。</p>
+
+                
+                <hr>
+                <!-- Pager -->
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2019/02/16/qlc解决了什么问题/" data-toggle="tooltip" data-placement="top" title="qlc解决了什么问题">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2019/02/03/ZhaoYLong-2019-02-03-Java内存模型与垃圾回收/" data-toggle="tooltip" data-placement="top" title="Java内存模型与垃圾回收">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+                <!-- tip start -->
+                
+
+                
+                <div class="comment_notes">
+                    <p>
+                        This is copyright.
+                    </p>
+                </div>
+                
+                <!-- tip end -->
+
+                <!-- Music start-->
+                
+                
+<link rel="stylesheet" href="/css/music-player/fonts/iconfont.css">
+
+
+<link rel="stylesheet" href="/css/music-player/css/reset.css">
+
+
+<link rel="stylesheet" href="/css/music-player/css/player.css">
+
+
+<div class="music-player">
+    <audio class="music-player__audio" ></audio>
+    <div class="music-player__main">
+        <div class="music-player__blur"></div>
+        <div class="music-player__disc">
+            <div class="music-player__image">
+                <img width="100%" src="" alt="">
+            </div>
+            <div class="music-player__pointer"><img width="100%" src="/img/cd_tou.png" alt=""></div>
+        </div>
+        <div class="music-player__controls">
+            <div class="music__info">
+                <h3 class="music__info--title">...</h3>
+                <p class="music__info--singer">...</p>
+            </div>
+            <div class="player-control">
+                <div class="player-control__content">
+                    <div class="player-control__btns">
+                        <div class="player-control__btn player-control__btn--prev"><i class="iconfont icon-prev"></i></div>
+                        <div class="player-control__btn player-control__btn--play"><i class="iconfont icon-play"></i></div>
+                        <div class="player-control__btn player-control__btn--next"><i class="iconfont icon-next"></i></div>
+                        <div class="player-control__btn player-control__btn--mode"><i class="iconfont icon-loop"></i></div>
+                    </div>
+                    <div class="player-control__volume">
+                        <div class="control__volume--icon player-control__btn"><i class="iconfont icon-volume"></i></div>
+                        <div class="control__volume--progress player_progress"></div>
+                    </div>
+                </div>
+                <div class="player-control__content">
+                    <div class="player__song--progress player_progress"></div>
+                    <div class="player__song--timeProgess nowTime">00:00</div>
+                    <div class="player__song--timeProgess totalTime">00:00</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="/js/music-player/utill.js"></script>
+
+
+<script src="/js/music-player/jquery.min.js"></script>
+
+<!-- netease; qqkg -->
+<!--
+<script src="/js/music-player/player.js?library=config.music.library.js"></script>
+-->
+<script src="../../../../js/music-player/player.js?library=netease&music=https://kg.qq.com/node/play?s=7deFpz7Z26Jmv7di&g_f=share_html"></script>
+                
+                <!-- Music end -->
+
+                <!-- Sharing -->
+                
+                <div class="social-share"  data-wechat-qrcode-helper="" align="center"></div>
+                <!--  css & js -->
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/css/share.min.css">
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/js/social-share.min.js"></script>
+                
+                <!-- Sharing -->
+
+                <!-- gitment start -->
+                
+                <!-- gitment end -->
+
+                <!-- 来必力City版安装代码 -->
+                
+                <!-- City版安装代码已完成 -->
+
+                <!-- disqus comment start -->
+                
+                <!-- disqus comment end -->
+            </div>
+            
+            <!-- Tabe of Content -->
+            <!-- Table of Contents -->
+
+                
+            <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <!-- no hr -->
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+                       
+                          <a class="tag" href="/tags/#WebAssembly" title="WebAssembly">WebAssembly</a>
+                        
+                    </div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+
+                    
+                        <li><a href="www.flepeng.com" target="_blank">Feng Lepeng&#39;s Blog</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("https://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'hover',
+          placement: 'left',
+          icon: 'ℬ'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+
+
+<style  type="text/css">
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; Feng Lepeng 2021 
+                    <br>
+                    Powered by 
+                    <a href="https://github.com/dusign/hexo-theme-snail" target="_blank" rel="noopener">
+                        <i>hexo-theme-snail</i>
+                    </a> | 
+                    <iframe name="star" style="margin-left: 2px; margin-bottom:-5px;" frameborder="0" scrolling="0"
+                        width="100px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=flepeng&repo=hexo-theme-lp&type=star">
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+
+</footer>
+
+<!-- jQuery -->
+
+<script src="/js/jquery.min.js"></script>
+
+
+<!-- Bootstrap Core JavaScript -->
+
+<script src="/js/bootstrap.min.js"></script>
+
+
+<!-- Custom Theme JavaScript -->
+
+<script src="/js/hux-blog.min.js"></script>
+
+
+<!-- Search -->
+
+<script src="/js/search.js"></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("https://flepeng.github.io/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("https://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-XXXXXXXX-X';
+    var _gaDomain = 'yoursite';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+
+<!-- Baidu Tongji -->
+
+
+<!-- Search -->
+
+    <script type="text/javascript">      
+        var search_path = "search.xml";
+        if (search_path.length == 0) {
+            search_path = "search.xml";
+        }
+    var path = "/" + search_path;
+    searchFunc(path, 'local-search-input', 'local-search-result');
+    </script>
+
+
+<!-- busuanzi -->
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+
+	<a id="rocket" href="#top" class=""></a>
+	<script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+    <script type="text/javascript" src="/js/toc.js?v=1.0.0" async=""></script>
+
+    
+        <!-- background effects line -->
+        
+
+        
+            <script type="text/javascript" src="/js/mouse-click.js" content='[&#34;🌱&#34;,&#34;just do it&#34;,&#34;🍀&#34;]' color='[&#34;rgb(121,93,179)&#34; ,&#34;rgb(76,180,231)&#34; ,&#34;rgb(184,90,154)&#34;]'></script>
+        
+
+        <!-- background effects end -->
+    
+
+    <!--<script size="50" alpha='0.3' zIndex="-999" src="/js/ribbonStatic.js"></script>-->
+    
+        <script src="/js/ribbonDynamic.js"></script>
+    
+</body>
+
+</html>
