@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <script data-ad-client="ca-pub-2488174175014870" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> <!-- google ad -->
+    <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+    <meta name="baidu-site-verification" content="093lY4ziMu" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="description" content="A hexo theme">
+    <meta name="keyword"  content="hexo, hexo-theme-lp">
+    <link rel="shortcut icon" href="/img/ironman-draw.png">
+    <!-- Place this tag in your head or just before your close body tag. -->
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <!--<link href='http://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>-->
+    <title>
+        
+          Django 入门之 ORM 缓存 中介模型 查询优化 - Hexo-theme-lp
+        
+    </title>
+
+    <link rel="canonical" href="https://flepeng.github.io/2021/08/08/lepeng-python-Django-Django-入门之-ORM-缓存-中介模型-查询优化/">
+
+    <!-- Bootstrap Core CSS -->
+    
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+
+
+    <!-- Custom CSS --> 
+    
+        
+<link rel="stylesheet" href="/css/dusign-light.css">
+
+        
+<link rel="stylesheet" href="/css/dusign-common-light.css">
+
+        
+<link rel="stylesheet" href="/css/font-awesome.css">
+
+        
+<link rel="stylesheet" href="/css/toc.css">
+
+        <!-- background effects end -->
+    
+    
+    <!-- Pygments Highlight CSS -->
+    
+<link rel="stylesheet" href="/css/highlight.css">
+
+
+    
+<link rel="stylesheet" href="/css/widget.css">
+
+
+    
+<link rel="stylesheet" href="/css/rocket.css">
+
+
+    
+<link rel="stylesheet" href="/css/signature.css">
+
+
+    
+<link rel="stylesheet" href="/css/fonts.googleapis.css">
+
+
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+
+    <!-- photography -->
+    
+<link rel="stylesheet" href="/css/photography.css">
+
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- background effects start -->
+    
+    <!-- background effects end -->
+
+	<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        
+            
+                background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('/img/header_img/archive-bg.jpg')
+                /*post*/
+            
+        
+    }
+    
+    #signature{
+        background-image: url('/img/signature/dusign.png');
+    }
+    
+</style>
+
+<header class="intro-header" >
+    <!-- Signature -->
+    <div id="signature">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                
+                    <div class="post-heading">
+                        <div class="tags">
+                            
+                              <a class="tag" href="/tags/#Python" title="Python">Python</a>
+                            
+                              <a class="tag" href="/tags/#Django" title="Django">Django</a>
+                            
+                        </div>
+                        <h1>Django 入门之 ORM 缓存 中介模型 查询优化</h1>
+                        <h2 class="subheading"></h2>
+                        <span class="meta">
+                            Posted by Lepeng on
+                            2021-08-08
+                        </span>
+
+                        
+                            <div class="blank_box"></div>
+                            <span class="meta">
+                                Words <span class="post-count">3.5k</span> and
+                                Reading Time <span class="post-count">14</span> Minutes
+                            </span>
+                            <div class="blank_box"></div>
+                            <!-- 不蒜子统计 start -->
+                            <span class="meta">
+                                Viewed <span id="busuanzi_value_page_pv"><i class="fa fa-spinner fa-spin"></i></span> Times
+                            </span>
+                            <!-- 不蒜子统计 end -->
+                        
+
+                    </div>
+                
+
+                </div>
+            </div>
+        </div>      
+    </div>
+
+    
+    <div class="waveWrapper">
+        <div class="wave wave_before" style="background-image: url('/img/wave-light.png')"></div>
+        <div class="wave wave_after" style="background-image: url('/img/wave-light.png')"></div>
+    </div>
+    
+</header>
+
+	
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Lepeng</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+
+                    
+
+                        
+                    
+
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/about/">About</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/archive/">Archives</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/categories/">Categories</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/tags/">Tags</a>
+                        </li>
+                        
+                    
+                    
+                    
+                    <li>
+                        <a href="http://flepeng.com" target="_blank">chinese_blog</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Main Content -->
+    <!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+            <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <h1 id="QuerySet"><a href="#QuerySet" class="headerlink" title="QuerySet"></a>QuerySet</h1><h3 id="可切片-切片不会记录到缓存"><a href="#可切片-切片不会记录到缓存" class="headerlink" title="可切片,切片不会记录到缓存"></a><strong>可切片,切片不会记录到缓存</strong></h3><p>使用Python 的切片语法来限制查询集记录的数目 。它等同于SQL 的LIMIT 和OFFSET 子句。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Entry.objects.all()[:5]      # (LIMIT 5)</span><br><span class="line">Entry.objects.all()[5:10]    # (OFFSET 5 LIMIT 5)</span><br></pre></td></tr></table></figure>
+<p><strong>不支持负的索引</strong>（例如Entry.objects.all()[-1]）。通常，查询集 的切片返回一个新的查询集 —— 它不会执行查询。</p>
+<h3 id="可迭代"><a href="#可迭代" class="headerlink" title="可迭代"></a><strong>可迭代</strong></h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">articleList&#x3D;models.Article.objects.all()</span><br><span class="line">for article in articleList:</span><br><span class="line">    print(article.title)</span><br></pre></td></tr></table></figure>
+<h3 id="惰性查询"><a href="#惰性查询" class="headerlink" title="惰性查询"></a><strong>惰性查询</strong></h3><p>查询集 是惰性执行的 —— 创建查询集不会带来任何数据库的访问。你可以将过滤器保持一整天，直到查询集 需要求值时，Django 才会真正运行这个查询。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">queryResult&#x3D;models.Article.objects.all() # not hits database</span><br><span class="line">print(queryResult) # hits database</span><br><span class="line">for article in queryResult:</span><br><span class="line">    print(article.title)    # hits database</span><br></pre></td></tr></table></figure>
+<p>一般来说，<strong>只有在“请求”查询集 的结果时才会到数据库中去获取它们</strong>。当你确实需要结果时，查询集 通过访问数据库来<em>求值</em>。 关于求值发生的准确时间，参见<a href="http://python.usyiyi.cn/documents/django_182/ref/models/querysets.html#when-querysets-are-evaluated" target="_blank" rel="noopener"><em>何时计算查询集</em></a>。</p>
+<h1 id="缓存机制"><a href="#缓存机制" class="headerlink" title="缓存机制"></a>缓存机制</h1><p>首先要有查询集，切片和索引不会缓存，简单打印查询集也不会缓存</p>
+<p>每个查询集都包含一个缓存来最小化对数据库的访问。理解它是如何工作的将让你编写最高效的代码。</p>
+<p>在一个新创建的查询集中，缓存为空。首次对查询集进行求值 —— 同时发生数据库查询 ——Django 将保存查询的结果到查询集的缓存中并返回明确请求的结果（例如，如果正在迭代查询集，则返回下一个结果）。接下来对该查询集 的求值将重用缓存的结果。</p>
+<p>请牢记这个缓存行为，因为对查询集使用不当的话，它会坑你的。例如，下面的语句创建两个查询集，对它们求值，然后扔掉它们：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">print([a.title for a in models.Article.objects.all()])</span><br><span class="line">print([a.create_time for a in models.Article.objects.all()])</span><br></pre></td></tr></table></figure>
+<p>这意味着相同的数据库查询将执行两次，显然倍增了你的数据库负载。同时，还有可能两个结果列表并不包含相同的数据库记录，因为在两次请求期间有可能有Article被添加进来或删除掉。为了避免这个问题，只需保存查询集并重新使用它：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">queryResult&#x3D;models.Article.objects.all()</span><br><span class="line">print([a.title for a in queryResult])</span><br><span class="line">print([a.create_time for a in queryResult])</span><br></pre></td></tr></table></figure>
+<h4 id="何时查询集不会被缓存"><a href="#何时查询集不会被缓存" class="headerlink" title="何时查询集不会被缓存?"></a>何时查询集不会被缓存?</h4><p>查询集不会永远缓存它们的结果。当只对查询集的部分进行求值时会检查缓存， 如果这个部分不在缓存中，那么接下来查询返回的记录都将不会被缓存。所以，这意味着使用切片或索引来限制查询集将不会填充缓存。</p>
+<p>例如，重复获取查询集对象中一个特定的索引将每次都查询数据库：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">queryset &#x3D; Entry.objects.all()</span><br><span class="line">print queryset[5] # Queries the database</span><br><span class="line">print queryset[5] # Queries the database again</span><br></pre></td></tr></table></figure>
+<p>然而，如果已经对全部查询集求值过，则将检查缓存：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">queryset &#x3D; Entry.objects.all()</span><br><span class="line">[entry for entry in queryset] # Queries the database</span><br><span class="line">print queryset[5] # Uses cache</span><br><span class="line">print queryset[5] # Uses cache</span><br></pre></td></tr></table></figure>
+<p>下面是一些其它例子，它们会使得全部的查询集被求值并填充到缓存中：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[entry for entry in queryset]</span><br><span class="line">bool(queryset)</span><br><span class="line">entry in queryset</span><br><span class="line">list(queryset)</span><br></pre></td></tr></table></figure>
+<p>注：简单地打印查询集不会填充缓存。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">queryResult=models.Article.objects.all()</span><br><span class="line">print(queryResult) <span class="comment">#  hits database</span></span><br><span class="line">print(queryResult) <span class="comment">#  hits database</span></span><br></pre></td></tr></table></figure>
+<h3 id="exists-与iterator-方法"><a href="#exists-与iterator-方法" class="headerlink" title="exists()与iterator()方法"></a>exists()与iterator()方法</h3><h4 id="exists："><a href="#exists：" class="headerlink" title="exists："></a>exists：</h4><p>简单的使用if语句进行判断也会完全执行整个queryset并且把数据放入cache，虽然你并不需要这些 数据！为了避免这个，可以用exists()方法来检查是否有数据：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">if queryResult.exists():</span><br><span class="line">    # SELECT (1) AS &quot;a&quot; FROM &quot;blog_article&quot; LIMIT 1; args&#x3D;()</span><br><span class="line">    print(&quot;exists...&quot;)</span><br></pre></td></tr></table></figure>
+<h4 id="iterator"><a href="#iterator" class="headerlink" title="iterator:"></a>iterator:</h4><p>当queryset非常巨大时，cache会成为问题。</p>
+<p>处理成千上万的记录时，将它们一次装入内存是很浪费的。更糟糕的是，巨大的queryset可能会锁住系统 进程，让你的程序濒临崩溃。要避免在遍历数据的同时产生queryset cache，可以使用iterator()方法 来获取数据，处理完数据就将其丢弃。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">objs &#x3D; Book.objects.all().iterator()</span><br><span class="line"># iterator()可以一次只从数据库获取少量数据，这样可以节省内存</span><br><span class="line">for obj in objs:</span><br><span class="line">    print(obj.title)</span><br><span class="line"># BUT,再次遍历没有打印,因为迭代器已经在上一次遍历(next)到最后一次了,没得遍历了</span><br><span class="line">for obj in objs:</span><br><span class="line">    print(obj.title)</span><br></pre></td></tr></table></figure>
+<p>当然，使用iterator()方法来防止生成cache，意味着遍历同一个queryset时会重复执行查询。所以使 用iterator()的时候要当心，确保你的代码在操作一个大的queryset时没有重复执行查询。</p>
+<p>总结:</p>
+<p>queryset的cache是用于减少程序对数据库的查询，在通常的使用下会保证只有在需要的时候才会查询数据库。 使用exists()和iterator()方法可以优化程序对内存的使用。不过，由于它们并不会生成queryset cache，可能 会造成额外的数据库查询。</p>
+<h1 id="中介模型"><a href="#中介模型" class="headerlink" title="中介模型"></a>中介模型</h1><p>处理类似搭配 pizza 和 topping 这样简单的多对多关系时，使用标准的ManyToManyField  就可以了。但是，有时你可能需要关联数据到两个模型之间的关系上。</p>
+<p>例如，有这样一个应用，它记录音乐家所属的音乐小组。我们可以用一个ManyToManyField 表示小组和成员之间的多对多关系。但是，有时你可能想知道更多成员关系的细节，比如成员是何时加入小组的。</p>
+<p>对于这些情况，Django 允许你指定一个中介模型来定义多对多关系。 你可以将其他字段放在中介模型里面。源模型的ManyToManyField 字段将使用through 参数指向中介模型。对于上面的音乐小组的例子，代码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> django.db <span class="keyword">import</span> models</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Person</span><span class="params">(models.Model)</span>:</span></span><br><span class="line">    name = models.CharField(max_length=<span class="number">128</span>)</span><br><span class="line"> </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__str__</span><span class="params">(self)</span>:</span>              <span class="comment"># __unicode__ on Python 2</span></span><br><span class="line">        <span class="keyword">return</span> self.name</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Group</span><span class="params">(models.Model)</span>:</span></span><br><span class="line">    name = models.CharField(max_length=<span class="number">128</span>)</span><br><span class="line">    members = models.ManyToManyField(Person, through=<span class="string">'Membership'</span>)</span><br><span class="line"> </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__str__</span><span class="params">(self)</span>:</span>              <span class="comment"># __unicode__ on Python 2</span></span><br><span class="line">        <span class="keyword">return</span> self.name</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Membership</span><span class="params">(models.Model)</span>:</span></span><br><span class="line">    person = models.ForeignKey(Person)</span><br><span class="line">    group = models.ForeignKey(Group)</span><br><span class="line">    date_joined = models.DateField()</span><br><span class="line">    invite_reason = models.CharField(max_length=<span class="number">64</span>)</span><br></pre></td></tr></table></figure>
+<p>既然你已经设置好ManyToManyField 来使用中介模型（在这个例子中就是Membership），接下来你要开始创建多对多关系。你要做的就是创建中介模型的实例：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">ringo = Person.objects.create(name=<span class="string">"Ringo Starr"</span>)</span><br><span class="line">paul = Person.objects.create(name=<span class="string">"Paul McCartney"</span>)</span><br><span class="line">beatles = Group.objects.create(name=<span class="string">"The Beatles"</span>)</span><br><span class="line">m1 = Membership(person=ringo, group=beatles,</span><br><span class="line"><span class="comment">#     date_joined=date(1962, 8, 16),</span></span><br><span class="line"><span class="comment">#     invite_reason="Needed a new drummer.")</span></span><br><span class="line"></span><br><span class="line">m1.save()</span><br><span class="line">beatles.members.all()</span><br><span class="line"><span class="comment"># [&lt;Person: Ringo Starr&gt;]</span></span><br><span class="line"></span><br><span class="line">ringo.group_set.all()</span><br><span class="line"><span class="comment"># [&lt;Group: The Beatles&gt;]</span></span><br><span class="line"></span><br><span class="line">m2 = Membership.objects.create(person=paul, group=beatles,</span><br><span class="line"><span class="comment">#     date_joined=date(1960, 8, 1),</span></span><br><span class="line"><span class="comment">#     invite_reason="Wanted to form a band.")</span></span><br><span class="line">beatles.members.all()</span><br><span class="line"><span class="comment"># [&lt;Person: Ringo Starr&gt;, &lt;Person: Paul McCartney&gt;]</span></span><br></pre></td></tr></table></figure>
+<p>与普通的多对多字段不同，你不能使用add、 create和赋值语句（比如，beatles.members = […]）来创建关系：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># THIS WILL NOT WORK</span><br><span class="line">&gt;&gt;&gt; beatles.members.add(john)</span><br><span class="line"># NEITHER WILL THIS</span><br><span class="line">&gt;&gt;&gt; beatles.members.create(name&#x3D;&quot;George Harrison&quot;)</span><br><span class="line"># AND NEITHER WILL THIS</span><br><span class="line">&gt;&gt;&gt; beatles.members &#x3D; [john, paul, ringo, george]</span><br></pre></td></tr></table></figure>
+<p>为什么不能这样做？ 这是因为你不能只创建 Person和 Group之间的关联关系，你还要指定 Membership模型中所需要的所有信息；而简单的add、create 和赋值语句是做不到这一点的。所以它们不能在使用中介模型的多对多关系中使用。此时，唯一的办法就是创建中介模型的实例。</p>
+<p> remove()方法被禁用也是出于同样的原因。但是clear() 方法却是可用的。它可以清空某个实例所有的多对多关系：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt;&gt; # Beatles have broken up</span><br><span class="line">&gt;&gt;&gt; beatles.members.clear()</span><br><span class="line">&gt;&gt;&gt; # Note that this deletes the intermediate model instances</span><br><span class="line">&gt;&gt;&gt; Membership.objects.all()</span><br><span class="line">[]</span><br></pre></td></tr></table></figure>
+<h1 id="查询优化"><a href="#查询优化" class="headerlink" title="查询优化"></a>查询优化</h1><h2 id="select-related"><a href="#select-related" class="headerlink" title="select_related"></a>select_related</h2><p>对于一对一字段（OneToOneField）和外键字段（ForeignKey），可以使用select_related 来对QuerySet进行优化。</p>
+<p>select_related 返回一个QuerySet，当执行它的查询时它沿着外键关系查询关联的对象的数据。它会生成一个复杂的查询并引起性能的损耗，但是在以后使用外键关系时将不需要数据库查询。</p>
+<p>简单说，在对QuerySet使用select_related()函数后，Django会获取相应外键对应的对象，从而在之后需要的时候不必再查询数据库了。</p>
+<p>下面的例子解释了普通查询和select_related() 查询的区别。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"># 查询id&#x3D;2的文章的分类名称,下面是一个标准的查询：（查询两次数据库）</span><br><span class="line"># Hits the database.</span><br><span class="line">article&#x3D;models.Article.objects.get(nid&#x3D;2)</span><br><span class="line"></span><br><span class="line"># Hits the database again to get the related Blog object.</span><br><span class="line">print(article.category.title)</span><br><span class="line"></span><br><span class="line"># 如果我们使用select_related()函数：（只查询一次数据库）</span><br><span class="line">articleList&#x3D;models.Article.objects.select_related(&quot;category&quot;).all()</span><br><span class="line">for article_obj in articleList:</span><br><span class="line">    #  Doesn&#39;t hit the database, because article_obj.category</span><br><span class="line">    #  has been prepopulated in the previous query.</span><br><span class="line">    print(article_obj.category.title)</span><br></pre></td></tr></table></figure>
+<h3 id="多外键查询"><a href="#多外键查询" class="headerlink" title="多外键查询"></a>多外键查询</h3><p>这是针对category的外键查询，如果是另外一个外键呢？</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">article&#x3D;models.Article.objects.select_related(&quot;category&quot;).get(nid&#x3D;1)</span><br><span class="line">print(article.articledetail)</span><br><span class="line"># 观察logging结果，发现依然需要查询两次，所以需要改为：</span><br><span class="line">article&#x3D;models.Article.objects.select_related(&quot;category&quot;,&quot;articledetail&quot;).get(nid&#x3D;1) </span><br><span class="line">print(article.articledetail)</span><br><span class="line">或者：</span><br><span class="line">article&#x3D;models.Article.objects</span><br><span class="line">　　　　　　　　　　　　　.select_related(&quot;category&quot;)</span><br><span class="line">　　　　　　　　　　　　　.select_related(&quot;articledetail&quot;)</span><br><span class="line">　　　　　　　　　　　　　.get(nid&#x3D;1)  # django 1.7 支持链式操作</span><br><span class="line">print(article.articledetail)</span><br></pre></td></tr></table></figure>
+<h3 id="深层查询"><a href="#深层查询" class="headerlink" title="深层查询"></a>深层查询</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"># 查询id&#x3D;1的文章的用户姓名</span><br><span class="line">article&#x3D;models.Article.objects.select_related(&quot;blog&quot;).get(nid&#x3D;1)</span><br><span class="line">print(article.blog.user.username)</span><br><span class="line"></span><br><span class="line"># 依然需要查询两次，这是因为第一次查询没有query到userInfo表，所以，修改如下：</span><br><span class="line">article&#x3D;models.Article.objects.select_related(&quot;blog__user&quot;).get(nid&#x3D;1) </span><br><span class="line">print(article.blog.user.username)</span><br></pre></td></tr></table></figure>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><ol>
+<li>select_related主要针一对一和多对一关系进行优化。</li>
+<li>select_related使用SQL的JOIN语句进行优化，通过减少SQL查询的次数来进行优化、提高性能。</li>
+<li>可以通过可变长参数指定需要select_related的字段名。也可以通过使用双下划线“__”连接字段名来实现指定的递归查询。</li>
+<li>没有指定的字段不会缓存，没有指定的深度不会缓存，如果要访问的话Django会再次进行SQL查询。</li>
+<li>也可以通过depth参数指定递归的深度，Django会自动缓存指定深度内所有的字段。如果要访问指定深度外的字段，Django会再次进行SQL查询。</li>
+<li>也接受无参数的调用，Django会尽可能深的递归查询所有的字段。但注意有Django递归的限制和性能的浪费。</li>
+<li>Django &gt;= 1.7，链式调用的select_related相当于使用可变长参数。Django &lt; 1.7，链式调用会导致前边的select_related失效，只保留最后一个。</li>
+</ol>
+<h2 id="prefetch-related"><a href="#prefetch-related" class="headerlink" title="prefetch_related()"></a>prefetch_related()</h2><p>对于多对多字段（ManyToManyField）和一对多字段，可以使用prefetch_related()来进行优化。</p>
+<p>prefetch_related()和select_related()的设计目的很相似，都是为了减少SQL查询的数量，但是实现的方式不一样。后者是通过JOIN语句，在SQL查询内解决问题。但是对于多对多关系，使用SQL语句解决就显得有些不太明智，因为JOIN得到的表将会很长，会导致SQL语句运行时间的增加和内存占用的增加。若有n个对象，每个对象的多对多字段对应Mi条，就会生成Σ(n)Mi 行的结果表。</p>
+<p>prefetch_related()的解决方法是，分别查询每个表，然后用Python处理他们之间的关系。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># 查询所有文章关联的所有标签</span><br><span class="line">article_obj&#x3D;models.Article.objects.all()</span><br><span class="line">for i in article_obj:</span><br><span class="line">    print(i.tags.all())  #4篇文章: hits database 5</span><br></pre></td></tr></table></figure>
+<p>改为prefetch_related：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># 查询所有文章关联的所有标签</span><br><span class="line">article_obj&#x3D;models.Article.objects.prefetch_related(&quot;tags&quot;).all()</span><br><span class="line">for i in article_obj:</span><br><span class="line">    print(i.tags.all())  #4篇文章: hits database 2</span><br></pre></td></tr></table></figure>
+<h1 id="原生sql之extra"><a href="#原生sql之extra" class="headerlink" title="原生sql之extra"></a>原生sql之extra</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">extra(select&#x3D;None, where&#x3D;None, params&#x3D;None, </span><br><span class="line">      tables&#x3D;None, order_by&#x3D;None, select_params&#x3D;None)</span><br></pre></td></tr></table></figure>
+<p>有些情况下，Django的查询语法难以简单的表达复杂的 WHERE 子句，对于这种情况, Django 提供了 extra() QuerySet修改机制 — 它能在 QuerySet生成的SQL从句中注入新子句</p>
+<p>extra可以指定一个或多个 参数,例如 select, where or tables. 这些参数都不是必须的，但是你至少要使用一个!要注意这些额外的方式对不同的数据库引擎可能存在移植性问题.(因为你在显式的书写SQL语句),除非万不得已,尽量避免这样做</p>
+<h3 id="参数之select"><a href="#参数之select" class="headerlink" title="参数之select"></a><strong>参数之select</strong></h3><p>select 参数可以让你在 SELECT 从句中添加其他字段信息，它应该是一个字典，存放着属性名到 SQL 从句的映射。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">queryResult&#x3D;models.Article.objects.extra(select&#x3D;&#123;&#39;is_recent&#39;: &quot;create_time &gt; &#39;2017-09-05&#39;&quot;&#125;)</span><br></pre></td></tr></table></figure>
+<p>结果集中每个 Entry 对象都有一个额外的属性is_recent, 它是一个布尔值，表示 Article对象的create_time 是否晚于2017-09-05.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># in sqlite:</span><br><span class="line">article_obj&#x3D;models.Article.objects.filter(nid&#x3D;1)</span><br><span class="line">　　　　　　　　　　　　　　.extra(select&#x3D;&#123;&quot;standard_time&quot;:&quot;strftime(&#39;%%Y-%%m-%%d&#39;,create_time)&quot;&#125;)</span><br><span class="line">　　　　　　　　　　　　　　.values(&quot;standard_time&quot;,&quot;nid&quot;,&quot;title&quot;)</span><br><span class="line">print(article_obj)</span><br><span class="line"># &lt;QuerySet [&#123;&#39;title&#39;: &#39;MongoDb 入门教程&#39;, &#39;standard_time&#39;: &#39;2017-09-03&#39;, &#39;nid&#39;: 1&#125;]&gt;</span><br></pre></td></tr></table></figure>
+<h3 id="参数之where-tables"><a href="#参数之where-tables" class="headerlink" title="参数之where / tables"></a>参数之where / tables</h3><p>您可以使用where定义显式SQL WHERE子句 – 也许执行非显式连接。您可以使用tables手动将表添加到SQL FROM子句。</p>
+<p>where和tables都接受字符串列表。所有where参数均为“与”任何其他搜索条件。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">queryResult&#x3D;models.Article.objects.extra(where&#x3D;[&#39;nid in (1,3) OR title like &quot;py%&quot; &#39;,&#39;nid&gt;2&#39;])</span><br></pre></td></tr></table></figure>
+<h1 id="整体插入"><a href="#整体插入" class="headerlink" title="整体插入"></a>整体插入</h1><p>创建对象时，尽可能使用bulk_create()来减少SQL查询的数量。例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Entry.objects.bulk_create([</span><br><span class="line">    Entry(headline&#x3D;&quot;Python 3.0 Released&quot;),</span><br><span class="line">    Entry(headline&#x3D;&quot;Python 3.1 Planned&quot;)</span><br><span class="line">])</span><br><span class="line"></span><br><span class="line"># 优于：</span><br><span class="line">Entry.objects.create(headline&#x3D;&quot;Python 3.0 Released&quot;)</span><br><span class="line">Entry.objects.create(headline&#x3D;&quot;Python 3.1 Planned&quot;)</span><br></pre></td></tr></table></figure>
+<p>注意该方法有很多注意事项，所以确保它适用于你的情况。这也可以用在ManyToManyFields中，所以：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">my_band.members.add(me, my_friend)</span><br><span class="line"></span><br><span class="line"># 优于：</span><br><span class="line">my_band.members.add(me)</span><br><span class="line">my_band.members.add(my_friend)</span><br></pre></td></tr></table></figure>
+<p>…其中Bands和Artists具有多对多关联。</p>
+
+                
+                <hr>
+                <!-- Pager -->
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2021/08/08/lepeng-python-Django-Django-入门之-Cookie、Session/" data-toggle="tooltip" data-placement="top" title="Django 入门之 Cookie、Session">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2021/08/08/lepeng-python-Django-Django-入门之-ORM-介绍-字段-字段参数-元信息/" data-toggle="tooltip" data-placement="top" title="Django 入门之 ORM 介绍 字段 字段参数 元信息">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+                <!-- tip start -->
+                
+
+                
+                <div class="comment_notes">
+                    <p>
+                        study well and make progress every day; study well and progress every day; study hard and make progress every day.
+                    </p>
+                </div>
+                
+                <!-- tip end -->
+
+                <!-- Music start-->
+                
+                <!-- Music end -->
+
+                <!-- Sharing -->
+                
+                <div class="social-share"  data-wechat-qrcode-helper="" align="center"></div>
+                <!--  css & js -->
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/css/share.min.css">
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/js/social-share.min.js"></script>
+                
+                <!-- Sharing -->
+
+                <!-- gitment start -->
+                
+                <!-- gitment end -->
+
+                <!-- 来必力City版安装代码 -->
+                
+                <!-- City版安装代码已完成 -->
+
+                <!-- disqus comment start -->
+                
+                <!-- disqus comment end -->
+            </div>
+            
+            <!-- Tabe of Content -->
+            <!-- Table of Contents -->
+
+    
+      
+        <aside id="sidebar">
+          <div id="toc" class="toc-article">
+          <strong class="toc-title">Contents</strong>
+          
+            
+              <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#QuerySet"><span class="toc-nav-number">1.</span> <span class="toc-nav-text">QuerySet</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#可切片-切片不会记录到缓存"><span class="toc-nav-number">1.0.1.</span> <span class="toc-nav-text">可切片,切片不会记录到缓存</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#可迭代"><span class="toc-nav-number">1.0.2.</span> <span class="toc-nav-text">可迭代</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#惰性查询"><span class="toc-nav-number">1.0.3.</span> <span class="toc-nav-text">惰性查询</span></a></li></ol></li></ol></li><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#缓存机制"><span class="toc-nav-number">2.</span> <span class="toc-nav-text">缓存机制</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#何时查询集不会被缓存"><span class="toc-nav-number">2.0.0.1.</span> <span class="toc-nav-text">何时查询集不会被缓存?</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#exists-与iterator-方法"><span class="toc-nav-number">2.0.1.</span> <span class="toc-nav-text">exists()与iterator()方法</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#exists："><span class="toc-nav-number">2.0.1.1.</span> <span class="toc-nav-text">exists：</span></a></li><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#iterator"><span class="toc-nav-number">2.0.1.2.</span> <span class="toc-nav-text">iterator:</span></a></li></ol></li></ol></li></ol></li><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#中介模型"><span class="toc-nav-number">3.</span> <span class="toc-nav-text">中介模型</span></a></li><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#查询优化"><span class="toc-nav-number">4.</span> <span class="toc-nav-text">查询优化</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#select-related"><span class="toc-nav-number">4.1.</span> <span class="toc-nav-text">select_related</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#多外键查询"><span class="toc-nav-number">4.1.1.</span> <span class="toc-nav-text">多外键查询</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#深层查询"><span class="toc-nav-number">4.1.2.</span> <span class="toc-nav-text">深层查询</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#总结"><span class="toc-nav-number">4.1.3.</span> <span class="toc-nav-text">总结</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#prefetch-related"><span class="toc-nav-number">4.2.</span> <span class="toc-nav-text">prefetch_related()</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#原生sql之extra"><span class="toc-nav-number">5.</span> <span class="toc-nav-text">原生sql之extra</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#参数之select"><span class="toc-nav-number">5.0.1.</span> <span class="toc-nav-text">参数之select</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#参数之where-tables"><span class="toc-nav-number">5.0.2.</span> <span class="toc-nav-text">参数之where &#x2F; tables</span></a></li></ol></li></ol></li><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#整体插入"><span class="toc-nav-number">6.</span> <span class="toc-nav-text">整体插入</span></a></li></ol>
+            
+          
+          </div>
+        </aside>
+      
+    
+
+                
+            <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <!-- no hr -->
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+                       
+                          <a class="tag" href="/tags/#Python" title="Python">Python</a>
+                        
+                          <a class="tag" href="/tags/#Django" title="Django">Django</a>
+                        
+                    </div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+
+                    
+                        <li><a href="https://blog.csdn.net/fenglepeng" target="_blank">Feng Lepeng&#39;s CSDN</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("https://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'hover',
+          placement: 'left',
+          icon: 'ℬ'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+
+
+<style  type="text/css">
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; Feng Lepeng 2021 
+                    <br>
+                    Powered by 
+                    <a href="https://github.com/dusign/hexo-theme-snail" target="_blank" rel="noopener">
+                        <i>hexo-theme-snail</i>
+                    </a> | 
+                    <iframe name="star" style="margin-left: 2px; margin-bottom:-5px;" frameborder="0" scrolling="0"
+                        width="100px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=flepeng&repo=hexo-theme-lp&type=star">
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+
+</footer>
+
+<!-- jQuery -->
+
+<script src="/js/jquery.min.js"></script>
+
+
+<!-- Bootstrap Core JavaScript -->
+
+<script src="/js/bootstrap.min.js"></script>
+
+
+<!-- Custom Theme JavaScript -->
+
+<script src="/js/hux-blog.min.js"></script>
+
+
+<!-- Search -->
+
+<script src="/js/search.js"></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("https://flepeng.github.io/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("https://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-XXXXXXXX-X';
+    var _gaDomain = 'yoursite';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+
+<!-- Baidu Tongji -->
+
+
+<!-- Search -->
+
+    <script type="text/javascript">      
+        var search_path = "search.xml";
+        if (search_path.length == 0) {
+            search_path = "search.xml";
+        }
+    var path = "/" + search_path;
+    searchFunc(path, 'local-search-input', 'local-search-result');
+    </script>
+
+
+<!-- busuanzi -->
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+
+	<a id="rocket" href="#top" class=""></a>
+	<script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+    <script type="text/javascript" src="/js/toc.js?v=1.0.0" async=""></script>
+
+    
+        <!-- background effects line -->
+        
+
+        
+            <script type="text/javascript" src="/js/mouse-click.js" content='[&quot;🌱&quot;,&quot;just do it&quot;,&quot;🍀&quot;]' color='[&quot;rgb(121,93,179)&quot; ,&quot;rgb(76,180,231)&quot; ,&quot;rgb(184,90,154)&quot;]'></script>
+        
+
+        <!-- background effects end -->
+    
+
+    <!--<script size="50" alpha='0.3' zIndex="-999" src="/js/ribbonStatic.js"></script>-->
+    
+        <script src="/js/ribbonDynamic.js"></script>
+    
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<!--<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>-->
+</body>
+
+</html>
