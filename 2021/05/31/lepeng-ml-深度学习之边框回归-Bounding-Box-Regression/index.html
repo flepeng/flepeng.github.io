@@ -125,8 +125,8 @@
                         
                             <div class="blank_box"></div>
                             <span class="meta">
-                                Words <span class="post-count">2.2k</span> and
-                                Reading Time <span class="post-count">8</span> Minutes
+                                Words <span class="post-count">2.3k</span> and
+                                Reading Time <span class="post-count">9</span> Minutes
                             </span>
                             <div class="blank_box"></div>
                             <!-- 不蒜子统计 start -->
@@ -278,31 +278,31 @@
 <li><strong>边框回归为什么宽高，坐标会设计这种形式？</strong></li>
 <li><strong>为什么边框回归只能微调，在离Ground Truth近的时候才能生效？</strong></li>
 </ul>
-<h2 id="为什么要边框回归？"><a href="#为什么要边框回归？" class="headerlink" title="为什么要边框回归？"></a>为什么要边框回归？</h2><p>这里引用王斌师兄的理解，如下图所示：  </p>
-<p><img src="https://img-blog.csdnimg.cn/20210531105847753.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2ZlbmdsZXBlbmc=,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
-<p>对于上图，绿色的框表示Ground Truth, 红色的框为Selective Search提取的Region Proposal。那么即便红色的框被分类器识别为飞机，但是由于红色的框定位不准(IoU&lt;0.5)， 那么这张图相当于没有正确的检测出飞机。 如果我们能对红色的框进行微调， 使得经过微调后的窗口跟Ground Truth 更接近， 这样岂不是定位会更准确。 确实，Bounding-box regression 就是用来微调这个窗口的。</p>
-<h2 id="边框回归是什么？"><a href="#边框回归是什么？" class="headerlink" title="边框回归是什么？"></a><strong>边框回归是什么？</strong></h2><p>继续借用师兄的理解：对于窗口一般使用四维向量 $(x,y,w,h)$ 来表示， 分别表示窗口的中心点坐标和宽高。 对于下图, 红色的框 P 代表原始的Proposal, 绿色的框 G 代表目标的 Ground Truth， 我们的目标是寻找一种关系使得输入原始的窗口 P 经过映射得到一个跟真实窗口 G 更接近的回归窗口$\hat{G}$。</p>
-<p><img src="https://img-blog.csdnimg.cn/20210531110013471.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2ZlbmdsZXBlbmc=,size_16,color_FFFFFF,t_70" alt="\[外链图片转存失败,源站可能有防盗链机制,建议将图片保存下来直接上传(img-WXzlsij2-1622429766100)(picture/1622428505-490a7f0c46359abd815c64201c0025fa.png)\]"><br>边框回归的目的既是：给定 $(P<em>{x},P</em>{y},P<em>{w},P</em>{h})$ 寻找一种映射 $f$， 使得 $f(P<em>{x},P</em>{y},P<em>{w},P</em>{h}) = (\hat{G<em>x},\hat{G_y},\hat{G_w},\hat{G_h})$ 并且$(\hat{G_x},\hat{G_y},\hat{G_w},\hat{G_h}) \approx (G</em>{x},G<em>{y},G</em>{w},G_{h})$</p>
-<h2 id="边框回归怎么做的？"><a href="#边框回归怎么做的？" class="headerlink" title="边框回归怎么做的？"></a>边框回归怎么做的？</h2><p>RCNN<a href="https://people.eecs.berkeley.edu/~rbg/papers/r-cnn-cvpr.pdf" target="_blank" rel="noopener">Region-based Convolution Networks for Accurate Object detection and Segmentation</a>作者在完成了的“生成候选区域——CNN提取特征——SVM进行分类”以后，为了进一步的提高定位效果，在文章的附录C中介绍了Bounding-box Regression的处理。Bounding-box Regression训练的过程中，输入数据为N个训练对 ${(P^{i},G^{i})},i=1,2,…,N$，其中 $p^i=(p^i_x,p^i_y,p^i_w,p^i_h)$ 为proposal的位置，前两个坐标表示proposal的中心坐标，后面两个坐标分别表示proposal的width和height，而 $G^i=(G_x,G_y,G_w,G_h)$ 表示groundtruth的位置， regression的目标就是学会一种映射将P转换为G。</p>
+<h2 id="为什么要边框回归？"><a href="#为什么要边框回归？" class="headerlink" title="为什么要边框回归？"></a>为什么要边框回归？</h2><p>这里引用王斌师兄的理解，如下图所示：<br><img src="https://img-blog.csdnimg.cn/20210531105847753.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2ZlbmdsZXBlbmc=,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
+<p>对于上图，绿色的框表示 Ground Truth, 红色的框为 Selective Search 提取的 Region Proposal。那么即便红色的框被分类器识别为飞机，但是由于红色的框定位不准(IoU&lt;0.5)， 那么这张图相当于没有正确的检测出飞机。 如果我们能对红色的框进行微调， 使得经过微调后的窗口跟 Ground Truth 更接近， 这样岂不是定位会更准确。 确实，Bounding-box regression 就是用来微调这个窗口的。</p>
+<h2 id="边框回归是什么？"><a href="#边框回归是什么？" class="headerlink" title="边框回归是什么？"></a><strong>边框回归是什么？</strong></h2><p>对于窗口一般使用四维向量 $(x,y,w,h)$ 来表示， 分别表示窗口的中心点坐标和宽高。 对于下图, 红色的框 P 代表原始的 Proposal, 绿色的框 G 代表目标的 Ground Truth， 我们的目标是寻找一种关系使得输入原始的窗口 P 经过映射得到一个跟真实窗口 G 更接近的回归窗口 $\hat{G}$。</p>
+<p><img src="https://img-blog.csdnimg.cn/20210531110013471.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2ZlbmdsZXBlbmc=,size_16,color_FFFFFF,t_70" alt=""><br>边框回归的目的既是：给定 $(P<em>{x},P</em>{y},P<em>{w},P</em>{h})$ 寻找一种映射 $f$， 使得 $f(P<em>{x},P</em>{y},P<em>{w},P</em>{h}) = (\hat{G<em>x},\hat{G_y},\hat{G_w},\hat{G_h})$ 并且$(\hat{G_x},\hat{G_y},\hat{G_w},\hat{G_h}) \approx (G</em>{x},G<em>{y},G</em>{w},G_{h})$</p>
+<h2 id="边框回归怎么做的？"><a href="#边框回归怎么做的？" class="headerlink" title="边框回归怎么做的？"></a>边框回归怎么做的？</h2><p>RCNN论文：<a href="https://people.eecs.berkeley.edu/~rbg/papers/r-cnn-cvpr.pdf" target="_blank" rel="noopener">Region-based Convolution Networks for Accurate Object detection and Segmentation</a> </p>
+<p>作者在完成了的<code>生成候选区域——CNN提取特征——SVM进行分类</code>以后，为了进一步的提高定位效果，在文章的附录C中介绍了 Bounding-box Regression 的处理。Bounding-box Regression 训练的过程中，输入数据为N个训练对 ${(P^{i},G^{i})},i=1,2,…,N$，其中 $p^i=(p^i_x,p^i_y,p^i_w,p^i_h)$ 为proposal的位置，前两个坐标表示proposal的中心坐标，后面两个坐标分别表示proposal的width和height，而 $G^i=(G_x,G_y,G_w,G_h)$ 表示groundtruth的位置， regression的目标就是学会一种映射将P转换为G。</p>
 <p>那么经过何种变换才能从上图中的窗口 P 变为窗口 $\hat{G}$ 呢？ 比较简单的思路就是: <em>平移+尺度放缩</em></p>
-<p>作者设计了四种坐标映射方法，其中前两个表示对proposal中心坐标的尺度不变的平移变换，后面两个则是对proposal的width和height的对数空间的变换，</p>
+<p>作者设计了四种坐标映射方法，其中前两个表示对 proposal 中心坐标的尺度不变的平移变换，后面两个则是对 proposal 的 width 和 height 的对数空间的变换，</p>
 <ol>
-<li><p>先做平移 $(\Delta x,\Delta y)$， $\Delta x = P<em>{w}d</em>{x}(P),\Delta y = P<em>{h}d</em>{y}(P)$ 这是R-CNN论文的：($d<em>{ \ast }(P) = w</em>{ \ast }^{T}\Phi <em>{5}(P)=t</em>{ \ast }$)</p>
-<script type="math/tex; mode=display">\hat{G}_{x} = P_{w}d_{x}(P) + P_{x},\text{(1)}</script><script type="math/tex; mode=display">\hat{G}_{y} = P_{h}d_{y}(P) + P_{y},\text{(2)}</script></li>
-<li><p>然后再做尺度缩放 $(S<em>{w},S</em>{h})$,  $S<em>{w} = exp(d</em>{w}(P)),S<em>{h} = exp(d</em>{h}(P))$, 对应论文中：</p>
-<p>$\hat{G}<em>{w} = P</em>{w}exp(d_{w}(P)),\text{(3)}$</p>
-<p>$\hat{G}<em>{h} = P</em>{h}exp(d_{h}(P)),\text{(4)}$</p>
-</li>
+<li>先做平移 $(\Delta x,\Delta y)$， $\Delta x = P<em>{w}d</em>{x}(P),\Delta y = P<em>{h}d</em>{y}(P)$ 这是R-CNN论文的：($d<em>{ \ast }(P) = w</em>{ \ast }^{T}\Phi <em>{5}(P)=t</em>{ \ast }$)</li>
 </ol>
-<p>观察(1)-(4)我们发现， 边框回归学习就是 $d<em>{x}(P),d</em>{y}(P),d<em>{w}(P),d</em>{h}(P)$这四个变换。下一步就是设计算法那得到这四个映射。</p>
+<script type="math/tex; mode=display">\hat{G}_{x} = P_{w}d_{x}(P) + P_{x},\text{(1)}</script><script type="math/tex; mode=display">\hat{G}_{y} = P_{h}d_{y}(P) + P_{y},\text{(2)}</script><ol>
+<li>然后再做尺度缩放 $(S<em>{w},S</em>{h})$,  $S<em>{w} = exp(d</em>{w}(P)),S<em>{h} = exp(d</em>{h}(P))$, 对应论文中：</li>
+</ol>
+<script type="math/tex; mode=display">\hat{G}_{w} = P_{w}exp(d_{w}(P)),\text{(3)}</script><script type="math/tex; mode=display">\hat{G}_{h} = P_{h}exp(d_{h}(P)),\text{(4)}</script><p>观察(1)-(4)我们发现， 边框回归学习就是 $d<em>{x}(P),d</em>{y}(P),d<em>{w}(P),d</em>{h}(P)$这四个变换。下一步就是设计算法那得到这四个映射。</p>
 <p>线性回归就是给定输入的特征向量 X, 学习一组参数 W, 使得经过线性回归后的值跟真实值 Y(Ground Truth)非常接近. 即 $Y \approx WX$ 。 那么 Bounding-box 中我们的输入以及输出分别是什么呢？</p>
 <h3 id="Input"><a href="#Input" class="headerlink" title="Input:"></a>Input:</h3><p>$RegionProposal\rightarrow P = (P<em>{x},P</em>{y},P<em>{w},P</em>{h})$，这个是什么？ 输入就是这四个数值吗？不是，其实<strong>真正的输入是这个窗口对应的 CNN 特征</strong>，也就是 R-CNN 中的 Pool5 feature（特征向量）。 (注：训练阶段输入还包括 Ground Truth， 也就是下边提到的 $t<em>{ \ast } = (t</em>{x},t<em>{y},t</em>{w},t_{h})$</p>
-<h3 id="Output"><a href="#Output" class="headerlink" title="Output:"></a>Output:</h3><p>需要进行的平移变换和尺度缩放  $d<em>{x}(P),d</em>{y}(P),d<em>{w}(P),d</em>{h}(P)$， 或者说是 $\Delta x,\Delta y,S<em>{w},S</em>{h}$ 。 我们的最终输出不应该是 Ground Truth 吗？ 是的， 但是有了这四个变换我们就可以直接得到 Ground Truth， 这里还有个问题， 根据(1)~(4)我们可以知道， P 经过 $d<em>{x}(P),d</em>{y}(P),d<em>{w}(P),d</em>{h}(P)$ 得到的并不是真实值 G， 而是预测值 $\hat{G}$。 的确， 这四个值应该是经过 Ground Truth 和 Proposal 计算得到的真正需要的平移量 $(t<em>{x},t</em>{y})$ 和尺度缩放 $(t<em>{w},t</em>{h})$ 。<br>这也就是 R-CNN 中的(6)~(9)：  </p>
-<script type="math/tex; mode=display">t_{x} = (G_{x}−P_{x})/ P_{w},(6)</script><script type="math/tex; mode=display">t_{y} = (G_{y}−P_{y})/ P_{h},(7)</script><script type="math/tex; mode=display">t_{w} = \log ⁡(G_{w}/ P_{w}),(8)</script><script type="math/tex; mode=display">t_{h} = \log ⁡(G_{h}/ P_{h}),(9)</script><p>那么目标函数可以表示为 $d<em>{ \ast }(P) = w</em>{ \ast }^{T}\Phi <em>{5}(P)$， $\Phi </em>{5}(P)$ 是输入 Proposal 的特征向量，$w<em>{ \ast }$是要学习的参数（*表示 x,y,w,h， 也就是每一个变换对应一个目标函数） , $d</em>{ \ast }(P)$ 是得到的预测值。 我们要让预测值跟真实值 $t<em>{ \ast } = (t</em>{x},t<em>{y},t</em>{w},t_{h})$差距最小， 得到损失函数为：</p>
+<h3 id="Output"><a href="#Output" class="headerlink" title="Output:"></a>Output:</h3><p>outpue 为：需要进行的平移变换和尺度缩放  $d<em>{x}(P),d</em>{y}(P),d<em>{w}(P),d</em>{h}(P)$， 或者说是 $\Delta x,\Delta y,S<em>{w},S</em>{h}$ 。 我们的最终输出不应该是 Ground Truth 吗？ 是的， 但是有了这四个变换我们就可以直接得到 Ground Truth。</p>
+<p>这里有个问题需要注意， 根据(1)~(4)我们可以知道， P 经过 $d<em>{x}(P),d</em>{y}(P),d<em>{w}(P),d</em>{h}(P)$ 得到的并不是真实值 G， 而是预测值 $\hat{G}$。 </p>
+<p>在训练时这四个值 $\Delta x,\Delta y,S<em>{w},S</em>{h}$ 的真实值应该是经过 Ground Truth 和 Proposal 计算得到的真正需要的平移量 $(t<em>{x},t</em>{y})$ 和尺度缩放 $(t<em>{w},t</em>{h})$ 。  这也就是 R-CNN 论文中的(6)~(9)：  </p>
+<script type="math/tex; mode=display">t_{x} = (G_{x}−P_{x})/ P_{w},(6)</script><script type="math/tex; mode=display">t_{y} = (G_{y}−P_{y})/ P_{h},(7)</script><script type="math/tex; mode=display">t_{w} = \log ⁡(G_{w}/ P_{w}),(8)</script><script type="math/tex; mode=display">t_{h} = \log ⁡(G_{h}/ P_{h}),(9)</script><h3 id="目标函数"><a href="#目标函数" class="headerlink" title="目标函数"></a>目标函数</h3><p>目标函数可以表示为 $d<em>{ \ast }(P) = w</em>{ \ast }^{T}\Phi <em>{5}(P)$， $\Phi </em>{5}(P)$ 是输入 Proposal 的特征向量，$w<em>{ \ast }$是要学习的参数（*表示 x,y,w,h， 也就是每一个变换对应一个目标函数） , $d</em>{ \ast }(P)$ 是得到的预测值。 我们要让预测值跟真实值 $t<em>{ \ast } = (t</em>{x},t<em>{y},t</em>{w},t_{h})$差距最小， 得到损失函数为：</p>
 <script type="math/tex; mode=display">Loss = \sum \limits_{i}^{N}(t_{ \ast }^{i}−\hat{w}_{ \ast }^{T}\phi _{5}(P^{i}))^2.</script><p>函数优化目标为：</p>
-<p>$W<em>{ \ast } = argmin</em>{w<em>{ \ast }} \sum \limits</em>{i}^{N}(t<em>{ \ast }^{i}−\hat{w}</em>{ \ast }^{T}\phi <em>{5}(P^{i}))^2 + \lambda ||\hat{w}</em>{ \ast }||^2.$</p>
-<p>利用梯度下降法或者最小二乘法就可以得到 $w_{ \ast }$。</p>
-<h2 id="为什么宽高尺度会设计这种形式？"><a href="#为什么宽高尺度会设计这种形式？" class="headerlink" title="为什么宽高尺度会设计这种形式？"></a>为什么宽高尺度会设计这种形式？</h2><p>这边重点解释一下为什么设计的 $t<em>{x},t</em>{y}$为什么除以宽高，为什么 $t<em>{w},t</em>{h}$会有log形式！！！</p>
+<script type="math/tex; mode=display">W_{ \ast } = argmin_{w_{ \ast }} \sum \limits_{i}^{N}(t_{ \ast }^{i}−\hat{w}_{ \ast }^{T}\phi _{5}(P^{i}))^2 + \lambda ||\hat{w}_{ \ast }||^2.</script><p>利用梯度下降法或者最小二乘法就可以得到 $w_{ \ast }$。</p>
+<p>最终在进行实验时，lambda = 1000, 同时作者发现同一对中P和G相距过远时通过上面的变换是不能完成的，而相距过远实际上也基本不会是同一物体，因此作者在进行实验室，对于 pair(P,G) 的选择是选择离P较近的G进行配对，这里表示较近的方法是需要P和一个G的最大的IoU要大于0.6,否则则抛弃该P。</p>
+<h2 id="为什么宽高尺度会设计这种形式？"><a href="#为什么宽高尺度会设计这种形式？" class="headerlink" title="为什么宽高尺度会设计这种形式？"></a>为什么宽高尺度会设计这种形式？</h2><p>重点解释一下为什么设计的 $t<em>{x},t</em>{y}$为什么除以宽高，为什么 $t<em>{w},t</em>{h}$会有log形式！！！</p>
 <p>首先CNN具有<strong>尺度不变性</strong>， 以下图为例：<br><img src="https://img-blog.csdnimg.cn/20210531112517447.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2ZlbmdsZXBlbmc=,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
 <h3 id="x-y-坐标除以宽高"><a href="#x-y-坐标除以宽高" class="headerlink" title="x,y 坐标除以宽高"></a><strong>x,y 坐标除以宽高</strong></h3><p>上图的两个人具有不同的尺度，因为他都是人，我们得到的特征相同。假设我们得到的特征为 $\phi <em>{1},\phi </em>{2}$，那么一个完好的特征应该具备 $\phi <em>{1} = \phi$。ok，如果我们直接学习坐标差值，以x坐标为例，$x</em>{i},p<em>{i}$ 分别代表第i个框的x坐标，学习到的映射为 $f$, $f(\phi </em>{1}) = x<em>{1}−p</em>{1}$，同理 $f(\phi <em>{2}) = x</em>{2}−p<em>{2}$。从上图显而易见，$x</em>{1}−p<em>{1} \neq x</em>{2}−p_{1}$。也就是说同一个x对应多个y，这明显不满足函数的定义。边框回归学习的是回归函数，然而你的目标却不满足函数定义，当然学习不到什么。</p>
 <h3 id="宽高坐标Log形式"><a href="#宽高坐标Log形式" class="headerlink" title="宽高坐标Log形式"></a>宽高坐标Log形式</h3><p>我们想要得到一个放缩的尺度，也就是说这里限制尺度必须大于0。我们学习的 $t<em>{w},t</em>{h}$怎么保证满足大于0呢？直观的想法就是EXP函数，如公式(3), (4)所示，那么反过来推导就是Log函数的来源了。</p>
@@ -376,7 +376,7 @@
           <strong class="toc-title">Contents</strong>
           
             
-              <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#为什么要边框回归？"><span class="toc-nav-number">1.</span> <span class="toc-nav-text">为什么要边框回归？</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#边框回归是什么？"><span class="toc-nav-number">2.</span> <span class="toc-nav-text">边框回归是什么？</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#边框回归怎么做的？"><span class="toc-nav-number">3.</span> <span class="toc-nav-text">边框回归怎么做的？</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#Input"><span class="toc-nav-number">3.1.</span> <span class="toc-nav-text">Input:</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#Output"><span class="toc-nav-number">3.2.</span> <span class="toc-nav-text">Output:</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#为什么宽高尺度会设计这种形式？"><span class="toc-nav-number">4.</span> <span class="toc-nav-text">为什么宽高尺度会设计这种形式？</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#x-y-坐标除以宽高"><span class="toc-nav-number">4.1.</span> <span class="toc-nav-text">x,y 坐标除以宽高</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#宽高坐标Log形式"><span class="toc-nav-number">4.2.</span> <span class="toc-nav-text">宽高坐标Log形式</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#为什么IoU较大，认为是线性变换？"><span class="toc-nav-number">5.</span> <span class="toc-nav-text">为什么IoU较大，认为是线性变换？</span></a></li></ol>
+              <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#为什么要边框回归？"><span class="toc-nav-number">1.</span> <span class="toc-nav-text">为什么要边框回归？</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#边框回归是什么？"><span class="toc-nav-number">2.</span> <span class="toc-nav-text">边框回归是什么？</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#边框回归怎么做的？"><span class="toc-nav-number">3.</span> <span class="toc-nav-text">边框回归怎么做的？</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#Input"><span class="toc-nav-number">3.1.</span> <span class="toc-nav-text">Input:</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#Output"><span class="toc-nav-number">3.2.</span> <span class="toc-nav-text">Output:</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#目标函数"><span class="toc-nav-number">3.3.</span> <span class="toc-nav-text">目标函数</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#为什么宽高尺度会设计这种形式？"><span class="toc-nav-number">4.</span> <span class="toc-nav-text">为什么宽高尺度会设计这种形式？</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#x-y-坐标除以宽高"><span class="toc-nav-number">4.1.</span> <span class="toc-nav-text">x,y 坐标除以宽高</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#宽高坐标Log形式"><span class="toc-nav-number">4.2.</span> <span class="toc-nav-text">宽高坐标Log形式</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#为什么IoU较大，认为是线性变换？"><span class="toc-nav-number">5.</span> <span class="toc-nav-text">为什么IoU较大，认为是线性变换？</span></a></li></ol>
             
           
           </div>
@@ -485,7 +485,7 @@
 
                 </ul>
                 <p class="copyright text-muted">
-                    Copyright &copy; Feng Lepeng 2021 
+                    Copyright &copy;  京ICP备18055501号-2; Feng Lepeng 2021
                     <br>
                     Powered by 
                     <a href="https://github.com/dusign/hexo-theme-snail" target="_blank" rel="noopener">
