@@ -125,8 +125,8 @@
                         
                             <div class="blank_box"></div>
                             <span class="meta">
-                                Words <span class="post-count">1.2k</span> and
-                                Reading Time <span class="post-count">5</span> Minutes
+                                Words <span class="post-count">2.5k</span> and
+                                Reading Time <span class="post-count">10</span> Minutes
                             </span>
                             <div class="blank_box"></div>
                             <!-- 不蒜子统计 start -->
@@ -272,7 +272,7 @@
 
                 <h2 id="1、WSGI协议"><a href="#1、WSGI协议" class="headerlink" title="1、WSGI协议"></a>1、WSGI协议</h2><p>Web框架致力于如何生成HTML代码，而Web服务器用于处理和响应HTTP请求。Web框架和Web服务器之间的通信，需要一套双方都遵守的接口协议。WSGI协议就是用来统一这两者的接口的。</p>
 <h2 id="2、WSGI容器"><a href="#2、WSGI容器" class="headerlink" title="2、WSGI容器"></a>2、WSGI容器</h2><p>常用的WSGI容器有Gunicorn和uWSGI，但Gunicorn直接用命令启动，不需要编写配置文件，相对uWSGI要容易很多</p>
-<h2 id="3、gunicorn介绍"><a href="#3、gunicorn介绍" class="headerlink" title="3、gunicorn介绍"></a>3、gunicorn介绍</h2><p>gunicorn是一个python Wsgi http server，只支持在Unix系统上运行，来源于Ruby的unicorn项目。Gunicorn使用prefork master-worker模型（在gunicorn中，master被称为arbiter），能够与各种wsgi web框架协作。</p>
+<h2 id="3、gunicorn介绍"><a href="#3、gunicorn介绍" class="headerlink" title="3、gunicorn介绍"></a>3、gunicorn介绍</h2><p>gunicorn是一个python WSGI http server，只支持在Unix系统上运行，来源于Ruby的unicorn项目。Gunicorn使用prefork master-worker模型（在gunicorn中，master被称为arbiter），能够与各种wsgi web框架协作。</p>
 <h3 id="为啥要用-gunicorn"><a href="#为啥要用-gunicorn" class="headerlink" title="为啥要用 gunicorn"></a>为啥要用 gunicorn</h3><p>Flask 是一个 Platform，他本身并不包括 Web Server，为了使用方便，Flask 内置了一个 Werkzeug wsgi server 但是这个 server 并不高效。 如果是工业部署的话， 就需要用 Gunicorn 去替代掉这个内置的 Wsgi Server.</p>
 <p>简单说下几种部署方式 </p>
 <ul>
@@ -285,9 +285,102 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ pip install gunicorn</span><br><span class="line">$ pip install greenlet # 使用异步必须安装</span><br><span class="line">$ pip install eventlet # 使用eventlet workers</span><br><span class="line">$ pip install gevent   # 使用gevent workers</span><br></pre></td></tr></table></figure>
 <h2 id="5、gunicorn使用"><a href="#5、gunicorn使用" class="headerlink" title="5、gunicorn使用"></a>5、gunicorn使用</h2><p>这里使用gunicorn来部署一个flask项目举例，此处flask框架的使用不过多阐述，不是本文的重点。</p>
 <p>如下例子，保存为app.py</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> flask <span class="keyword">import</span> Flask</span><br><span class="line">app = Flask(__name__)</span><br><span class="line"></span><br><span class="line"><span class="meta">@app.route("/")</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">hello</span><span class="params">()</span>:</span></span><br><span class="line">    <span class="keyword">return</span> <span class="string">"Hello World!"</span></span><br></pre></td></tr></table></figure>
-<p>gunicorn通常使用的参数如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">-c CONFIG, --config&#x3D;CONFIG      # 设定配置文件。</span><br><span class="line">-b BIND, --bind&#x3D;BIND            # 设定服务需要绑定的端口。建议使用HOST:PORT。</span><br><span class="line">-w WORKERS, --workers&#x3D;WORKERS   # 设置工作进程数。建议服务器每一个核心可以设置2-4个。</span><br><span class="line">-k MODULE                       # 选定异步工作方式使用的模块。</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">from flask import Flask</span><br><span class="line">app &#x3D; Flask(__name__)</span><br><span class="line"></span><br><span class="line">@app.route(&quot;&#x2F;&quot;)</span><br><span class="line">def hello():</span><br><span class="line">    return &quot;Hello World!&quot;</span><br></pre></td></tr></table></figure>
+<h3 id="gunicorn通常使用的参数如下："><a href="#gunicorn通常使用的参数如下：" class="headerlink" title="gunicorn通常使用的参数如下："></a>gunicorn通常使用的参数如下：</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">-c CONFIG, --config&#x3D;CONFIG              # 设定配置文件。</span><br><span class="line">-b BIND, --bind&#x3D;BIND                    # 设定服务需要绑定的端口。建议使用HOST:PORT。</span><br><span class="line">--backlog                               # 未决连接的最大数量，即等待服务的客户的数量。必须是正整数，一般设定在64~2048的范围内，一般设置为2048，超过这个数字将导致客户端在尝试连接时错误</span><br><span class="line">-D, --daemon                            # 以守护进程形式来运行Gunicorn进程，其实就是将这个服务放到后台去运行。</span><br><span class="line">-w INT, --workers INT                   # 设置工作进程数。建议服务器每一个核心可以设置2-4个。</span><br><span class="line">-k STRTING, --worker-class STRTING      # 选定异步工作方式使用的模块，包括 sync（默认）, eventlet（需要下载eventlet&gt;&#x3D;0.9.7）, gevent（需要下载gevent&gt;&#x3D;0.13）, tornado（需要下载tornado&gt;&#x3D;0.2）, gthread, gaiohttp（需要python 3.4和aiohttp&gt;&#x3D;0.21.5）。</span><br><span class="line">--threads INT                           # 处理请求的工作线程数，使用指定数量的线程运行每个worker。为正整数，默认为1。</span><br><span class="line">--worker-connections INT                # 最大客户端并发数量，默认情况下这个值为1000。此设置将影响gevent和eventlet工作模式</span><br><span class="line">--max-requests INT                      # 重新启动之前，工作将处理的最大请求数。默认值为0</span><br><span class="line">--max-requests-jitter INT               # 要添加到max_requests的最大抖动。抖动将导致每个工作的重启被随机化，这是为了避免所有工作被重启。randint(0,max-requests-jitter)</span><br><span class="line">-t INT, --timeout INT                   # 超过这么多秒后工作将被杀掉，并重新启动。一般设定为30秒</span><br><span class="line">--graceful-timeout INT                  # 优雅的人工超时时间，默认情况下，这个值为30。收到重启信号后，工作人员有那么多时间来完成服务请求。在超时(从接收到重启信号开始)之后仍然活着的工作将被强行杀死。</span><br><span class="line">--keep-alive INT                        # 在keep-alive连接上等待请求的秒数，默认情况下值为2。一般设定在1~5秒之间。</span><br><span class="line">--limit-request-line INT                # HTTP请求行的最大大小，此参数用于限制HTTP请求行的允许大小，默认情况下，这个值为4094。值是0~8190的数字。此参数可以防止任何DDOS攻击</span><br><span class="line">--limit-request-fields INT              # 限制HTTP请求中请求头字段的数量。此字段用于限制请求头字段的数量以防止DDOS攻击，与limit-request-field-size一起使用可以提高安全性。默认情况下，这个值为100，这个值不能超过32768</span><br><span class="line">--limit-request-field-size INT          # 限制HTTP请求中请求头的大小，默认情况下这个值为8190。值是一个整数或者0，当该值为0时，表示将对请求头大小不做限制</span><br><span class="line">--reload                                # 代码更新时将重启工作，默认为False。此设置用于开发，每当应用程序发生更改时，都会导致工作重新启动。</span><br><span class="line">--reload-engine STRTING                 # 选择重载的引擎，支持的有三种：auto、pull、inotity：需要下载</span><br><span class="line">--spew                                  # 打印服务器执行过的每一条语句，默认False。此选择为原子性的，即要么全部打印，要么全部不打印</span><br><span class="line">--check-config                          # 显示现在的配置，默认值为False，即显示。</span><br><span class="line">--preload                               # 在工作进程被复制(派生)之前加载应用程序代码，默认为False。通过预加载应用程序，你可以节省RAM资源，并且加快服务器启动时间。</span><br><span class="line">--chdir                                 # 加载应用程序之前将chdir目录指定到指定目录</span><br><span class="line">--daemon                                # 守护Gunicorn进程，默认False</span><br><span class="line">-p FILE, --pid FILE                     # 设置pid文件的文件名，如果不设置将不会创建pid文件</span><br><span class="line">--worker-tmp-dir DIR                    # 设置工作临时文件目录，如果不设置会采用默认值。</span><br><span class="line">--access-logfile FILE                   # 确认要写入Access log的文件FILE. &#39;-&#39; 表示输出到标准输出.</span><br><span class="line">--access-logformat STRING               # 要写入的访问日志格式。access_log_format &#x3D; &#39;%(h)s %(l)s %(u)s %(t)s&#39;</span><br><span class="line">--error-logfile FILE, --log-file FILE   # 确认要写入Error log的文件FILE. &#39;-&#39; 表示输出到标准错误输出.</span><br><span class="line">--log-level LEVEL                       # 错误日志输出等级。支持的级别名称为:debug(调试)、info(信息)、warning(警告)、error(错误)、critical(危急)</span><br></pre></td></tr></table></figure>
+<p>常见log格式说明：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>识别码</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>h</td>
+<td>远程地址</td>
+</tr>
+<tr>
+<td>l</td>
+<td>“-“</td>
+</tr>
+<tr>
+<td>u</td>
+<td>用户名</td>
+</tr>
+<tr>
+<td>t</td>
+<td>时间</td>
+</tr>
+<tr>
+<td>r</td>
+<td>状态行，如：<code>GET /test HTTP/1.1</code></td>
+</tr>
+<tr>
+<td>m</td>
+<td>请求方法</td>
+</tr>
+<tr>
+<td>U</td>
+<td>没有查询字符串的URL</td>
+</tr>
+<tr>
+<td>q</td>
+<td>查询字符串</td>
+</tr>
+<tr>
+<td>H</td>
+<td>协议</td>
+</tr>
+<tr>
+<td>s</td>
+<td>状态码</td>
+</tr>
+<tr>
+<td>B</td>
+<td>response长度</td>
+</tr>
+<tr>
+<td>b</td>
+<td>response长度(CLF格式)</td>
+</tr>
+<tr>
+<td>f</td>
+<td>参考</td>
+</tr>
+<tr>
+<td>a</td>
+<td>用户代理</td>
+</tr>
+<tr>
+<td>T</td>
+<td>请求时间，单位为s</td>
+</tr>
+<tr>
+<td>D</td>
+<td>请求时间，单位为ms</td>
+</tr>
+<tr>
+<td>p</td>
+<td>进程id</td>
+</tr>
+<tr>
+<td>{Header}i</td>
+<td>请求头</td>
+</tr>
+<tr>
+<td>{Header}o</td>
+<td>相应头</td>
+</tr>
+<tr>
+<td>{Variable}e</td>
+<td>环境变量</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>更多配置：<a href="http://docs.gunicorn.org/en/stable/settings.html#server-mechanics" target="_blank" rel="noopener">http://docs.gunicorn.org/en/stable/settings.html#server-mechanics</a></p>
 <p>在shell中输入你的启动配置，比如：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">gunicorn -w 3 -b 127.0.0.1:8080 app:app</span><br><span class="line"># 此处app:app中，第一个app为flask项目实例所在的包，第二个app为生成的flask项目实例</span><br></pre></td></tr></table></figure>
 <p>这样运行正常就可以启动服务器了。</p>
@@ -306,7 +399,7 @@
 <p>杀掉进程后，稍等几秒，再使用ps -ef | grep gunicorn查看，发现gunicorn服务进程已全部杀掉。</p>
 <h2 id="8、配置文件"><a href="#8、配置文件" class="headerlink" title="8、配置文件"></a>8、配置文件</h2><p>通过gunicorn -h可以看到gunicorn有非常多的配置项，因此通常会写成一个配置文件来进行配置。</p>
 <p>比如gunicorn.conf文件</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"># gunicorn.conf</span><br><span class="line"></span><br><span class="line">bind &#x3D; &quot;0.0.0.0:5000&quot;</span><br><span class="line">workers &#x3D; 4</span><br><span class="line">backlog &#x3D; 2048</span><br><span class="line">pidfile &#x3D; &quot;log&#x2F;gunicorn.pid&quot;</span><br><span class="line">accesslog &#x3D; &quot;log&#x2F;access.log&quot;</span><br><span class="line">errorlog &#x3D; &quot;log&#x2F;debug.log&quot;</span><br><span class="line">timeout &#x3D; 600</span><br><span class="line"># debug&#x3D;False生产环境不用这个配置项，但调试的时候debug&#x3D;True还是挺好用的。而且，开启debug项后，在启动gunicorn的时候可以看到所有可配置项的配置</span><br><span class="line">debug&#x3D;False</span><br><span class="line">capture_output &#x3D; True</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"># gunicorn.conf</span><br><span class="line"></span><br><span class="line"># 监听地址</span><br><span class="line">bind &#x3D; &quot;0.0.0.0:8000&quot;</span><br><span class="line"></span><br><span class="line"># 并行进程数</span><br><span class="line">workers &#x3D; 4</span><br><span class="line"></span><br><span class="line"> # 每个进程开启的线程数</span><br><span class="line">threads &#x3D; 2</span><br><span class="line"></span><br><span class="line"># 监听队列</span><br><span class="line">backlog &#x3D; 2048</span><br><span class="line"></span><br><span class="line"># pid 和 log 文件</span><br><span class="line">pidfile &#x3D; &quot;log&#x2F;gunicorn.pid&quot;</span><br><span class="line"># loglevel &#x3D; &quot;&#x2F;logs&#x2F;debug&quot;</span><br><span class="line"># logfile &#x3D; &quot;&#x2F;logs&#x2F;gun_debug.log&quot;</span><br><span class="line">accesslog &#x3D; &quot;log&#x2F;access.log&quot;</span><br><span class="line"># access_log_format &#x3D; &quot;%(h)s %(t)s %(U)s %(q)s&quot;</span><br><span class="line">errorlog &#x3D; &quot;log&#x2F;debug.log&quot;</span><br><span class="line"></span><br><span class="line"># 超时</span><br><span class="line">timeout &#x3D; 600</span><br><span class="line"></span><br><span class="line"># 工作模式协程。使用gevent模式，还可以使用sync模式，默认的是sync模式</span><br><span class="line">worker_class &#x3D; &quot;gevent&quot;</span><br><span class="line"></span><br><span class="line"># 设置守护进程,将进程交给supervisor管理</span><br><span class="line">daemon &#x3D; &quot;false&quot;</span><br><span class="line"></span><br><span class="line"># 最大客户端并发数量，默认情况下这个值为1000。此设置将影响gevent和eventlet工作模式</span><br><span class="line">worker_connections &#x3D; 2000</span><br><span class="line"></span><br><span class="line"># debug&#x3D;False生产环境不用这个配置项，但调试的时候debug&#x3D;True还是挺好用的。开启debug项后，在启动gunicorn的时候可以看到所有可配置项的配置</span><br><span class="line">debug&#x3D;False</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">capture_output &#x3D; True</span><br></pre></td></tr></table></figure>
 <p>注意上面log项，如果需要将这些log文件统一放到log文件夹下，事先要先建好，不然运行时会报错。</p>
 <p>运行代码为：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gunicorn --config gunicorn.conf main:app</span><br></pre></td></tr></table></figure>
@@ -374,7 +467,7 @@
           <strong class="toc-title">Contents</strong>
           
             
-              <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#1、WSGI协议"><span class="toc-nav-number">1.</span> <span class="toc-nav-text">1、WSGI协议</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#2、WSGI容器"><span class="toc-nav-number">2.</span> <span class="toc-nav-text">2、WSGI容器</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#3、gunicorn介绍"><span class="toc-nav-number">3.</span> <span class="toc-nav-text">3、gunicorn介绍</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#为啥要用-gunicorn"><span class="toc-nav-number">3.1.</span> <span class="toc-nav-text">为啥要用 gunicorn</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#4、gunicorn安装"><span class="toc-nav-number">4.</span> <span class="toc-nav-text">4、gunicorn安装</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#5、gunicorn使用"><span class="toc-nav-number">5.</span> <span class="toc-nav-text">5、gunicorn使用</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#6、绑定端口"><span class="toc-nav-number">6.</span> <span class="toc-nav-text">6、绑定端口</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#7、结束gunicorn服务进程"><span class="toc-nav-number">7.</span> <span class="toc-nav-text">7、结束gunicorn服务进程</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#8、配置文件"><span class="toc-nav-number">8.</span> <span class="toc-nav-text">8、配置文件</span></a></li></ol>
+              <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#1、WSGI协议"><span class="toc-nav-number">1.</span> <span class="toc-nav-text">1、WSGI协议</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#2、WSGI容器"><span class="toc-nav-number">2.</span> <span class="toc-nav-text">2、WSGI容器</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#3、gunicorn介绍"><span class="toc-nav-number">3.</span> <span class="toc-nav-text">3、gunicorn介绍</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#为啥要用-gunicorn"><span class="toc-nav-number">3.1.</span> <span class="toc-nav-text">为啥要用 gunicorn</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#4、gunicorn安装"><span class="toc-nav-number">4.</span> <span class="toc-nav-text">4、gunicorn安装</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#5、gunicorn使用"><span class="toc-nav-number">5.</span> <span class="toc-nav-text">5、gunicorn使用</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#gunicorn通常使用的参数如下："><span class="toc-nav-number">5.1.</span> <span class="toc-nav-text">gunicorn通常使用的参数如下：</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#6、绑定端口"><span class="toc-nav-number">6.</span> <span class="toc-nav-text">6、绑定端口</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#7、结束gunicorn服务进程"><span class="toc-nav-number">7.</span> <span class="toc-nav-text">7、结束gunicorn服务进程</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#8、配置文件"><span class="toc-nav-number">8.</span> <span class="toc-nav-text">8、配置文件</span></a></li></ol>
             
           
           </div>
@@ -485,7 +578,7 @@
                 <p class="copyright text-muted">
                     Copyright &copy;
                     <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">京ICP备18055501号-2</a>;
-                    Feng Lepeng 2021
+                    Feng Lepeng 2022
                     <br>
                     Powered by 
                     <a href="https://github.com/dusign/hexo-theme-snail" target="_blank" rel="noopener">
