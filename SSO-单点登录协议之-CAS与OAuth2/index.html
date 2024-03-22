@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <script data-ad-client="ca-pub-2488174175014870" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> <!-- google ad -->
+    <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+    <meta name="baidu-site-verification" content="093lY4ziMu" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="description" content="博主用来记录和分享一些日常学到的知识">
+    <meta name="keyword"  content="hexo, java，python">
+    <link rel="shortcut icon" href="/img/hexo/ironman-draw.png">
+    <!-- Place this tag in your head or just before your close body tag. -->
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <!--<link href='http://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>-->
+    <title>
+        
+          SSO 单点登录协议之 CAS与OAuth2 - Python技术分享
+        
+    </title>
+
+    <link rel="canonical" href="https://flepeng.github.io/SSO-单点登录协议之-CAS与OAuth2/">
+
+    <!-- Bootstrap Core CSS -->
+    
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+
+
+    <!-- Custom CSS --> 
+    
+        
+<link rel="stylesheet" href="/css/dusign-light.css">
+
+        
+<link rel="stylesheet" href="/css/dusign-common-light.css">
+
+        
+<link rel="stylesheet" href="/css/font-awesome.css">
+
+        
+<link rel="stylesheet" href="/css/toc.css">
+
+        <!-- background effects end -->
+    
+    
+    <!-- Pygments Highlight CSS -->
+    
+<link rel="stylesheet" href="/css/highlight.css">
+
+
+    
+<link rel="stylesheet" href="/css/widget.css">
+
+
+    
+<link rel="stylesheet" href="/css/rocket.css">
+
+
+    
+<link rel="stylesheet" href="/css/signature.css">
+
+
+    
+<link rel="stylesheet" href="/css/fonts.googleapis.css">
+
+
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+
+    <!-- photography -->
+    
+<link rel="stylesheet" href="/css/photography.css">
+
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- background effects start -->
+    
+    <!-- background effects end -->
+
+	<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        
+            
+                background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('/img/header_img/archive-bg.jpg')
+                /*post*/
+            
+        
+    }
+    
+    #signature{
+        background-image: url('/img/hexo/signature/dusign.png');
+    }
+    
+</style>
+
+<header class="intro-header" >
+    <!-- Signature -->
+    <div id="signature">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                
+                    <div class="post-heading">
+                        <div class="tags">
+                            
+                              <a class="tag" href="/tags/#sso" title="sso">sso</a>
+                            
+                        </div>
+                        <h1>SSO 单点登录协议之 CAS与OAuth2</h1>
+                        <h2 class="subheading"></h2>
+                        <span class="meta">
+                            Posted by Lepeng on
+                            2021-09-02
+                        </span>
+
+                        
+                            <div class="blank_box"></div>
+                            <span class="meta">
+                                Words <span class="post-count">1.7k</span> and
+                                Reading Time <span class="post-count">5</span> Minutes
+                            </span>
+                            <div class="blank_box"></div>
+                            <!-- 不蒜子统计 start -->
+                            <span class="meta">
+                                Viewed <span id="busuanzi_value_page_pv"><i class="fa fa-spinner fa-spin"></i></span> Times
+                            </span>
+                            <!-- 不蒜子统计 end -->
+                        
+
+                    </div>
+                
+
+                </div>
+            </div>
+        </div>      
+    </div>
+
+    
+    <div class="waveWrapper">
+        <div class="wave wave_before" style="background-image: url('/img/wave-light.png')"></div>
+        <div class="wave wave_after" style="background-image: url('/img/wave-light.png')"></div>
+    </div>
+    
+</header>
+
+	
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Lepeng</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+
+                    
+
+                        
+                    
+
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/about/">About</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/archive/">Archives</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/categories/">Categories</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/tags/">Tags</a>
+                        </li>
+                        
+                    
+                    
+                    
+                    <li>
+                        <a href="http://flepeng.com" target="_blank">chinese_blog</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Main Content -->
+    <!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+            <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>在系统开发初期，系统很少，每个系统都有自己的登录模块，用户直接使用自己的账号进行登录即可。</p>
+<p>但当功能不断完善，为了合理利用资源并降低耦合性，往往需要将单系统拆分为多个子系统。</p>
+<p>以阿里系的网站为例，一个网站背后有众多的子系统，用户的一次交易或操作往往可能需要十多甚至几十个子系统的协作，如果每个子系统都需要用户进行登录验证，那么用户就需要登录几十次，这显然是不可行的。</p>
+<p>那么现在我们面对的情况如下：</p>
+<ul>
+<li>当前有多个子系统。</li>
+<li>在任何一个子系统登录后，其他系统均无需再次登录。</li>
+<li>如何存储证书。</li>
+<li>如何验证证书。</li>
+</ul>
+<p>一个多系统共存的环境下，用户在一处登录后，就不用在其他系统中登录，用户的一次登录能得到其他所有系统的信任，这就是单点登录。</p>
+<h2 id="使用cookie实现SSO"><a href="#使用cookie实现SSO" class="headerlink" title="使用cookie实现SSO"></a>使用cookie实现SSO</h2><h2 id="流程"><a href="#流程" class="headerlink" title="流程"></a>流程</h2><p><img src="/img/sso.jpg"></p>
+<h2 id="讲解"><a href="#讲解" class="headerlink" title="讲解"></a>讲解</h2><p>将证书存储在客户端的cookie中，十分方便，但也带来两个问题</p>
+<ul>
+<li><p>cookie的安全性无法保证(对cookie进行加密)。</p>
+</li>
+<li><p>跨域问题(强制将多个子系统域名设置成一致。(不太现实))</p>
+</li>
+</ul>
+<h2 id="CAS"><a href="#CAS" class="headerlink" title="CAS"></a><a href="https://blog.csdn.net/isyoungboy/article/details/103242009" target="_blank" rel="noopener">CAS</a></h2><p><a href="https://apereo.github.io/cas/6.2.x/index.html" target="_blank" rel="noopener">CAS官网</a>上的标准流程，具体流程如下：</p>
+<ol>
+<li>用户访问app系统，app系统是需要登录的，但用户现在没有登录。</li>
+<li>跳转到CAS server，即SSO登录系统。SSO系统也没有登录，弹出用户登录页。</li>
+<li>用户填写用户名、密码，SSO系统进行认证后，将登录状态写入SSO的session，浏览器中写入SSO域下的Cookie。</li>
+<li>SSO系统登录完成后会生成一个ST（Service Ticket），然后跳转到app系统，同时将ST作为参数传递给app系统。</li>
+<li>app系统拿到ST后，从后台向SSO发送请求，验证ST是否有效。</li>
+<li>验证通过后，app系统将登录状态写入session并设置app域下的Cookie。</li>
+</ol>
+<p>至此，跨域单点登录就完成了。以后我们再访问app系统时，app就是登录的。接下来，我们再看看访问app2系统时的流程。</p>
+<ol>
+<li>用户访问app2系统，app2系统没有登录，跳转到SSO。</li>
+<li>根据cookie 查session，发现SSO已经登录了，不需要重新登录认证。</li>
+<li>SSO生成ST，浏览器跳转到app2系统，并将ST作为参数传递给app2。</li>
+<li>app2拿到ST，后台访问SSO，验证ST是否有效。</li>
+<li>验证成功后，app2将登录状态写入session，并在app2域下写入Cookie。</li>
+</ol>
+<p>这样，app2系统不需要走登录流程，就已经是登录了。SSO，app和app2在不同的域，它们之间的session不共享也是没问题的。</p>
+<h2 id="OAuth2"><a href="#OAuth2" class="headerlink" title="OAuth2"></a>OAuth2</h2><p>OAuth2（Open Authorization，开放授权）是为用户资源的授权定义了一个安全、开放及简单的标准，第三方无需知道用户的账号及密码（CAS也不需要知道。），就可获取到用户的授权信息。</p>
+<p>主要应用于第三方应用授权登录：在APP或者网页接入一些第三方应用时，时常会需要用户登录另一个合作平台，比如QQ，微博，微信的授权登录,第三方应用通过oauth2方式获取用户信息。</p>
+<p><img src="/img/sso2.png" alt="在这里插入图片描述"></p>
+<p>以微信登录为例：</p>
+<ol>
+<li>用户访问第三方网站,第三方应用需要用户登录验证,用户选择微信授权登录</li>
+<li>第三方应用返回跳转连接（携带redirctUrl），从而发起微信登录授权请求，</li>
+<li>微信服务器拉起用户授权确认页面</li>
+<li>用户授权通过</li>
+<li>微信发送请求到第三方应用redirctUrl(第2步填写redirct_uri参数),返回凭证code与state(第2步自定义)</li>
+<li>第三方应用获取到code之后,根据code获取accessToken</li>
+<li>根据accessToken获取用户信息</li>
+<li>对用户信息进行处理(用户是否第一次登录,保存用户信息,自定义token,session处理等)</li>
+<li>返回结果(步骤1对应url或者重定向到首页)</li>
+</ol>
+<h2 id="CAS的单点登录和oauth2的最大区别"><a href="#CAS的单点登录和oauth2的最大区别" class="headerlink" title="CAS的单点登录和oauth2的最大区别"></a>CAS的单点登录和oauth2的最大区别</h2><h3 id="保护不同"><a href="#保护不同" class="headerlink" title="保护不同"></a>保护不同</h3><ul>
+<li><p>CAS的单点登录是保障客户端的用户资源的安全（应用拿不到用户名密码）。</p>
+</li>
+<li><p>OAuth2则是保障服务端的用户资源的安全（拿到用户信息时需要验证）。</p>
+</li>
+</ul>
+<h3 id="目的不同"><a href="#目的不同" class="headerlink" title="目的不同"></a>目的不同</h3><ul>
+<li><p>CAS客户端要获取的最终信息是，这个用户到底有没有权限访问我（CAS客户端）的资源。</p>
+</li>
+<li><p>OAuth2获取的最终信息是，我（oauth2服务提供方）的用户的资源到底能不能让你（oauth2的客户端）访问。</p>
+</li>
+</ul>
+<h3 id="过程不同"><a href="#过程不同" class="headerlink" title="过程不同"></a>过程不同</h3><ul>
+<li><p>CAS的单点登录，资源都在CAS客户端这边，不在CAS的服务器那一方。 用户在给CAS服务端提供了用户名密码后，作为CAS客户端并不知道这件事。 随便给客户端个ST，那么客户端是不能确定这个ST是用户伪造还是真的有效，所以要拿着这个ST去服务端再问一下，这个用户给我的是有效的ST还是无效的ST，是有效的我才能让这个用户访问。</p>
+</li>
+<li><p>OAuth2认证，资源都在OAuth2服务提供者那一方，OAuth2客户端是想索取用户的资源。 所以在最安全的模式下，用户授权之后，OAuth2 服务端并不能直接返回token，并重定向送给OAuth2客户端，因为这个token有可能被黑客截获，如果黑客截获了这个token，那用户的资源也就暴露在这个黑客之下了。 于是聪明的OAuth2服务端发送了一个认证code给OAuth2客户端（通过重定向），OAuth2客户端在后台，通过https的方式，用这个code以及另一串OAuth2客户端和OAuth2服务端预先商量好的密码，才能获取到token和刷新token，这个过程是非常安全的。 如果黑客截获了code，他没有那串预先商量好的密码，他也是无法获取token的。这样oauth2就能保证请求资源这件事，是用户同意的，OAuth2客户端也是被认可的，可以放心的把资源发给这个OAuth2客户端了。</p>
+</li>
+</ul>
+<p>总结：所以cas登录和OAuth2在流程上的最大区别就是，通过ST或者code去认证的时候，需不需要预先商量好的密码。</p>
+<p>cas 只负责验证用户是否是真的， OAuth2 还负责拿到用户信息</p>
+
+                
+                <hr>
+                <!-- Pager -->
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/041-ElasticSearch-42-核心概念-01-ElasticSearch-核心概念/" data-toggle="tooltip" data-placement="top" title="ElasticSearch 核心概念">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/Python-31-Python-第三方模块-Python-第三方模块之-PyMongo-python中操作MongoDB/" data-toggle="tooltip" data-placement="top" title="Python 第三方模块之 PyMongo - python中操作MongoDB">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+                <!-- tip start -->
+                
+
+                
+                <div class="comment_notes">
+                    <p>
+                        study well and make progress every day; study well and progress every day; study hard and make progress every day.
+                    </p>
+                </div>
+                
+                <!-- tip end -->
+
+                <!-- Music start-->
+                
+                <!-- Music end -->
+
+                <!-- Sharing -->
+                
+                <div class="social-share"  data-wechat-qrcode-helper="" align="center"></div>
+                <!--  css & js -->
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/css/share.min.css">
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/js/social-share.min.js"></script>
+                
+                <!-- Sharing -->
+
+                <!-- gitment start -->
+                
+                <!-- gitment end -->
+
+                <!-- 来必力City版安装代码 -->
+                
+                <!-- City版安装代码已完成 -->
+
+                <!-- disqus comment start -->
+                
+                <!-- disqus comment end -->
+            </div>
+            
+            <!-- Tabe of Content -->
+            <!-- Table of Contents -->
+
+    
+      
+        <aside id="sidebar">
+          <div id="toc" class="toc-article">
+          <strong class="toc-title">Contents</strong>
+          
+            
+              <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#背景"><span class="toc-nav-number">1.</span> <span class="toc-nav-text">背景</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#使用cookie实现SSO"><span class="toc-nav-number">2.</span> <span class="toc-nav-text">使用cookie实现SSO</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#流程"><span class="toc-nav-number">3.</span> <span class="toc-nav-text">流程</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#讲解"><span class="toc-nav-number">4.</span> <span class="toc-nav-text">讲解</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#CAS"><span class="toc-nav-number">5.</span> <span class="toc-nav-text">CAS</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#OAuth2"><span class="toc-nav-number">6.</span> <span class="toc-nav-text">OAuth2</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#CAS的单点登录和oauth2的最大区别"><span class="toc-nav-number">7.</span> <span class="toc-nav-text">CAS的单点登录和oauth2的最大区别</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#保护不同"><span class="toc-nav-number">7.1.</span> <span class="toc-nav-text">保护不同</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#目的不同"><span class="toc-nav-number">7.2.</span> <span class="toc-nav-text">目的不同</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#过程不同"><span class="toc-nav-number">7.3.</span> <span class="toc-nav-text">过程不同</span></a></li></ol></li></ol>
+            
+          
+          </div>
+        </aside>
+      
+    
+
+                
+            <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <!-- no hr -->
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+                       
+                          <a class="tag" href="/tags/#sso" title="sso">sso</a>
+                        
+                    </div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+
+                    
+                        <li><a href="https://blog.csdn.net/fenglepeng" target="_blank">Feng Lepeng&#39;s CSDN</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("https://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'hover',
+          placement: 'left',
+          icon: 'ℬ'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+
+
+<style  type="text/css">
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+
+                
+                    <li>
+                        <a target="_blank"  href="https://github.com/flepeng">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy;
+                    <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">京ICP备18055501号-2</a>;
+                    Feng Lepeng 2024
+                    <br>
+                    Powered by 
+                    <a href="https://github.com/dusign/hexo-theme-snail" target="_blank" rel="noopener">
+                        <i>hexo-theme-snail</i>
+                    </a> | 
+                    <iframe name="star" style="margin-left: 2px; margin-bottom:-5px;" frameborder="0" scrolling="0"
+                        width="100px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=flepeng&repo=hexo-theme-lp&type=star">
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+
+</footer>
+
+<!-- jQuery -->
+
+<script src="/js/jquery.min.js"></script>
+
+
+<!-- Bootstrap Core JavaScript -->
+
+<script src="/js/bootstrap.min.js"></script>
+
+
+<!-- Custom Theme JavaScript -->
+
+<script src="/js/hux-blog.min.js"></script>
+
+
+<!-- Search -->
+
+<script src="/js/search.js"></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("https://flepeng.github.io/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("https://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-XXXXXXXX-X';
+    var _gaDomain = 'yoursite';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+
+<!-- Baidu Tongji -->
+
+
+<!-- Search -->
+
+    <script type="text/javascript">      
+        var search_path = "search.xml";
+        if (search_path.length == 0) {
+            search_path = "search.xml";
+        }
+    var path = "/" + search_path;
+    searchFunc(path, 'local-search-input', 'local-search-result');
+    </script>
+
+
+<!-- busuanzi -->
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+
+	<a id="rocket" href="#top" class=""></a>
+	<script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+    <script type="text/javascript" src="/js/toc.js?v=1.0.0" async=""></script>
+
+    
+        <!-- background effects line -->
+        
+
+        
+            <script type="text/javascript" src="/js/mouse-click.js" content='[&quot;🌱&quot;,&quot;just do it&quot;,&quot;🍀&quot;]' color='[&quot;rgb(121,93,179)&quot; ,&quot;rgb(76,180,231)&quot; ,&quot;rgb(184,90,154)&quot;]'></script>
+        
+
+        <!-- background effects end -->
+    
+
+    <!--<script size="50" alpha='0.3' zIndex="-999" src="/js/ribbonStatic.js"></script>-->
+    
+        <script src="/js/ribbonDynamic.js"></script>
+    
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+
+</html>

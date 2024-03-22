@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <script data-ad-client="ca-pub-2488174175014870" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> <!-- google ad -->
+    <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+    <meta name="baidu-site-verification" content="093lY4ziMu" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="description" content="博主用来记录和分享一些日常学到的知识">
+    <meta name="keyword"  content="hexo, java，python">
+    <link rel="shortcut icon" href="/img/hexo/ironman-draw.png">
+    <!-- Place this tag in your head or just before your close body tag. -->
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <!--<link href='http://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>-->
+    <title>
+        
+          kubernetes 安全机制 - Python技术分享
+        
+    </title>
+
+    <link rel="canonical" href="https://flepeng.github.io/042-云原生-02-kubernetes-31-核心概念-kubernetes-安全机制/">
+
+    <!-- Bootstrap Core CSS -->
+    
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+
+
+    <!-- Custom CSS --> 
+    
+        
+<link rel="stylesheet" href="/css/dusign-light.css">
+
+        
+<link rel="stylesheet" href="/css/dusign-common-light.css">
+
+        
+<link rel="stylesheet" href="/css/font-awesome.css">
+
+        
+<link rel="stylesheet" href="/css/toc.css">
+
+        <!-- background effects end -->
+    
+    
+    <!-- Pygments Highlight CSS -->
+    
+<link rel="stylesheet" href="/css/highlight.css">
+
+
+    
+<link rel="stylesheet" href="/css/widget.css">
+
+
+    
+<link rel="stylesheet" href="/css/rocket.css">
+
+
+    
+<link rel="stylesheet" href="/css/signature.css">
+
+
+    
+<link rel="stylesheet" href="/css/fonts.googleapis.css">
+
+
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+
+    <!-- photography -->
+    
+<link rel="stylesheet" href="/css/photography.css">
+
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- background effects start -->
+    
+    <!-- background effects end -->
+
+	<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        
+            
+                background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('/img/header_img/archive-bg.jpg')
+                /*post*/
+            
+        
+    }
+    
+    #signature{
+        background-image: url('/img/hexo/signature/dusign.png');
+    }
+    
+</style>
+
+<header class="intro-header" >
+    <!-- Signature -->
+    <div id="signature">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                
+                    <div class="post-heading">
+                        <div class="tags">
+                            
+                              <a class="tag" href="/tags/#Kubernetes" title="Kubernetes">Kubernetes</a>
+                            
+                        </div>
+                        <h1>kubernetes 安全机制</h1>
+                        <h2 class="subheading"></h2>
+                        <span class="meta">
+                            Posted by Lepeng on
+                            2023-03-01
+                        </span>
+
+                        
+                            <div class="blank_box"></div>
+                            <span class="meta">
+                                Words <span class="post-count">795</span> and
+                                Reading Time <span class="post-count">3</span> Minutes
+                            </span>
+                            <div class="blank_box"></div>
+                            <!-- 不蒜子统计 start -->
+                            <span class="meta">
+                                Viewed <span id="busuanzi_value_page_pv"><i class="fa fa-spinner fa-spin"></i></span> Times
+                            </span>
+                            <!-- 不蒜子统计 end -->
+                        
+
+                    </div>
+                
+
+                </div>
+            </div>
+        </div>      
+    </div>
+
+    
+    <div class="waveWrapper">
+        <div class="wave wave_before" style="background-image: url('/img/wave-light.png')"></div>
+        <div class="wave wave_after" style="background-image: url('/img/wave-light.png')"></div>
+    </div>
+    
+</header>
+
+	
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Lepeng</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+
+                    
+
+                        
+                    
+
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/about/">About</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/archive/">Archives</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/categories/">Categories</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/tags/">Tags</a>
+                        </li>
+                        
+                    
+                    
+                    
+                    <li>
+                        <a href="http://flepeng.com" target="_blank">chinese_blog</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Main Content -->
+    <!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+            <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <h2 id="Kubernetes-安全框架-API-认证三关"><a href="#Kubernetes-安全框架-API-认证三关" class="headerlink" title="Kubernetes 安全框架 API 认证三关"></a>Kubernetes 安全框架 API 认证三关</h2><ul>
+<li><p>访问K8S集群的资源需要过三关：认证、鉴权、准入控制  </p>
+</li>
+<li><p>普通用户进行访问的时候，都需要经过 apiserver， apiserver 做统一协调，比如门卫</p>
+<ul>
+<li>访问过程中，需要证书、token、或者用户名和密码</li>
+<li>如果访问 pod 需要serviceAccount</li>
+</ul>
+</li>
+<li><p>K8S 安全控制框架主要由下面3个阶段进行控制，每一个阶段都支持插件方式，通过 API Server 配置来启用插件。  </p>
+<ol>
+<li>Authentication（认证）  </li>
+<li>Authorization（授权）  </li>
+<li>Admission Control（准入控制）</li>
+</ol>
+</li>
+</ul>
+<p><img src="/img/kubernetes/1679277519-33063fd7b36dc7196409a8e177297796.png"></p>
+<p><strong>查看ServiceAccount</strong>  </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># kubectl get sa</span><br><span class="line"></span><br><span class="line">NAME SECRETS AGE</span><br><span class="line">default 1 5d22h</span><br><span class="line">nfs-client-provisioner 1 3h1m</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="认证"><a href="#认证" class="headerlink" title="认证"></a>认证</h3><p>对外不暴露 8080 端口，只能内部访问，对外使用的端口 6443</p>
+<p>客户端身份认证常用方式</p>
+<ul>
+<li>https 证书认证，基于 ca 证书。</li>
+<li>http token 认证，通过 token 来识别用户。</li>
+<li>http 基本认证，用户名 + 密码认证。</li>
+</ul>
+<h3 id="授权"><a href="#授权" class="headerlink" title="授权"></a>授权</h3><p>RBAC（Role-Based Access Control，基于角色的访问控制）：负责完成授权（Authorization）工作。</p>
+<p><img src="/img/kubernetes/1679277519-6fa4fcf90a41de5923c4b684dc6b3ced.png"></p>
+<h3 id="准入控制"><a href="#准入控制" class="headerlink" title="准入控制"></a>准入控制</h3><p>Adminssion Control 实际上是一个准入控制器插件列表，发送到 API Server 的请求都需要经过这个列表中的每个准入控制器。</p>
+<p>插件的检查，检查不通过，则拒绝请求。</p>
+<p>1.11 版本以上推荐使用的插件：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">--enable-admission-plugins&#x3D; \</span><br><span class="line">NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds, ResourceQuota</span><br></pre></td></tr></table></figure>
+
+<h2 id="RBAC-核心概念"><a href="#RBAC-核心概念" class="headerlink" title="RBAC 核心概念"></a>RBAC 核心概念</h2><p>RBAC（Role-Based Access Control，基于角色的访问控制），允许通过 Kubernetes API 动态配置策略。</p>
+<p><strong>k8s 中有默认的几个角色</strong></p>
+<ul>
+<li>Role：授权特定命名空间的访问权限  </li>
+<li>ClusterRole：授权所有命名空间的访问权限</li>
+</ul>
+<p><strong>角色绑定</strong></p>
+<ul>
+<li>RoleBinding：将角色绑定到主体（即subject）  </li>
+<li>ClusterRoleBinding：将集群角色绑定到主体</li>
+</ul>
+<p><strong>主体（subject）</strong></p>
+<ul>
+<li>User：用户  </li>
+<li>Group：用户组  </li>
+<li>ServiceAccount：服务账号</li>
+</ul>
+<p><img src="/img/kubernetes/1679277519-428fbc7900012ad1ed149d480c5a91af.png"></p>
+<h2 id="RBAC-实现鉴权"><a href="#RBAC-实现鉴权" class="headerlink" title="RBAC 实现鉴权"></a>RBAC 实现鉴权</h2><h3 id="1、创建命名空间"><a href="#1、创建命名空间" class="headerlink" title="1、创建命名空间"></a>1、创建命名空间</h3><p>首先查看已经存在的命名空间</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl get namespace</span><br></pre></td></tr></table></figure>
+
+<p>然后我们创建一个自己的命名空间 roledemo。</p>
+<p>为什么要创建命名空间？因为如果不创建命名空间的话，默认是在 default 下。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl create ns roledemo</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="2、命名空间创建Pod"><a href="#2、命名空间创建Pod" class="headerlink" title="2、命名空间创建Pod"></a>2、命名空间创建Pod</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl run nginx --image=nginx -n roledemo</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="3、创建角色"><a href="#3、创建角色" class="headerlink" title="3、创建角色"></a>3、创建角色</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"># vim rbac-role.yaml</span><br><span class="line"></span><br><span class="line">kind: Role</span><br><span class="line">apiVersion: rbac.authorization.k8s.io&#x2F;v1</span><br><span class="line">metadata:</span><br><span class="line">  namespace: roledemo</span><br><span class="line">  name: pod-reader</span><br><span class="line">rules:</span><br><span class="line">- apiGroups: [&quot;&quot;]</span><br><span class="line">  resources: [&quot;pods&quot;]</span><br><span class="line">  verbs: [&quot;get&quot;, &quot;watch&quot;, &quot;list&quot;]</span><br></pre></td></tr></table></figure>
+
+<p>tip：这个角色只对pod 有 get、list权限</p>
+<p>然后通过 yaml创建我们的role</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f rbac-role.yaml     <span class="comment"># 创建</span></span><br><span class="line">kubectl get role -n roledemo        <span class="comment"># 查看</span></span><br><span class="line"></span><br><span class="line">NAME        AGE</span><br><span class="line">pod-reader  19s</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="4、创建角色绑定"><a href="#4、创建角色绑定" class="headerlink" title="4、创建角色绑定"></a>4、创建角色绑定</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"># role-rolebinding.yaml</span><br><span class="line"></span><br><span class="line">kind: RoleBinding</span><br><span class="line">apiVersion: rbac.authorization.k8s.io&#x2F;v1</span><br><span class="line">metadata:</span><br><span class="line">  name: read-pods</span><br><span class="line">  namespace: default</span><br><span class="line">subjects:</span><br><span class="line">- kind: User</span><br><span class="line">  name: lucy</span><br><span class="line">  apiGroup: rbac.authorization.k8s.io</span><br><span class="line">roleRef:</span><br><span class="line">  kind: Role</span><br><span class="line">  name: pod-reader</span><br><span class="line">  apiGroup: rbac.authorization.k8s.io</span><br></pre></td></tr></table></figure>
+
+<p>然后创建我们的角色绑定</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 创建角色绑定</span></span><br><span class="line">kubectl apply -f rbac-rolebinding.yaml</span><br><span class="line"><span class="comment"># 查看角色绑定</span></span><br><span class="line">kubectl get role, rolebinding -n roledemo</span><br></pre></td></tr></table></figure>
+
+<p><img src="/img/kubernetes/image-20201118095357067.png"></p>
+<h3 id="5、使用证书识别身份"><a href="#5、使用证书识别身份" class="headerlink" title="5、使用证书识别身份"></a>5、使用证书识别身份</h3><p>我们首先得有一个 rbac-user.sh 证书脚本</p>
+<p><img src="/img/kubernetes/image-20201118095541427.png"></p>
+<p><img src="/img/kubernetes/image-20201118095627954.png"></p>
+<p>这里包含了很多证书文件，在TSL目录下，需要复制过来</p>
+<p>通过下面命令执行我们的脚本</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./rbac-user.sh</span><br></pre></td></tr></table></figure>
+
+<p>最后我们进行测试</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 用get命令查看 pod 【有权限】</span></span><br><span class="line">kubectl get pods -n roledemo</span><br><span class="line"><span class="comment"># 用get命令查看svc 【没权限】</span></span><br><span class="line">kubectl get svc -n roledmeo</span><br></pre></td></tr></table></figure>
+
+<p><img src="/img/kubernetes/image-20201118100051043.png"></p>
+
+                
+                <hr>
+                <!-- Pager -->
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/042-云原生-02-kubernetes-31-核心概念-Kubernetes-yaml-文件/" data-toggle="tooltip" data-placement="top" title="Kubernetes yaml 文件">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/042-云原生-02-kubernetes-31-核心概念-kubernetes-核心概念之1-label、Select/" data-toggle="tooltip" data-placement="top" title="kubernetes kubernetes 核心概念之1 label、Select">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+                <!-- tip start -->
+                
+
+                
+                <div class="comment_notes">
+                    <p>
+                        study well and make progress every day; study well and progress every day; study hard and make progress every day.
+                    </p>
+                </div>
+                
+                <!-- tip end -->
+
+                <!-- Music start-->
+                
+                <!-- Music end -->
+
+                <!-- Sharing -->
+                
+                <div class="social-share"  data-wechat-qrcode-helper="" align="center"></div>
+                <!--  css & js -->
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/css/share.min.css">
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/js/social-share.min.js"></script>
+                
+                <!-- Sharing -->
+
+                <!-- gitment start -->
+                
+                <!-- gitment end -->
+
+                <!-- 来必力City版安装代码 -->
+                
+                <!-- City版安装代码已完成 -->
+
+                <!-- disqus comment start -->
+                
+                <!-- disqus comment end -->
+            </div>
+            
+            <!-- Tabe of Content -->
+            <!-- Table of Contents -->
+
+    
+      
+        <aside id="sidebar">
+          <div id="toc" class="toc-article">
+          <strong class="toc-title">Contents</strong>
+          
+            
+              <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#Kubernetes-安全框架-API-认证三关"><span class="toc-nav-number">1.</span> <span class="toc-nav-text">Kubernetes 安全框架 API 认证三关</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#认证"><span class="toc-nav-number">1.1.</span> <span class="toc-nav-text">认证</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#授权"><span class="toc-nav-number">1.2.</span> <span class="toc-nav-text">授权</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#准入控制"><span class="toc-nav-number">1.3.</span> <span class="toc-nav-text">准入控制</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#RBAC-核心概念"><span class="toc-nav-number">2.</span> <span class="toc-nav-text">RBAC 核心概念</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#RBAC-实现鉴权"><span class="toc-nav-number">3.</span> <span class="toc-nav-text">RBAC 实现鉴权</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#1、创建命名空间"><span class="toc-nav-number">3.1.</span> <span class="toc-nav-text">1、创建命名空间</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#2、命名空间创建Pod"><span class="toc-nav-number">3.2.</span> <span class="toc-nav-text">2、命名空间创建Pod</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#3、创建角色"><span class="toc-nav-number">3.3.</span> <span class="toc-nav-text">3、创建角色</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#4、创建角色绑定"><span class="toc-nav-number">3.4.</span> <span class="toc-nav-text">4、创建角色绑定</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#5、使用证书识别身份"><span class="toc-nav-number">3.5.</span> <span class="toc-nav-text">5、使用证书识别身份</span></a></li></ol></li></ol>
+            
+          
+          </div>
+        </aside>
+      
+    
+
+                
+            <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <!-- no hr -->
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+                       
+                          <a class="tag" href="/tags/#Kubernetes" title="Kubernetes">Kubernetes</a>
+                        
+                    </div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+
+                    
+                        <li><a href="https://blog.csdn.net/fenglepeng" target="_blank">Feng Lepeng&#39;s CSDN</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("https://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'hover',
+          placement: 'left',
+          icon: 'ℬ'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+
+
+<style  type="text/css">
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+
+                
+                    <li>
+                        <a target="_blank"  href="https://github.com/flepeng">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy;
+                    <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">京ICP备18055501号-2</a>;
+                    Feng Lepeng 2024
+                    <br>
+                    Powered by 
+                    <a href="https://github.com/dusign/hexo-theme-snail" target="_blank" rel="noopener">
+                        <i>hexo-theme-snail</i>
+                    </a> | 
+                    <iframe name="star" style="margin-left: 2px; margin-bottom:-5px;" frameborder="0" scrolling="0"
+                        width="100px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=flepeng&repo=hexo-theme-lp&type=star">
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+
+</footer>
+
+<!-- jQuery -->
+
+<script src="/js/jquery.min.js"></script>
+
+
+<!-- Bootstrap Core JavaScript -->
+
+<script src="/js/bootstrap.min.js"></script>
+
+
+<!-- Custom Theme JavaScript -->
+
+<script src="/js/hux-blog.min.js"></script>
+
+
+<!-- Search -->
+
+<script src="/js/search.js"></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("https://flepeng.github.io/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("https://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-XXXXXXXX-X';
+    var _gaDomain = 'yoursite';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+
+<!-- Baidu Tongji -->
+
+
+<!-- Search -->
+
+    <script type="text/javascript">      
+        var search_path = "search.xml";
+        if (search_path.length == 0) {
+            search_path = "search.xml";
+        }
+    var path = "/" + search_path;
+    searchFunc(path, 'local-search-input', 'local-search-result');
+    </script>
+
+
+<!-- busuanzi -->
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+
+	<a id="rocket" href="#top" class=""></a>
+	<script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+    <script type="text/javascript" src="/js/toc.js?v=1.0.0" async=""></script>
+
+    
+        <!-- background effects line -->
+        
+
+        
+            <script type="text/javascript" src="/js/mouse-click.js" content='[&quot;🌱&quot;,&quot;just do it&quot;,&quot;🍀&quot;]' color='[&quot;rgb(121,93,179)&quot; ,&quot;rgb(76,180,231)&quot; ,&quot;rgb(184,90,154)&quot;]'></script>
+        
+
+        <!-- background effects end -->
+    
+
+    <!--<script size="50" alpha='0.3' zIndex="-999" src="/js/ribbonStatic.js"></script>-->
+    
+        <script src="/js/ribbonDynamic.js"></script>
+    
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+
+</html>

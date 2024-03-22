@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <script data-ad-client="ca-pub-2488174175014870" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> <!-- google ad -->
+    <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+    <meta name="baidu-site-verification" content="093lY4ziMu" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="description" content="博主用来记录和分享一些日常学到的知识">
+    <meta name="keyword"  content="hexo, java，python">
+    <link rel="shortcut icon" href="/img/hexo/ironman-draw.png">
+    <!-- Place this tag in your head or just before your close body tag. -->
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <!--<link href='http://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>-->
+    <title>
+        
+          MySQL MVCC - Python技术分享
+        
+    </title>
+
+    <link rel="canonical" href="https://flepeng.github.io/041-MySQL-41-底层原理-MySQL-MVCC/">
+
+    <!-- Bootstrap Core CSS -->
+    
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+
+
+    <!-- Custom CSS --> 
+    
+        
+<link rel="stylesheet" href="/css/dusign-light.css">
+
+        
+<link rel="stylesheet" href="/css/dusign-common-light.css">
+
+        
+<link rel="stylesheet" href="/css/font-awesome.css">
+
+        
+<link rel="stylesheet" href="/css/toc.css">
+
+        <!-- background effects end -->
+    
+    
+    <!-- Pygments Highlight CSS -->
+    
+<link rel="stylesheet" href="/css/highlight.css">
+
+
+    
+<link rel="stylesheet" href="/css/widget.css">
+
+
+    
+<link rel="stylesheet" href="/css/rocket.css">
+
+
+    
+<link rel="stylesheet" href="/css/signature.css">
+
+
+    
+<link rel="stylesheet" href="/css/fonts.googleapis.css">
+
+
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+
+    <!-- photography -->
+    
+<link rel="stylesheet" href="/css/photography.css">
+
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- background effects start -->
+    
+    <!-- background effects end -->
+
+	<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        
+            
+                background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('/img/header_img/archive-bg.jpg')
+                /*post*/
+            
+        
+    }
+    
+    #signature{
+        background-image: url('/img/hexo/signature/dusign.png');
+    }
+    
+</style>
+
+<header class="intro-header" >
+    <!-- Signature -->
+    <div id="signature">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                
+                    <div class="post-heading">
+                        <div class="tags">
+                            
+                              <a class="tag" href="/tags/#MySQL" title="MySQL">MySQL</a>
+                            
+                        </div>
+                        <h1>MySQL MVCC</h1>
+                        <h2 class="subheading"></h2>
+                        <span class="meta">
+                            Posted by Lepeng on
+                            2020-08-08
+                        </span>
+
+                        
+                            <div class="blank_box"></div>
+                            <span class="meta">
+                                Words <span class="post-count">2.8k</span> and
+                                Reading Time <span class="post-count">10</span> Minutes
+                            </span>
+                            <div class="blank_box"></div>
+                            <!-- 不蒜子统计 start -->
+                            <span class="meta">
+                                Viewed <span id="busuanzi_value_page_pv"><i class="fa fa-spinner fa-spin"></i></span> Times
+                            </span>
+                            <!-- 不蒜子统计 end -->
+                        
+
+                    </div>
+                
+
+                </div>
+            </div>
+        </div>      
+    </div>
+
+    
+    <div class="waveWrapper">
+        <div class="wave wave_before" style="background-image: url('/img/wave-light.png')"></div>
+        <div class="wave wave_after" style="background-image: url('/img/wave-light.png')"></div>
+    </div>
+    
+</header>
+
+	
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Lepeng</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+
+                    
+
+                        
+                    
+
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/about/">About</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/archive/">Archives</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/categories/">Categories</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/tags/">Tags</a>
+                        </li>
+                        
+                    
+                    
+                    
+                    <li>
+                        <a href="http://flepeng.com" target="_blank">chinese_blog</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Main Content -->
+    <!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+            <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <h1 id="1、简介"><a href="#1、简介" class="headerlink" title="1、简介"></a>1、简介</h1><p><strong>MVCC（Multi-Version Concurrency Control，多版本并发控制）</strong>，是一种并发控制的方法，一般在数据库管理系统中，实现对数据库的并发访问。用于支持 读已提交(RC) 和 可重复读(RR) 隔离级别的实现。</p>
+<p>数据库并发场景一般有三种：</p>
+<ul>
+<li>【读-读】：不存在任何问题，不需要并发控制。</li>
+<li>【读-写】：有线程安全问题，可能会造成事务隔离性问题，可能会有脏读，幻读，不可重复读。</li>
+<li>【写-写】：有线程安全问题，可能会存在更新丢失问题。</li>
+</ul>
+<p>MVCC 主要是用来解决【读-写】冲突的无锁并发控制，可以解决以下问题：</p>
+<ul>
+<li>在并发读写数据时，可以做到在读操作时不用阻塞写操作，写操作不用阻塞读操作，提高数据库并发读写的性能。</li>
+<li>可以解决脏读，幻读，不可重复读等事务隔离问题，但不能解决【写-写】引起的更新丢失问题。</li>
+</ul>
+<p>那么【写-写】问题怎么解决呢，就需要用到 MVCC+锁 的组合，一般数据库中都会采用 MVCC与锁 的两种组合来解决并发场景的问题，以此最大限度的提高数据库性能。如下：</p>
+<ul>
+<li>MVCC + 悲观锁：MVCC 解决【读-写】冲突，悲观锁解决【写-写】冲突。<ul>
+<li>MVCC 解决快照读的冲突。悲观锁（也就是读锁和写锁）解决当前读和【写-写】冲突，悲观锁 InnoDB 已实现。</li>
+</ul>
+</li>
+<li>MVCC + 乐观锁：MVCC 解决【读-写】冲突，乐观锁解决【写-写】冲突。<ul>
+<li>MVCC 解决快照读的冲突。乐观锁（其实就是不加锁，如果内容变更，则放弃查询和更新）解决当前读和【写-写】冲突，乐观锁由用户自己实现。</li>
+</ul>
+</li>
+</ul>
+<p>VCC的实现依赖于六个概念：【隐式字段】【undo日志】【版本链】【快照读和当前读】【读视图】。</p>
+<h1 id="2、InnoDB-表的隐藏字段"><a href="#2、InnoDB-表的隐藏字段" class="headerlink" title="2、InnoDB 表的隐藏字段"></a>2、InnoDB 表的隐藏字段</h1><p>在 MySQL 中，InnoDB 会为每行记录后面添加两个 or 三个隐藏字段：</p>
+<ul>
+<li><code>DB_ROW_ID</code>(可能有)：行ID，MySQL 的 B+Tree 索引特性要求每个表必须要有一个主键。如果没有设置的话，会自动寻找第一个不包含 NULL 的唯一索引列作为主键。如果还是找不到，就会在这个 <code>DB_ROW_ID</code> 上自动生成一个唯一值，以此来当作主键（该列和MVCC的关系不大）。</li>
+<li><code>DB_TRX_ID</code>：事务ID，占用 6byte 的标识，记录的是当前事务在做 INSERT 或 UPDATE 语句操作时的 事务ID（DELETE语句被当做是UPDATE语句的特殊情况）。</li>
+<li><code>DB_ROLL_PTR</code>：回滚指针，占用 7byte，指向这条记录的上一个版本的 undo log 记录，通过它可以将不同的版本串联起来，形成版本链。相当于链表的 next指针。</li>
+</ul>
+<blockquote>
+<p>注意，添加的隐藏字段并不是很多人认为的创建时间和删除时间，同时在 MySQL 中 MVCC 的实现也不是通过什么快照来实现的。之所以有这种说法可能是源自于《高性能MySQL》一书中对 MySQL 中 MVCC 的错误结论，然后就人云亦云传开了（注意，这里一直强调的是 MySQL 中 MVCC 的实现，是因为在不同的数据库中可能会有不同的实现）。所以说看源码和看官方文档才是最权威的解释。</p>
+</blockquote>
+<p>#、3 undo log</p>
+<p>undo log 一种用于撤销回退的日志。</p>
+<p><strong>undo log记录的是什么？</strong> undo log 中记录的是当前事务操作中的相反操作。如：</p>
+<ul>
+<li>一条 insert 语句在 undo log 中会对应一条 delete 语句。</li>
+<li>一条 delete 语句在 undo log 中会对应一条 insert 语句。</li>
+<li>一条 update 语句在 undo log 中对应相反的 update 语句。</li>
+</ul>
+<p><strong>Undo log的工作原理</strong> </p>
+<ol>
+<li>执行 update 操作时，事务A 提交时候（事务还没提交），会将数据进行备份，备份到对应的 undo buffer，当事务回滚时或者数据库崩溃时用于回滚事务。</li>
+</ol>
+<p>undo log 的主要作用是事务回滚和实现 MVCC 快照读。</p>
+<p>undo log 分为两种：</p>
+<ul>
+<li>insert undo log：事务在 insert 新记录时产生的 undo log。仅用于事务回滚，并且在事务提交后可以被立即丢弃。</li>
+<li>update undo log：事务在 update 或 delete 时产生的 undo log。不仅在事务回滚时需要，在实现 MVCC 快照读时也需要，所以不能随便删除，只有在快速读或事务回滚不涉及该日志时，对应的日志才会被清理线程统一清除。</li>
+</ul>
+<p>MVCC 实际上是使用的 update undo log 实现的快照读。</p>
+<blockquote>
+<p>InnoDB 并不会真正地去开辟空间存储多个版本的行记录，只是借助 undo log 记录每次写操作的反向操作。所以 B+Tree 上对应的记录行只会有一个最新的版本，但是 InnoDB 可以根据 undo log 得到数据的历史版本，从而实现多版本控制。</p>
+</blockquote>
+<h1 id="4、版本链"><a href="#4、版本链" class="headerlink" title="4、版本链"></a>4、版本链</h1><p>当事务对某一行数据进行改动时，会产生一条 undo log，多个事务同时操作一条记录时，就会产生多个版本的 undo log，这些日志通过回滚指针（<code>DB_ROLL_PTR</code>）连成一个链表，称为版本链。</p>
+<p>假设现在有一张 account 表，其中有 id 和 name 两个字段，那么版本链的示意图如下：</p>
+<p><img src="/img/mysql/00/1669971731-d0dde471edb4cc45291de71d0571680a.png"></p>
+<h1 id="5、快照读和当前读"><a href="#5、快照读和当前读" class="headerlink" title="5、快照读和当前读"></a>5、快照读和当前读</h1><h2 id="快照读（Consistent-Read，也叫普通读）"><a href="#快照读（Consistent-Read，也叫普通读）" class="headerlink" title="快照读（Consistent Read，也叫普通读）"></a>快照读（Consistent Read，也叫普通读）</h2><p>快照读读取的是记录数据的可见版本，不加锁，不加锁的普通 select 语句都是快照读，即不加锁的非阻塞读。</p>
+<p>快照读的执行方式是生成 ReadView，直接利用 MVCC 机制来进行读取，并不会对记录进行加锁。</p>
+<p>如下语句：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from table;</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="当前读（Locking-Read，也称锁定读）"><a href="#当前读（Locking-Read，也称锁定读）" class="headerlink" title="当前读（Locking Read，也称锁定读）"></a>当前读（Locking Read，也称锁定读）</h2><p>当前读 读取的是记录数据的最新版本，并且需要先获取对应记录的锁。如下语句：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">SELECT * FROM student LOCK IN SHARE MODE;  # 共享锁</span><br><span class="line">SELECT * FROM student FOR UPDATE;   # 排他锁</span><br><span class="line">INSERT INTO student values ...      # 排他锁</span><br><span class="line">DELETE FROM student WHERE ...       # 排他锁</span><br><span class="line">UPDATE student SET ...              # 排他锁</span><br></pre></td></tr></table></figure>
+
+
+<h1 id="6、读视图（Read-View）"><a href="#6、读视图（Read-View）" class="headerlink" title="6、读视图（Read View）"></a>6、读视图（Read View）</h1><p>Read View 提供了某一时刻事务系统的快照，主要是用来做可见性判断, 里面保存了【对本事务不可见的其他活跃事务】。</p>
+<p>开启事务后，会产生一个 Read View，<strong>实际是在执行 select 语句前才生成当前事务的 Read View</strong>，用来判断当前事务可见哪个版本的数据，即可见性判断。</p>
+<h2 id="Read-View-的四个属性"><a href="#Read-View-的四个属性" class="headerlink" title="Read View 的四个属性"></a>Read View 的四个属性</h2><p>MySQL5.7 源码中对 Read View 定义了四个属性，如下：</p>
+<ul>
+<li><code>creator_trx_id</code>: 创建当前 Read View 的事务ID。</li>
+<li><code>m_ids</code>: 当前系统中所有的活跃事务（当前系统中开启了事务，但还没有提交的事务）的 id。</li>
+<li><code>m_low_limit_id</code>: 当前系统中活跃的读写事务中最小的事务id，即 m_ids 中的最小值。</li>
+<li><code>m_up_limit_id</code>: 当前系统中事务的 id 值最大的那个事务 id 值再加 1，也就是系统中下一个要生成的事务 id。</li>
+</ul>
+<p>Read View 会根据这 4 个属性，结合 undo log 版本链中的属性，来实现 MVCC 机制，从而决定一个事务最后能读取到数据的哪个版本。</p>
+<p>假设现在有 事务A 和 事务B 并发执行，事务A 的事务 id 为 10，事务B 的事务 id 为 20。</p>
+<ul>
+<li><p>事务A 的 Read View：<code>m_ids=[10,20]，m_low_limit_id=10，m_up_limit_id=21，creator_trx_id=10</code></p>
+</li>
+<li><p>事务B 的 Read View：<code>m_ids=[10,20]，m_low_limit_id=10，m_up_limit_id=21，creator_trx_id=20</code></p>
+</li>
+</ul>
+<p>当执行 SELECT 语句的时候会创建 Read View，但是在读取已提交和可重复读两个事务级别下，生成 Read View 的策略是不一样的：</p>
+<ul>
+<li>读取已提交级别是每执行一次 SELECT 语句就会重新生成一份 Read View。</li>
+<li>而可重复读级别是只会在第一次 SELECT 语句执行的时候会生成一份，后续的 SELECT 语句会沿用之前生成的 Read View（即使后面有更新语句的话，也会继续沿用）。</li>
+</ul>
+<h2 id="Read-View-可见性判断规则"><a href="#Read-View-可见性判断规则" class="headerlink" title="Read View 可见性判断规则"></a>Read View 可见性判断规则</h2><p><img src="/img/mysql/00/1669971731-4b310d97f7dc1aac228bc6e08a7f1c7f.png"></p>
+<p>当一个事务读取某条数据时，会通过每一条记录的隐藏字段 <code>DB_TRX_ID</code> 在坐标轴上的位置来进行可见性规则判断，如下：</p>
+<ul>
+<li><p><code>DB_TRX_ID &lt; m_low_limit_id</code>: 表示 <code>DB_TRX_ID</code> 对应这条数据 在当前事务开启 <code>creator_trx_id</code> 之前，其他的事务就已经将该条数据修改了并提交了事务(事务的 id 值是递增的)，所以当前事务能读取到。</p>
+</li>
+<li><p><code>DB_TRX_ID &gt;= m_up_limit_id</code>: 表示在当前事务 <code>creator_trx_id</code> 开启以后，有新的事务开启，并且新的事务修改了这行数据的值并提交了事务，因为这是 <code>creator_trx_id</code> 后面的事务修改提交的数据，所以当前事务 <code>creator_trx_id</code> 是不能读取到的。</p>
+</li>
+<li><p><code>m_low_limit_id =&lt; DB_TRX_ID &lt; m_up_limit_id</code>:</p>
+<ul>
+<li><p><code>DB_TRX_ID 在 m_ids 数组中</code>: 表示 <code>DB_TRX_ID</code> 和当前事务 <code>creator_trx_id</code> 是在同一时刻开启的事务。</p>
+<ul>
+<li><p><code>DB_TRX_ID 不等于 creator_trx_id</code>: <code>DB_TRX_ID</code> 事务修改了数据的值，并提交了事务，而这个事务不是自己，所以当前事务 <code>creator_trx_id</code> 不能读取到。</p>
+</li>
+<li><p><code>DB_TRX_ID 等于 creator_trx_id</code>: 表明数据是自己修改并提交的，因此是可见的。</p>
+</li>
+</ul>
+</li>
+<li><p><code>DB_TRX_ID 不在 m_ids 数组中</code>: 表示的是在当前事务 <code>creator_trx_id</code> 开启之前，其他事务 <code>DB_TRX_ID</code> 将数据修改后就已经提交了事务，所以当前事务能读取到。</p>
+</li>
+</ul>
+</li>
+</ul>
+<h1 id="7、MVCC实现原理"><a href="#7、MVCC实现原理" class="headerlink" title="7、MVCC实现原理"></a>7、MVCC实现原理</h1><p>通过上述对 Read View 的分析可以总结出：InnoDB 实现 MVCC 是通过 Read View 与 Undo Log 实现的，Undo Log 保存了历史快照，形成版版本链，Read View 可见性规则判断当前版本的数据是否可见。</p>
+<p>InnnoDB 执行查询语句的具体步骤为：</p>
+<ol>
+<li><p>执行语句之前获取查询事务自己的 事务ID，即事务版本号。</p>
+</li>
+<li><p>通过 事务ID 获取 Read View。</p>
+</li>
+<li><p>查询存储的数据，将其 <code>DB_TRX_ID</code> 与 Read View 中的事务版本号 <code>creator_trx_id</code> 进行比较。</p>
+</li>
+<li><p>不符合 Read View 的可见性规则，则读取 Undo log 中历史快照数据。</p>
+</li>
+<li><p>找到当前事务能够读取的数据返回。</p>
+</li>
+</ol>
+<p>而在实际的使用过程中，Read View 在不同的隔离级别下是得工作方式是不一样。</p>
+<ul>
+<li><p><strong>读已提交（Read committed, RC）MVCC 实现原理</strong>：在读已提交的隔离级别下实现 MVCC，同一个事务里面，每一次查询都会产生一个新的 Read View 副本，这样可能造成同一个事务里前后读取数据可能不一致的问题（不可重复读并发问题）。</p>
+</li>
+<li><p><strong>可重复读（Repeatable read,RR）MVCC 实现原理</strong>：在可重复读的隔离级别下实现 MVCC，同一个事务里面，多次查询，都只会产生一个共用 Read View，都是使用的执行第一次 <strong>select</strong> 语句时生成的 Read View，以此不可重复读并发问题。</p>
+</li>
+</ul>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ul>
+<li><a href="https://mp.weixin.qq.com/s/ZVsuqpaKTAMeA0SyqRbqyw" target="_blank" rel="noopener">https://mp.weixin.qq.com/s/ZVsuqpaKTAMeA0SyqRbqyw</a></li>
+<li><a href="https://blog.csdn.net/weixin_30342639/article/details/107552255" target="_blank" rel="noopener">https://blog.csdn.net/weixin_30342639/article/details/107552255</a></li>
+</ul>
+
+                
+                <hr>
+                <!-- Pager -->
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/041-MySQL-41-底层原理-00-MySQL-基础/" data-toggle="tooltip" data-placement="top" title="MySQL 基础">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/041-MySQL-41-底层原理-MySQL-事务/" data-toggle="tooltip" data-placement="top" title="MySQL 事务">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+                <!-- tip start -->
+                
+
+                
+                <div class="comment_notes">
+                    <p>
+                        study well and make progress every day; study well and progress every day; study hard and make progress every day.
+                    </p>
+                </div>
+                
+                <!-- tip end -->
+
+                <!-- Music start-->
+                
+                <!-- Music end -->
+
+                <!-- Sharing -->
+                
+                <div class="social-share"  data-wechat-qrcode-helper="" align="center"></div>
+                <!--  css & js -->
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/css/share.min.css">
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/js/social-share.min.js"></script>
+                
+                <!-- Sharing -->
+
+                <!-- gitment start -->
+                
+                <!-- gitment end -->
+
+                <!-- 来必力City版安装代码 -->
+                
+                <!-- City版安装代码已完成 -->
+
+                <!-- disqus comment start -->
+                
+                <!-- disqus comment end -->
+            </div>
+            
+            <!-- Tabe of Content -->
+            <!-- Table of Contents -->
+
+    
+      
+        <aside id="sidebar">
+          <div id="toc" class="toc-article">
+          <strong class="toc-title">Contents</strong>
+          
+            
+              <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#1、简介"><span class="toc-nav-number">1.</span> <span class="toc-nav-text">1、简介</span></a></li><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#2、InnoDB-表的隐藏字段"><span class="toc-nav-number">2.</span> <span class="toc-nav-text">2、InnoDB 表的隐藏字段</span></a></li><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#4、版本链"><span class="toc-nav-number">3.</span> <span class="toc-nav-text">4、版本链</span></a></li><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#5、快照读和当前读"><span class="toc-nav-number">4.</span> <span class="toc-nav-text">5、快照读和当前读</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#快照读（Consistent-Read，也叫普通读）"><span class="toc-nav-number">4.1.</span> <span class="toc-nav-text">快照读（Consistent Read，也叫普通读）</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#当前读（Locking-Read，也称锁定读）"><span class="toc-nav-number">4.2.</span> <span class="toc-nav-text">当前读（Locking Read，也称锁定读）</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#6、读视图（Read-View）"><span class="toc-nav-number">5.</span> <span class="toc-nav-text">6、读视图（Read View）</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#Read-View-的四个属性"><span class="toc-nav-number">5.1.</span> <span class="toc-nav-text">Read View 的四个属性</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#Read-View-可见性判断规则"><span class="toc-nav-number">5.2.</span> <span class="toc-nav-text">Read View 可见性判断规则</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#7、MVCC实现原理"><span class="toc-nav-number">6.</span> <span class="toc-nav-text">7、MVCC实现原理</span></a></li><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#Reference"><span class="toc-nav-number">7.</span> <span class="toc-nav-text">Reference</span></a></li></ol>
+            
+          
+          </div>
+        </aside>
+      
+    
+
+                
+            <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <!-- no hr -->
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+                       
+                          <a class="tag" href="/tags/#MySQL" title="MySQL">MySQL</a>
+                        
+                    </div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+
+                    
+                        <li><a href="https://blog.csdn.net/fenglepeng" target="_blank">Feng Lepeng&#39;s CSDN</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("https://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'hover',
+          placement: 'left',
+          icon: 'ℬ'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+
+
+<style  type="text/css">
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+
+                
+                    <li>
+                        <a target="_blank"  href="https://github.com/flepeng">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy;
+                    <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">京ICP备18055501号-2</a>;
+                    Feng Lepeng 2024
+                    <br>
+                    Powered by 
+                    <a href="https://github.com/dusign/hexo-theme-snail" target="_blank" rel="noopener">
+                        <i>hexo-theme-snail</i>
+                    </a> | 
+                    <iframe name="star" style="margin-left: 2px; margin-bottom:-5px;" frameborder="0" scrolling="0"
+                        width="100px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=flepeng&repo=hexo-theme-lp&type=star">
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+
+</footer>
+
+<!-- jQuery -->
+
+<script src="/js/jquery.min.js"></script>
+
+
+<!-- Bootstrap Core JavaScript -->
+
+<script src="/js/bootstrap.min.js"></script>
+
+
+<!-- Custom Theme JavaScript -->
+
+<script src="/js/hux-blog.min.js"></script>
+
+
+<!-- Search -->
+
+<script src="/js/search.js"></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("https://flepeng.github.io/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("https://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-XXXXXXXX-X';
+    var _gaDomain = 'yoursite';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+
+<!-- Baidu Tongji -->
+
+
+<!-- Search -->
+
+    <script type="text/javascript">      
+        var search_path = "search.xml";
+        if (search_path.length == 0) {
+            search_path = "search.xml";
+        }
+    var path = "/" + search_path;
+    searchFunc(path, 'local-search-input', 'local-search-result');
+    </script>
+
+
+<!-- busuanzi -->
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+
+	<a id="rocket" href="#top" class=""></a>
+	<script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+    <script type="text/javascript" src="/js/toc.js?v=1.0.0" async=""></script>
+
+    
+        <!-- background effects line -->
+        
+
+        
+            <script type="text/javascript" src="/js/mouse-click.js" content='[&quot;🌱&quot;,&quot;just do it&quot;,&quot;🍀&quot;]' color='[&quot;rgb(121,93,179)&quot; ,&quot;rgb(76,180,231)&quot; ,&quot;rgb(184,90,154)&quot;]'></script>
+        
+
+        <!-- background effects end -->
+    
+
+    <!--<script size="50" alpha='0.3' zIndex="-999" src="/js/ribbonStatic.js"></script>-->
+    
+        <script src="/js/ribbonDynamic.js"></script>
+    
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+
+</html>

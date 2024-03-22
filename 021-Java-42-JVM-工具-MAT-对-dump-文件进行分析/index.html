@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <script data-ad-client="ca-pub-2488174175014870" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> <!-- google ad -->
+    <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+    <meta name="baidu-site-verification" content="093lY4ziMu" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="description" content="博主用来记录和分享一些日常学到的知识">
+    <meta name="keyword"  content="hexo, java，python">
+    <link rel="shortcut icon" href="/img/hexo/ironman-draw.png">
+    <!-- Place this tag in your head or just before your close body tag. -->
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <!--<link href='http://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>-->
+    <title>
+        
+          工具 MAT 对 dump 文件进行分析 - Python技术分享
+        
+    </title>
+
+    <link rel="canonical" href="https://flepeng.github.io/021-Java-42-JVM-工具-MAT-对-dump-文件进行分析/">
+
+    <!-- Bootstrap Core CSS -->
+    
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+
+
+    <!-- Custom CSS --> 
+    
+        
+<link rel="stylesheet" href="/css/dusign-light.css">
+
+        
+<link rel="stylesheet" href="/css/dusign-common-light.css">
+
+        
+<link rel="stylesheet" href="/css/font-awesome.css">
+
+        
+<link rel="stylesheet" href="/css/toc.css">
+
+        <!-- background effects end -->
+    
+    
+    <!-- Pygments Highlight CSS -->
+    
+<link rel="stylesheet" href="/css/highlight.css">
+
+
+    
+<link rel="stylesheet" href="/css/widget.css">
+
+
+    
+<link rel="stylesheet" href="/css/rocket.css">
+
+
+    
+<link rel="stylesheet" href="/css/signature.css">
+
+
+    
+<link rel="stylesheet" href="/css/fonts.googleapis.css">
+
+
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+
+    <!-- photography -->
+    
+<link rel="stylesheet" href="/css/photography.css">
+
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- background effects start -->
+    
+    <!-- background effects end -->
+
+	<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        
+            
+                background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('/img/header_img/archive-bg.jpg')
+                /*post*/
+            
+        
+    }
+    
+    #signature{
+        background-image: url('/img/hexo/signature/dusign.png');
+    }
+    
+</style>
+
+<header class="intro-header" >
+    <!-- Signature -->
+    <div id="signature">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                
+                    <div class="post-heading">
+                        <div class="tags">
+                            
+                              <a class="tag" href="/tags/#Java" title="Java">Java</a>
+                            
+                        </div>
+                        <h1>工具 MAT 对 dump 文件进行分析</h1>
+                        <h2 class="subheading"></h2>
+                        <span class="meta">
+                            Posted by Lepeng on
+                            2021-04-19
+                        </span>
+
+                        
+                            <div class="blank_box"></div>
+                            <span class="meta">
+                                Words <span class="post-count">1.7k</span> and
+                                Reading Time <span class="post-count">6</span> Minutes
+                            </span>
+                            <div class="blank_box"></div>
+                            <!-- 不蒜子统计 start -->
+                            <span class="meta">
+                                Viewed <span id="busuanzi_value_page_pv"><i class="fa fa-spinner fa-spin"></i></span> Times
+                            </span>
+                            <!-- 不蒜子统计 end -->
+                        
+
+                    </div>
+                
+
+                </div>
+            </div>
+        </div>      
+    </div>
+
+    
+    <div class="waveWrapper">
+        <div class="wave wave_before" style="background-image: url('/img/wave-light.png')"></div>
+        <div class="wave wave_after" style="background-image: url('/img/wave-light.png')"></div>
+    </div>
+    
+</header>
+
+	
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Lepeng</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+
+                    
+
+                        
+                    
+
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/about/">About</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/archive/">Archives</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/categories/">Categories</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/tags/">Tags</a>
+                        </li>
+                        
+                    
+                    
+                    
+                    <li>
+                        <a href="http://flepeng.com" target="_blank">chinese_blog</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Main Content -->
+    <!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+            <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <h1 id="Mat的作用"><a href="#Mat的作用" class="headerlink" title="Mat的作用"></a>Mat的作用</h1><p>MAT 是 Memory Analyzer tool 的缩写，是一种快速，功能丰富的 Java 堆分析工具，能帮助你查找内存泄漏和减少内存消耗。很多情况下，我们需要处理测试提供的 hprof 文件，分析内存相关问题，那么 MAT 也绝对是不二之选。 Eclipse可以下载插件结合使用，也可以作为一个独立分析工具使用。</p>
+<ul>
+<li><p>官网地址：<a href="https://www.eclipse.org/mat/" target="_blank" rel="noopener">https://www.eclipse.org/mat/</a></p>
+</li>
+<li><p>下载地址：<a href="https://www.eclipse.org/mat/downloads.php" target="_blank" rel="noopener">https://www.eclipse.org/mat/downloads.php</a></p>
+</li>
+</ul>
+<h1 id="Mat的使用步骤"><a href="#Mat的使用步骤" class="headerlink" title="Mat的使用步骤"></a>Mat的使用步骤</h1><p>打开 Mat 后点击 <code>File&gt;OpenHeapDump</code> 打开一个对应的 dump 文件后，此时对应的打开后结果如图所示：</p>
+<p><img src="/img/java/jvm/00/1706599366-9afe1ae10efa3a608fc83a46bfc1811e.png"></p>
+<p>默认情况下打开该 dump 文件后，直接展示的就是一个Overview(概览)的页签，其中可以看到上面标注为（1,2）的地方所对应的图标与Overview页签中所对应的部分图标是相似的；如果你不小心关掉了Overview的页签，那么直接单击当前dump页签第一行导航栏的第一个 I字的图标即可，同理，如果此时想要打开Histogram，那么在不打开Overview的情况下，直接点击第一行导航栏的第二个图标即可</p>
+<h1 id="Overview"><a href="#Overview" class="headerlink" title="Overview"></a>Overview</h1><p>Overview 页签下分别包含了 Actions，Reports，Step By Step 三大块功能，每一块功能下的子集所对应的作用分别是：</p>
+<ul>
+<li><p>Actions：</p>
+<ul>
+<li><strong>Histogram</strong>：列出每个类所对应的对象个数，以及所占用的内存大小</li>
+<li><strong>Dominator Tree</strong>：以占用总内存的百分比的方式来列举出所有的实例对象，注意这个地方是直接列举出的对应的对象而不是类，这个视图是用来发现大内存对象的</li>
+<li>Top Consumers：按照类和包分组的方式展示出占用内存最大的一个对象</li>
+<li>Duplicate Classes：检测由多个类加载器所加载的类信息（用来查找重复的类）</li>
+</ul>
+</li>
+<li><p>Reports：</p>
+<ul>
+<li><strong>Leak Suspects</strong>：通过MAT自动分析当前内存泄露的主要原因</li>
+<li>Top Components：Top组件，列出大于总堆1%的组件的报告</li>
+</ul>
+</li>
+<li><p>Step By Step：</p>
+<ul>
+<li>Component Report：组件报告,分析属于公共根包或类加载器的对象；</li>
+</ul>
+</li>
+</ul>
+<h2 id="Histogram"><a href="#Histogram" class="headerlink" title="Histogram"></a>Histogram</h2><p>通过 Histogram 列出每个类所对应的对象个数，以及所占用的内存大小；</p>
+<p>此处选中一个 ClassName 单击后，通过左上角 Inspector 可以看到当前类的回收情况，内存地址等</p>
+<p><img src="/img/java/jvm/00/1706599366-fa81f266c34e5361463824fc51d11ec1.png"></p>
+<p>补充解释：</p>
+<ul>
+<li>字段一：表示当前类所对应的对象数量</li>
+<li>字段二：Shallow Size是对象本身占据的内存的大小，不包含其引用的对象。对于常规对象（非数组）的Shallow Size由其成员变量的数量和类型来定，而数组的ShallowSize由数组类型和数组长度来决定，它为数组元素大小的总和；</li>
+<li>字段三：Retained Size&#x3D;当前对象大小+当前对象可直接或间接引用到的对象的大小总和。(间接引用的含义：A-&gt;B-&gt;C,C就是间接引用) ，并且排除被GC Roots直接或者间接引用的对象；</li>
+</ul>
+<p>关于红框内的Statics，Attributes，Classhierarchy,Value则分别表示当前类的静态变量，属性，当前类的层次结构图，以及当前类所对应的值Value；</p>
+<p>注意：当前Histogram的列属性：ClassName，Objects，ShallowHeap，RetainedHeap这几个列属性下面都是有提供一个输入框，通过该输入框可以进行相关类的检索，比如：在ClassName下输入一个正则._quark._那么则获取到所有包路径为quark的类信息；</p>
+<h2 id="Dominator-Tree"><a href="#Dominator-Tree" class="headerlink" title="Dominator Tree"></a>Dominator Tree</h2><p>以 占用总内存的百分比的方式来列举出所有的实例对象，可以用来发现大内存对象；</p>
+<p><img src="/img/java/jvm/00/1706599366-70eb2430cb17066260c1ac2d18d9983a.png"></p>
+<p>如上图所示：可以看到ConcurrentHashMap@0x60191cfa8这个对象占据了98.92%的堆大小，所以基本就可以断定，当前项目之所以会down机的主要原因是，ConcurrentHashMap溢出所导致的问题；</p>
+<p><strong>那么当我们需要查看，当前该ConcurrentHashMap@0x60191cfa8对象都引用了那些数据，以及当前该对象是被那几个对象所引用的，如何查看？</strong></p>
+<p>鼠标在当前所要查看的对象右键，点击List Objects可以看到分别提供了：with outgoing references（查看当前该对象的所有的引用信息） 和 with incoming references（查看当前该对象是被那几个对象所引用的） ；</p>
+<p><img src="/img/java/jvm/00/1706599366-7070db767cb3f522104b894be14a70b0.png"></p>
+<h2 id="Leak-Suspects"><a href="#Leak-Suspects" class="headerlink" title="Leak Suspects"></a>Leak Suspects</h2><p>通过MAT自动分析当前内存泄露的主要原因</p>
+<p><img src="/img/java/jvm/00/1706599366-3d2e7108f40306fa7a7494b3580c970d.png"></p>
+<p>可以看到，当前MAT所给出内存泄露的主要原因是：当前实例java.util.concurrent.ConcurrentHashMap被加载自system class loader，共占用了 98.92%的堆内存，这个实例被引用自org.apache.ignite.internal.processors.cache.binary.CacheObjectBinaryProcessorImpl并且这个CacheObjectBinaryProcessorImpl这个对象是加载自LaunchedURLClassLoader这个类加载器；</p>
+<p>并且还给出了所对应的主要关键词是：</p>
+<p>java.util.concurrent.ConcurrentHashMap$Node[]<br>java.util.concurrent.ConcurrentHashMap<br>org.springframework.boot.loader.LaunchedURLClassLoader @ 0x6000a6860</p>
+<p>基本上可以说是很详细了，一语中的，如果想要查看明细，可以直接点击detail，里面有更详细的说明，如下图所示：</p>
+<p><img src="/img/java/jvm/00/1706599366-6aa8827eaa64e2eb9265b9e120c07912.png"></p>
+<p>上图分别说明了到该内存泄漏的对象的最快路径，也就是列出了当前ConcurrentHashMapConcurrentHashMap@0x60191cfa8这个对象所对应的被引用关系：可以看到当前引起内存泄漏的ConcurrentHashMap被CacheObjectBinaryProcessorImpl@0x60191cea8这个对象的metadataLocCache这个属性所引用，而CacheObjectBinaryProcessorImpl这个对象又被GridKernalContextImpl @ 0x601821bf8这个对象的cacheObjeProc这个属性所引用，以此递推；</p>
+<p>除此之外，还有以下三个被隐藏的信息，点击即可查看明细：<br>Accumulated Objects in Dominator Tree （主控树中的累积对象），Accumulated Objects by Class in Dominator Tree（主控树中的按类累积对象 ，All Accumulated Objects by Class （按类列出所有的累积对象）</p>
+<h1 id="一级导航栏功能说明"><a href="#一级导航栏功能说明" class="headerlink" title="一级导航栏功能说明"></a>一级导航栏功能说明</h1><p>查看完上述关于Overview中的功能说明后，此处再来看一下Overview中不包含的一些功能</p>
+<h2 id="Thread-Overview"><a href="#Thread-Overview" class="headerlink" title="Thread_Overview"></a>Thread_Overview</h2><p>如下图所示，点击一级导航栏的第5个图标，可以用来查看当前进程dump时的所有线程的堆栈信息，通过分析下面所对应的堆栈信息，可以很快速的定位到对应的线程所执行的方法等层级关系，以此来定位对应的异常问题；</p>
+<p><img src="/img/java/jvm/00/1706599366-432ee366d89513da86c13adc8afc882e.png"></p>
+<h2 id="OQL"><a href="#OQL" class="headerlink" title="OQL"></a>OQL</h2><p>用于查询Java堆的类SQL查询语言</p>
+<p><img src="/img/java/jvm/00/1706599366-390794edc7f090c6168827942a5cdf51.png"></p>
+<h2 id="Heap-Dump-Overview"><a href="#Heap-Dump-Overview" class="headerlink" title="Heap Dump Overview"></a>Heap Dump Overview</h2><p>点击一级导航栏的第6个图标的下拉框下的 Heap Dump Overview，可以查看全局的内存占用信息</p>
+<p><img src="/img/java/jvm/00/1706599366-5be7c15f014ac5cdb209e1c5ce7ce277.png"></p>
+<h2 id="Find-Object-by-address"><a href="#Find-Object-by-address" class="headerlink" title="Find Object by address"></a>Find Object by address</h2><p>查看指定内存地址所对应的对象信息；</p>
+<p><img src="/img/java/jvm/00/1706599366-0a76bd20677e8d31d0026ce0b58968dd.png"></p>
+
+                
+                <hr>
+                <!-- Pager -->
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/021-Java-42-JVM-命令-jstat-查看堆内存使用情况/" data-toggle="tooltip" data-placement="top" title="命令 jstat 查看堆内存使用情况">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/021-Java-42-JVM-工具-VisualVM-对-dump-文件进行分析/" data-toggle="tooltip" data-placement="top" title="工具 VisualVM 对 dump 文件进行分析">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+                <!-- tip start -->
+                
+
+                
+                <div class="comment_notes">
+                    <p>
+                        study well and make progress every day; study well and progress every day; study hard and make progress every day.
+                    </p>
+                </div>
+                
+                <!-- tip end -->
+
+                <!-- Music start-->
+                
+                <!-- Music end -->
+
+                <!-- Sharing -->
+                
+                <div class="social-share"  data-wechat-qrcode-helper="" align="center"></div>
+                <!--  css & js -->
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/css/share.min.css">
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/js/social-share.min.js"></script>
+                
+                <!-- Sharing -->
+
+                <!-- gitment start -->
+                
+                <!-- gitment end -->
+
+                <!-- 来必力City版安装代码 -->
+                
+                <!-- City版安装代码已完成 -->
+
+                <!-- disqus comment start -->
+                
+                <!-- disqus comment end -->
+            </div>
+            
+            <!-- Tabe of Content -->
+            <!-- Table of Contents -->
+
+    
+      
+        <aside id="sidebar">
+          <div id="toc" class="toc-article">
+          <strong class="toc-title">Contents</strong>
+          
+            
+              <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#Mat的作用"><span class="toc-nav-number">1.</span> <span class="toc-nav-text">Mat的作用</span></a></li><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#Mat的使用步骤"><span class="toc-nav-number">2.</span> <span class="toc-nav-text">Mat的使用步骤</span></a></li><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#Overview"><span class="toc-nav-number">3.</span> <span class="toc-nav-text">Overview</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#Histogram"><span class="toc-nav-number">3.1.</span> <span class="toc-nav-text">Histogram</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#Dominator-Tree"><span class="toc-nav-number">3.2.</span> <span class="toc-nav-text">Dominator Tree</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#Leak-Suspects"><span class="toc-nav-number">3.3.</span> <span class="toc-nav-text">Leak Suspects</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#一级导航栏功能说明"><span class="toc-nav-number">4.</span> <span class="toc-nav-text">一级导航栏功能说明</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#Thread-Overview"><span class="toc-nav-number">4.1.</span> <span class="toc-nav-text">Thread_Overview</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#OQL"><span class="toc-nav-number">4.2.</span> <span class="toc-nav-text">OQL</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#Heap-Dump-Overview"><span class="toc-nav-number">4.3.</span> <span class="toc-nav-text">Heap Dump Overview</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#Find-Object-by-address"><span class="toc-nav-number">4.4.</span> <span class="toc-nav-text">Find Object by address</span></a></li></ol></li></ol>
+            
+          
+          </div>
+        </aside>
+      
+    
+
+                
+            <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <!-- no hr -->
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+                       
+                          <a class="tag" href="/tags/#Java" title="Java">Java</a>
+                        
+                    </div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+
+                    
+                        <li><a href="https://blog.csdn.net/fenglepeng" target="_blank">Feng Lepeng&#39;s CSDN</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("https://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'hover',
+          placement: 'left',
+          icon: 'ℬ'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+
+
+<style  type="text/css">
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+
+                
+                    <li>
+                        <a target="_blank"  href="https://github.com/flepeng">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy;
+                    <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">京ICP备18055501号-2</a>;
+                    Feng Lepeng 2024
+                    <br>
+                    Powered by 
+                    <a href="https://github.com/dusign/hexo-theme-snail" target="_blank" rel="noopener">
+                        <i>hexo-theme-snail</i>
+                    </a> | 
+                    <iframe name="star" style="margin-left: 2px; margin-bottom:-5px;" frameborder="0" scrolling="0"
+                        width="100px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=flepeng&repo=hexo-theme-lp&type=star">
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+
+</footer>
+
+<!-- jQuery -->
+
+<script src="/js/jquery.min.js"></script>
+
+
+<!-- Bootstrap Core JavaScript -->
+
+<script src="/js/bootstrap.min.js"></script>
+
+
+<!-- Custom Theme JavaScript -->
+
+<script src="/js/hux-blog.min.js"></script>
+
+
+<!-- Search -->
+
+<script src="/js/search.js"></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("https://flepeng.github.io/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("https://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-XXXXXXXX-X';
+    var _gaDomain = 'yoursite';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+
+<!-- Baidu Tongji -->
+
+
+<!-- Search -->
+
+    <script type="text/javascript">      
+        var search_path = "search.xml";
+        if (search_path.length == 0) {
+            search_path = "search.xml";
+        }
+    var path = "/" + search_path;
+    searchFunc(path, 'local-search-input', 'local-search-result');
+    </script>
+
+
+<!-- busuanzi -->
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+
+	<a id="rocket" href="#top" class=""></a>
+	<script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+    <script type="text/javascript" src="/js/toc.js?v=1.0.0" async=""></script>
+
+    
+        <!-- background effects line -->
+        
+
+        
+            <script type="text/javascript" src="/js/mouse-click.js" content='[&quot;🌱&quot;,&quot;just do it&quot;,&quot;🍀&quot;]' color='[&quot;rgb(121,93,179)&quot; ,&quot;rgb(76,180,231)&quot; ,&quot;rgb(184,90,154)&quot;]'></script>
+        
+
+        <!-- background effects end -->
+    
+
+    <!--<script size="50" alpha='0.3' zIndex="-999" src="/js/ribbonStatic.js"></script>-->
+    
+        <script src="/js/ribbonDynamic.js"></script>
+    
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+
+</html>

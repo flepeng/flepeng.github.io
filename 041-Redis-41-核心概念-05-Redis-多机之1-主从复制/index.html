@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <script data-ad-client="ca-pub-2488174175014870" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> <!-- google ad -->
+    <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+    <meta name="baidu-site-verification" content="093lY4ziMu" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="description" content="博主用来记录和分享一些日常学到的知识">
+    <meta name="keyword"  content="hexo, java，python">
+    <link rel="shortcut icon" href="/img/hexo/ironman-draw.png">
+    <!-- Place this tag in your head or just before your close body tag. -->
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <!--<link href='http://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>-->
+    <title>
+        
+          Redis 多机之1 - 主从复制 - Python技术分享
+        
+    </title>
+
+    <link rel="canonical" href="https://flepeng.github.io/041-Redis-41-核心概念-05-Redis-多机之1-主从复制/">
+
+    <!-- Bootstrap Core CSS -->
+    
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+
+
+    <!-- Custom CSS --> 
+    
+        
+<link rel="stylesheet" href="/css/dusign-light.css">
+
+        
+<link rel="stylesheet" href="/css/dusign-common-light.css">
+
+        
+<link rel="stylesheet" href="/css/font-awesome.css">
+
+        
+<link rel="stylesheet" href="/css/toc.css">
+
+        <!-- background effects end -->
+    
+    
+    <!-- Pygments Highlight CSS -->
+    
+<link rel="stylesheet" href="/css/highlight.css">
+
+
+    
+<link rel="stylesheet" href="/css/widget.css">
+
+
+    
+<link rel="stylesheet" href="/css/rocket.css">
+
+
+    
+<link rel="stylesheet" href="/css/signature.css">
+
+
+    
+<link rel="stylesheet" href="/css/fonts.googleapis.css">
+
+
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+
+    <!-- photography -->
+    
+<link rel="stylesheet" href="/css/photography.css">
+
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- background effects start -->
+    
+    <!-- background effects end -->
+
+	<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        
+            
+                background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('/img/header_img/archive-bg.jpg')
+                /*post*/
+            
+        
+    }
+    
+    #signature{
+        background-image: url('/img/hexo/signature/dusign.png');
+    }
+    
+</style>
+
+<header class="intro-header" >
+    <!-- Signature -->
+    <div id="signature">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                
+                    <div class="post-heading">
+                        <div class="tags">
+                            
+                              <a class="tag" href="/tags/#Redis" title="Redis">Redis</a>
+                            
+                        </div>
+                        <h1>Redis 多机之1 - 主从复制</h1>
+                        <h2 class="subheading"></h2>
+                        <span class="meta">
+                            Posted by Lepeng on
+                            2021-01-01
+                        </span>
+
+                        
+                            <div class="blank_box"></div>
+                            <span class="meta">
+                                Words <span class="post-count">1.9k</span> and
+                                Reading Time <span class="post-count">7</span> Minutes
+                            </span>
+                            <div class="blank_box"></div>
+                            <!-- 不蒜子统计 start -->
+                            <span class="meta">
+                                Viewed <span id="busuanzi_value_page_pv"><i class="fa fa-spinner fa-spin"></i></span> Times
+                            </span>
+                            <!-- 不蒜子统计 end -->
+                        
+
+                    </div>
+                
+
+                </div>
+            </div>
+        </div>      
+    </div>
+
+    
+    <div class="waveWrapper">
+        <div class="wave wave_before" style="background-image: url('/img/wave-light.png')"></div>
+        <div class="wave wave_after" style="background-image: url('/img/wave-light.png')"></div>
+    </div>
+    
+</header>
+
+	
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Lepeng</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+
+                    
+
+                        
+                    
+
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/about/">About</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/archive/">Archives</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/categories/">Categories</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/tags/">Tags</a>
+                        </li>
+                        
+                    
+                    
+                    
+                    <li>
+                        <a href="http://flepeng.com" target="_blank">chinese_blog</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Main Content -->
+    <!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+            <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <h2 id="1-主从复制"><a href="#1-主从复制" class="headerlink" title="1 主从复制"></a>1 主从复制</h2><p><img src="/img/redis/1691290697-8d4438d579b188fed9d074aa3a355b6b.png"></p>
+<p><strong>主从复制</strong> 是指将一台 Redis 服务器的数据，复制到其他的 Redis 服务器。前者称为 **主节点(master)**，后者称为 **从节点(slave)**。</p>
+<p>数据的复制是 <strong>单向</strong> 的，只能由主节点到从节点。</p>
+<p>默认情况下，每台Redis服务器都是主节点；且一个主节点可以有多个从节点(或没有从节点)，但一个从节点只能有一个主节点。</p>
+<p>Redis 主从复制支持 <strong>主从同步</strong> 和 <strong>从从同步</strong> 两种，后者是 Redis 后续版本新增的功能，以减轻主节点的同步负担。</p>
+<h2 id="2-主从复制的作用"><a href="#2-主从复制的作用" class="headerlink" title="2 主从复制的作用"></a>2 主从复制的作用</h2><ul>
+<li><strong>数据冗余：</strong> 主从复制实现了数据的热备份，是持久化之外的一种数据冗余方式。</li>
+<li><strong>故障恢复：</strong> 当主节点出现问题时，可以由从节点提供服务，实现快速的故障恢复(实际上是一种服务的冗余)。</li>
+<li><strong>负载均衡：</strong> 在主从复制的基础上，配合读写分离，可以由主节点提供写服务，由从节点提供读服务（即写 Redis 数据时应用连接主节点，读 Redis 数据时应用连接从节点），分担服务器负载。尤其是在写少读多的场景下，通过多个从节点分担读负载，可以大大提高 Redis 服务器的并发量。</li>
+<li><strong>高可用基石：</strong> 除了上述作用以外，主从复制还是哨兵和集群能够实施的 <strong>基础</strong>，因此说主从复制是 Redis 高可用的基础。</li>
+</ul>
+<h2 id="3-快速体验"><a href="#3-快速体验" class="headerlink" title="3 快速体验"></a>3 快速体验</h2><p>在 <strong>Redis</strong> 中，用户可以通过执行 <code>SLAVEOF</code> 命令或者设置 <code>slaveof</code> 选项，让一个服务器去复制另一个服务器，以下三种方式是 <strong>完全等效</strong> 的：</p>
+<ul>
+<li><strong>配置文件</strong>：在从服务器的配置文件中加入：<code>slaveof &lt;masterip&gt; &lt;masterport&gt;</code></li>
+<li><strong>启动命令</strong>：redis-server 启动命令后加入 <code>--slaveof &lt;masterip&gt; &lt;masterport&gt;</code></li>
+<li><strong>客户端命令</strong>：Redis 服务器启动后，直接通过客户端执行命令：<code>slaveof &lt;masterip&gt; &lt;masterport&gt;</code>，让该 Redis 实例成为从节点。</li>
+</ul>
+<p>注意：<strong>主从复制的开启，完全是在从节点发起的，不需要我们在主节点做任何事情。</strong></p>
+<p>实验所使用的主从节点是在一台机器上的不同Redis实例，其中主节点监听6379端口，从节点监听6380端口</p>
+<h3 id="3-1-第一步：本地启动两个节点"><a href="#3-1-第一步：本地启动两个节点" class="headerlink" title="3.1 第一步：本地启动两个节点"></a>3.1 第一步：本地启动两个节点</h3><p>安装好 Redis 之后，我们可以使用 <code>redis-server --port &lt;port&gt;</code> 的方式指定创建两个不同端口的 Redis 实例，例如分别创建端口为 <code>6379</code> 和 <code>6380</code> 两个 Redis 实例：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 创建一个端口为 6379 的 Redis 实例</span></span><br><span class="line">redis-server --port 6379</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 创建一个端口为 6380 的 Redis 实例</span></span><br><span class="line">redis-server --port 6380</span><br></pre></td></tr></table></figure>
+
+<p>此时两个 Redis 节点启动后，都默认为 <strong>主节点</strong>。</p>
+<h3 id="3-2-第二步：建立复制"><a href="#3-2-第二步：建立复制" class="headerlink" title="3.2 第二步：建立复制"></a>3.2 第二步：建立复制</h3><p>我们在 <code>6380</code> 端口的节点中执行 <code>slaveof</code> 命令，使之变为从节点：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 在 6380 端口的 Redis 实例中使用控制台</span></span><br><span class="line">redis-cli -p 6380</span><br><span class="line">127.0.0.1:6380&gt; SLAVEOF 127.0.0.1ø 6379OK       # 成为本地 6379 端口实例的从节点</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="3-3-第三步：观察效果"><a href="#3-3-第三步：观察效果" class="headerlink" title="3.3 第三步：观察效果"></a>3.3 第三步：观察效果</h3><p>下面我们来验证一下，主节点的数据是否会复制到从节点之中：</p>
+<ul>
+<li><p>先在 <strong>从节点</strong> 中查询一个 <strong>不存在</strong> 的 key：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6380&gt; GET mykey</span><br><span class="line">(nil)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>再在 <strong>主节点</strong> 中添加这个 key：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt; SET mykey myvalueOK</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>此时再从 <strong>从节点</strong> 中查询，会发现已经从 <strong>主节点</strong> 同步到 <strong>从节点</strong>：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6380&gt; GET mykey</span><br><span class="line">"myvalue"</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="3-4-第四步：断开复制"><a href="#3-4-第四步：断开复制" class="headerlink" title="3.4 第四步：断开复制"></a>3.4 第四步：断开复制</h3><p>通过 <code>slaveof &lt;masterip&gt; &lt;masterport&gt;</code> 命令建立主从复制关系以后，可以通过 <code>slaveof no one</code> 断开。</p>
+<p>需要注意的是，从节点断开复制后，<strong>不会删除已有的数据</strong>，只是不再接受主节点新的数据变化。</p>
+<p>从节点执行 <code>slaveof no one</code> 之后，从节点和主节点分别打印日志如下：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 从节点打印日志</span></span><br><span class="line">61496:M 17 Mar 2020 08:10:22.749 # Connection with master lost.</span><br><span class="line">61496:M 17 Mar 2020 08:10:22.749 * Caching the disconnected master state.</span><br><span class="line">61496:M 17 Mar 2020 08:10:22.749 * Discarding previously cached master state.</span><br><span class="line">61496:M 17 Mar 2020 08:10:22.749 * MASTER MODE enabled (user request from 'id=4 addr=127.0.0.1:55096 fd=8 name= age=1664 idle=0 flags=N db=0 sub=0 psub=0 multi=-1 qbuf=34 qbuf-free=32734 obl=0 oll=0 omem=0 events=r cmd=slaveof')</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 主节点打印日志</span></span><br><span class="line">61467:M 17 Mar 2020 08:10:22.749 # Connection with replica 127.0.0.1:6380 lost.</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="4-实现原理简析"><a href="#4-实现原理简析" class="headerlink" title="4 实现原理简析"></a>4 实现原理简析</h2><p><img src="/img/redis/1691290697-c6fc1dbcf1460e227d2f35885a6649a2.png"></p>
+<p>上图为 Redis 主从复制的原理， <strong>可以分为成三个阶段：准备阶段-数据同步阶段-命令传播阶段</strong>。</p>
+<blockquote>
+<p>更详细的步骤请参考：<a href="https://www.cnblogs.com/kismetv/p/9236731.html" target="_blank" rel="noopener">https://www.cnblogs.com/kismetv/p/9236731.html</a></p>
+</blockquote>
+<p>除此之外，我们还要进行一些其他说明。</p>
+<h3 id="4-1-身份验证-主从复制安全问题"><a href="#4-1-身份验证-主从复制安全问题" class="headerlink" title="4.1 身份验证 | 主从复制安全问题"></a>4.1 身份验证 | 主从复制安全问题</h3><p>如果 <strong>主节点</strong> 配置 <code>requirepass</code> 设置了密码，那 <strong>从节点</strong> 该怎么设置呢？</p>
+<p>我们可以在 <strong>从节点</strong> 中对应配置 <code>masterauth</code> 参数 (与主节点 <code>_requirepass_</code> 保持一致)， 这样就能够进行正常复制了。</p>
+<h3 id="4-2-SYNC-命令是一个非常耗费资源的操作"><a href="#4-2-SYNC-命令是一个非常耗费资源的操作" class="headerlink" title="4.2 SYNC 命令是一个非常耗费资源的操作"></a>4.2 SYNC 命令是一个非常耗费资源的操作</h3><p>每次执行 <code>SYNC</code> 命令，主从服务器需要执行如下动作：</p>
+<ol>
+<li><strong>主服务器</strong> 需要执行 <code>BGSAVE</code> 命令来生成 RDB 文件，这个生成操作会 <strong>消耗</strong> 主服务器大量的 <strong>CPU、内存和磁盘 I&#x2F;O 的资源</strong>；</li>
+<li><strong>主服务器</strong> 需要将自己生成的 RDB 文件 发送给从服务器，这个发送操作会 <strong>消耗</strong> 主服务器 <strong>大量的网络资源</strong> (带宽和流量)，并对主服务器响应命令请求的时间产生影响；</li>
+<li>接收到 RDB 文件的 <strong>从服务器</strong> 需要载入主服务器发来的 RBD 文件，并且在载入期间，从服务器 <strong>会因为阻塞而没办法处理命令请求</strong>；</li>
+</ol>
+<p>特别是当出现 <strong>断线重复制</strong> 的情况是时，为了让从服务器补足断线时确实的那一小部分数据，却要执行一次如此耗资源的 <code>SYNC</code> 命令，显然是不合理的。</p>
+<h4 id="PSYNC-命令的引入"><a href="#PSYNC-命令的引入" class="headerlink" title="PSYNC 命令的引入"></a>PSYNC 命令的引入</h4><p>所以在 <strong>Redis 2.8</strong> 中引入了 <code>PSYNC</code> 命令来代替 <code>SYNC</code>，它具有两种模式：</p>
+<ol>
+<li><p><strong>全量复制：</strong> 用于初次复制或其他无法进行部分复制的情况，将主节点中的所有数据都发送给从节点，是一个非常重型的操作；</p>
+</li>
+<li><p><strong>部分复制：</strong> 用于网络中断等情况后的复制，只将 <strong>中断期间主节点执行的写命令</strong> 发送给从节点，与全量复制相比更加高效。<br><strong>需要注意</strong> 的是，如果网络中断时间过长，导致主节点没有能够完整地保存中断期间执行的写命令，则无法进行部分复制，仍使用全量复制；</p>
+<p>部分复制的原理主要是靠主从节点分别维护一个 <strong>复制偏移量</strong>，有了这个偏移量之后断线重连之后一比较，之后就可以仅仅把从服务器断线之后确实的这部分数据给补回来了。</p>
+</li>
+</ol>
+<blockquote>
+<p>更多的详细内容可以参考：<a href="https://www.cnblogs.com/kismetv/p/9236731.html" target="_blank" rel="noopener">https://www.cnblogs.com/kismetv/p/9236731.html</a></p>
+</blockquote>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ol>
+<li><a href="https://www.cnblogs.com/wmyskxz/p/12511834.html" target="_blank" rel="noopener">https://www.cnblogs.com/wmyskxz/p/12511834.html</a></li>
+<li>《Redis 设计与实现》 | 黄健宏 著 - <a href="http://redisbook.com/" target="_blank" rel="noopener">http://redisbook.com/</a></li>
+<li>深入学习Redis（3）：主从复制 - <a href="https://www.cnblogs.com/kismetv/p/9236731.html" target="_blank" rel="noopener">https://www.cnblogs.com/kismetv/p/9236731.html</a></li>
+</ol>
+
+                
+                <hr>
+                <!-- Pager -->
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/041-Redis-41-核心概念-04-Redis-单线程-or-多线程/" data-toggle="tooltip" data-placement="top" title="Redis 单线程 or 多线程">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/041-Redis-41-核心概念-05-Redis-多机之2-哨兵/" data-toggle="tooltip" data-placement="top" title="Redis 多机之2 - 哨兵">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+                <!-- tip start -->
+                
+
+                
+                <div class="comment_notes">
+                    <p>
+                        study well and make progress every day; study well and progress every day; study hard and make progress every day.
+                    </p>
+                </div>
+                
+                <!-- tip end -->
+
+                <!-- Music start-->
+                
+                <!-- Music end -->
+
+                <!-- Sharing -->
+                
+                <div class="social-share"  data-wechat-qrcode-helper="" align="center"></div>
+                <!--  css & js -->
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/css/share.min.css">
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/js/social-share.min.js"></script>
+                
+                <!-- Sharing -->
+
+                <!-- gitment start -->
+                
+                <!-- gitment end -->
+
+                <!-- 来必力City版安装代码 -->
+                
+                <!-- City版安装代码已完成 -->
+
+                <!-- disqus comment start -->
+                
+                <!-- disqus comment end -->
+            </div>
+            
+            <!-- Tabe of Content -->
+            <!-- Table of Contents -->
+
+    
+      
+        <aside id="sidebar">
+          <div id="toc" class="toc-article">
+          <strong class="toc-title">Contents</strong>
+          
+            
+              <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#1-主从复制"><span class="toc-nav-number">1.</span> <span class="toc-nav-text">1 主从复制</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#2-主从复制的作用"><span class="toc-nav-number">2.</span> <span class="toc-nav-text">2 主从复制的作用</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#3-快速体验"><span class="toc-nav-number">3.</span> <span class="toc-nav-text">3 快速体验</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#3-1-第一步：本地启动两个节点"><span class="toc-nav-number">3.1.</span> <span class="toc-nav-text">3.1 第一步：本地启动两个节点</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#3-2-第二步：建立复制"><span class="toc-nav-number">3.2.</span> <span class="toc-nav-text">3.2 第二步：建立复制</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#3-3-第三步：观察效果"><span class="toc-nav-number">3.3.</span> <span class="toc-nav-text">3.3 第三步：观察效果</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#3-4-第四步：断开复制"><span class="toc-nav-number">3.4.</span> <span class="toc-nav-text">3.4 第四步：断开复制</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#4-实现原理简析"><span class="toc-nav-number">4.</span> <span class="toc-nav-text">4 实现原理简析</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#4-1-身份验证-主从复制安全问题"><span class="toc-nav-number">4.1.</span> <span class="toc-nav-text">4.1 身份验证 | 主从复制安全问题</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#4-2-SYNC-命令是一个非常耗费资源的操作"><span class="toc-nav-number">4.2.</span> <span class="toc-nav-text">4.2 SYNC 命令是一个非常耗费资源的操作</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#PSYNC-命令的引入"><span class="toc-nav-number">4.2.1.</span> <span class="toc-nav-text">PSYNC 命令的引入</span></a></li></ol></li></ol></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#参考资料"><span class="toc-nav-number">5.</span> <span class="toc-nav-text">参考资料</span></a></li></ol>
+            
+          
+          </div>
+        </aside>
+      
+    
+
+                
+            <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <!-- no hr -->
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+                       
+                          <a class="tag" href="/tags/#Redis" title="Redis">Redis</a>
+                        
+                    </div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+
+                    
+                        <li><a href="https://blog.csdn.net/fenglepeng" target="_blank">Feng Lepeng&#39;s CSDN</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("https://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'hover',
+          placement: 'left',
+          icon: 'ℬ'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+
+
+<style  type="text/css">
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+
+                
+                    <li>
+                        <a target="_blank"  href="https://github.com/flepeng">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy;
+                    <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">京ICP备18055501号-2</a>;
+                    Feng Lepeng 2024
+                    <br>
+                    Powered by 
+                    <a href="https://github.com/dusign/hexo-theme-snail" target="_blank" rel="noopener">
+                        <i>hexo-theme-snail</i>
+                    </a> | 
+                    <iframe name="star" style="margin-left: 2px; margin-bottom:-5px;" frameborder="0" scrolling="0"
+                        width="100px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=flepeng&repo=hexo-theme-lp&type=star">
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+
+</footer>
+
+<!-- jQuery -->
+
+<script src="/js/jquery.min.js"></script>
+
+
+<!-- Bootstrap Core JavaScript -->
+
+<script src="/js/bootstrap.min.js"></script>
+
+
+<!-- Custom Theme JavaScript -->
+
+<script src="/js/hux-blog.min.js"></script>
+
+
+<!-- Search -->
+
+<script src="/js/search.js"></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("https://flepeng.github.io/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("https://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-XXXXXXXX-X';
+    var _gaDomain = 'yoursite';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+
+<!-- Baidu Tongji -->
+
+
+<!-- Search -->
+
+    <script type="text/javascript">      
+        var search_path = "search.xml";
+        if (search_path.length == 0) {
+            search_path = "search.xml";
+        }
+    var path = "/" + search_path;
+    searchFunc(path, 'local-search-input', 'local-search-result');
+    </script>
+
+
+<!-- busuanzi -->
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+
+	<a id="rocket" href="#top" class=""></a>
+	<script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+    <script type="text/javascript" src="/js/toc.js?v=1.0.0" async=""></script>
+
+    
+        <!-- background effects line -->
+        
+
+        
+            <script type="text/javascript" src="/js/mouse-click.js" content='[&quot;🌱&quot;,&quot;just do it&quot;,&quot;🍀&quot;]' color='[&quot;rgb(121,93,179)&quot; ,&quot;rgb(76,180,231)&quot; ,&quot;rgb(184,90,154)&quot;]'></script>
+        
+
+        <!-- background effects end -->
+    
+
+    <!--<script size="50" alpha='0.3' zIndex="-999" src="/js/ribbonStatic.js"></script>-->
+    
+        <script src="/js/ribbonDynamic.js"></script>
+    
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+
+</html>

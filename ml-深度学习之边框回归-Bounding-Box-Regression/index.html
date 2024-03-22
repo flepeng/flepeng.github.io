@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <script data-ad-client="ca-pub-2488174175014870" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> <!-- google ad -->
+    <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+    <meta name="baidu-site-verification" content="093lY4ziMu" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="description" content="博主用来记录和分享一些日常学到的知识">
+    <meta name="keyword"  content="hexo, java，python">
+    <link rel="shortcut icon" href="/img/hexo/ironman-draw.png">
+    <!-- Place this tag in your head or just before your close body tag. -->
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <!--<link href='http://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>-->
+    <title>
+        
+          深度学习之边框回归(Bounding Box Regression) - Python技术分享
+        
+    </title>
+
+    <link rel="canonical" href="https://flepeng.github.io/ml-深度学习之边框回归-Bounding-Box-Regression/">
+
+    <!-- Bootstrap Core CSS -->
+    
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+
+
+    <!-- Custom CSS --> 
+    
+        
+<link rel="stylesheet" href="/css/dusign-light.css">
+
+        
+<link rel="stylesheet" href="/css/dusign-common-light.css">
+
+        
+<link rel="stylesheet" href="/css/font-awesome.css">
+
+        
+<link rel="stylesheet" href="/css/toc.css">
+
+        <!-- background effects end -->
+    
+    
+    <!-- Pygments Highlight CSS -->
+    
+<link rel="stylesheet" href="/css/highlight.css">
+
+
+    
+<link rel="stylesheet" href="/css/widget.css">
+
+
+    
+<link rel="stylesheet" href="/css/rocket.css">
+
+
+    
+<link rel="stylesheet" href="/css/signature.css">
+
+
+    
+<link rel="stylesheet" href="/css/fonts.googleapis.css">
+
+
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+
+    <!-- photography -->
+    
+<link rel="stylesheet" href="/css/photography.css">
+
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- background effects start -->
+    
+    <!-- background effects end -->
+
+	<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        
+            
+                background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('/img/header_img/archive-bg.jpg')
+                /*post*/
+            
+        
+    }
+    
+    #signature{
+        background-image: url('/img/hexo/signature/dusign.png');
+    }
+    
+</style>
+
+<header class="intro-header" >
+    <!-- Signature -->
+    <div id="signature">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                
+                    <div class="post-heading">
+                        <div class="tags">
+                            
+                              <a class="tag" href="/tags/#深度学习" title="深度学习">深度学习</a>
+                            
+                        </div>
+                        <h1>深度学习之边框回归(Bounding Box Regression)</h1>
+                        <h2 class="subheading"></h2>
+                        <span class="meta">
+                            Posted by Lepeng on
+                            2021-05-31
+                        </span>
+
+                        
+                            <div class="blank_box"></div>
+                            <span class="meta">
+                                Words <span class="post-count">2.4k</span> and
+                                Reading Time <span class="post-count">9</span> Minutes
+                            </span>
+                            <div class="blank_box"></div>
+                            <!-- 不蒜子统计 start -->
+                            <span class="meta">
+                                Viewed <span id="busuanzi_value_page_pv"><i class="fa fa-spinner fa-spin"></i></span> Times
+                            </span>
+                            <!-- 不蒜子统计 end -->
+                        
+
+                    </div>
+                
+
+                </div>
+            </div>
+        </div>      
+    </div>
+
+    
+    <div class="waveWrapper">
+        <div class="wave wave_before" style="background-image: url('/img/wave-light.png')"></div>
+        <div class="wave wave_after" style="background-image: url('/img/wave-light.png')"></div>
+    </div>
+    
+</header>
+
+	
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Lepeng</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+
+                    
+
+                        
+                    
+
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/about/">About</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/archive/">Archives</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/categories/">Categories</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/tags/">Tags</a>
+                        </li>
+                        
+                    
+                    
+                    
+                    <li>
+                        <a href="http://flepeng.com" target="_blank">chinese_blog</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Main Content -->
+    <!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+            <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <p>从rcnn， fast rcnn, faster rcnn, yolo, r-fcn, ssd，到cvpr的yolo9000。这些paper中损失函数都包含了边框回归，除了rcnn详细介绍了，其他的paper都是一笔带过，或者直接引用rcnn就把损失函数写出来了。前三条网上解释比较多，后面的两条我看了很多paper，才得出这些结论。</p>
+<ul>
+<li>为什么要边框回归？</li>
+<li>什么是边框回归？</li>
+<li>边框回归怎么做的？</li>
+<li><strong>边框回归为什么宽高，坐标会设计这种形式？</strong></li>
+<li><strong>为什么边框回归只能微调，在离Ground Truth近的时候才能生效？</strong></li>
+</ul>
+<h2 id="为什么要边框回归？"><a href="#为什么要边框回归？" class="headerlink" title="为什么要边框回归？"></a>为什么要边框回归？</h2><p>这里引用王斌师兄的理解，如下图所示：<br><img src="https://img-blog.csdnimg.cn/20210531105847753.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2ZlbmdsZXBlbmc=,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
+<p>对于上图，绿色的框表示 Ground Truth, 红色的框为 Selective Search 提取的 Region Proposal。那么即便红色的框被分类器识别为飞机，但是由于红色的框定位不准(IoU&lt;0.5)， 那么这张图相当于没有正确的检测出飞机。 如果我们能对红色的框进行微调， 使得经过微调后的窗口跟 Ground Truth 更接近， 这样岂不是定位会更准确。 确实，Bounding-box regression 就是用来微调这个窗口的。</p>
+<h2 id="边框回归是什么？"><a href="#边框回归是什么？" class="headerlink" title="边框回归是什么？"></a><strong>边框回归是什么？</strong></h2><p>对于窗口一般使用四维向量 $(x,y,w,h)$ 来表示， 分别表示窗口的中心点坐标和宽高。 对于下图, 红色的框 P 代表原始的 Proposal, 绿色的框 G 代表目标的 Ground Truth， 我们的目标是寻找一种关系使得输入原始的窗口 P 经过映射得到一个跟真实窗口 G 更接近的回归窗口 $\hat{G}$。</p>
+<p><img src="https://img-blog.csdnimg.cn/20210531110013471.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2ZlbmdsZXBlbmc=,size_16,color_FFFFFF,t_70"><br>边框回归的目的既是：给定 $(P_{x},P_{y},P_{w},P_{h})$ 寻找一种映射 $f$， 使得 $f(P_{x},P_{y},P_{w},P_{h}) &#x3D; (\hat{G_x},\hat{G_y},\hat{G_w},\hat{G_h})$ 并且$(\hat{G_x},\hat{G_y},\hat{G_w},\hat{G_h}) \approx (G_{x},G_{y},G_{w},G_{h})$</p>
+<h2 id="边框回归怎么做的？"><a href="#边框回归怎么做的？" class="headerlink" title="边框回归怎么做的？"></a>边框回归怎么做的？</h2><p>RCNN论文：<a href="https://people.eecs.berkeley.edu/~rbg/papers/r-cnn-cvpr.pdf" target="_blank" rel="noopener">Region-based Convolution Networks for Accurate Object detection and Segmentation</a> </p>
+<p>作者在完成了的<code>生成候选区域——CNN提取特征——SVM进行分类</code>以后，为了进一步的提高定位效果，在文章的附录C中介绍了 Bounding-box Regression 的处理。Bounding-box Regression 训练的过程中，输入数据为N个训练对 ${(P^{i},G^{i})},i&#x3D;1,2,…,N$，其中 $p^i&#x3D;(p^i_x,p^i_y,p^i_w,p^i_h)$ 为proposal的位置，前两个坐标表示proposal的中心坐标，后面两个坐标分别表示proposal的width和height，而 $G^i&#x3D;(G_x,G_y,G_w,G_h)$ 表示groundtruth的位置， regression的目标就是学会一种映射将P转换为G。</p>
+<p>那么经过何种变换才能从上图中的窗口 P 变为窗口 $\hat{G}$ 呢？ 比较简单的思路就是: <em>平移+尺度放缩</em></p>
+<p>作者设计了四种坐标映射方法，其中前两个表示对 proposal 中心坐标的尺度不变的平移变换，后面两个则是对 proposal 的 width 和 height 的对数空间的变换，</p>
+<ol>
+<li>先做平移 $(\Delta x,\Delta y)$， $\Delta x &#x3D; P_{w}d_{x}(P),\Delta y &#x3D; P_{h}d_{y}(P)$ 这是R-CNN论文的：($d_{ \ast }(P) &#x3D; w_{ \ast }^{T}\Phi <em>{5}(P)&#x3D;t</em>{ \ast }$)</li>
+</ol>
+<p>$$\hat{G}<em>{x} &#x3D; P</em>{w}d_{x}(P) + P_{x},\text{(1)}$$</p>
+<p>$$\hat{G}<em>{y} &#x3D; P</em>{h}d_{y}(P) + P_{y},\text{(2)}$$</p>
+<ol start="2">
+<li>然后再做尺度缩放 $(S_{w},S_{h})$,  $S_{w} &#x3D; exp(d_{w}(P)),S_{h} &#x3D; exp(d_{h}(P))$, 对应论文中：</li>
+</ol>
+<p>$$\hat{G}<em>{w} &#x3D; P</em>{w}exp(d_{w}(P)),\text{(3)}$$</p>
+<p>$$\hat{G}<em>{h} &#x3D; P</em>{h}exp(d_{h}(P)),\text{(4)}$$</p>
+<p>观察(1)-(4)我们发现， 边框回归学习就是 $d_{x}(P),d_{y}(P),d_{w}(P),d_{h}(P)$这四个变换。下一步就是设计算法那得到这四个映射。</p>
+<p>线性回归就是给定输入的特征向量 X, 学习一组参数 W, 使得经过线性回归后的值跟真实值 Y(Ground Truth)非常接近. 即 $Y \approx WX$ 。 那么 Bounding-box 中我们的输入以及输出分别是什么呢？</p>
+<h3 id="Input"><a href="#Input" class="headerlink" title="Input:"></a>Input:</h3><p>$RegionProposal\rightarrow P &#x3D; (P_{x},P_{y},P_{w},P_{h})$，这个是什么？ 输入就是这四个数值吗？不是，其实<strong>真正的输入是这个窗口对应的 CNN 特征</strong>，也就是 R-CNN 中的 Pool5 feature（特征向量）。 (注：训练阶段输入还包括 Ground Truth， 也就是下边提到的 $t_{ \ast } &#x3D; (t_{x},t_{y},t_{w},t_{h})$</p>
+<h3 id="Output"><a href="#Output" class="headerlink" title="Output:"></a>Output:</h3><p>outpue 为：需要进行的平移变换和尺度缩放  $d_{x}(P),d_{y}(P),d_{w}(P),d_{h}(P)$， 或者说是 $\Delta x,\Delta y,S_{w},S_{h}$ 。 我们的最终输出不应该是 Ground Truth 吗？ 是的， 但是有了这四个变换我们就可以直接得到 Ground Truth。</p>
+<p>这里有个问题需要注意， 根据(1)~(4)我们可以知道， P 经过 $d_{x}(P),d_{y}(P),d_{w}(P),d_{h}(P)$ 得到的并不是真实值 G， 而是预测值 $\hat{G}$。 </p>
+<p>在训练时这四个值 $\Delta x,\Delta y,S_{w},S_{h}$ 的真实值应该是经过 Ground Truth 和 Proposal 计算得到的真正需要的平移量 $(t_{x},t_{y})$ 和尺度缩放 $(t_{w},t_{h})$ 。  这也就是 R-CNN 论文中的(6)~(9)：  </p>
+<p>$$t_{x} &#x3D; (G_{x}−P_{x})&#x2F; P_{w},(6)$$</p>
+<p>$$t_{y} &#x3D; (G_{y}−P_{y})&#x2F; P_{h},(7)$$</p>
+<p>$$t_{w} &#x3D; \log ⁡(G_{w}&#x2F; P_{w}),(8)$$</p>
+<p>$$t_{h} &#x3D; \log ⁡(G_{h}&#x2F; P_{h}),(9)$$</p>
+<h3 id="目标函数"><a href="#目标函数" class="headerlink" title="目标函数"></a>目标函数</h3><p>目标函数可以表示为 $d_{ \ast }(P) &#x3D; w_{ \ast }^{T}\Phi <em>{5}(P)$， $\Phi <em>{5}(P)$ 是输入 Proposal 的特征向量，$w</em>{ \ast }$是要学习的参数（*表示 x,y,w,h， 也就是每一个变换对应一个目标函数） , $d</em>{ \ast }(P)$ 是得到的预测值。 我们要让预测值跟真实值 $t_{ \ast } &#x3D; (t_{x},t_{y},t_{w},t_{h})$差距最小， 得到损失函数为：</p>
+<p>$$Loss &#x3D; \sum \limits_{i}^{N}(t_{ \ast }^{i}−\hat{w}_{ \ast }^{T}\phi _{5}(P^{i}))^2.$$</p>
+<p>函数优化目标为：</p>
+<p>$$W_{ \ast } &#x3D; argmin_{w_{ \ast }} \sum \limits_{i}^{N}(t_{ \ast }^{i}−\hat{w}_{ \ast }^{T}\phi <em>{5}(P^{i}))^2 + \lambda ||\hat{w}</em>{ \ast }||^2.$$</p>
+<p>利用梯度下降法或者最小二乘法就可以得到 $w_{ \ast }$。</p>
+<p>最终在进行实验时，lambda &#x3D; 1000, 同时作者发现同一对中P和G相距过远时通过上面的变换是不能完成的，而相距过远实际上也基本不会是同一物体，因此作者在进行实验室，对于 pair(P,G) 的选择是选择离P较近的G进行配对，这里表示较近的方法是需要P和一个G的最大的IoU要大于0.6,否则则抛弃该P。</p>
+<h2 id="为什么宽高尺度会设计这种形式？"><a href="#为什么宽高尺度会设计这种形式？" class="headerlink" title="为什么宽高尺度会设计这种形式？"></a>为什么宽高尺度会设计这种形式？</h2><p>重点解释一下为什么设计的 $t_{x},t_{y}$为什么除以宽高，为什么 $t_{w},t_{h}$会有log形式！！！</p>
+<p>首先CNN具有<strong>尺度不变性</strong>， 以下图为例：<br><img src="https://img-blog.csdnimg.cn/20210531112517447.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2ZlbmdsZXBlbmc=,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
+<h3 id="x-y-坐标除以宽高"><a href="#x-y-坐标除以宽高" class="headerlink" title="x,y 坐标除以宽高"></a><strong>x,y 坐标除以宽高</strong></h3><p>上图的两个人具有不同的尺度，因为他都是人，我们得到的特征相同。假设我们得到的特征为 $\phi <em>{1},\phi <em>{2}$，那么一个完好的特征应该具备 $\phi <em>{1} &#x3D; \phi$。ok，如果我们直接学习坐标差值，以x坐标为例，$x</em>{i},p</em>{i}$ 分别代表第i个框的x坐标，学习到的映射为 $f$, $f(\phi <em>{1}) &#x3D; x</em>{1}−p</em>{1}$，同理 $f(\phi <em>{2}) &#x3D; x</em>{2}−p_{2}$。从上图显而易见，$x_{1}−p_{1} \neq x_{2}−p_{1}$。也就是说同一个x对应多个y，这明显不满足函数的定义。边框回归学习的是回归函数，然而你的目标却不满足函数定义，当然学习不到什么。</p>
+<h3 id="宽高坐标Log形式"><a href="#宽高坐标Log形式" class="headerlink" title="宽高坐标Log形式"></a>宽高坐标Log形式</h3><p>我们想要得到一个放缩的尺度，也就是说这里限制尺度必须大于0。我们学习的 $t_{w},t_{h}$怎么保证满足大于0呢？直观的想法就是EXP函数，如公式(3), (4)所示，那么反过来推导就是Log函数的来源了。</p>
+<h2 id="为什么IoU较大，认为是线性变换？"><a href="#为什么IoU较大，认为是线性变换？" class="headerlink" title="为什么IoU较大，认为是线性变换？"></a>为什么IoU较大，认为是线性变换？</h2><p>当输入的 Proposal 与 Ground Truth 相差较小时(RCNN 设置的是 IoU&gt;0.6)， 可以认为这种变换是一种线性变换， 那么我们就可以用线性回归来建模对窗口进行微调， 否则会导致训练的回归模型不 work（当 Proposal跟 GT 离得较远，就是复杂的非线性问题了，此时用线性回归建模显然不合理）。这里我来解释：</p>
+<p>Log函数明显不满足线性函数，但是为什么当Proposal 和Ground Truth相差较小的时候，就可以认为是一种线性变换呢？大家还记得这个公式不？参看高数1。</p>
+<p>$$lim_{x &#x3D; 0}log(1 + x) &#x3D; x$$</p>
+<p>现在回过来看公式(8):</p>
+<p>$$t_{w} &#x3D; \log ⁡(G_{w}&#x2F; P_{w}) &#x3D; log(\frac{G_{w} + P_{w}−P_{w}}{P_{w}}) &#x3D; log(1 + \frac{G_{w}−P_{w}}{P_{w}})$$</p>
+<p>当且仅当 $G_{w}−P_{w}&#x3D;0$的时候，才会是线性函数，也就是宽度和高度必须近似相等。</p>
+<p>对于IoU大于指定值这块，我并不认同作者的说法。我个人理解，只保证Region Proposal和Ground Truth的宽高相差不多就能满足回归条件。x,y位置到没有太多限制，这点我们从YOLOv2可以看出，原始的边框回归其实x，y的位置相对来说对很大的。这也是YOLOv2的改进地方。</p>
+
+                
+                <hr>
+                <!-- Pager -->
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/Python-31-Python-第三方模块-Python-第三方模块之-pandas-操作-excel/" data-toggle="tooltip" data-placement="top" title="Python 第三方模块之 pandas 操作 excel">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/Python-31-Python-第三方模块-Python-第三方模块之-numpy-random-随机抽样/" data-toggle="tooltip" data-placement="top" title="Python 第三方模块之 numpy.random - 随机抽样">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+                <!-- tip start -->
+                
+
+                
+                <div class="comment_notes">
+                    <p>
+                        study well and make progress every day; study well and progress every day; study hard and make progress every day.
+                    </p>
+                </div>
+                
+                <!-- tip end -->
+
+                <!-- Music start-->
+                
+                <!-- Music end -->
+
+                <!-- Sharing -->
+                
+                <div class="social-share"  data-wechat-qrcode-helper="" align="center"></div>
+                <!--  css & js -->
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/css/share.min.css">
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/js/social-share.min.js"></script>
+                
+                <!-- Sharing -->
+
+                <!-- gitment start -->
+                
+                <!-- gitment end -->
+
+                <!-- 来必力City版安装代码 -->
+                
+                <!-- City版安装代码已完成 -->
+
+                <!-- disqus comment start -->
+                
+                <!-- disqus comment end -->
+            </div>
+            
+            <!-- Tabe of Content -->
+            <!-- Table of Contents -->
+
+    
+      
+        <aside id="sidebar">
+          <div id="toc" class="toc-article">
+          <strong class="toc-title">Contents</strong>
+          
+            
+              <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#为什么要边框回归？"><span class="toc-nav-number">1.</span> <span class="toc-nav-text">为什么要边框回归？</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#边框回归是什么？"><span class="toc-nav-number">2.</span> <span class="toc-nav-text">边框回归是什么？</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#边框回归怎么做的？"><span class="toc-nav-number">3.</span> <span class="toc-nav-text">边框回归怎么做的？</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#Input"><span class="toc-nav-number">3.1.</span> <span class="toc-nav-text">Input:</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#Output"><span class="toc-nav-number">3.2.</span> <span class="toc-nav-text">Output:</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#目标函数"><span class="toc-nav-number">3.3.</span> <span class="toc-nav-text">目标函数</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#为什么宽高尺度会设计这种形式？"><span class="toc-nav-number">4.</span> <span class="toc-nav-text">为什么宽高尺度会设计这种形式？</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#x-y-坐标除以宽高"><span class="toc-nav-number">4.1.</span> <span class="toc-nav-text">x,y 坐标除以宽高</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#宽高坐标Log形式"><span class="toc-nav-number">4.2.</span> <span class="toc-nav-text">宽高坐标Log形式</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#为什么IoU较大，认为是线性变换？"><span class="toc-nav-number">5.</span> <span class="toc-nav-text">为什么IoU较大，认为是线性变换？</span></a></li></ol>
+            
+          
+          </div>
+        </aside>
+      
+    
+
+                
+            <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <!-- no hr -->
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+                       
+                          <a class="tag" href="/tags/#深度学习" title="深度学习">深度学习</a>
+                        
+                    </div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+
+                    
+                        <li><a href="https://blog.csdn.net/fenglepeng" target="_blank">Feng Lepeng&#39;s CSDN</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("https://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'hover',
+          placement: 'left',
+          icon: 'ℬ'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+
+
+<style  type="text/css">
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+
+                
+                    <li>
+                        <a target="_blank"  href="https://github.com/flepeng">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy;
+                    <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">京ICP备18055501号-2</a>;
+                    Feng Lepeng 2024
+                    <br>
+                    Powered by 
+                    <a href="https://github.com/dusign/hexo-theme-snail" target="_blank" rel="noopener">
+                        <i>hexo-theme-snail</i>
+                    </a> | 
+                    <iframe name="star" style="margin-left: 2px; margin-bottom:-5px;" frameborder="0" scrolling="0"
+                        width="100px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=flepeng&repo=hexo-theme-lp&type=star">
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+
+</footer>
+
+<!-- jQuery -->
+
+<script src="/js/jquery.min.js"></script>
+
+
+<!-- Bootstrap Core JavaScript -->
+
+<script src="/js/bootstrap.min.js"></script>
+
+
+<!-- Custom Theme JavaScript -->
+
+<script src="/js/hux-blog.min.js"></script>
+
+
+<!-- Search -->
+
+<script src="/js/search.js"></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("https://flepeng.github.io/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("https://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-XXXXXXXX-X';
+    var _gaDomain = 'yoursite';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+
+<!-- Baidu Tongji -->
+
+
+<!-- Search -->
+
+    <script type="text/javascript">      
+        var search_path = "search.xml";
+        if (search_path.length == 0) {
+            search_path = "search.xml";
+        }
+    var path = "/" + search_path;
+    searchFunc(path, 'local-search-input', 'local-search-result');
+    </script>
+
+
+<!-- busuanzi -->
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+
+	<a id="rocket" href="#top" class=""></a>
+	<script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+    <script type="text/javascript" src="/js/toc.js?v=1.0.0" async=""></script>
+
+    
+        <!-- background effects line -->
+        
+
+        
+            <script type="text/javascript" src="/js/mouse-click.js" content='[&quot;🌱&quot;,&quot;just do it&quot;,&quot;🍀&quot;]' color='[&quot;rgb(121,93,179)&quot; ,&quot;rgb(76,180,231)&quot; ,&quot;rgb(184,90,154)&quot;]'></script>
+        
+
+        <!-- background effects end -->
+    
+
+    <!--<script size="50" alpha='0.3' zIndex="-999" src="/js/ribbonStatic.js"></script>-->
+    
+        <script src="/js/ribbonDynamic.js"></script>
+    
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+
+</html>

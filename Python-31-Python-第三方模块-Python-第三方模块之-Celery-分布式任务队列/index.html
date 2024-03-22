@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <script data-ad-client="ca-pub-2488174175014870" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> <!-- google ad -->
+    <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+    <meta name="baidu-site-verification" content="093lY4ziMu" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="description" content="博主用来记录和分享一些日常学到的知识">
+    <meta name="keyword"  content="hexo, java，python">
+    <link rel="shortcut icon" href="/img/hexo/ironman-draw.png">
+    <!-- Place this tag in your head or just before your close body tag. -->
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <!--<link href='http://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>-->
+    <title>
+        
+          Python 第三方模块之 Celery - 分布式任务队列 - Python技术分享
+        
+    </title>
+
+    <link rel="canonical" href="https://flepeng.github.io/Python-31-Python-第三方模块-Python-第三方模块之-Celery-分布式任务队列/">
+
+    <!-- Bootstrap Core CSS -->
+    
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+
+
+    <!-- Custom CSS --> 
+    
+        
+<link rel="stylesheet" href="/css/dusign-light.css">
+
+        
+<link rel="stylesheet" href="/css/dusign-common-light.css">
+
+        
+<link rel="stylesheet" href="/css/font-awesome.css">
+
+        
+<link rel="stylesheet" href="/css/toc.css">
+
+        <!-- background effects end -->
+    
+    
+    <!-- Pygments Highlight CSS -->
+    
+<link rel="stylesheet" href="/css/highlight.css">
+
+
+    
+<link rel="stylesheet" href="/css/widget.css">
+
+
+    
+<link rel="stylesheet" href="/css/rocket.css">
+
+
+    
+<link rel="stylesheet" href="/css/signature.css">
+
+
+    
+<link rel="stylesheet" href="/css/fonts.googleapis.css">
+
+
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+
+    <!-- photography -->
+    
+<link rel="stylesheet" href="/css/photography.css">
+
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- background effects start -->
+    
+    <!-- background effects end -->
+
+	<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        
+            
+                background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('/img/header_img/archive-bg.jpg')
+                /*post*/
+            
+        
+    }
+    
+    #signature{
+        background-image: url('/img/hexo/signature/dusign.png');
+    }
+    
+</style>
+
+<header class="intro-header" >
+    <!-- Signature -->
+    <div id="signature">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                
+                    <div class="post-heading">
+                        <div class="tags">
+                            
+                              <a class="tag" href="/tags/#Python" title="Python">Python</a>
+                            
+                              <a class="tag" href="/tags/#Python 第三方模块" title="Python 第三方模块">Python 第三方模块</a>
+                            
+                        </div>
+                        <h1>Python 第三方模块之 Celery - 分布式任务队列</h1>
+                        <h2 class="subheading"></h2>
+                        <span class="meta">
+                            Posted by Lepeng on
+                            2021-04-27
+                        </span>
+
+                        
+                            <div class="blank_box"></div>
+                            <span class="meta">
+                                Words <span class="post-count">3.7k</span> and
+                                Reading Time <span class="post-count">16</span> Minutes
+                            </span>
+                            <div class="blank_box"></div>
+                            <!-- 不蒜子统计 start -->
+                            <span class="meta">
+                                Viewed <span id="busuanzi_value_page_pv"><i class="fa fa-spinner fa-spin"></i></span> Times
+                            </span>
+                            <!-- 不蒜子统计 end -->
+                        
+
+                    </div>
+                
+
+                </div>
+            </div>
+        </div>      
+    </div>
+
+    
+    <div class="waveWrapper">
+        <div class="wave wave_before" style="background-image: url('/img/wave-light.png')"></div>
+        <div class="wave wave_after" style="background-image: url('/img/wave-light.png')"></div>
+    </div>
+    
+</header>
+
+	
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Lepeng</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+
+                    
+
+                        
+                    
+
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/about/">About</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/archive/">Archives</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/categories/">Categories</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/tags/">Tags</a>
+                        </li>
+                        
+                    
+                    
+                    
+                    <li>
+                        <a href="http://flepeng.com" target="_blank">chinese_blog</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Main Content -->
+    <!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+            <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <h2 id="Celery简单介绍"><a href="#Celery简单介绍" class="headerlink" title="Celery简单介绍"></a>Celery简单介绍</h2><p>Celery 是一个基于 Python 开发的分布式异步消息任务队列，通过它可以轻松的实现任务的异步处理，如果你的业务场景中需要用到异步任务，就可以考虑使用 Celery，举几个实例场景:</p>
+<ul>
+<li>你想对100台机器执行一条批量命令，可能会花很长时间 ，但你不想让你的程序等着结果返回，而是给你返回一个任务ID，你过一段时间只需要拿着这个任务id就可以拿到任务执行结果，在任务执行ing进行时，你可以继续做其它的事情</li>
+<li>你想做一个定时任务，比如每天检测一下你们所有客户的资料，如果发现今天是客户的生日，就给他发个短信祝福</li>
+</ul>
+<p>Celery 在执行任务时需要通过一个消息中间件来接收和发送任务消息，以及存储任务结果， 一般使用rabbitMQ or Redis</p>
+<h3 id="Celery有以下优点"><a href="#Celery有以下优点" class="headerlink" title="Celery有以下优点"></a>Celery有以下优点</h3><ul>
+<li>简单：一旦熟悉了celery的工作流程后，配置和使用还是比较简单的</li>
+<li>高可用：当任务执行失败或执行过程中发生连接中断，celery 会自动尝试重新执行任务</li>
+<li>快速：一个单进程的celery每分钟可处理上百万个任务</li>
+<li>灵活：几乎celery的各个组件都可以被扩展及自定制</li>
+</ul>
+<h3 id="Celery基本工作流程图"><a href="#Celery基本工作流程图" class="headerlink" title="Celery基本工作流程图"></a>Celery基本工作流程图</h3><p><img src="/img/python/3/1667199523-d7f7d8f3acb9d580d8d5bae2f5ea1078.png"></p>
+<p><img src="/img/python/3/1667199523-782c694491982bcf59c67c917abf8e2b.png"></p>
+<ul>
+<li>Producer：任务委托方</li>
+<li>Broker：任务中心（中介），如RabbitMQ、Redis等</li>
+<li>Beat：任务调度器</li>
+<li>Worker：任务执行者，可以有多个（分布式）</li>
+<li>Result：任务中心的数据库，储存任务执行结果</li>
+<li>Backend：因为任务经由中介，而非直接委派到Worker手上，所以Producer并不知道任务被委派给了谁，以及任务的完成结果，所以这时候需要一个Backend（理解成手机，通过手机查看任务完成情况）</li>
+</ul>
+<h2 id="Celery安装使用"><a href="#Celery安装使用" class="headerlink" title="Celery安装使用"></a>Celery安装使用</h2><p>安装celery模块</p>
+<figure class="highlight crystal"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ pip install celery</span><br></pre></td></tr></table></figure>
+
+<p>celery需要rabbitMQ、Redis、Amazon SQS、Zookeeper（测试中） 充当broker来进行消息的接收，并且也支持多个broker和worker来实现高可用和分布式。<a href="http://docs.celeryproject.org/en/latest/getting-started/brokers/index.html" target="_blank" rel="noopener">http://docs.celeryproject.org/en/latest/getting-started/brokers/index.html</a></p>
+<ol>
+<li><p>Celery的默认broker是RabbitMQ, 仅需配置一行就可以</p>
+ <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">broker_url &#x3D; &#39;amqp:&#x2F;&#x2F;guest:guest@localhost:5672&#x2F;&#x2F;&#39;</span><br></pre></td></tr></table></figure>
+<p> rabbitMQ 没装的话请装一下，安装看这里</p>
+<p> <a href="http://docs.celeryproject.org/en/latest/getting-started/brokers/rabbitmq.html#id3" target="_blank" rel="noopener">http://docs.celeryproject.org/en/latest/getting-started/brokers/rabbitmq.html#id3</a></p>
+</li>
+<li><p>使用Redis做broker也可以，安装redis组件</p>
+ <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ pip install -U &quot;celery[redis]&quot;</span><br></pre></td></tr></table></figure>
+<p> 配置redis</p>
+ <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"># Configuration is easy, just configure the location of your Redis database:</span><br><span class="line">app.conf.broker_url &#x3D; &#39;redis:&#x2F;&#x2F;localhost:6379&#x2F;0&#39;</span><br><span class="line"> </span><br><span class="line"># Where the URL is in the format of:</span><br><span class="line">redis:&#x2F;&#x2F;:password@hostname:port&#x2F;db_number</span><br><span class="line"> </span><br><span class="line"># all fields after the scheme are optional, and will default to localhost on port 6379, using database 0.</span><br></pre></td></tr></table></figure>
+<p> 如果想获取每个任务的执行结果，还需要配置一下把任务结果存在哪</p>
+ <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># If you also want to store the state and return values of tasks in Redis, you should configure these settings:</span><br><span class="line">app.conf.result_backend &#x3D; &#39;redis:&#x2F;&#x2F;localhost:6379&#x2F;0&#39;</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="使用-Celery"><a href="#使用-Celery" class="headerlink" title="使用 Celery"></a>使用 Celery</h2><p>创建一个celery application 用来定义你的任务列表，创建一个任务文件tasks.py</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"># tasks.py</span><br><span class="line">from celery import Celery</span><br><span class="line"> </span><br><span class="line">app &#x3D; Celery(&#39;tasks&#39;,                     # 随便</span><br><span class="line">             broker&#x3D;&#39;redis:&#x2F;&#x2F;localhost&#39;,  # 中间件</span><br><span class="line">             backend&#x3D;&#39;redis:&#x2F;&#x2F;localhost&#39;) # 存储</span><br><span class="line"> </span><br><span class="line"># 弱如果redis 有密码，改成下面的方式，password前面有冒号</span><br><span class="line"># redis:&#x2F;&#x2F;:password@127.0.0.1:6379&#x2F;2</span><br><span class="line"> </span><br><span class="line">@app.task</span><br><span class="line">def add(x,y):</span><br><span class="line">    print(&quot;running...&quot;,x,y)</span><br><span class="line">    return x+y</span><br></pre></td></tr></table></figure>
+
+<p><strong>启动Celery Worker来开始监听并执行任务</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ celery -A tasks worker --loglevel&#x3D;info</span><br></pre></td></tr></table></figure>
+
+<p><strong>调用任务</strong>，再打开一个终端， 进行命令行模式，调用任务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">[root@localhost celerys]# python3</span><br><span class="line">Python 3.5.2 (default, Jul  7 2017, 23:36:01)</span><br><span class="line">[GCC 4.8.5 20150623 (Red Hat 4.8.5-11)] on linux</span><br><span class="line">Type &quot;help&quot;, &quot;copyright&quot;, &quot;credits&quot; or &quot;license&quot; for more information.</span><br><span class="line">&gt;&gt;&gt; from tasks import add                   # import add</span><br><span class="line">&gt;&gt;&gt; add.delay(4,6)                          # 执行函数</span><br><span class="line">&lt;AsyncResult: 4b5a8ab6-693c-4ce5-b779-305cfcdf70cd&gt;   # 返回taskid</span><br><span class="line"> </span><br><span class="line">&gt;&gt;&gt; result.ready()                          # 是否运行完成</span><br><span class="line">False</span><br><span class="line"> </span><br><span class="line">&gt;&gt;&gt; result &#x3D; add.delay(4,6)                 # 执行函数</span><br><span class="line">&gt;&gt;&gt; result.get()                            # 同步获取结果,一直等待</span><br><span class="line">10</span><br><span class="line"> </span><br><span class="line">&gt;&gt;&gt; result.get(timeout&#x3D;1)                   # 设置超时时间，过期错误异常</span><br><span class="line">Traceback (most recent call last):</span><br><span class="line">    --strip--</span><br><span class="line">celery.exceptions.TimeoutError: The operation timed out.</span><br><span class="line"> </span><br><span class="line">&gt;&gt;&gt; result &#x3D; add.delay(4,&#39;a&#39;)               # 执行错误命令</span><br><span class="line">&gt;&gt;&gt; result.get()                            # get后获取到错误信息，触发异常</span><br><span class="line">Traceback (most recent call last):</span><br><span class="line">     --strip--</span><br><span class="line">celery.backends.base.TypeError: unsupported operand type(s) for +: &#39;int&#39; and &#39;str&#39;</span><br><span class="line"> </span><br><span class="line">&gt;&gt;&gt; result &#x3D; add.delay(4,&#39;a&#39;)</span><br><span class="line">&gt;&gt;&gt; result.get(propagate&#x3D;False)             # propagate&#x3D;False 不触发异常，获取错误信息</span><br><span class="line">TypeError(&quot;unsupported operand type(s) for +: &#39;int&#39; and &#39;str&#39;&quot;,)</span><br><span class="line">&gt;&gt;&gt; result.traceback                        # 获取具体错误信息 log打印用</span><br><span class="line">&#39;Traceback (most recent call last):\n  File &quot;&#x2F;usr&#x2F;local&#x2F;python3.5&#x2F;lib&#x2F;python3.5&#x2F;site-packages&#x2F;celery&#x2F;app&#x2F;trace.py&quot;, line 367, in trace_task\n    R &#x3D; retval &#x3D; fun(*args, **kwargs)\n  File &quot;&#x2F;usr&#x2F;local&#x2F;python3.5&#x2F;lib&#x2F;python3.5&#x2F;site-packages&#x2F;celery&#x2F;app&#x2F;trace.py&quot;, line 622, in __protected_call__\n    return self.run(*args, **kwargs)\n  File &quot;&#x2F;data&#x2F;celerys&#x2F;tasks.py&quot;, line 12, in add\n    return x+y\nTypeError: unsupported operand type(s) for +: \&#39;int\&#39; and \&#39;str\&#39;\n&#39;</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="在项目中如何使用celery"><a href="#在项目中如何使用celery" class="headerlink" title="在项目中如何使用celery"></a>在项目中如何使用celery</h2><p>可以把celery配置成一个应用，目录格式如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">proj&#x2F;__init__.py</span><br><span class="line">    &#x2F;celery.py</span><br><span class="line">    &#x2F;tasks.py</span><br></pre></td></tr></table></figure>
+
+<p>proj&#x2F;celery.py内容</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"># proj&#x2F;celery.py</span><br><span class="line">from __future__ import absolute_import, unicode_literals</span><br><span class="line">from celery import Celery</span><br><span class="line"> </span><br><span class="line">app &#x3D; Celery(&#39;proj&#39;,</span><br><span class="line">             broker&#x3D;&#39;amqp:&#x2F;&#x2F;&#39;,</span><br><span class="line">             backend&#x3D;&#39;amqp:&#x2F;&#x2F;&#39;,</span><br><span class="line">             include&#x3D;[&#39;proj.tasks&#39;])</span><br><span class="line"> </span><br><span class="line"># Optional configuration, see the application user guide.</span><br><span class="line">app.conf.update(</span><br><span class="line">    result_expires&#x3D;3600,</span><br><span class="line">)</span><br><span class="line"> </span><br><span class="line">if __name__ &#x3D;&#x3D; &#39;__main__&#39;:</span><br><span class="line">    app.start()</span><br></pre></td></tr></table></figure>
+
+<p>proj&#x2F;tasks.py中的内容</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"># proj&#x2F;tasks.py</span><br><span class="line">from __future__ import absolute_import, unicode_literals</span><br><span class="line">from .celery import app</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">@app.task</span><br><span class="line">def add(x, y):</span><br><span class="line">    return x + y</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">@app.task</span><br><span class="line">def mul(x, y):</span><br><span class="line">    return x * y</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">@app.task</span><br><span class="line">def xsum(numbers):</span><br><span class="line">    return sum(numbers)</span><br></pre></td></tr></table></figure>
+
+<p><strong>启动worker</strong> </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ celery -A proj worker -l info</span><br></pre></td></tr></table></figure>
+
+<p>输出，像不像一个c</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">-------------- celery@Alexs-MacBook-Pro.local v4.0.2 (latentcall)</span><br><span class="line">---- **** -----</span><br><span class="line">--- * ***  * -- Darwin-15.6.0-x86_64-i386-64bit 2017-01-26 21:50:24</span><br><span class="line">-- * - **** ---</span><br><span class="line">- ** ---------- [config]</span><br><span class="line">- ** ---------- .&gt; app:         proj:0x103a020f0</span><br><span class="line">- ** ---------- .&gt; transport:   redis:&#x2F;&#x2F;localhost:6379&#x2F;&#x2F;</span><br><span class="line">- ** ---------- .&gt; results:     redis:&#x2F;&#x2F;localhost&#x2F;</span><br><span class="line">- *** --- * --- .&gt; concurrency: 8 (prefork)</span><br><span class="line">-- ******* ---- .&gt; task events: OFF (enable -E to monitor tasks in this worker)</span><br><span class="line">--- ***** -----</span><br><span class="line"> -------------- [queues]</span><br><span class="line">                .&gt; celery           exchange&#x3D;celery(direct) key&#x3D;celery</span><br></pre></td></tr></table></figure>
+
+<p><strong>后台启动worker</strong></p>
+<p>在生产环境中，您希望在后台运行worker，这在 <a href="http://docs.celeryproject.org/en/latest/userguide/daemonizing.html#daemonizing" target="_blank" rel="noopener">daemonization tutorial</a> 教程中有详细介绍 </p>
+<p>daemonization 脚本使用 Celery multi 命令在后台启动一个或多个worker</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ celery multi start w1 -A proj -l info</span><br><span class="line">celery multi v4.0.0 (latentcall)</span><br><span class="line">&gt; Starting nodes...</span><br><span class="line">    &gt; w1.halcyon.local: OK</span><br></pre></td></tr></table></figure>
+
+<p>重启</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">$ celery multi restart w1 -A proj -l info</span><br><span class="line">celery multi v4.0.0 (latentcall)</span><br><span class="line">&gt; Stopping nodes...</span><br><span class="line">    &gt; w1.halcyon.local: TERM -&gt; 64024</span><br><span class="line">&gt; Waiting for 1 node.....</span><br><span class="line">    &gt; w1.halcyon.local: OK</span><br><span class="line">&gt; Restarting node w1.halcyon.local: OK</span><br><span class="line">celery multi v4.0.0 (latentcall)</span><br><span class="line">&gt; Stopping nodes...</span><br><span class="line">    &gt; w1.halcyon.local: TERM -&gt; 64052</span><br></pre></td></tr></table></figure>
+
+<p>停止</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ celery multi stop w1 -A proj -l info</span><br></pre></td></tr></table></figure>
+
+<p>stop 命令是异步的，所以它不会等待worker关闭。你可能会想使用 stopwait 命令来代替，这可以确保所有当前正在执行的任务在退出前完成:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ celery multi stopwait w1 -A proj -l info</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="Celery-定时任务"><a href="#Celery-定时任务" class="headerlink" title="Celery 定时任务"></a>Celery 定时任务</h2><p>celery支持定时任务，设定好任务的执行时间，celery就会定时自动帮你执行，这个定时任务模块叫celery beat</p>
+<p>写一个脚本periodic_task.py</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"># periodic_task.py</span><br><span class="line">from celery import Celery</span><br><span class="line">from celery.schedules import crontab</span><br><span class="line"> </span><br><span class="line">app &#x3D; Celery()</span><br><span class="line"> </span><br><span class="line">@app.on_after_configure.connect</span><br><span class="line">def setup_periodic_tasks(sender, **kwargs):</span><br><span class="line">    # Calls test(&#39;hello&#39;) every 10 seconds.</span><br><span class="line">    # add_periodic_task 会添加一条定时任务</span><br><span class="line">    sender.add_periodic_task(10.0, test.s(&#39;hello&#39;), name&#x3D;&#39;add every 10&#39;)</span><br><span class="line"> </span><br><span class="line">    # 每 30s 执行一次 test(&#39;world&#39;) </span><br><span class="line">    sender.add_periodic_task(30.0, test.s(&#39;world&#39;), expires&#x3D;10)</span><br><span class="line"> </span><br><span class="line">    # Executes every Monday morning at 7:30 a.m.</span><br><span class="line">    sender.add_periodic_task(</span><br><span class="line">        crontab(hour&#x3D;7, minute&#x3D;30, day_of_week&#x3D;1),</span><br><span class="line">        test.s(&#39;Happy Mondays!&#39;),</span><br><span class="line">    )</span><br><span class="line"> </span><br><span class="line">@app.task</span><br><span class="line">def test(arg):</span><br><span class="line">    print(arg)</span><br></pre></td></tr></table></figure>
+
+<p>上面是通过调用函数添加定时任务，也可以像写配置文件一样的形式添加，下面是每30s执行的任务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">app.conf.beat_schedule &#x3D; &#123;</span><br><span class="line">    &#39;add-every-30-seconds&#39;: &#123;</span><br><span class="line">        &#39;task&#39;: &#39;tasks.add&#39;,</span><br><span class="line">        &#39;schedule&#39;: 30.0,</span><br><span class="line">        &#39;args&#39;: (16, 16)</span><br><span class="line">    &#125;,</span><br><span class="line">&#125;</span><br><span class="line">app.conf.timezone &#x3D; &#39;UTC&#39;</span><br></pre></td></tr></table></figure>
+
+<p>任务添加好了，需要让celery单独启动一个进程来定时发起这些任务，注意，这里是发起任务，不是执行，这个进程只会不断的去检查你的任务计划，每发现有任务需要执行了，就发起一个任务调用消息，交给celery worker去执行</p>
+<p><strong>启动任务调度器 celery beat</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ celery -A periodic_task beat</span><br></pre></td></tr></table></figure>
+
+<p>输出：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">celery beat v4.0.2 (latentcall) is starting.</span><br><span class="line">__    -    ... __   -        _</span><br><span class="line">LocalTime -&gt; 2017-02-08 18:39:31</span><br><span class="line">Configuration -&gt;</span><br><span class="line">    . broker -&gt; redis:&#x2F;&#x2F;localhost:6379&#x2F;&#x2F;</span><br><span class="line">    . loader -&gt; celery.loaders.app.AppLoader</span><br><span class="line">    . scheduler -&gt; celery.beat.PersistentScheduler</span><br><span class="line">    . db -&gt; celerybeat-schedule</span><br><span class="line">    . logfile -&gt; [stderr]@%WARNING</span><br><span class="line">    . maxinterval -&gt; 5.00 minutes (300s)</span><br></pre></td></tr></table></figure>
+
+<p>此时还差一步，就是还需要启动一个worker,负责执行celery beat发起的任务</p>
+<p><strong>启动celery worker来执行任务</strong>，此时观察worker的输出，是不是每隔一小会，就会执行一次定时任务呢！</p>
+<p>beat需要将任务的最后运行时间存储在本地数据库文件中（默认情况下名为celerybeat schedule），因此它需要访问当前目录，或者您可以为该文件指定一个自定义位置: </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ celery -A periodic_task beat -s &#x2F;home&#x2F;celery&#x2F;var&#x2F;run&#x2F;celerybeat-schedule</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="更复杂的定时配置"><a href="#更复杂的定时配置" class="headerlink" title="更复杂的定时配置"></a>更复杂的定时配置</h3><p>上面的定时任务比较简单，只是每多少s执行一个任务，但如果你想要每周一三五的早上8点给你发邮件怎么办呢？哈，其实也简单，用crontab功能，跟linux自带的crontab功能是一样的，可以个性化定制任务执行时间</p>
+<p><em>linux crontab <a href="http://www.cnblogs.com/peida/archive/2013/01/08/2850483.html" target="_blank" rel="noopener">http://www.cnblogs.com/peida/archive/2013/01/08/2850483.html</a></em> </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">from celery.schedules import crontab</span><br><span class="line"> </span><br><span class="line">app.conf.beat_schedule &#x3D; &#123;</span><br><span class="line">    # Executes every Monday morning at 7:30 a.m.</span><br><span class="line">    &#39;add-every-monday-morning&#39;: &#123;   # 给任务起个名字</span><br><span class="line">        &#39;task&#39;: &#39;tasks.add&#39;,        # 任务调用的函数</span><br><span class="line">        &#39;schedule&#39;: crontab(hour&#x3D;7, minute&#x3D;30, day_of_week&#x3D;1),   # 定时任务</span><br><span class="line">        &#39;args&#39;: (16, 16),           # 任务调用的参数</span><br><span class="line">    &#125;,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上面的这条意思是每周1的早上7.30执行tasks.add任务。还有更多定时配置方式参考：<a href="https://blog.csdn.net/fenglepeng/article/details/104481808" target="_blank" rel="noopener">https://blog.csdn.net/fenglepeng/article/details/104481808</a></p>
+<p>上面能满足你绝大多数定时任务需求了，甚至还能根据潮起潮落来配置定时任务，具体看 <a href="http://docs.celeryproject.org/en/latest/userguide/periodic-tasks.html#solar-schedules" target="_blank" rel="noopener">http://docs.celeryproject.org/en/latest/userguide/periodic-tasks.html#solar-schedules</a></p>
+<h2 id="最佳实践之与django结合"><a href="#最佳实践之与django结合" class="headerlink" title="最佳实践之与django结合"></a>最佳实践之与django结合</h2><p>django 可以轻松跟celery结合实现异步任务，只需简单配置即可。如果你有一个 Django 项目目录如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">- proj&#x2F;</span><br><span class="line">  - proj&#x2F;__init__.py</span><br><span class="line">  - proj&#x2F;settings.py</span><br><span class="line">  - proj&#x2F;urls.py</span><br><span class="line">- manage.py</span><br></pre></td></tr></table></figure>
+
+<p>那么推荐的方法是创建一个新的 <code>proj/proj/Celery.py</code> 模块，它定义了Celery实例:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"># proj&#x2F;proj&#x2F;celery.py</span><br><span class="line">from __future__ import absolute_import, unicode_literals</span><br><span class="line">import os</span><br><span class="line">from celery import Celery</span><br><span class="line"> </span><br><span class="line"># set the default Django settings module for the &#39;celery&#39; program.</span><br><span class="line">os.environ.setdefault(&#39;DJANGO_SETTINGS_MODULE&#39;, &#39;proj.settings&#39;)</span><br><span class="line"> </span><br><span class="line">app &#x3D; Celery(&#39;proj&#39;)</span><br><span class="line"> </span><br><span class="line"># Using a string here means the worker don&#39;t have to serialize</span><br><span class="line"># the configuration object to child processes.</span><br><span class="line"># - namespace&#x3D;&#39;CELERY&#39; means all celery-related configuration keys</span><br><span class="line">#   should have a &#96;CELERY_&#96; prefix.</span><br><span class="line">app.config_from_object(&#39;django.conf:settings&#39;, namespace&#x3D;&#39;CELERY&#39;)</span><br><span class="line"> </span><br><span class="line"># Load task modules from all registered Django app configs.</span><br><span class="line">app.autodiscover_tasks()</span><br><span class="line"> </span><br><span class="line">@app.task(bind&#x3D;True)</span><br><span class="line">def debug_task(self):</span><br><span class="line">    print(&#39;Request: &#123;0!r&#125;&#39;.format(self.request))</span><br></pre></td></tr></table></figure>
+
+<p>然后你需要在 <code>proj/proj/__init__.py</code> 模块中导入这个应用程序。这确保了应用程序在Django启动时被加载，以便 <code>@shared_task</code> 装饰器(后面会提到)使用它:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># proj&#x2F;proj&#x2F;__init__.py</span><br><span class="line">from __future__ import absolute_import, unicode_literals  # 绝对导入</span><br><span class="line"> </span><br><span class="line"># This will make sure the app is always imported when</span><br><span class="line"># Django starts so that shared_task will use this app.</span><br><span class="line">from .celery import app as celery_app</span><br><span class="line"> </span><br><span class="line">__all__ &#x3D; [&#39;celery_app&#39;]</span><br></pre></td></tr></table></figure>
+
+<p>请注意，这个示例项目布局适用于较大的项目，对于简单的项目，您可以使用一个单独的包含模块来定义应用程序和任务，如<a href="http://docs.celeryproject.org/en/latest/getting-started/first-steps-with-celery.html#tut-celery" target="_blank" rel="noopener">First Steps with celery</a>教程。</p>
+<p>让我们分析一下在第一个模块中发生了什么，首先我们从未来导入绝对导入，这样我们的celery.py模块就不会与库冲突:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">from __future__ import absolute_import   # 绝对导入</span><br></pre></td></tr></table></figure>
+
+<p>然后我们为 Celery 命令行程序设置默认的<a href="http://django.readthedocs.io/en/latest/topics/settings.html#envvar-DJANGO_SETTINGS_MODULE" target="_blank" rel="noopener">DJANGO_SETTINGS_MODULE</a>环境变量:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">os.environ.setdefault(&#39;DJANGO_SETTINGS_MODULE&#39;, &#39;proj.settings&#39;)  # 设置环境</span><br></pre></td></tr></table></figure>
+
+<p>你不需要这一行，但它使你不必总是把设置模块传递给 Celery 程序。它必须总是在创建应用实例之前出现，正如我们接下来所做的:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">app &#x3D; Celery(&#39;proj&#39;)</span><br></pre></td></tr></table></figure>
+
+<p>这是我们的库实例。</p>
+<p>我们还添加了Django的设置模块作为芹菜的配置源。这意味着你不必使用多个配置文件，而是直接从Django设置中配置 Celery;但如果需要，也可以将它们分开。</p>
+<p>大写名称空间意味着所有芹菜配置选项必须用大写而不是小写指定，并且以<code>CELERY_</code>开头，因此例如 <code>task_always_eager</code> 设置变成 <code>CELERY_TASK_ALWAYS_EAGER</code>，<a href="http://docs.celeryproject.org/en/latest/userguide/configuration.html#std:setting-broker_url" target="_blank" rel="noopener">broker_url</a>设置变成 <code>CELERY_BROKER_URL</code>。</p>
+<p>你可以直接在这里传递对象，但是使用字符串更好，因为这样worker就不必序列化对象了。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">app.config_from_object(&#39;django.conf:settings&#39;, namespace&#x3D;&#39;CELERY&#39;)</span><br></pre></td></tr></table></figure>
+
+<p>接下来，可重用应用的一个常见做法是在一个单独的’ tasks.py ‘模块中定义所有的任务，而 Celery 确实有办法自动发现这些模块:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">app.autodiscover_tasks()</span><br></pre></td></tr></table></figure>
+
+<p>celery 会自动发现目录下的所有task</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">- app1&#x2F;</span><br><span class="line">    - tasks.py</span><br><span class="line">    - models.py</span><br><span class="line">- app2&#x2F;</span><br><span class="line">    - tasks.py</span><br><span class="line">    - models.py</span><br></pre></td></tr></table></figure>
+
+<p>最后，<code>debug_task</code> 示例是一个转储自己请求信息的任务。这是使用在 celery3.1 中引入的新的 <code>bind=True</code> 任务选项来方便地引用当前任务实例。</p>
+<p><strong>然后在具体的app里的tasks.py里写你的任务</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"># Create your tasks here</span><br><span class="line">from __future__ import absolute_import, unicode_literals</span><br><span class="line">from celery import shared_task</span><br><span class="line"> </span><br><span class="line">@shared_task</span><br><span class="line">def add(x, y):</span><br><span class="line">    return x + y</span><br><span class="line"> </span><br><span class="line">@shared_task</span><br><span class="line">def mul(x, y):</span><br><span class="line">    return x * y</span><br><span class="line"> </span><br><span class="line">@shared_task</span><br><span class="line">def xsum(numbers):</span><br><span class="line">    return sum(numbers)</span><br></pre></td></tr></table></figure>
+
+<p><strong>在你的django views里调用celery task</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">from django.shortcuts import render,HttpResponse</span><br><span class="line"> </span><br><span class="line"># Create your views here.</span><br><span class="line"> </span><br><span class="line">from  bernard import tasks</span><br><span class="line"> </span><br><span class="line">def task_test(request):</span><br><span class="line"> </span><br><span class="line">    res &#x3D; tasks.add.delay(228,24)</span><br><span class="line">    print(&quot;start running task&quot;)</span><br><span class="line">    print(&quot;async task res&quot;,res.get() )</span><br><span class="line"> </span><br><span class="line">    return HttpResponse(&#39;res %s&#39;%res.get())</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="django中使用计划任务功能"><a href="#django中使用计划任务功能" class="headerlink" title="django中使用计划任务功能"></a>django中使用计划任务功能</h2><p>有<a href="https://pypi.python.org/pypi/django-celery-beat/" target="_blank" rel="noopener">Django -celery-beat</a>扩展，它将调度存储在Django数据库中，并提供了一个方便的管理界面，在运行时管理周期性任务。</p>
+<p>安装和使用这个扩展:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ pip install django-celery-beat</span><br></pre></td></tr></table></figure>
+
+<p>将 <code>djanggo_celery_beat</code> 模块添加到你的Django项目 <code>settings.py</code> 中的 <code>INSTALLED_APPS</code> 中:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">INSTALLED_APPS &#x3D; (</span><br><span class="line">    ...,</span><br><span class="line">    &#39;django_celery_beat&#39;,</span><br><span class="line">)</span><br><span class="line"> </span><br><span class="line"># 注意，模块名中没有破折号，只有下划线</span><br></pre></td></tr></table></figure>
+
+<p>应用Django数据库迁移，以便创建必要的表:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ python manage.py migrate</span><br></pre></td></tr></table></figure>
+
+<p>使用 django 调度程序启动 celery beat 服务:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ celery -A proj beat -l info -S django</span><br></pre></td></tr></table></figure>
+
+<p>访问Django-Admin界面设置一些定期任务，在admin页面里，有3张表</p>
+<p><img src="/img/python/3/1667199523-3a3df79e3be78f695ba21f85d7ff821d.png"></p>
+<p>配置完长这样<br><img src="/img/python/3/1667199523-7049bb817f535ff3e4c80a13352db659.png"></p>
+<p>此时启动你的celery beat 和worker，会发现每隔2分钟，beat会发起一个任务消息让worker执行scp_task任务</p>
+<p>注意，经测试，每添加或修改一个任务，celery beat都需要重启一次，要不然新的配置不会被celery beat进程读到</p>
+
+                
+                <hr>
+                <!-- Pager -->
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/Python-31-Python-第三方模块-Python-第三方模块之-APScheduler-定时任务/" data-toggle="tooltip" data-placement="top" title="Python 第三方模块之 APScheduler - 定时任务">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/Python-31-Python-第三方模块-Python-第三方模块之-DButils-数据库连接池/" data-toggle="tooltip" data-placement="top" title="Python 第三方模块之 DButils - 数据库连接池">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+                <!-- tip start -->
+                
+
+                
+                <div class="comment_notes">
+                    <p>
+                        study well and make progress every day; study well and progress every day; study hard and make progress every day.
+                    </p>
+                </div>
+                
+                <!-- tip end -->
+
+                <!-- Music start-->
+                
+                <!-- Music end -->
+
+                <!-- Sharing -->
+                
+                <div class="social-share"  data-wechat-qrcode-helper="" align="center"></div>
+                <!--  css & js -->
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/css/share.min.css">
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/js/social-share.min.js"></script>
+                
+                <!-- Sharing -->
+
+                <!-- gitment start -->
+                
+                <!-- gitment end -->
+
+                <!-- 来必力City版安装代码 -->
+                
+                <!-- City版安装代码已完成 -->
+
+                <!-- disqus comment start -->
+                
+                <!-- disqus comment end -->
+            </div>
+            
+            <!-- Tabe of Content -->
+            <!-- Table of Contents -->
+
+    
+      
+        <aside id="sidebar">
+          <div id="toc" class="toc-article">
+          <strong class="toc-title">Contents</strong>
+          
+            
+              <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#Celery简单介绍"><span class="toc-nav-number">1.</span> <span class="toc-nav-text">Celery简单介绍</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#Celery有以下优点"><span class="toc-nav-number">1.1.</span> <span class="toc-nav-text">Celery有以下优点</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#Celery基本工作流程图"><span class="toc-nav-number">1.2.</span> <span class="toc-nav-text">Celery基本工作流程图</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#Celery安装使用"><span class="toc-nav-number">2.</span> <span class="toc-nav-text">Celery安装使用</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#使用-Celery"><span class="toc-nav-number">3.</span> <span class="toc-nav-text">使用 Celery</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#在项目中如何使用celery"><span class="toc-nav-number">4.</span> <span class="toc-nav-text">在项目中如何使用celery</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#Celery-定时任务"><span class="toc-nav-number">5.</span> <span class="toc-nav-text">Celery 定时任务</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#更复杂的定时配置"><span class="toc-nav-number">5.1.</span> <span class="toc-nav-text">更复杂的定时配置</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#最佳实践之与django结合"><span class="toc-nav-number">6.</span> <span class="toc-nav-text">最佳实践之与django结合</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#django中使用计划任务功能"><span class="toc-nav-number">7.</span> <span class="toc-nav-text">django中使用计划任务功能</span></a></li></ol>
+            
+          
+          </div>
+        </aside>
+      
+    
+
+                
+            <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <!-- no hr -->
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+                       
+                          <a class="tag" href="/tags/#Python" title="Python">Python</a>
+                        
+                          <a class="tag" href="/tags/#Python 第三方模块" title="Python 第三方模块">Python 第三方模块</a>
+                        
+                    </div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+
+                    
+                        <li><a href="https://blog.csdn.net/fenglepeng" target="_blank">Feng Lepeng&#39;s CSDN</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("https://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'hover',
+          placement: 'left',
+          icon: 'ℬ'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+
+
+<style  type="text/css">
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+
+                
+                    <li>
+                        <a target="_blank"  href="https://github.com/flepeng">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy;
+                    <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">京ICP备18055501号-2</a>;
+                    Feng Lepeng 2024
+                    <br>
+                    Powered by 
+                    <a href="https://github.com/dusign/hexo-theme-snail" target="_blank" rel="noopener">
+                        <i>hexo-theme-snail</i>
+                    </a> | 
+                    <iframe name="star" style="margin-left: 2px; margin-bottom:-5px;" frameborder="0" scrolling="0"
+                        width="100px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=flepeng&repo=hexo-theme-lp&type=star">
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+
+</footer>
+
+<!-- jQuery -->
+
+<script src="/js/jquery.min.js"></script>
+
+
+<!-- Bootstrap Core JavaScript -->
+
+<script src="/js/bootstrap.min.js"></script>
+
+
+<!-- Custom Theme JavaScript -->
+
+<script src="/js/hux-blog.min.js"></script>
+
+
+<!-- Search -->
+
+<script src="/js/search.js"></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("https://flepeng.github.io/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("https://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-XXXXXXXX-X';
+    var _gaDomain = 'yoursite';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+
+<!-- Baidu Tongji -->
+
+
+<!-- Search -->
+
+    <script type="text/javascript">      
+        var search_path = "search.xml";
+        if (search_path.length == 0) {
+            search_path = "search.xml";
+        }
+    var path = "/" + search_path;
+    searchFunc(path, 'local-search-input', 'local-search-result');
+    </script>
+
+
+<!-- busuanzi -->
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+
+	<a id="rocket" href="#top" class=""></a>
+	<script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+    <script type="text/javascript" src="/js/toc.js?v=1.0.0" async=""></script>
+
+    
+        <!-- background effects line -->
+        
+
+        
+            <script type="text/javascript" src="/js/mouse-click.js" content='[&quot;🌱&quot;,&quot;just do it&quot;,&quot;🍀&quot;]' color='[&quot;rgb(121,93,179)&quot; ,&quot;rgb(76,180,231)&quot; ,&quot;rgb(184,90,154)&quot;]'></script>
+        
+
+        <!-- background effects end -->
+    
+
+    <!--<script size="50" alpha='0.3' zIndex="-999" src="/js/ribbonStatic.js"></script>-->
+    
+        <script src="/js/ribbonDynamic.js"></script>
+    
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+
+</html>

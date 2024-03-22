@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <script data-ad-client="ca-pub-2488174175014870" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> <!-- google ad -->
+    <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+    <meta name="baidu-site-verification" content="093lY4ziMu" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="description" content="博主用来记录和分享一些日常学到的知识">
+    <meta name="keyword"  content="hexo, java，python">
+    <link rel="shortcut icon" href="/img/hexo/ironman-draw.png">
+    <!-- Place this tag in your head or just before your close body tag. -->
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <!--<link href='http://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>-->
+    <title>
+        
+          MySQL 锁 - Python技术分享
+        
+    </title>
+
+    <link rel="canonical" href="https://flepeng.github.io/041-MySQL-41-底层原理-MySQL-锁/">
+
+    <!-- Bootstrap Core CSS -->
+    
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+
+
+    <!-- Custom CSS --> 
+    
+        
+<link rel="stylesheet" href="/css/dusign-light.css">
+
+        
+<link rel="stylesheet" href="/css/dusign-common-light.css">
+
+        
+<link rel="stylesheet" href="/css/font-awesome.css">
+
+        
+<link rel="stylesheet" href="/css/toc.css">
+
+        <!-- background effects end -->
+    
+    
+    <!-- Pygments Highlight CSS -->
+    
+<link rel="stylesheet" href="/css/highlight.css">
+
+
+    
+<link rel="stylesheet" href="/css/widget.css">
+
+
+    
+<link rel="stylesheet" href="/css/rocket.css">
+
+
+    
+<link rel="stylesheet" href="/css/signature.css">
+
+
+    
+<link rel="stylesheet" href="/css/fonts.googleapis.css">
+
+
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+
+    <!-- photography -->
+    
+<link rel="stylesheet" href="/css/photography.css">
+
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- background effects start -->
+    
+    <!-- background effects end -->
+
+	<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        
+            
+                background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('/img/header_img/archive-bg.jpg')
+                /*post*/
+            
+        
+    }
+    
+    #signature{
+        background-image: url('/img/hexo/signature/dusign.png');
+    }
+    
+</style>
+
+<header class="intro-header" >
+    <!-- Signature -->
+    <div id="signature">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                
+                    <div class="post-heading">
+                        <div class="tags">
+                            
+                              <a class="tag" href="/tags/#MySQL" title="MySQL">MySQL</a>
+                            
+                        </div>
+                        <h1>MySQL 锁</h1>
+                        <h2 class="subheading"></h2>
+                        <span class="meta">
+                            Posted by Lepeng on
+                            2020-08-08
+                        </span>
+
+                        
+                            <div class="blank_box"></div>
+                            <span class="meta">
+                                Words <span class="post-count">3.8k</span> and
+                                Reading Time <span class="post-count">13</span> Minutes
+                            </span>
+                            <div class="blank_box"></div>
+                            <!-- 不蒜子统计 start -->
+                            <span class="meta">
+                                Viewed <span id="busuanzi_value_page_pv"><i class="fa fa-spinner fa-spin"></i></span> Times
+                            </span>
+                            <!-- 不蒜子统计 end -->
+                        
+
+                    </div>
+                
+
+                </div>
+            </div>
+        </div>      
+    </div>
+
+    
+    <div class="waveWrapper">
+        <div class="wave wave_before" style="background-image: url('/img/wave-light.png')"></div>
+        <div class="wave wave_after" style="background-image: url('/img/wave-light.png')"></div>
+    </div>
+    
+</header>
+
+	
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Lepeng</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+
+                    
+
+                        
+                    
+
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/about/">About</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/archive/">Archives</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/categories/">Categories</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/tags/">Tags</a>
+                        </li>
+                        
+                    
+                    
+                    
+                    <li>
+                        <a href="http://flepeng.com" target="_blank">chinese_blog</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Main Content -->
+    <!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+            <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <blockquote>
+<p>官网保平安：<a href="https://www.mysql.com/" target="_blank" rel="noopener">https://www.mysql.com/</a><br>MySQL 思维导图：<a href="https://www.processon.com/view/link/63bc2c8ea82ed9463ba99f38" target="_blank" rel="noopener">https://www.processon.com/view/link/63bc2c8ea82ed9463ba99f38</a></p>
+</blockquote>
+<h2 id="MySQL-中有哪几种锁-★★★"><a href="#MySQL-中有哪几种锁-★★★" class="headerlink" title="MySQL 中有哪几种锁 ★★★"></a>MySQL 中有哪几种锁 ★★★</h2><p>按锁粒度从大到小分类：<strong>表锁、页锁和行锁</strong> 以及特殊场景下使用的 <strong>全局锁</strong></p>
+<ul>
+<li><p>表锁：表级别的锁定是 MySQL 各存储引擎中<strong>最大颗粒度</strong>的锁定机制。该锁定机制最大的特点是实现逻辑非常简单，带来的系统负面影响最小。所以获取锁和释放锁的速度很快。<strong>由于表级锁一次会将整个表锁定</strong>，所以可以很好的<strong>避免困扰我们的死锁问题</strong>。常用表级锁主要是 MyISAM 引擎。</p>
+</li>
+<li><p>行锁：与表锁正相反，行锁最大的特点就是<strong>锁定对象的颗粒度很小</strong>，也是目前各大数据库管理软件所实现的锁定颗粒度最小的。由于锁定颗粒度很小，所以发生锁定<strong>资源争用的概率也最小</strong>，能够给予应用程序尽可能大的并发处理能力从而提高系统的整体性能。<br>虽然能够在并发处理能力上面有较大的优势，但是行级锁定也因此带来了不少弊端。由于锁定资源的颗粒度很小，所以每次获取锁和释放锁需要做的事情也更多，带来的消耗自然也就更大了。此外，<strong>行级锁定也最容易发生死锁。</strong><br>InnoDB 的行锁是针对索引字段加的锁，表级锁是针对非索引字段加的锁。当我们执行 UPDATE、DELETE 语句时，如果 WHERE 条件中字段没有命中索引或者索引失效的话，就会导致扫描全表对表中的所有记录进行加锁，很多时候即使用了索引也有可能会走全表扫描，这是因为 MySQL 优化器的原因。<br>由于 MVCC 的存在，对于一般的 SELECT 语句，InnoDB 不会加任何锁，因为一般的 SELECT 语句都是当前读。</p>
+</li>
+<li><p>页锁：相对偏中性的页级锁，页锁是 MySQL 中比较独特的一种锁定级别，在其他数据库管理软件中也并不是太常见。页级锁定的特点是<strong>锁定颗粒度介于行级锁定与表级锁之间</strong>，所以获取锁定所需要的资源开销，以及所能提供的并发处理能力也同样是介于上面二者之间。另外，页级锁定和行级锁定一样，会发生死锁。</p>
+</li>
+<li><p>全局锁：是对整个<strong>数据库实例加锁</strong>。使用场景一般在全库逻辑备份时。</p>
+</li>
+</ul>
+<p>如果按锁级别分类则有：<strong>共享锁（Share Lock，S 锁，读锁）、排他锁（Exclusive Lock，X 锁，写锁，独占锁）</strong>。不论是表级锁还是行级锁，都存在共享锁和排他锁这两类。</p>
+<ul>
+<li><p>共享锁：事务在读取记录的时候获取共享锁，允许多个事务同时获取（锁兼容）。</p>
+</li>
+<li><p>排他锁：事务在修改记录的时候获取排他锁，不允许多个事务同时获取。如果一个记录已经被加了排他锁，那其他事务不能再对这条事务加任何类型的锁（锁不兼容）。</p>
+</li>
+</ul>
+<p>面向编程的两种锁思想：<strong><strong>悲观锁、乐观锁</strong></strong>。</p>
+<ul>
+<li><p>悲观锁：就是比较悲观的锁，总是假设最坏的情况，每次去拿数据的时候都认为别人会修改，所以每次在拿数据的时候都会上锁，直到操作完成之后才会释放锁，在上锁期间其他人不能操作数据。<br>比较适合用在 DB 写大于读的情况。<br>通常来讲，在数据库上的悲观锁需要数据库本身提供支持，即通过常用的 <code>SELECT … FOR UPDATE</code> 操作来实现悲观锁。当执行 <code>SELECT … FOR UPDATE</code> 时会获取被 SELECT 中的数据行的行锁，因此其他并发执行的 <code>SELECT … FOR UPDATE</code> 如果试图选中同一行则会发生排斥（需要等待行锁被释放），因此达到锁的效果。<br><code>SELECT … FOR UPDATE</code> 获取的行锁会在当前事务结束时自动释放，因此必须在事务中使用。<br>需要特别注意的是，不同的数据库对 <code>SELECT … FOR UPDATE</code> 的实现和支持都是有所区别的，例如 Oracle 支持 <code>SELECT FOR UPDATE no wait</code> 表示如果拿不到锁立刻报错，而不是等待，MySQL 没有 no wait 这个选项。另外，MySQL 还有个问题是：<code>SELECT … FOR UPDATE</code> 语句执行中所有扫描过的行都会被锁上，这一点很容易造成问题。因此，如果在 MySQL 中用悲观锁务必要确定使用了索引，而不是全表扫描。</p>
+</li>
+<li><p>乐观锁：总是假设最好的情况，每次去拿数据的时候都认为别人不会修改，所以不会上锁，但是在更新的时候会判断一下在此期间别人有没有去更新这个数据，如果别人修改了数据则放弃操作，否则执行操作。<br>可以使用<strong>版本号机制</strong>和<strong>CAS算法</strong>实现，适用于多读的应用类型，这样可以提高吞吐量。</p>
+<ul>
+<li>CAS是一种无锁算法，CAS有3个操作数，内存值V，旧的预期值A，要修改的新值B。当且仅当预期值A和内存值V相同时，将内存值V修改为B，否则什么都不做。</li>
+</ul>
+<p>乐观锁在数据库上的实现完全是逻辑的，不需要数据库提供特殊的支持。一般的做法是在需要锁的数据上增加一个版本号或者时间戳，然后按照如下方式实现：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">1.  SELECT data AS old_data, version AS old_version FROM …;</span><br><span class="line">2.  根据获取的数据进行业务操作，得到new_data和new_version</span><br><span class="line">3.  UPDATE SET data &#x3D; new_data, version &#x3D; new_version WHERE version &#x3D; old_version</span><br><span class="line">    if (updated row &gt; 0) &#123;</span><br><span class="line">        &#x2F;&#x2F; 乐观锁获取成功，操作完成</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        &#x2F;&#x2F; 乐观锁获取失败，回滚并重试</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>乐观锁是否在事务中其实都是无所谓的，其底层机制是这样：在数据库内部 update 同一行的时候是不允许并发的，即数据库每次执行一条 update 语句时会获取被 update 行的写锁，直到这一行被成功更新后才释放。因此在业务操作进行前获取需要锁的数据的当前版本号，然后实际更新数据时再次对比版本号确认与之前获取的相同，并更新版本号，即可确认这其间没有发生并发的修改。如果更新失败，即可认为老版本的数据已经被并发修改掉而不存在了，此时认为获取锁失败，需要回滚整个业务操作并可根据需要重试整个过程。</p>
+</li>
+<li><p>悲观锁与乐观锁的应用场景<br>一般情况下，读多写少更适合用乐观锁，读少写多更适合用悲观锁。乐观锁在不发生取锁失败的情况下开销比悲观锁小，但是一旦发生失败回滚开销则比较大，因此适合用在取锁失败概率比较小的场景，可以提升系统并发性能。</p>
+</li>
+</ul>
+<p>意向锁是加在表级别的一个锁，分为<strong>意向共享（读）锁（IS）、意向排他（写）锁（IX）</strong>。意向锁，顾名思义，就是指明接下来要做的是一个什么类型的操作。</p>
+<ul>
+<li><p>意向共享锁：在准备给表数据添加一个S锁时，需要先获得该表的IS锁。</p>
+</li>
+<li><p>意向排他锁：在准备给表数据添加一个X锁时，需要先获得该表的IX锁。</p>
+</li>
+</ul>
+<p>意向锁的出现还有一个主要原因是为了在支持不同粒度锁时，能有更高的效率。比如：</p>
+<ol>
+<li>事务A 对 表T 中的某一数据行添加了行锁。</li>
+<li>这时 事务B 要对 表T 添加 表X锁，但是在添加之前需要先检查是否有其他事务持有该表的X锁和行X锁，如果持有则要阻塞。<ul>
+<li>对于表X锁，事务B 可以直接判断是否有其他事务是有，</li>
+<li>对于行X锁，事务B 只能通过遍历 表T 中的所有行是否有锁，这样判断效率很低，非常耗时。</li>
+</ul>
+</li>
+</ol>
+<p>意向锁就是为了解决上述的问题。意向锁是表级别的锁，上述过程变成了：</p>
+<ol>
+<li>在 事务A 在更新数据添加行锁之前，会在表级别由数据库自动添加一个IX锁。</li>
+<li>当 事务B 在需要获取 X锁 时，只需要检查表级别是否有 IX锁，如果有 IX锁 代表当前有其他事务正在对表或者表中数据执行写操作，不能加锁成功。</li>
+</ol>
+<p><strong>意向锁为自动添加</strong></p>
+<p>锁的颗粒度：在给定的资源上，锁定的数据量越少，则系统的并发程度越高，如果系统花费大量的时间来管理锁，而不是存取数据，那么系统的性能可能会因此受到影响。</p>
+<h2 id="怎么加读锁和写锁-★★★"><a href="#怎么加读锁和写锁-★★★" class="headerlink" title="怎么加读锁和写锁 ★★★"></a>怎么加读锁和写锁 ★★★</h2><p>读锁和写锁均阻塞不了 <strong>快照读</strong>。</p>
+<h3 id="写锁"><a href="#写锁" class="headerlink" title="写锁"></a>写锁</h3><p>语法：<code>SELECT … FOR UPDATE</code></p>
+<p>加锁之后另一个线程只可以 <strong>快照读</strong>，不可以修改。</p>
+<ul>
+<li>若一个线程 <code>FOR UPDATE</code> 执行锁住某行数据，另一个线程读取的时候，sql 里没有<code>FOR UPDATE</code>，则可以正常读取，因为 没有 <code>FOR UPDATE</code> 是快照读（快照读不需要加锁）。</li>
+<li><code>FOR UPDATE</code> 如果使用索引字段（一般为主键）进行筛选，则获取的是行级别锁，只会锁定筛选出的数据，如：<code>SELECT * FROM tb WHERE ai=2 FOR UPDATE</code>。</li>
+<li><code>FOR UPDATE</code> 没有使用索引字段，则获取的是表锁。</li>
+</ul>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 进程1</span></span><br><span class="line"><span class="keyword">SET</span> AUTOCOMMIT;</span><br><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> tb <span class="keyword">FOR</span> <span class="keyword">UPDATE</span> ;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 进程2：</span></span><br><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> tb;  <span class="comment">--不会阻塞</span></span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> tb(myname, <span class="keyword">id</span>) <span class="keyword">VALUES</span>(<span class="string">"1"</span>, <span class="number">200</span>);  <span class="comment">-- 阻塞</span></span><br><span class="line"><span class="keyword">UPDATE</span> tb <span class="keyword">SET</span> myname=<span class="string">"2"</span>  <span class="comment">-- 阻塞</span></span><br></pre></td></tr></table></figure>
+
+
+<h3 id="读锁"><a href="#读锁" class="headerlink" title="读锁"></a>读锁</h3><p>语法：<code>SELECT … FOR SHARE</code> 和 <code>SELECT … LOCK IN SHARE MODE</code>。<code>FOR SHARE</code> 是 <code>LOCK IN SHARE MODE</code> 的替代品，但是 <code>LOCK IN SHARE MODE</code> 仍然可以向后兼容。</p>
+<p>上锁之后，另一个线程可以读，但不能修改。</p>
+<h2 id="InnoDB-有哪几类行锁"><a href="#InnoDB-有哪几类行锁" class="headerlink" title="InnoDB 有哪几类行锁"></a>InnoDB 有哪几类行锁</h2><blockquote>
+<p><a href="https://blog.csdn.net/qq_53267860/article/details/125338623" target="_blank" rel="noopener">https://blog.csdn.net/qq_53267860/article/details/125338623</a></p>
+</blockquote>
+<p>InnoDB 支持三种行锁定方式：</p>
+<ul>
+<li><p>记录锁（Record Lock）：记录锁只存在于使用唯一索引和主键索引中，锁定单条索引记录。</p>
+<ul>
+<li>例如：<code>SELECT * FROM table WHERE id = 1 FOR UPDATE;</code> id 为 1 的记录行会被锁住。</li>
+<li>需要注意的是：id 列必须为唯一索引列或主键列，否则上述语句加的锁就会变成临键锁。</li>
+<li>同时查询语句必须为精准匹配（&#x3D;），不能为 &gt;、&lt;、like等，否则也会退化成临键锁。</li>
+</ul>
+</li>
+<li><p>间隙锁（Gap Lock）：锁定一个范围，不包括记录本身。间隙锁存在于非唯一索引和主键索引中，锁定开区间范围内的一段间隔，它是基于临键锁实现的。</p>
+<ul>
+<li>例如：<code>SELECT * FROM table WHERE id BETWEN 1 AND 10 FOR UPDATE;</code> 所有在（1，10）区间内的记录行都会被锁住，所有id 为 2、3、4、5、6、7、8、9 的数据行的插入会被阻塞，但是 1 和 10 两条记录行并不会被锁住。</li>
+</ul>
+</li>
+<li><p>临键锁（Next-key Lock）：其实就是 Record Lock+Gap Lock，锁定一个范围，包含记录本身。记录锁只能锁住已经存在的记录，为了避免插入新记录，需要依赖间隙锁。</p>
+</li>
+</ul>
+<p>InnoDB 的默认隔离级别 REPEATABLE-READ（可重读）是可以解决幻读问题发生的，主要有下面两种情况：</p>
+<ul>
+<li>快照读：由 MVCC 机制来保证不出现幻读。</li>
+<li>当前读：使用 Next-Key Lock 进行加锁来保证不出现幻读。</li>
+</ul>
+<h2 id="索引与锁有什么关系"><a href="#索引与锁有什么关系" class="headerlink" title="索引与锁有什么关系"></a>索引与锁有什么关系</h2><h3 id="InnoDB"><a href="#InnoDB" class="headerlink" title="InnoDB"></a>InnoDB</h3><ul>
+<li><p>对于 UPDATE、DELETE、INSERT 语句，InnoDB 会自动给涉及到的数据集加<strong>写锁</strong></p>
+</li>
+<li><p>对于 SELECT 语句，InnoDB 默认不会加任何锁类型，我们可以手动加锁，如使用 <code>SELECT … FOR UPDATE</code> 加写锁，使用 <code>SELECT … FOR SHARE</code> 或 <code>SELECT … LOCK IN SHARE MODE</code> 加读锁。</p>
+</li>
+</ul>
+<p>加过排他锁（写锁）的数据行，其他事务中是不能修改其数据的，也不能通过 <code>FOR UPDATE</code> 和 <code>LOCK IN SHARE MODE</code> 锁的方式查询数据；但可以直接通过 <code>SELECT … FROM</code> 查询数据，因为普通查询是快照读，没有任何锁机制。</p>
+<p><strong>索引和锁的关系</strong>：</p>
+<ol>
+<li><p>InnoDB 的行锁是通过给索引的索引项加锁来实现的。</p>
+<ul>
+<li>唯一索引、主键索引<ul>
+<li>对于指定查询某一条记录的加锁语句，如果该记录不存在，会产生记录锁和间隙锁，如果记录存在，则只会产生记录锁，如：<code>WHERE id=5 FOR UPDATE;</code></li>
+<li>对于查找某一范围内的查询语句，会产生间隙锁，如：<code>WHERE id BETWEEN 5 AND 7 FOR UPDATE;</code></li>
+</ul>
+</li>
+<li>普通索引<ul>
+<li>在普通索引列上，不管是何种查询，只要加锁，都会产生间隙锁或者临键锁，这跟唯一索引不一样。<ol>
+<li>命中记录时（包括&gt;&#x3D;和between），锁记录所在索引区间和前一个索引区间（临键锁）</li>
+<li>未命中记录时，锁记录所在索引区间（间隙锁）</li>
+</ol>
+</li>
+<li>在普通索引跟唯一索引中，数据间隙的分析，数据行是优先根据普通索引排序，再根据唯一索引排序。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>不通过索引条件查询时，InnoDB 一定会使用表锁（因为没有索引只能全表扫描）。</p>
+</li>
+<li><p>即便在条件中使用了索引字段，但是否使用索引来检索数据是由 MySQL 通过判断不同执行计划的代价来决定的，如果 MySQL 认为全表扫描效率更高，比如对一些很小的表，它就不会使用索引，这种情况下 InnoDB 将使用表锁，而不是行锁。因此，在分析锁冲突时，别忘了检查SQL的执行计划，以确认是否真正使用了索引。</p>
+</li>
+</ol>
+<h3 id="MyISAM"><a href="#MyISAM" class="headerlink" title="MyISAM"></a>MyISAM</h3><ul>
+<li>MyISAM 在执行查询语句 SELECT 前，会自动给涉及的所有表加 <strong>读锁</strong>，</li>
+<li>MyISAM 在执行更新操作（UPDATE、DELETE、INSERT等）前，会自动给涉及的表加 <strong>写锁</strong>，这个过程并不需要用户干预。</li>
+</ul>
+<h2 id="锁和事务隔离级别的关系"><a href="#锁和事务隔离级别的关系" class="headerlink" title="锁和事务隔离级别的关系"></a>锁和事务隔离级别的关系</h2><p>MySQL 中 InnoDB 提供事务。数据库并发场景一般有三种：</p>
+<ul>
+<li>【读-读】：不存在任何问题，不需要并发控制。</li>
+<li>【读-写】：有线程安全问题，可能会造成事务隔离性问题，可能会有脏读，幻读，不可重复读。</li>
+<li>【写-写】：有线程安全问题，可能会存在更新丢失问题。</li>
+</ul>
+<p>那么【读-写】和【写-写】问题怎么解决呢：</p>
+<ul>
+<li>MVCC + 悲观锁：MVCC 解决【读-写】冲突，悲观锁解决【写-写】冲突。<ul>
+<li>MVCC 解决快照读的冲突。悲观锁（也就是读锁和写锁）解决当前读和【写-写】冲突，悲观锁 InnoDB 已实现。</li>
+</ul>
+</li>
+<li>MVCC + 乐观锁：MVCC 解决【读-写】冲突，乐观锁解决【写-写】冲突。<ul>
+<li>MVCC 解决快照读的冲突。乐观锁（其实就是不加锁，如果内容变更，则放弃查询和更新）解决当前读和【写-写】冲突，乐观锁由用户自己实现。</li>
+</ul>
+</li>
+</ul>
+
+                
+                <hr>
+                <!-- Pager -->
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/041-MySQL-41-底层原理-MySQL-索引为什么使用B-Tree/" data-toggle="tooltip" data-placement="top" title="MySQL 索引为什么使用 B+Tree">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/041-MySQL-41-底层原理-MySQL-索引/" data-toggle="tooltip" data-placement="top" title="MySQL 索引">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+                <!-- tip start -->
+                
+
+                
+                <div class="comment_notes">
+                    <p>
+                        study well and make progress every day; study well and progress every day; study hard and make progress every day.
+                    </p>
+                </div>
+                
+                <!-- tip end -->
+
+                <!-- Music start-->
+                
+                <!-- Music end -->
+
+                <!-- Sharing -->
+                
+                <div class="social-share"  data-wechat-qrcode-helper="" align="center"></div>
+                <!--  css & js -->
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/css/share.min.css">
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/js/social-share.min.js"></script>
+                
+                <!-- Sharing -->
+
+                <!-- gitment start -->
+                
+                <!-- gitment end -->
+
+                <!-- 来必力City版安装代码 -->
+                
+                <!-- City版安装代码已完成 -->
+
+                <!-- disqus comment start -->
+                
+                <!-- disqus comment end -->
+            </div>
+            
+            <!-- Tabe of Content -->
+            <!-- Table of Contents -->
+
+    
+      
+        <aside id="sidebar">
+          <div id="toc" class="toc-article">
+          <strong class="toc-title">Contents</strong>
+          
+            
+              <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#MySQL-中有哪几种锁-★★★"><span class="toc-nav-number">1.</span> <span class="toc-nav-text">MySQL 中有哪几种锁 ★★★</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#怎么加读锁和写锁-★★★"><span class="toc-nav-number">2.</span> <span class="toc-nav-text">怎么加读锁和写锁 ★★★</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#写锁"><span class="toc-nav-number">2.1.</span> <span class="toc-nav-text">写锁</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#读锁"><span class="toc-nav-number">2.2.</span> <span class="toc-nav-text">读锁</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#InnoDB-有哪几类行锁"><span class="toc-nav-number">3.</span> <span class="toc-nav-text">InnoDB 有哪几类行锁</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#索引与锁有什么关系"><span class="toc-nav-number">4.</span> <span class="toc-nav-text">索引与锁有什么关系</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#InnoDB"><span class="toc-nav-number">4.1.</span> <span class="toc-nav-text">InnoDB</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#MyISAM"><span class="toc-nav-number">4.2.</span> <span class="toc-nav-text">MyISAM</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#锁和事务隔离级别的关系"><span class="toc-nav-number">5.</span> <span class="toc-nav-text">锁和事务隔离级别的关系</span></a></li></ol>
+            
+          
+          </div>
+        </aside>
+      
+    
+
+                
+            <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <!-- no hr -->
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+                       
+                          <a class="tag" href="/tags/#MySQL" title="MySQL">MySQL</a>
+                        
+                    </div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+
+                    
+                        <li><a href="https://blog.csdn.net/fenglepeng" target="_blank">Feng Lepeng&#39;s CSDN</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("https://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'hover',
+          placement: 'left',
+          icon: 'ℬ'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+
+
+<style  type="text/css">
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+
+                
+                    <li>
+                        <a target="_blank"  href="https://github.com/flepeng">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy;
+                    <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">京ICP备18055501号-2</a>;
+                    Feng Lepeng 2024
+                    <br>
+                    Powered by 
+                    <a href="https://github.com/dusign/hexo-theme-snail" target="_blank" rel="noopener">
+                        <i>hexo-theme-snail</i>
+                    </a> | 
+                    <iframe name="star" style="margin-left: 2px; margin-bottom:-5px;" frameborder="0" scrolling="0"
+                        width="100px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=flepeng&repo=hexo-theme-lp&type=star">
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+
+</footer>
+
+<!-- jQuery -->
+
+<script src="/js/jquery.min.js"></script>
+
+
+<!-- Bootstrap Core JavaScript -->
+
+<script src="/js/bootstrap.min.js"></script>
+
+
+<!-- Custom Theme JavaScript -->
+
+<script src="/js/hux-blog.min.js"></script>
+
+
+<!-- Search -->
+
+<script src="/js/search.js"></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("https://flepeng.github.io/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("https://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-XXXXXXXX-X';
+    var _gaDomain = 'yoursite';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+
+<!-- Baidu Tongji -->
+
+
+<!-- Search -->
+
+    <script type="text/javascript">      
+        var search_path = "search.xml";
+        if (search_path.length == 0) {
+            search_path = "search.xml";
+        }
+    var path = "/" + search_path;
+    searchFunc(path, 'local-search-input', 'local-search-result');
+    </script>
+
+
+<!-- busuanzi -->
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+
+	<a id="rocket" href="#top" class=""></a>
+	<script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+    <script type="text/javascript" src="/js/toc.js?v=1.0.0" async=""></script>
+
+    
+        <!-- background effects line -->
+        
+
+        
+            <script type="text/javascript" src="/js/mouse-click.js" content='[&quot;🌱&quot;,&quot;just do it&quot;,&quot;🍀&quot;]' color='[&quot;rgb(121,93,179)&quot; ,&quot;rgb(76,180,231)&quot; ,&quot;rgb(184,90,154)&quot;]'></script>
+        
+
+        <!-- background effects end -->
+    
+
+    <!--<script size="50" alpha='0.3' zIndex="-999" src="/js/ribbonStatic.js"></script>-->
+    
+        <script src="/js/ribbonDynamic.js"></script>
+    
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+
+</html>

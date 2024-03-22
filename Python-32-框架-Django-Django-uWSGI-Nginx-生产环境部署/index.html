@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <script data-ad-client="ca-pub-2488174175014870" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> <!-- google ad -->
+    <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+    <meta name="baidu-site-verification" content="093lY4ziMu" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="description" content="博主用来记录和分享一些日常学到的知识">
+    <meta name="keyword"  content="hexo, java，python">
+    <link rel="shortcut icon" href="/img/hexo/ironman-draw.png">
+    <!-- Place this tag in your head or just before your close body tag. -->
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <!--<link href='http://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>-->
+    <title>
+        
+          使用 Django + uWSGI + Nginx 部署 Django - Python技术分享
+        
+    </title>
+
+    <link rel="canonical" href="https://flepeng.github.io/Python-32-框架-Django-Django-uWSGI-Nginx-生产环境部署/">
+
+    <!-- Bootstrap Core CSS -->
+    
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+
+
+    <!-- Custom CSS --> 
+    
+        
+<link rel="stylesheet" href="/css/dusign-light.css">
+
+        
+<link rel="stylesheet" href="/css/dusign-common-light.css">
+
+        
+<link rel="stylesheet" href="/css/font-awesome.css">
+
+        
+<link rel="stylesheet" href="/css/toc.css">
+
+        <!-- background effects end -->
+    
+    
+    <!-- Pygments Highlight CSS -->
+    
+<link rel="stylesheet" href="/css/highlight.css">
+
+
+    
+<link rel="stylesheet" href="/css/widget.css">
+
+
+    
+<link rel="stylesheet" href="/css/rocket.css">
+
+
+    
+<link rel="stylesheet" href="/css/signature.css">
+
+
+    
+<link rel="stylesheet" href="/css/fonts.googleapis.css">
+
+
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+
+    <!-- photography -->
+    
+<link rel="stylesheet" href="/css/photography.css">
+
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- background effects start -->
+    
+    <!-- background effects end -->
+
+	<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        
+            
+                background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('/img/header_img/archive-bg.jpg')
+                /*post*/
+            
+        
+    }
+    
+    #signature{
+        background-image: url('/img/hexo/signature/dusign.png');
+    }
+    
+</style>
+
+<header class="intro-header" >
+    <!-- Signature -->
+    <div id="signature">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                
+                    <div class="post-heading">
+                        <div class="tags">
+                            
+                              <a class="tag" href="/tags/#Python" title="Python">Python</a>
+                            
+                              <a class="tag" href="/tags/#Django" title="Django">Django</a>
+                            
+                        </div>
+                        <h1>使用 Django + uWSGI + Nginx 部署 Django</h1>
+                        <h2 class="subheading"></h2>
+                        <span class="meta">
+                            Posted by Lepeng on
+                            2021-08-08
+                        </span>
+
+                        
+                            <div class="blank_box"></div>
+                            <span class="meta">
+                                Words <span class="post-count">4.9k</span> and
+                                Reading Time <span class="post-count">20</span> Minutes
+                            </span>
+                            <div class="blank_box"></div>
+                            <!-- 不蒜子统计 start -->
+                            <span class="meta">
+                                Viewed <span id="busuanzi_value_page_pv"><i class="fa fa-spinner fa-spin"></i></span> Times
+                            </span>
+                            <!-- 不蒜子统计 end -->
+                        
+
+                    </div>
+                
+
+                </div>
+            </div>
+        </div>      
+    </div>
+
+    
+    <div class="waveWrapper">
+        <div class="wave wave_before" style="background-image: url('/img/wave-light.png')"></div>
+        <div class="wave wave_after" style="background-image: url('/img/wave-light.png')"></div>
+    </div>
+    
+</header>
+
+	
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Lepeng</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+
+                    
+
+                        
+                    
+
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/about/">About</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/archive/">Archives</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/categories/">Categories</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/tags/">Tags</a>
+                        </li>
+                        
+                    
+                    
+                    
+                    <li>
+                        <a href="http://flepeng.com" target="_blank">chinese_blog</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Main Content -->
+    <!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+            <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <blockquote>
+<p>官方文档：<a href="https://uwsgi-docs.readthedocs.io/en/latest/Options.html" target="_blank" rel="noopener">https://uwsgi-docs.readthedocs.io/en/latest/Options.html</a></p>
+</blockquote>
+<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>如何在生产上部署Django?</p>
+<blockquote>
+<p>Django的部署可以有很多方式，采用 nginx+uwsgi 的方式是其中比较常见的一种方式。</p>
+</blockquote>
+<h2 id="概念介绍"><a href="#概念介绍" class="headerlink" title="概念介绍"></a>概念介绍</h2><h3 id="为什么需要web协议"><a href="#为什么需要web协议" class="headerlink" title="为什么需要web协议"></a>为什么需要web协议</h3><p>开发出的应用程序需要和服务器程序配合，才能为用户提供服务。但是不同的框架有不同的开发方式，需要有一种协议来规范不同的框架，这就是web协议。</p>
+<p>web协议本质：就是定义了Web服务器和Web应用程序或框架的一种简单而普通的接口规范。</p>
+<p>Web协议出现顺序：CGI -&gt; FCGI -&gt; WSGI -&gt; uwsgi</p>
+<ol>
+<li><strong>CGI</strong>：最早的协议</li>
+<li><strong>FCGI</strong>：比CGI快</li>
+<li><strong>WSGI</strong>：Python专用的协议</li>
+<li><strong>uwsgi</strong>：比FCGI和WSGI，是uWSGI项目自有的协议，主要特征是采用二进制来存储数据,议都是使用字符串，所以在存储空间和解析速度上，都优于字符串型协议。</li>
+</ol>
+<h3 id="WSGI是什么？"><a href="#WSGI是什么？" class="headerlink" title="WSGI是什么？"></a>WSGI是什么？</h3><ol>
+<li>WSGI是一种规范，它定义了使用Python编写的web app(django)与web server（uWSGI）之间接口格式，实现web app与web server间的解耦。</li>
+<li>WSGI没有官方的实现，因为WSGI更像一个协议，只要遵照这些协议，WSGI应用(Application)都可以在任何服务器(Server)上运行。</li>
+<li>WSGI实质：WSGI是一种描述web服务器（如nginx, uWSGI等服务器）如何与web应用程序（如用Django、Flask框架写的程序）通信的规范、协议。</li>
+</ol>
+<h3 id="uwsgi是什么？"><a href="#uwsgi是什么？" class="headerlink" title="uwsgi是什么？"></a>uwsgi是什么？</h3><ol>
+<li>它是一个二进制协议，可以携带任何类型的数据。</li>
+<li>一个uwsgi分组的4个字节描述了这个分组包含的数据类型。</li>
+<li>uwsgi是一种线路协议而不是通信协议，在此常用于在uWSGI服务器与其他网络服务器的数据通信；</li>
+</ol>
+<p><strong>uwsgi性能非常高</strong></p>
+<p><img src="/img/python/1624450446-df75b58c1a0ed8efc087487dd7142768.png"></p>
+<h3 id="uWSGI是什么？（web服务器-和-nginx类似）"><a href="#uWSGI是什么？（web服务器-和-nginx类似）" class="headerlink" title="uWSGI是什么？（web服务器 和 nginx类似）"></a>uWSGI是什么？（web服务器 和 nginx类似）</h3><ol>
+<li>uWSGI是一个全功能的HTTP服务器，实现了WSGI协议，uWSGI协议，http协议等。Nginx中HttpUwsgiModule的作用是与uWSGI服务器进行交换。</li>
+<li>uWSGI作用：它要做的就是把HTTP协议转化成语言支持的网络协议，比如把HTTP协议转化成WSGI协议，让Python可以直接使用。</li>
+<li>uWSGI特点：轻量级，易部署，性能比nginx差很多</li>
+</ol>
+<p>注：</p>
+<ul>
+<li>如果架构是Nginx+uWSGI+APP，uWSGI是一个中间件</li>
+<li>如果架构是uWSGI+APP，uWSGI是一个服务器</li>
+</ul>
+<p><strong>uWSGI的主要特点如下</strong></p>
+<ol>
+<li>超快的性能</li>
+<li>低内存占用（实测为apache2的mod_wsgi的一半左右）</li>
+<li>多app管理（终于不用冥思苦想下个app用哪个端口比较好了-.-）</li>
+<li>详尽的日志功能（可以用来分析app性能和瓶颈）</li>
+<li>高度可定制（内存大小限制，服务一定次数后重启等）</li>
+</ol>
+<p>总而言之uwgi是个部署用的好东东，正如uWSGI作者所吹嘘的：</p>
+<p><em>If you are searching for a simple wsgi-only server, uWSGI is not for you, but if you are building a real (production-ready) app that need to be rock-solid, fast and easy to distribute&#x2F;optimize for various load-average, you will pathetically and morbidly fall in love (we hope) with uWSGI.</em></p>
+<h3 id="总结：WSGI-x2F-uwsgi-x2F-uWSGI-这三个概念的区分"><a href="#总结：WSGI-x2F-uwsgi-x2F-uWSGI-这三个概念的区分" class="headerlink" title="总结：WSGI &#x2F; uwsgi &#x2F; uWSGI 这三个概念的区分"></a>总结：WSGI &#x2F; uwsgi &#x2F; uWSGI 这三个概念的区分</h3><ol>
+<li>WSGI是一种通信协议，通常用户django框架和uWSGI服务器之间通信。（如果说的更细致的话就是用来和Python WSGI model通信）</li>
+<li>uwsgi是一种线路协议而不是通信协议，在此常用于在uWSGI服务器与其他网络服务器的数据通信。</li>
+<li>而uWSGI是实现了uwsgi和WSGI等协议的Web服务器</li>
+</ol>
+<h3 id="django是什么"><a href="#django是什么" class="headerlink" title="django是什么?"></a>django是什么?</h3><p>Django是一个Web框架,框架的作用在于处理request和reponse,其他的不是框架所关心的内容。</p>
+<p>所以如何部署Django不是Django所需要关心的。</p>
+<h3 id="请求处理整体流程"><a href="#请求处理整体流程" class="headerlink" title="请求处理整体流程"></a>请求处理整体流程</h3><p>nginx接收到浏览器发送过来的http请求,将包进行解析,分析url</p>
+<p>静态文件请求：就直接访问用户给nginx配置的静态文件目录,直接返回用户请求的静态文件</p>
+<p>动态接口请求：那么nginx就将请求转发给uWSGI,最后到达Django处理</p>
+<h3 id="各模块作用"><a href="#各模块作用" class="headerlink" title="各模块作用"></a>各模块作用</h3><ol>
+<li>nginx：是对外的服务器,外部浏览器通过url访问nginx, nginx主要处理静态请求</li>
+<li>uWSGI：是对内的服务器,主要用来处理动态请求</li>
+<li>uwsgi：是一种web协议,接收到请求之后将包进行处理,处理成wsgi可以接受的格式,并发给wsgi</li>
+<li>WSGI：是python专用的web协议,根据请求调用应用程序(django)的某个文件,某个文件的某个函数</li>
+<li>django：是真正干活的，查询数据等资源,把处理的结果再次返回给WSGI，WSGI将返回值进行打包,打包成uwsgi能够接收的格式</li>
+<li>uwsgj接收wsgi发送的请求,并转发给nginx,nginx最终将返回值返回给浏览器</li>
+</ol>
+<h3 id="Django-uWSGI方案"><a href="#Django-uWSGI方案" class="headerlink" title="Django + uWSGI方案"></a>Django + uWSGI方案</h3><p>没有nginx而只有uwsgi的服务器,则是Internet请求直接由uwsgi处理,并反馈到web项目中。</p>
+<p>nginx可以实现安全过滤,防DDOS等保护安全的操作,并且如果配置了多台服务器, nginx可以保证服务器的负载相对均衡.</p>
+<p>而uWSGI则是一个web服务器,实现了WSGI协议(Web Server Gateway Interface), http协议等,它可以接收和处理请求,发出响应等。所以只用uwsgi也是可以的。</p>
+<h3 id="nginx和uWSGI特点"><a href="#nginx和uWSGI特点" class="headerlink" title="nginx和uWSGI特点"></a>nginx和uWSGI特点</h3><ol>
+<li><p>nginx的作用<br>反向代理,可以拦截一些web攻击,保护后端的web服务器<br>负载均衡,根据轮询算法,分配请求到多节点web服务器<br>缓存静态资源,加快访问速度,释放web服务器的内存占用专项专用</p>
+</li>
+<li><p>uWSGI的适用<br>单节点服务器的简易部署<br>轻量级，好部署</p>
+</li>
+</ol>
+<h2 id="uWSGI安装使用"><a href="#uWSGI安装使用" class="headerlink" title="uWSGI安装使用"></a>uWSGI安装使用</h2><h3 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">pip install uwsgi</span><br><span class="line"># ... or if you want to install the latest LTS (long term support) release,</span><br><span class="line">pip install https:&#x2F;&#x2F;projects.unbit.it&#x2F;downloads&#x2F;uwsgi-lts.tar.gz</span><br></pre></td></tr></table></figure>
+
+<p>基本测试</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">Create a file called test.py:</span><br><span class="line"># test.py</span><br><span class="line">def application(env, start_response):</span><br><span class="line">    start_response(&#39;200 OK&#39;, [(&#39;Content-Type&#39;,&#39;text&#x2F;html&#39;)])</span><br><span class="line">    return [b&quot;Hello World&quot;] # python3</span><br><span class="line">    #return [&quot;Hello World&quot;] # python2</span><br><span class="line"></span><br><span class="line"># 运行</span><br><span class="line">uwsgi --http :8000 --wsgi-file test.py</span><br><span class="line"></span><br><span class="line"># 在浏览器内输入：http:&#x2F;&#x2F;127.0.0.1:8001，查看是否有&quot;Hello World&quot;输出，若没有输出，检查安装过程。</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="uwsgi-参数解析"><a href="#uwsgi-参数解析" class="headerlink" title="uwsgi 参数解析"></a>uwsgi 参数解析</h3><p>下面列举了常用的 uWSGI 的配置选项，每一个选项都可以使用在任何一种支持的配置方式里（如命令行参数、环境变量、xml文件、ini文件、yaml格式文件以及LDAP）。有些选项的使用需要某些插件的支持。</p>
+<p>当使用某一种配置风格或者将一种风格转换另一个风格时，需要注意一下规则：</p>
+<ul>
+<li><p>命令行参数（command line args）：需要给选项增加“–”前缀。</p>
+<ul>
+<li>例如socket选项：<code>--socket</code></li>
+</ul>
+</li>
+<li><p>环境变量（environment variable）：选项名都要换成大写，并且加上“UWSGI_”前缀，所有原来选项名中的“-”都要换成下划线“_”</p>
+<ul>
+<li>例如max-vars选项将变成：<code>UWSGI_MAX_VARS=&quot;&quot;</code></li>
+</ul>
+</li>
+<li><p>xml文件：xml文件中的根结点应该是，所有的选项值是作为文本节点。标识符类型的选项可以没有对应的值。</p>
+<ul>
+<li>socket选项和master选项可以如下配置：<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;uwsgi&gt;</span><br><span class="line">    &lt;socket&gt;127.0.0.1:3031&lt;&#x2F;socket&gt;</span><br><span class="line">    &lt;master&#x2F;&gt;</span><br><span class="line">&lt;&#x2F;uwsgi&gt;</span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+<li><p>ini文件：配置域应该是uwsgi，标识符类型的选项的值可以设为true或者1。</p>
+<ul>
+<li>socket选项和master选项可以如下配置：<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[uwsgi]</span><br><span class="line">socket &#x3D;127.0.0.1:3031</span><br><span class="line">master &#x3D;true</span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+<li><p>yaml格式文件：根元素需要设置为uwsgi，标识符类型的选项的值可以设为true或者1。</p>
+<ul>
+<li>socket选项和master选项可以如下配置：<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">uwsgi:  </span><br><span class="line">    socket:127.0.0.1</span><br><span class="line">    master:1</span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+<li><p>lda格式：这个格式比较复杂，你应该查阅专门的wiki文档。见 <a href="http://projects.unbit.it/uwsgi/wiki/useLDAP" target="_blank" rel="noopener">useLDAP</a>。</p>
+</li>
+<li><p><code>http</code>: 协议类型和端口号，例如 <code>--http 127.0.0.1:8080</code></p>
+</li>
+<li><p><code>socket</code>: 指定uwsgi的客户端将要连接的socket的路径（使用UNIX socket的情况）或者地址（使用网络地址的情况）。你最多可以同时指定8个socket选项。当使用命令行变量时，可以使用“-s”这个缩写</p>
+<ul>
+<li>例如: <code>--socket /tmp/uwsgi.sock</code></li>
+<li><code>--socket 127.0.0.1:8080</code></li>
+</ul>
+</li>
+<li><p><code>processes</code>: 开启的进程数量，等同于 workers（官网：spawn the specified number ofworkers &#x2F; processes）</p>
+</li>
+<li><p><code>workers</code>: 开启的进程数量，等同于 processes（官网：spawn the specified number ofworkers &#x2F; processes）</p>
+<ul>
+<li>要根据代码实际运行情况来定夺, 通常为 <code>cpu * 2</code> </li>
+<li>引用官网：There is no magic rule for setting the number of processes or threads to use. It is very much application and system dependent. Simple math                  like processes &#x3D; 2 * cpucores will not be enough. You need to experiment with various setups and be prepared constantly monitor your apps. uwsgitop could be a great tool to find the best values.</li>
+</ul>
+</li>
+<li><p><code>threads</code>: 每个process开启的线程。由于GIL的存在，我觉得这个没啥用。（官网：run each worker in prethreaded mode with the specified number of threads）</p>
+</li>
+<li><p><code>chdir</code>: 指定运行目录（官网：chdir to specified directory before apps loading）</p>
+</li>
+<li><p><code>wsgi-file</code>： 载入wsgi-file（load .wsgi file）</p>
+</li>
+<li><p><code>module</code>: 载入wsgi-file（load .wsgi file），和 wsgi-file 配置一个就行</p>
+</li>
+<li><p><code>master</code>: 允许主进程存在（enable master process）</p>
+</li>
+<li><p><code>daemonize</code>: 使进程在后台运行，并将日志打到指定的日志文件或者udp服务器。实际上最常用的，还是把运行记录输出到一个本地文件上。</p>
+</li>
+<li><p><code>vacuum</code>: 当服务器退出的时候自动清理环境，删除unix socket文件和pid文件（try to remove all of the generated file&#x2F;sockets）</p>
+</li>
+<li><p><code>post-buffering</code>: 启用post缓冲，如果一个HTTP请求有一个主体(像一个表单生成的post请求)，你必须在你的应用程序中读取(消费)它。如果不这样做，与web服务器的通信套接字可能会被破坏。如果你比较懒，你可以使用post-buffering选项，它会自动为你读取数据。对于机架应用程序，这是自动启用的。</p>
+</li>
+<li><p><code>buffer-size</code>: 设置用于uwsgi包解析的内部缓存区大小。默认是4k。</p>
+<ul>
+<li>如果你打算接受一个拥有很多请求头的大请求，你可以增加这个值到64k。<code>--buffer-size 32768</code></li>
+</ul>
+</li>
+<li><p><code>max-requests</code>: reload workers after the specified amount of managed requests。一个worker完成多少个请求以后就重启。可以使用这个选项来默默地对抗内存泄漏（尽管这类情况使用reload-on-as和reload-on-rss选项更有用）</p>
+<ul>
+<li><code>max-requests 100000</code></li>
+</ul>
+</li>
+<li><p><code>disable-logging</code>: disable request logging，禁掉请求的系统日志，不记录请求信息的日志。只记录错误以及uWSGI内部消息到日志中，调试模式下要打开，生产环境注意关闭，这个东西很影响效率</p>
+</li>
+<li><p><code>stats 监控程序的url</code>: 在指定的地址上，开启状态服务，只有设置了这个参数以后才能用 uwsgitop ip:port 来观看监控，类似于linux的top命令</p>
+<ul>
+<li>引用官网：enable the stats server on the specified address）</li>
+<li>示例： <code>state=127.0.0.1:1717</code></li>
+</ul>
+</li>
+<li><p><code>listen</code>: 设置socket的监听队列大小（默认：100）。每一个socket都有一个相关联的队列，请求会被放入其中等待进程来处理。当这个队列满的时候，新来的请求就会被拒绝。队列大小的最大值依赖于系统内核。</p>
+<ul>
+<li>这个值要可以稍大一点 <code>--listen 8192</code></li>
+</ul>
+</li>
+</ul>
+<h3 id="一些配置文件"><a href="#一些配置文件" class="headerlink" title="一些配置文件"></a>一些配置文件</h3><h4 id="配置1"><a href="#配置1" class="headerlink" title="配置1"></a>配置1</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"># 非多站模式时 vhost &#x3D; true 和 no-site &#x3D; true 需要注释掉，否则后续 nginx 配置文件中设置的入口文件则不生效</span><br><span class="line">[uwsgi]</span><br><span class="line">socket &#x3D; 127.0.0.1:9090</span><br><span class="line">master &#x3D; true         # 主进程</span><br><span class="line">vhost &#x3D; true          # 多站模式</span><br><span class="line">no-site &#x3D; true        # 多站模式时不设置入口模块和文件</span><br><span class="line">workers &#x3D; 2           # 子进程数</span><br><span class="line">reload-mercy &#x3D; 10     </span><br><span class="line">vacuum &#x3D; true         # 退出、重启时清理文件</span><br><span class="line">max-requests &#x3D; 1000   </span><br><span class="line">limit-as &#x3D; 512</span><br><span class="line">buffer-size &#x3D; 30000</span><br><span class="line">pidfile &#x3D; &#x2F;var&#x2F;run&#x2F;uwsgi9090.pid    # pid文件，用于下面的脚本启动、停止该进程</span><br><span class="line">daemonize &#x3D; &#x2F;website&#x2F;uwsgi9090.log</span><br></pre></td></tr></table></figure>
+
+<h4 id="配置2"><a href="#配置2" class="headerlink" title="配置2"></a>配置2</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">[uwsgi]</span><br><span class="line"># socket 为上线使用，http为直接作为服务器使用</span><br><span class="line">socket&#x3D;&#x2F;home&#x2F;fenglepeng&#x2F;dsp_backend&#x2F;log&#x2F;uwsgi.sock</span><br><span class="line">http&#x3D;0.0.0.0:8080</span><br><span class="line"></span><br><span class="line"># uwsgi内部解析的数据包大小，默认4k</span><br><span class="line">buffer-size&#x3D;65536</span><br><span class="line"></span><br><span class="line">post-buffering&#x3D;65536</span><br><span class="line"></span><br><span class="line"># 项目目录</span><br><span class="line">chdir&#x3D;&#x2F;home&#x2F;fenglepeng&#x2F;dsp_backend&#x2F;dsp_backend</span><br><span class="line">wsgi-file&#x3D;wsgi.py</span><br><span class="line"></span><br><span class="line"># 静态文件映射路径</span><br><span class="line"># static-map&#x3D;&#x2F;static&#x3D;&#x2F;data&#x2F;my_env1&#x2F;monitor1&#x2F;static</span><br><span class="line"></span><br><span class="line"># 指定项目的application，这个和 wsgi-file 配置一个就行</span><br><span class="line"># mysite1.mysite1.wsgi这一句表示mysite1项目下的mysite1目录下的wsgi.py文件。</span><br><span class="line">module&#x3D;mysite1.mysite1.wsgi:application</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"># 虚拟环境目录</span><br><span class="line"># home &#x3D; home&#x2F;ray&#x2F;MxOnline&#x2F;mxonlineEnv</span><br><span class="line"></span><br><span class="line"># 允许主进程存在，开启的进程数量，线程数量</span><br><span class="line">master&#x3D;true         </span><br><span class="line">processes&#x3D;8</span><br><span class="line">threads&#x3D;2</span><br><span class="line"></span><br><span class="line">#  uwsgi.pid 和uwsgi.log会在启动uwsgi时自动生成在项目目录下。</span><br><span class="line">pidfile&#x3D;uwsgi.pid</span><br><span class="line">daemonize&#x3D;uwsgi.log</span><br><span class="line"></span><br><span class="line"># max-requests&#x3D;2000</span><br><span class="line"># chmod-socket&#x3D;664</span><br><span class="line"></span><br><span class="line"># 退出、重启时清理文件</span><br><span class="line">vacuum&#x3D;true</span><br><span class="line"></span><br><span class="line"># 修改python文件后立刻生效</span><br><span class="line">py-autoreload&#x3D;1</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="uwsgi-命令"><a href="#uwsgi-命令" class="headerlink" title="uwsgi 命令"></a>uwsgi 命令</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"># 启动</span><br><span class="line">uwsgi -ini uwsgi.ini</span><br><span class="line"></span><br><span class="line"># 重启</span><br><span class="line">uwsgi --reload uwsgi&#x2F;uwsgi.pid</span><br><span class="line"></span><br><span class="line"># 停止</span><br><span class="line">uwsgi --stop uwsgi&#x2F;uwsgi.pid</span><br><span class="line"></span><br><span class="line"># uwsgi进程和worker的状态很详细</span><br><span class="line">uwsgi --connect-and-read uwsgi&#x2F;uwsgi.status</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="uwsgitop"><a href="#uwsgitop" class="headerlink" title="uwsgitop"></a>uwsgitop</h2><p>只需要简单的在uwsgi的运行参数里加上：<code>--stats /tmp/stats.socket</code> 或者 <code>--stats 127.0.0.1:1717</code> </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">uwsgi --socket :3031 --module welcome --master --processes 8 --stats &#x2F;tmp&#x2F;stats.socket</span><br><span class="line"># or</span><br><span class="line">uwsgi --socket :3031 --module welcome --master --processes 8 --stats 127.0.0.1:1717</span><br></pre></td></tr></table></figure>
+
+<h3 id="安装uwsgitop"><a href="#安装uwsgitop" class="headerlink" title="安装uwsgitop"></a>安装uwsgitop</h3><p>uwsgitop是其他top类似，使用状态服务来获取服务数据。在PyPI上有uwsgitop，所以可以通过pip或者easy_install安装。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install uwsgitop</span><br></pre></td></tr></table></figure>
+
+<h3 id="使用uwsgitop"><a href="#使用uwsgitop" class="headerlink" title="使用uwsgitop"></a>使用uwsgitop</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">uwsgitop &#x2F;tmp&#x2F;stats.socket</span><br><span class="line">uwsgitop 127.0.0.1:1717</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="Nginx-配置文件"><a href="#Nginx-配置文件" class="headerlink" title="Nginx 配置文件"></a>Nginx 配置文件</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"># 负载均衡</span><br><span class="line">upstream django &#123;</span><br><span class="line">    # server unix:&#x2F;&#x2F;&#x2F;path&#x2F;to&#x2F;your&#x2F;mysite&#x2F;mysite.sock; # for a file socket</span><br><span class="line">    server 127.0.0.1:8001; # for a web port socket (we&#39;ll use this first)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"># configuration of the server</span><br><span class="line">server &#123;</span><br><span class="line">    listen      8000;           # 监听的端口</span><br><span class="line">    server_name example.com;   # 监听的域名，或者ip</span><br><span class="line">    charset     utf-8;</span><br><span class="line"></span><br><span class="line">    # max upload size</span><br><span class="line">    client_max_body_size 75M;   # request请求body</span><br><span class="line"></span><br><span class="line">    # Django media</span><br><span class="line">    location &#x2F;media  &#123;</span><br><span class="line">        alias &#x2F;path&#x2F;to&#x2F;your&#x2F;mysite&#x2F;media;   # 项目的media路径</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    location &#x2F;static &#123;</span><br><span class="line">        alias &#x2F;path&#x2F;to&#x2F;your&#x2F;mysite&#x2F;static;  # 项目的static 路径</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    # Finally, send all non-media requests to the Django server.</span><br><span class="line">    location &#x2F; &#123;</span><br><span class="line">        # uwsgi_pass  django;                    # 上面配置的负载均衡</span><br><span class="line">        # include   &#x2F;path&#x2F;to&#x2F;your&#x2F;mysite&#x2F;uwsgi_params; # the uwsgi_params file you installed</span><br><span class="line">        </span><br><span class="line">        include  uwsgi_params;</span><br><span class="line">        uwsgi_pass  127.0.0.1:9090;                # 必须和uwsgi中的设置一致</span><br><span class="line">        # uwsgi_pass unix:&#x2F;&#x2F;&#x2F;home&#x2F;sock&#x2F;[xxx].sock; # 此为nginx 使用 sock 的重点</span><br><span class="line">        </span><br><span class="line">        # uwsgi_param UWSGI_SCRIPT demosite.wsgi;  # 入口文件，即wsgi.py相对于项目根目录的位置，“.”相当于一层目录</span><br><span class="line">        # uwsgi_param UWSGI_CHDIR &#x2F;demosite;       # 项目根目录</span><br><span class="line">        index  index.html index.htm;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="静态文件"><a href="#静态文件" class="headerlink" title="静态文件"></a>静态文件</h2><p>在运行nginx之前，你必须将所有的Django静态文件收集到静态文件夹中。首先，你必须编辑mysite&#x2F;settings.py添加:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">STATIC_URL &#x3D; &#39;static&#39;</span><br><span class="line">STATIC_ROOT &#x3D; os.path.join(BASE_DIR, &quot;static&#x2F;&quot;)</span><br><span class="line">MEDIA_URL &#x3D; &#39;&#x2F;media&#x2F;&#39;</span><br><span class="line">MEDIA_ROOT &#x3D; os.path.join(BASE_DIR,&#39;media&#39;)</span><br><span class="line">STATICFILES_DIRS &#x3D; [os.path.join(BASE_DIR,&#39;static&#39;),]</span><br></pre></td></tr></table></figure>
+
+<p>在项目目录下迁移静态文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python manage.py collectstatic</span><br></pre></td></tr></table></figure>
+
+<p>此时启动Nginx 和Uwsgi，你的django项目就可以实现高并发啦！</p>
+<h2 id="异常处理"><a href="#异常处理" class="headerlink" title="异常处理"></a>异常处理</h2><h3 id="socket-配置不一致"><a href="#socket-配置不一致" class="headerlink" title="socket 配置不一致"></a>socket 配置不一致</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">upstream prematurely closed connection while reading response header from upstream, client: 127.0.0.1, server: localhost, request: &quot;GET &#x2F; HTTP&#x2F;1.1&quot;, upstream: &quot;uwsgi:&#x2F;&#x2F;127.0.0.1:8080&quot;, host: &quot;127.0.0.1&quot;</span><br></pre></td></tr></table></figure>
+
+<p>uwsgi.ini 文件中的 socket &#x3D; 127.0.0.1:8001  配置 一定要和 nginx 中的配置相匹配，不匹配会出现上述报错</p>
+<h3 id="uwsgi出现invalid-request-block-size-21573-max-4096-…skip"><a href="#uwsgi出现invalid-request-block-size-21573-max-4096-…skip" class="headerlink" title="uwsgi出现invalid request block size: 21573 (max 4096)…skip"></a>uwsgi出现invalid request block size: 21573 (max 4096)…skip</h3><p>uwsgi内部解析的数据包大小，默认4k。如果准备接收大请求，你可以增长到64k。可以设置 uwsgi.ini 参数解决</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">buffer-size &#x3D; 65536</span><br></pre></td></tr></table></figure>
+
+<h3 id="uwsgi-temp-Permission-denied"><a href="#uwsgi-temp-Permission-denied" class="headerlink" title="uwsgi_temp Permission denied"></a>uwsgi_temp Permission denied</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">connect() to unix:*.sock failed (13: Permission denied) while connecting to upstream, client: *, server: *, request: &quot;GET &#x2F; HTTP&#x2F;1.1&quot;, upstream: &quot;uwsgi:&#x2F;&#x2F;unix:*.sock:&quot;, host: &quot;*&quot;</span><br></pre></td></tr></table></figure>
+
+<p>解决方案一：</p>
+<p>uwsgi_temp 目录及上层目录 增加 x 权限</p>
+<p>解决方案二：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"># 检查SELinux是否开启</span><br><span class="line">getenforece</span><br><span class="line"></span><br><span class="line"># 设置暂时关闭</span><br><span class="line"></span><br><span class="line">setenforce 0   # 关闭</span><br><span class="line">setenforce 1   # 开启</span><br><span class="line"></span><br><span class="line"># 设置永久关闭</span><br><span class="line">vim &#x2F;ect&#x2F;selinux&#x2F;config</span><br><span class="line"># 设置</span><br><span class="line">SELINUX &#x3D; disabled</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="socket-Permission-denied"><a href="#socket-Permission-denied" class="headerlink" title="socket Permission denied"></a>socket Permission denied</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">2022&#x2F;03&#x2F;08 11:32:00 [crit] 104178#0: *64 connect() to unix:&#x2F;home&#x2F;fenglepeng&#x2F;dsp_backend&#x2F;log&#x2F;uwsgi.sock failed (13: Permission denied) while connecting to upstream, client: 10.122.107.133, server: localhost, request: &quot;GET &#x2F;api&#x2F;v1&#x2F;bucket?offset&#x3D;0&amp;limit&#x3D;10&amp;bucket_name&#x3D;&amp;bucket_security_level&#x3D;&amp;attribute&#x3D; HTTP&#x2F;1.0&quot;, upstream: &quot;uwsgi:&#x2F;&#x2F;unix:&#x2F;home&#x2F;fenglepeng&#x2F;dsp_backend&#x2F;log&#x2F;uwsgi.sock:&quot;, host: &quot;***.com&quot;, referrer: &quot;https:&#x2F;&#x2F;***.com&#x2F;app&#x2F;bucket&#x2F;myBucket&quot;</span><br></pre></td></tr></table></figure>
+
+<p>解决办法：</p>
+<p>nginx 启动的用户（一般是nobody）需要对 socket 文件具有 x 权限</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p>Django中settings.py中的五个设置参数的一些故事：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line">1、MEDIA_ROOT与MEDIA_URL</span><br><span class="line">事实上MEDIA_ROOT和MEDIA_URL代表的是用户上传后的文件一般保存的地方。我的理解是，可变文件的文件夹。</span><br><span class="line">与这两个参数有联系的，是在Django的FileField和ImageField这样的Model类中，有upload_to参数可选。</span><br><span class="line">当upload_to设置相关的地址后，如：upload_to&#x3D;&quot;username&quot;；</span><br><span class="line">文件上传后将自动保存到 os.path.join(MEDIA_ROOT, upload_to)。</span><br><span class="line">而MEDIA_URL,，则代表用户通过URL来访问这个本地地址的URL。</span><br><span class="line">如本机http:&#x2F;&#x2F;127.0.0.1&#x2F;， MEDIA_URL设置为&quot;&#x2F;site_media&#x2F;&quot;，</span><br><span class="line">那么通过 http:&#x2F;&#x2F;127.0.0.1&#x2F;site_media&#x2F;*** 就可以访问相关的上传图片或者其他资源。</span><br><span class="line"></span><br><span class="line">2、STATIC_ROOT与STATIC_URL</span><br><span class="line">STATIC_ROOT和STATIC_URL则是网站中，用于网站显示的静态图片、CSS、JS等文件的保存地址。</span><br><span class="line">我的理解是，运行中不会再变文件的文件夹（即不会删除或者新增）</span><br><span class="line"></span><br><span class="line">2.1 STATIC_URL同MEDIA_URL类似；STATIC_URL为&quot;&#x2F;static&#x2F;&quot;时候，</span><br><span class="line">    通过http:&#x2F;&#x2F;127.0.0.1&#x2F;static&#x2F;***就可以访问相关的静态文件了。</span><br><span class="line"></span><br><span class="line">2.2 STATIC_ROOT是一个比较特殊的文件夹。</span><br><span class="line">这是区别Django的开发模式和部署模式下最大的地方了。</span><br><span class="line">通常我们在开发模式下，可以在我们所在的project下建立相应的app， 然后每个app下都建立相应的static文件夹。</span><br><span class="line">在开发模式下（Debug&#x3D;True），Django将为我们自动查找这些静态文件（每个app）并在网页上显示出来。</span><br><span class="line">然而，在部署模式下，Django认为这些工作交由web服务器来运行会更有效率。</span><br><span class="line">因此，在部署时，我们需要运行一下python manage.py collectstatic 这个命令。</span><br><span class="line">这个命令将会把每个app里的static目录下的文件copy到STATIC_ROOT这个文件夹下，</span><br><span class="line">这时候如果在部署模式下（Debug&#x3D;False），网页中相关的，如： http:&#x2F;&#x2F;127.0.0.1&#x2F;static&#x2F;*** 的访问，</span><br><span class="line">将不会访问Django下各个App中的static，而是STATIC_ROOT中所指定的文件夹。</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">3、Debug&#x3D;False后，为何无法访问图片和js等文件了？</span><br><span class="line">其实这个问题，是在于web服务器没有对STATIC_ROOT以及MEDIA_ROOT这两个文件夹进行映射所导致的。</span><br><span class="line">以apache为例，假定：</span><br><span class="line">STATIC_ROOT&#x3D;&quot;&#x2F;home&#x2F;user&#x2F;static&#x2F;&quot;</span><br><span class="line">STATIC_URL&#x3D;&quot;&#x2F;static&#x2F;&quot;</span><br><span class="line">MEDIA_ROOT&#x3D;&quot;&#x2F;home&#x2F;user&#x2F;media&#x2F;&quot;</span><br><span class="line">MEDIA_URL&#x3D;&quot;&#x2F;media&#x2F;&quot;</span><br><span class="line"></span><br><span class="line">那么可以在apache的配置文件中，增加以下：</span><br><span class="line">&lt;Location &quot;&#x2F;static&#x2F;&quot;&gt;</span><br><span class="line">Order deny,allow</span><br><span class="line">Allow from all</span><br><span class="line">Satisfy Any</span><br><span class="line">&lt;&#x2F;Location&gt;</span><br><span class="line">Alias &#x2F;static&#x2F; &quot;&#x2F;home&#x2F;user&#x2F;static&quot;</span><br><span class="line">&lt;Location &quot;&#x2F;media&#x2F;&quot;&gt;</span><br><span class="line">Order deny,allow</span><br><span class="line">Allow from all</span><br><span class="line">Satisfy Any</span><br><span class="line">&lt;&#x2F;Location&gt;</span><br><span class="line">Alias &#x2F;media&#x2F; &quot;&#x2F;home&#x2F;user&#x2F;media&#x2F;&quot;</span><br><span class="line"></span><br><span class="line">4、STATICFILES_DIRS：</span><br><span class="line">和TEMPLATE_DIRS的含义差不多，就是除了各个app的static目录以外还需要管理的静态文件，</span><br><span class="line">添加到这里的文件会在collectstatic时 copy到STATIC_ROOT中</span><br></pre></td></tr></table></figure>
+
+                
+                <hr>
+                <!-- Pager -->
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/frontend-Vue-Vue-插槽/" data-toggle="tooltip" data-placement="top" title="Vue 插槽 vue-slot、slot-scope">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/Python-32-框架-Django-Django-ORM-合并查询集/" data-toggle="tooltip" data-placement="top" title="Django 合并查询集">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+                <!-- tip start -->
+                
+
+                
+                <div class="comment_notes">
+                    <p>
+                        study well and make progress every day; study well and progress every day; study hard and make progress every day.
+                    </p>
+                </div>
+                
+                <!-- tip end -->
+
+                <!-- Music start-->
+                
+                <!-- Music end -->
+
+                <!-- Sharing -->
+                
+                <div class="social-share"  data-wechat-qrcode-helper="" align="center"></div>
+                <!--  css & js -->
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/css/share.min.css">
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/js/social-share.min.js"></script>
+                
+                <!-- Sharing -->
+
+                <!-- gitment start -->
+                
+                <!-- gitment end -->
+
+                <!-- 来必力City版安装代码 -->
+                
+                <!-- City版安装代码已完成 -->
+
+                <!-- disqus comment start -->
+                
+                <!-- disqus comment end -->
+            </div>
+            
+            <!-- Tabe of Content -->
+            <!-- Table of Contents -->
+
+    
+      
+        <aside id="sidebar">
+          <div id="toc" class="toc-article">
+          <strong class="toc-title">Contents</strong>
+          
+            
+              <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#背景"><span class="toc-nav-number">1.</span> <span class="toc-nav-text">背景</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#概念介绍"><span class="toc-nav-number">2.</span> <span class="toc-nav-text">概念介绍</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#为什么需要web协议"><span class="toc-nav-number">2.1.</span> <span class="toc-nav-text">为什么需要web协议</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#WSGI是什么？"><span class="toc-nav-number">2.2.</span> <span class="toc-nav-text">WSGI是什么？</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#uwsgi是什么？"><span class="toc-nav-number">2.3.</span> <span class="toc-nav-text">uwsgi是什么？</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#uWSGI是什么？（web服务器-和-nginx类似）"><span class="toc-nav-number">2.4.</span> <span class="toc-nav-text">uWSGI是什么？（web服务器 和 nginx类似）</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#总结：WSGI-x2F-uwsgi-x2F-uWSGI-这三个概念的区分"><span class="toc-nav-number">2.5.</span> <span class="toc-nav-text">总结：WSGI &#x2F; uwsgi &#x2F; uWSGI 这三个概念的区分</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#django是什么"><span class="toc-nav-number">2.6.</span> <span class="toc-nav-text">django是什么?</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#请求处理整体流程"><span class="toc-nav-number">2.7.</span> <span class="toc-nav-text">请求处理整体流程</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#各模块作用"><span class="toc-nav-number">2.8.</span> <span class="toc-nav-text">各模块作用</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#Django-uWSGI方案"><span class="toc-nav-number">2.9.</span> <span class="toc-nav-text">Django + uWSGI方案</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#nginx和uWSGI特点"><span class="toc-nav-number">2.10.</span> <span class="toc-nav-text">nginx和uWSGI特点</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#uWSGI安装使用"><span class="toc-nav-number">3.</span> <span class="toc-nav-text">uWSGI安装使用</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#安装"><span class="toc-nav-number">3.1.</span> <span class="toc-nav-text">安装</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#uwsgi-参数解析"><span class="toc-nav-number">3.2.</span> <span class="toc-nav-text">uwsgi 参数解析</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#一些配置文件"><span class="toc-nav-number">3.3.</span> <span class="toc-nav-text">一些配置文件</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#配置1"><span class="toc-nav-number">3.3.1.</span> <span class="toc-nav-text">配置1</span></a></li><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#配置2"><span class="toc-nav-number">3.3.2.</span> <span class="toc-nav-text">配置2</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#uwsgi-命令"><span class="toc-nav-number">3.4.</span> <span class="toc-nav-text">uwsgi 命令</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#uwsgitop"><span class="toc-nav-number">4.</span> <span class="toc-nav-text">uwsgitop</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#安装uwsgitop"><span class="toc-nav-number">4.1.</span> <span class="toc-nav-text">安装uwsgitop</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#使用uwsgitop"><span class="toc-nav-number">4.2.</span> <span class="toc-nav-text">使用uwsgitop</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#Nginx-配置文件"><span class="toc-nav-number">5.</span> <span class="toc-nav-text">Nginx 配置文件</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#静态文件"><span class="toc-nav-number">6.</span> <span class="toc-nav-text">静态文件</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#异常处理"><span class="toc-nav-number">7.</span> <span class="toc-nav-text">异常处理</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#socket-配置不一致"><span class="toc-nav-number">7.1.</span> <span class="toc-nav-text">socket 配置不一致</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#uwsgi出现invalid-request-block-size-21573-max-4096-…skip"><span class="toc-nav-number">7.2.</span> <span class="toc-nav-text">uwsgi出现invalid request block size: 21573 (max 4096)…skip</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#uwsgi-temp-Permission-denied"><span class="toc-nav-number">7.3.</span> <span class="toc-nav-text">uwsgi_temp Permission denied</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#socket-Permission-denied"><span class="toc-nav-number">7.4.</span> <span class="toc-nav-text">socket Permission denied</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#参考"><span class="toc-nav-number">8.</span> <span class="toc-nav-text">参考</span></a></li></ol>
+            
+          
+          </div>
+        </aside>
+      
+    
+
+                
+            <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <!-- no hr -->
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+                       
+                          <a class="tag" href="/tags/#Python" title="Python">Python</a>
+                        
+                          <a class="tag" href="/tags/#Django" title="Django">Django</a>
+                        
+                    </div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+
+                    
+                        <li><a href="https://blog.csdn.net/fenglepeng" target="_blank">Feng Lepeng&#39;s CSDN</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("https://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'hover',
+          placement: 'left',
+          icon: 'ℬ'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+
+
+<style  type="text/css">
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+
+                
+                    <li>
+                        <a target="_blank"  href="https://github.com/flepeng">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy;
+                    <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">京ICP备18055501号-2</a>;
+                    Feng Lepeng 2024
+                    <br>
+                    Powered by 
+                    <a href="https://github.com/dusign/hexo-theme-snail" target="_blank" rel="noopener">
+                        <i>hexo-theme-snail</i>
+                    </a> | 
+                    <iframe name="star" style="margin-left: 2px; margin-bottom:-5px;" frameborder="0" scrolling="0"
+                        width="100px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=flepeng&repo=hexo-theme-lp&type=star">
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+
+</footer>
+
+<!-- jQuery -->
+
+<script src="/js/jquery.min.js"></script>
+
+
+<!-- Bootstrap Core JavaScript -->
+
+<script src="/js/bootstrap.min.js"></script>
+
+
+<!-- Custom Theme JavaScript -->
+
+<script src="/js/hux-blog.min.js"></script>
+
+
+<!-- Search -->
+
+<script src="/js/search.js"></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("https://flepeng.github.io/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("https://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-XXXXXXXX-X';
+    var _gaDomain = 'yoursite';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+
+<!-- Baidu Tongji -->
+
+
+<!-- Search -->
+
+    <script type="text/javascript">      
+        var search_path = "search.xml";
+        if (search_path.length == 0) {
+            search_path = "search.xml";
+        }
+    var path = "/" + search_path;
+    searchFunc(path, 'local-search-input', 'local-search-result');
+    </script>
+
+
+<!-- busuanzi -->
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+
+	<a id="rocket" href="#top" class=""></a>
+	<script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+    <script type="text/javascript" src="/js/toc.js?v=1.0.0" async=""></script>
+
+    
+        <!-- background effects line -->
+        
+
+        
+            <script type="text/javascript" src="/js/mouse-click.js" content='[&quot;🌱&quot;,&quot;just do it&quot;,&quot;🍀&quot;]' color='[&quot;rgb(121,93,179)&quot; ,&quot;rgb(76,180,231)&quot; ,&quot;rgb(184,90,154)&quot;]'></script>
+        
+
+        <!-- background effects end -->
+    
+
+    <!--<script size="50" alpha='0.3' zIndex="-999" src="/js/ribbonStatic.js"></script>-->
+    
+        <script src="/js/ribbonDynamic.js"></script>
+    
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+
+</html>

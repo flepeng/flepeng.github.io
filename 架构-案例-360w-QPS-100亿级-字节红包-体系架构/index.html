@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <script data-ad-client="ca-pub-2488174175014870" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> <!-- google ad -->
+    <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+    <meta name="baidu-site-verification" content="093lY4ziMu" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="description" content="博主用来记录和分享一些日常学到的知识">
+    <meta name="keyword"  content="hexo, java，python">
+    <link rel="shortcut icon" href="/img/hexo/ironman-draw.png">
+    <!-- Place this tag in your head or just before your close body tag. -->
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <!--<link href='http://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>-->
+    <title>
+        
+          360w QPS 100亿级 字节红包 体系架构 - Python技术分享
+        
+    </title>
+
+    <link rel="canonical" href="https://flepeng.github.io/架构-案例-360w-QPS-100亿级-字节红包-体系架构/">
+
+    <!-- Bootstrap Core CSS -->
+    
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+
+
+    <!-- Custom CSS --> 
+    
+        
+<link rel="stylesheet" href="/css/dusign-light.css">
+
+        
+<link rel="stylesheet" href="/css/dusign-common-light.css">
+
+        
+<link rel="stylesheet" href="/css/font-awesome.css">
+
+        
+<link rel="stylesheet" href="/css/toc.css">
+
+        <!-- background effects end -->
+    
+    
+    <!-- Pygments Highlight CSS -->
+    
+<link rel="stylesheet" href="/css/highlight.css">
+
+
+    
+<link rel="stylesheet" href="/css/widget.css">
+
+
+    
+<link rel="stylesheet" href="/css/rocket.css">
+
+
+    
+<link rel="stylesheet" href="/css/signature.css">
+
+
+    
+<link rel="stylesheet" href="/css/fonts.googleapis.css">
+
+
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+
+    <!-- photography -->
+    
+<link rel="stylesheet" href="/css/photography.css">
+
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- background effects start -->
+    
+    <!-- background effects end -->
+
+	<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        
+            
+                background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('/img/header_img/archive-bg.jpg')
+                /*post*/
+            
+        
+    }
+    
+    #signature{
+        background-image: url('/img/hexo/signature/dusign.png');
+    }
+    
+</style>
+
+<header class="intro-header" >
+    <!-- Signature -->
+    <div id="signature">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                
+                    <div class="post-heading">
+                        <div class="tags">
+                            
+                              <a class="tag" href="/tags/#architecture" title="architecture">architecture</a>
+                            
+                        </div>
+                        <h1>360w QPS 100亿级 字节红包 体系架构</h1>
+                        <h2 class="subheading"></h2>
+                        <span class="meta">
+                            Posted by Lepeng on
+                            2023-02-01
+                        </span>
+
+                        
+                            <div class="blank_box"></div>
+                            <span class="meta">
+                                Words <span class="post-count">6.4k</span> and
+                                Reading Time <span class="post-count">22</span> Minutes
+                            </span>
+                            <div class="blank_box"></div>
+                            <!-- 不蒜子统计 start -->
+                            <span class="meta">
+                                Viewed <span id="busuanzi_value_page_pv"><i class="fa fa-spinner fa-spin"></i></span> Times
+                            </span>
+                            <!-- 不蒜子统计 end -->
+                        
+
+                    </div>
+                
+
+                </div>
+            </div>
+        </div>      
+    </div>
+
+    
+    <div class="waveWrapper">
+        <div class="wave wave_before" style="background-image: url('/img/wave-light.png')"></div>
+        <div class="wave wave_after" style="background-image: url('/img/wave-light.png')"></div>
+    </div>
+    
+</header>
+
+	
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Lepeng</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+
+                    
+
+                        
+                    
+
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/about/">About</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/archive/">Archives</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/categories/">Categories</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/tags/">Tags</a>
+                        </li>
+                        
+                    
+                    
+                    
+                    <li>
+                        <a href="http://flepeng.com" target="_blank">chinese_blog</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Main Content -->
+    <!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+            <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <blockquote>
+<p>参考来源：字节跳动技术团队：春节钱包大流量奖励系统入账及展示的设计与实现</p>
+</blockquote>
+<h1 id="1-背景-amp-挑战-amp-目标"><a href="#1-背景-amp-挑战-amp-目标" class="headerlink" title="1. 背景&amp;挑战&amp;目标"></a>1. 背景&amp;挑战&amp;目标</h1><h2 id="1-1-业务背景"><a href="#1-1-业务背景" class="headerlink" title="1.1 业务背景"></a>1.1 业务背景</h2><p>（1）<strong>支持八端</strong>：</p>
+<p>2022 年字节系产品春节活动需要支持八端 APP 产品（包含抖音&#x2F;抖音火山&#x2F;抖音极速版&#x2F;西瓜&#x2F;头条&#x2F;头条极速版&#x2F;番茄小说&#x2F;番茄畅听）的奖励互通。用户在上述任意一端都可以参与活动，得到的奖励在其他端都可以提现与使用。</p>
+<p>（2）<strong>玩法多变</strong>：</p>
+<p>主要有集卡、朋友页红包雨、红包雨、集卡开奖与烟火大会等。</p>
+<p>（3）<strong>多种奖励</strong>：</p>
+<p>奖励类型包含现金红包、补贴视频红包、商业化广告券、电商券、支付券、消费金融券、保险券、信用卡优惠券、喜茶券、电影票券、dou+券、抖音文创券、头像挂件等。</p>
+<h2 id="1-2-核心挑战"><a href="#1-2-核心挑战" class="headerlink" title="1.2 核心挑战"></a>1.2 核心挑战</h2><p>（1）超高吞吐，超大并发，最高预估 360w QPS 发奖。</p>
+<p>（2）奖励类型多，共 10 余种奖励。多种发奖励的场景，玩法多变；</p>
+<p>（3）从奖励系统稳定性、用户体验、资金安全与运营基础能力全方位保障，确保活动顺利进行 。</p>
+<h2 id="1-3-最终目标"><a href="#1-3-最终目标" class="headerlink" title="1.3 最终目标"></a>1.3 最终目标</h2><p>（1）<strong>奖励入账</strong>：数据高可靠。提供统一的错误处理机制，入账幂等能力和奖励预算控制。</p>
+<p>（2）<strong>奖励展示&#x2F;使用</strong>：支持用户查看、提现（现金），使用卡券&#x2F;挂件等能力。</p>
+<p>（3）<strong>稳定性保障</strong>：在大流量的入账场景下，保证钱包核心路径稳定性与完善，通过常用稳定性保障手段如资源扩容、限流、熔断、降级、兜底、资源隔离等方式保证用户奖励方向的核心体验。</p>
+<p>（4）<strong>资金安全</strong>：通过幂等、对账、监控与报警等机制，保证资金安全，保证用户资产应发尽发，不少发。</p>
+<p>（5）<strong>活动隔离</strong>：实现内部测试、灰度放量和正式春节活动三个阶段的奖励入账与展示的数据隔离，不互相影响。</p>
+<h1 id="2-产品需求介绍"><a href="#2-产品需求介绍" class="headerlink" title="2. 产品需求介绍"></a>2. 产品需求介绍</h1><p>用户可以在任意一端参与字节的春节活动获取奖励，以抖音红包雨现金红包入账场景为例，具体的业务流程如下：</p>
+<p><code>登录抖音 → 参与活动 → 活动钱包页 → 点击提现按钮 → 进入提现页面 → 进行提现 → 提现结果页</code>，</p>
+<p>另外从钱包页也可以进入活动钱包页。</p>
+<p><img src="/img/architecture/1701071057-4ddd2c76b9113949bb65f1883112596a.png"></p>
+<p>奖励发放核心场景：</p>
+<ol>
+<li><strong>集卡</strong>：集卡抽卡时发放各类卡券，集卡锦鲤还会发放大额现金红包，集卡开奖时发放瓜分奖金和优惠券；</li>
+<li><strong>红包雨</strong>：发红包、卡券以及视频补贴红包，其中红包和卡券最高分别 180w QPS；</li>
+</ol>
+<p><img src="/img/architecture/1701071057-089fb321a704f408cf4983e0d10c3ef8.png"></p>
+<h1 id="3-钱包资产中台设计与实现"><a href="#3-钱包资产中台设计与实现" class="headerlink" title="3. 钱包资产中台设计与实现"></a>3. 钱包资产中台设计与实现</h1><p>在 2022 年春节活动中，业务方分为：</p>
+<p>UG、激励中台、视频红包、钱包方向、资产中台等</p>
+<p>其中，UG 主要负责活动的玩法实现，包含集卡、红包雨以及烟火大会等具体的活动相关业务逻辑和稳定性保障。</p>
+<p>而钱包方向定位是大流量场景下实现奖励入账、奖励展示、奖励使用与资金安全保障的相关任务。</p>
+<p>其中资产中台负责<strong>奖励发放与奖励展示</strong>部分。</p>
+<h2 id="3-1-春节资产资产中台总体架构图如下："><a href="#3-1-春节资产资产中台总体架构图如下：" class="headerlink" title="3.1 春节资产资产中台总体架构图如下："></a>3.1 春节资产资产中台总体架构图如下：</h2><p><img src="/img/architecture/1701071057-0485d7f3ee186b485d08fc0d54f985e4.png"></p>
+<p>钱包资产中台核心系统划分如下：</p>
+<ol>
+<li><p><strong>资产订单层</strong>：</p>
+<p>收敛八端奖励入账链路，提供统一的接口协议，对接上游活动业务方的奖励发放功能，同时，支持预算控制、补偿、订单号幂等。</p>
+</li>
+<li><p><strong>活动钱包 api 层</strong>：</p>
+<p>统一奖励展示链路，同时支持大流量场景</p>
+</li>
+</ol>
+<h2 id="3-2-资产订单中心设计"><a href="#3-2-资产订单中心设计" class="headerlink" title="3.2 资产订单中心设计"></a>3.2 资产订单中心设计</h2><p><strong>核心发放模型：</strong></p>
+<p><img src="/img/architecture/1701071057-c3ad23d35c65e953adce298252acd14a.png"></p>
+<p><strong>说明：</strong></p>
+<p>活动 ID 唯一区分一个活动，本次春节分配了一个单独的母活动 ID。场景 ID 和具体的一种奖励类型一一对应，定义该场景下发奖励的唯一配置，场景 ID 可以配置的能力有：</p>
+<ul>
+<li>发奖励账单文案；</li>
+<li>是否需要补偿；</li>
+<li>限流配置；</li>
+<li>是否进行库存控制；</li>
+<li>是否要进行对账。</li>
+<li>提供可插拔的能力，供业务可选接入。</li>
+</ul>
+<p><strong>订单号设计：</strong></p>
+<p>资产订单层支持订单号维度的发奖幂等，订单号设计逻辑为</p>
+<p><code>${actID}_${scene_id}_${rain_id}_${award_type}_${statge}</code></p>
+<p>从单号设计层面保证不超发，每个场景的奖励用户最多只领一次。</p>
+<h1 id="4-核心难点问题解决"><a href="#4-核心难点问题解决" class="headerlink" title="4. 核心难点问题解决"></a>4. 核心难点问题解决</h1><h2 id="4-1-难点一：支持八端奖励数据互通"><a href="#4-1-难点一：支持八端奖励数据互通" class="headerlink" title="4.1 难点一：支持八端奖励数据互通"></a>4.1 难点一：支持八端奖励数据互通</h2><p>有八个产品端，需要统一对接，其中抖音系和头条系 APP 是不同的账号体系，所以不能通过用户 ID 打通奖励互通。</p>
+<p>具体解决方案是：</p>
+<ul>
+<li>给每个用户生成唯一的 actID</li>
+<li>手机号优先级最高，如果不同端登录的手机号一样，在不同端的 actID 是一致的。</li>
+</ul>
+<p>在唯一 actID 基础上，每个用户的奖励数据是绑定在 actID 上的，入账和查询是通过 actID 维度实现的，即可实现八端奖励互通。</p>
+<p>示意图如下：</p>
+<p><img src="/img/architecture/1701071057-c730f3846e1e5874299bccd110d076ed.png"></p>
+<h2 id="4-2-难点二：高场景下的奖励入账实现"><a href="#4-2-难点二：高场景下的奖励入账实现" class="headerlink" title="4.2 难点二：高场景下的奖励入账实现"></a>4.2 难点二：高场景下的奖励入账实现</h2><p>超高并发场景，发现金红包都是最关键的一环。有几个原因如下：</p>
+<ol>
+<li>预估发现金红包最大流量有 180w TPS。</li>
+<li>现金红包本身价值高，需要保证资金安全。</li>
+<li>用户对现金的敏感度很高，在保证用户体验与功能完整性同时也要考虑成本问题。</li>
+</ol>
+<p>终上所述，<strong>发现金红包面临比较大的技术挑战。</strong></p>
+<p>发红包其实是一种交易行为，资金流走向是从公司成本出然后进入个人账户。</p>
+<p>（1）从技术方案上是要支持订单号维度的幂等，同一订单号多次请求只入账一次。订单号生成逻辑为</p>
+<p><code>${actID}_${scene_id}_${rain_id}_${award_type}_${statge}</code></p>
+<p>从单号设计层面保证不超发。</p>
+<p>（2）支持高并发，有以下 2 个传统方案：</p>
+<table>
+<thead>
+<tr>
+<th>具体方案类型</th>
+<th>实现思路</th>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>同步入账</td>
+<td>申请和预估流量相同的计算和存储资源</td>
+<td>1.开发简单； 2.不容易出错；</td>
+<td><strong>浪费存储成本。</strong> 拿账户数据库举例，经实际压测结果：支持 30w 发红包需要 152 个数据库实例，如果支持 180w 发红包，至少需要 1152 个数据库实例，还没有算上 tce 和 redis 等其他计算和存储资源。</td>
+</tr>
+<tr>
+<td>异步入账</td>
+<td>申请部分计算和存储资源资源，实际入账能力与预估有一定差值</td>
+<td>1.开发简单； 2.不容易出错； 3.不浪费资源；</td>
+<td><strong>用户体验受到很大影响。</strong> 入账延迟较大，以今年活动举例会有十几分钟延迟。用户参与玩法得到奖励后在活动钱包页看不到奖励，也无法进行提现，会有大量客诉，影响抖音活动的效果。</td>
+</tr>
+</tbody></table>
+<p>以上两种传统意义上的技术方案都有明显的缺点，</p>
+<p>那么进行思考，既能相对节约资源又能保证用户体验的方案是什么？</p>
+<p>最终采用的是红包雨 token 方案，具体方案是：</p>
+<p><strong>使用异步入账加较少量分布式存储和较复杂方案来实现，</strong></p>
+<p>下面具体介绍一下。</p>
+<h3 id="4-2-1-红包雨-token-方案："><a href="#4-2-1-红包雨-token-方案：" class="headerlink" title="4.2.1 红包雨 token 方案："></a>4.2.1 红包雨 token 方案：</h3><p><strong>根据预估发放红包估算</strong>，红包雨 token 方案, 计算实际入账最低要支持的 TPS 为 30w，所以实际发放中有压单的过程。</p>
+<p><strong>设计目标：</strong></p>
+<p>在活动预估给用户发放（180w）与实际入账（30w）有很大 gap 的情况下，保证用户的核心体验。</p>
+<p>用户在前端页面查看与使用过当中不能感知压单的过程，即查看与使用体验不能受到影响，相关展示的数据包含余额，累计收入与红包流水，使用包含提现等。</p>
+<p><strong>具体设计方案：</strong></p>
+<p>我们在大流量场景下每次给用户发红包会生成一个加密 token（<strong>使用非对称加密</strong>，包含发红包的元信息：红包金额，actID，与发放时间等），分别存储在客户端和服务端（<strong>容灾互备</strong>），每个用户有个 token 列表。每次发红包的时候会在 Redis 里记录该 token 的入账状态，然后用户在活动钱包页看到的现金红包流水、余额等数据，是合并已入账红包列表+token 列表-已入账&#x2F;入账中 token 列表的结果。</p>
+<p>同时为保证用户提现体验不感知红包压单流程，在进入提现页或者点击提现时，将未入账的 token 列表进行强制入账，保证用户提现时账户的余额为应入账总金额，不 block 用户提现流程。</p>
+<p><strong>示意图如下：</strong></p>
+<p><img src="/img/architecture/1701071057-0ae19f1d6ece98ddf8e5865e7bc0c920.png"></p>
+<p><strong>token 数据结构：</strong></p>
+<p>token 使用的是 protobuf 格式，经单测验证存储消耗实际比使用 json 少了一倍，节约请求网络的带宽和存储成本；同时序列化与反序列化消耗 cpu 也有降低。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 红包雨token结构</span><br><span class="line">type RedPacketToken struct &#123;</span><br><span class="line">   AppID      int64  &#96;protobuf: varint,1,opt  json: AppID,omitempty &#96; &#x2F;&#x2F; 端ID</span><br><span class="line">   ActID     int64  &#96;protobuf: varint,2,opt  json: UserID,omitempty &#96; &#x2F;&#x2F; ActID</span><br><span class="line">   ActivityID string &#96;protobuf: bytes,3,opt  json: ActivityID,omitempty &#96; &#x2F;&#x2F; 活动ID</span><br><span class="line">   SceneID    string &#96;protobuf: bytes,4,opt  json: SceneID,omitempty &#96; &#x2F;&#x2F; 场景ID</span><br><span class="line">   Amount     int64  &#96;protobuf: varint,5,opt  json: Amount,omitempty &#96; &#x2F;&#x2F; 红包金额</span><br><span class="line">   OutTradeNo string &#96;protobuf: bytes,6,opt  json: OutTradeNo,omitempty &#96; &#x2F;&#x2F; 订单号</span><br><span class="line">   OpenTime   int64  &#96;protobuf: varint,7,opt  json: OpenTime,omitempty &#96; &#x2F;&#x2F; 开奖时间</span><br><span class="line">   RainID     int32  &#96;protobuf: varint,8,opt,name&#x3D;rainID  json: rainID,omitempty &#96; &#x2F;&#x2F; 红包雨ID</span><br><span class="line">   Status     int64  &#96;protobuf: varint,9,opt,name&#x3D;status  json: status,omitempty &#96; &#x2F;&#x2F;入账状态</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>token 安全性保障：</strong></p>
+<p>采用非对称加密算法，保障存储在的客户端尽可能不被破解。</p>
+<p>如果 token 加密算法被黑产破译，可监控报警发现，可降级。</p>
+<h3 id="4-3-难点三：发奖励链路依赖多的稳定性保障"><a href="#4-3-难点三：发奖励链路依赖多的稳定性保障" class="headerlink" title="4.3 难点三：发奖励链路依赖多的稳定性保障"></a>4.3 难点三：发奖励链路依赖多的稳定性保障</h3><p>发红包流程降级示意图如下：</p>
+<p><img src="/img/architecture/1701071057-ca7104e99e433ecf6dc96ae1073294ab.png"></p>
+<p>根据历史经验，实现的功能越复杂，依赖会变多，对应的稳定性风险就越高，那么如何保证高依赖的系统稳定性呢？</p>
+<p><strong>解决方案：</strong></p>
+<p>现金红包入账最基础要保障的功能，是将用户得到的红包进行入账，核心的功能，需要支持幂等与预算控制（避免超发），红包账户的幂等设计强依赖数据库保持事务一致性。</p>
+<p>但是如果极端情况发生，中间的链路可能会出现问题，如果是弱依赖，需要支持降级掉，不影响发放主流程。</p>
+<p>钱包方向发红包<strong>最短路径</strong>为依赖服务实例计算资源和 MySQL 存储资源实现现金红包入账。</p>
+<p>发红包强弱依赖梳理图示：</p>
+<table>
+<thead>
+<tr>
+<th>psm</th>
+<th>依赖服务</th>
+<th>是否强依赖</th>
+<th>降级方案</th>
+<th>降级后影响</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>资产中台</td>
+<td>tcc</td>
+<td><strong>是</strong></td>
+<td>降级读本地缓存</td>
+<td>无</td>
+</tr>
+<tr>
+<td></td>
+<td>bytkekv</td>
+<td>否</td>
+<td>主动降级开关，跳过 bytekv，依赖下游做幂等</td>
+<td>无</td>
+</tr>
+<tr>
+<td>资金交易层</td>
+<td>分布式锁 Redis</td>
+<td>否</td>
+<td>被动降级，调用失败，直接跳过</td>
+<td>基本无</td>
+</tr>
+<tr>
+<td></td>
+<td>token Redis</td>
+<td>否</td>
+<td>主动降级开关，不调用 Redis</td>
+<td>用户能感知到入账有延迟，会有很多客诉</td>
+</tr>
+<tr>
+<td></td>
+<td>MySQL</td>
+<td><strong>是</strong></td>
+<td>主有问题，联系 dba 切主</td>
+<td>故障期间发红包不可用</td>
+</tr>
+</tbody></table>
+<h2 id="4-4-难点四：大流量发卡券预算控制"><a href="#4-4-难点四：大流量发卡券预算控制" class="headerlink" title="4.4 难点四：大流量发卡券预算控制"></a>4.4 难点四：大流量发卡券预算控制</h2><p>大流量集中发券的一个场景，钱包侧与算法策略配合进行卡券发放库存控制，防止超发。</p>
+<p><strong>具体实现：</strong></p>
+<p>（1）钱包资产中台维护每个卡券模板 ID 的消耗发放量。</p>
+<p>（2）每次卡券发放前，读取该卡券模板 ID 的消耗量以及总库存数。同时会设置一个阈值，如果卡券剩余量小于 10%后不发这个券（使用兜底券或者祝福语进行兜底）。</p>
+<p>（3） 发券流程 累计每个券模板 ID 的消耗量（使用 Redis incr 命令原子累加消耗量），然后与总活动库存进行比对，如果消耗量大于总库存数则拒绝掉，防止超发，也是一个兜底流程。</p>
+<p><strong>具体流程图：</strong></p>
+<p><img src="/img/architecture/1701071057-6984c13a7e23b83a22818339cd1c9f59.png"></p>
+<p><strong>优化方向：</strong></p>
+<p>（1）大流量下使用 Redis 计数，单 key 会存在热 key 问题，需要拆分 key 来解决。</p>
+<p>（2）大流量场景下，<strong>操作 Redis 会存在超时问题</strong>，返回上游处理中，上游继续重试发券，会多消耗库存少发，本次春节活动实际活动库存在预估库存基础上加了 5%的量级来缓解超时带来的少发问题。</p>
+<h2 id="4-5-难点五：高-QPS-场景下的热-key-的读取和写入稳定性保障"><a href="#4-5-难点五：高-QPS-场景下的热-key-的读取和写入稳定性保障" class="headerlink" title="4.5 难点五：高 QPS 场景下的热 key 的读取和写入稳定性保障"></a>4.5 难点五：高 QPS 场景下的热 key 的读取和写入稳定性保障</h2><p>最大流量预估读取有 180wQPS，写入 30wQPS。</p>
+<p>这是典型的超大流量，热点 key、更新延迟不敏感，非数据强一致性场景（数字是一直累加），同时要做好<strong>容灾降级处理</strong>，最后实际活动展示的金额与产品预计发放数值误差小于 1%。</p>
+<p><img src="/img/architecture/1701071057-260c7aa883845f2b679d3714007b00ec.png"></p>
+<h3 id="4-5-1-方案一"><a href="#4-5-1-方案一" class="headerlink" title="4.5.1 方案一"></a>4.5.1 方案一</h3><p>高 QPS 下的读取和写入单 key，比较容易想到的是使用 Redis 分布式缓存来进行实现，但是单 key 读取和写入的会打到一个实例上，压测过单实例的瓶颈为 3w QPS。</p>
+<p>所以做的一个优化是拆分多个 key，然后用本地缓存兜底。</p>
+<p><strong>具体写入流程：</strong></p>
+<p>设计拆分 100 个 key，每次发红包根据请求的 actID%100 使用 incr 命令累加该数字，因为不能保证幂等性，所以超时不重试。</p>
+<p><img src="/img/architecture/1701071057-a4ab9fcbb6351ec2858ce51c5643422d.png"></p>
+<p><strong>读取流程：</strong></p>
+<p>与写入流程类似，优先读取本地缓存，如果本地缓存值为为 0，那么去读取各个 Redis 的 key 值累加到一起，进行返回。</p>
+<p><img src="/img/architecture/1701071057-01928e2b817f7c6a7a8fb96fed4c54db.png"></p>
+<p><strong>问题：</strong></p>
+<p>（1）拆分 100 个 key 会出现读扩散的问题，需要申请较多 Redis 资源，存储成本比较高。</p>
+<p>而且可能存在读取超时问题，不能保证一次读取所有 key 都读取成功，故返回的结果可能会较上一次有减少。</p>
+<p>（2）容灾方案方面，如果申请备份 Redis，也需要较多的存储资源，需要的额外存储成本。</p>
+<h3 id="4-5-2-方案二"><a href="#4-5-2-方案二" class="headerlink" title="4.5.2 方案二"></a>4.5.2 方案二</h3><p><strong>设计思路：</strong></p>
+<p>在方案一实现的基础上进行优化，在写场景，通过本地缓存进行合并写请求，进行原子性累加，读场景返回本地缓存的值，减少额外的存储资源占用。</p>
+<p>使用 Redis 实现中心化存储，最终大家读到的值都是一样的。</p>
+<p><strong>具体设计方案：</strong></p>
+<p>每个 docker 实例启动时都会执行定时任务，分为读 Redis 任务和写 Redis 任务。</p>
+<p><strong>读取流程：</strong></p>
+<ol>
+<li>本地的定时任务每秒执行一次，读取 Redis 单 key 的值，如果获取到的值大于本地缓存那么更新本地缓存的值。</li>
+<li>对外暴露的 sdk 直接返回本地缓存的值即可。</li>
+<li>有个问题需要注意下，每次实例启动第一秒内是没有数据的，所以会阻塞读，等有数据再返回。</li>
+</ol>
+<p><strong>写入流程：</strong></p>
+<ol>
+<li>因为读取都是读取本地缓存（本地缓存不过期），所以处理好并发情况下的写即可。</li>
+<li>本地缓存写变量使用 go 的 atomic.AddInt64 支持原子性累加本地写缓存的值。</li>
+<li>每次执行更新 Redis 的定时任务，先将本地写缓存复制到 amount 变量，最后将 amount 的值 incr 到 Redis 单 key 上，实现 Redis 的单 key 的值一直累加。</li>
+<li>容灾方案是使用备份 Redis 集群，写入时进行双写，一旦主机群挂掉，设计了一个配置开关支持读取备份 Redis。两个 Redis 集群的数据一致性，通过定时任务兜底实现。</li>
+</ol>
+<p>具体写入流程图如下：</p>
+<p><img src="/img/architecture/1701071057-7de103b1a77c872757315df40eaa446b.png"></p>
+<p><strong>本方案调用 Redis 的流量是跟实例数成正比</strong>，</p>
+<p>经调研读取侧的服务为主会场实例数 2 万个，写入侧服务为资产中台实例数 8 千个，所以实际 Redis 要支持的 QPS 为 2.8 万&#x2F;定时任务执行间隔（单位为 s），经压测验证 Redis 单实例可以支持单 key2 万 get，8k incr 的操作，所以设置定时任务的<strong>执行时间间隔是 1s</strong>，如果实例数更多可以考虑延长执行时间间隔。</p>
+<h3 id="4-5-3-方案对比"><a href="#4-5-3-方案对比" class="headerlink" title="4.5.3 方案对比"></a>4.5.3 方案对比</h3><table>
+<thead>
+<tr>
+<th></th>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>方案一</td>
+<td>1. 实现成本简单</td>
+<td>1. 浪费存储资源； 2. 难以做容灾； 3. 不能做到一直累加；</td>
+</tr>
+<tr>
+<td>方案二</td>
+<td>1. 节约资源； 2. 容灾方案比较简单，同时也节约资源成本；</td>
+<td>1. 实现稍复杂，需要考虑好并发原子性累加问题</td>
+</tr>
+</tbody></table>
+<p><strong>结论：</strong></p>
+<p>从实现效果，资源成本和容灾等方面考虑，最终选择了方案二上线。</p>
+<h3 id="4-6-难点六：大流量场景下资金安全保障"><a href="#4-6-难点六：大流量场景下资金安全保障" class="headerlink" title="4.6 难点六：大流量场景下资金安全保障"></a>4.6 难点六：大流量场景下资金安全保障</h3><p>钱包方向在本次春节活动期间做了三件事情来保障大流量大预算的现金红包发放的资金安全：</p>
+<ol>
+<li>现金红包发放整体预算控制的拦截</li>
+<li>单笔现金红包发放金额上限的拦截</li>
+<li>大流量发红包场景的资金对账</li>
+</ol>
+<ul>
+<li>小时级别对账：支持红包雨&#x2F;集卡&#x2F;烟火红包发放 h+1 小时级对账，并针对部分场景设置兜底 h+2 核对。</li>
+<li>准实时对账：红包雨已入账的红包数据反查钱包资产中台和活动侧做准实时对账</li>
+</ul>
+<p>多维度核对示意图：</p>
+<p><img src="/img/architecture/1701071057-19973f34246df6770f163af9a5ee47ff.png"></p>
+<p>准实时对账流程图：</p>
+<p><img src="/img/architecture/1701071057-aa4fffceba3d5c241d7e3227e5653af5.png"></p>
+<p><strong>说明：</strong></p>
+<p>准实时对账监控和报警可以及时发现是否异常入账情况，如果报警发现会有紧急预案处理。</p>
+<h1 id="5-通用模式抽象"><a href="#5-通用模式抽象" class="headerlink" title="5. 通用模式抽象"></a>5. 通用模式抽象</h1><p>在经历过春节超大流量活动后的设计与实现后，有一些总结和经验与大家一起分享一下。</p>
+<h2 id="5-1-容灾降级层面"><a href="#5-1-容灾降级层面" class="headerlink" title="5.1 容灾降级层面"></a>5.1 容灾降级层面</h2><p>大流量场景，为了保证活动最终上线效果，容灾是一定要做好的。</p>
+<p>参考业界通用实现方案，如降级、限流、熔断、资源隔离，根据预估活动参与人数和效果进行使用存储预估等。</p>
+<h3 id="5-1-1-限流层面"><a href="#5-1-1-限流层面" class="headerlink" title="5.1.1 限流层面"></a>5.1.1 限流层面</h3><p>（1）限流方面应用了 api 层 nginx 入流量限流，分布式入流量限流，分布式出流量限流。这几个限流器都是字节跳动公司层面公共的中间件，经过大流量的验证。</p>
+<p>（2）首先进行了实际单实例压测，根据单实例扛住的流量与本次春节活动预估流量打到该服务的流量进行扩容，并结合下游能抗住的情况，在 tlb 入流量、入流量限流以及出流量限流分别做好了详细完整的配置并同。</p>
+<p><strong>限流目标：</strong></p>
+<p>保证自身服务稳定性，防止外部预期外流量把本身服务打垮，防止造成雪崩效应，保证核心业务和用户核心体验。</p>
+<p>简单集群限流是实例维度的限流，每个实例限流的 QPS&#x3D;总配置限流 QPS&#x2F;实例数，对于多机器低 QPS 可能会有不准的情况，要<strong>经过实际压测并且及时调整配置值。</strong></p>
+<p>对于分布式入流量和出流量限流，两种使用方式如下，每种方式都支持高低 QPS，区别只是 SDK 使用方式和功能不同。</p>
+<p>一般低 QPS 精度要求高，采用 redis 计数方式，使用方提供自己的 redis 集群。</p>
+<p>高 QPS 精度要求低，退化为总 QPS&#x2F;tce 实例数的单实例限流。</p>
+<h3 id="5-1-2-降级层面"><a href="#5-1-2-降级层面" class="headerlink" title="5.1.2 降级层面"></a>5.1.2 降级层面</h3><p>对于高流量场景，每个核心功能都要有对应的<strong>降级方案</strong>来保证突发情况核心链路的稳定性。</p>
+<p>（1）本次春节奖励入账与活动活动钱包页方向做好了充分的操作预案，一共有 26 个降级开关，关键时刻弃车保帅，防止有单点问题影响核心链路。</p>
+<p>（2）以发现金红包链路举例，钱包方向最后完全降级的方案是只依赖 docker 和 MySQL，其他依赖都是可以降级掉的，MySQL 主有问题可以紧急联系切主，虽说最后一个都没用上，但是前提要设计好保证活动的万无一失。</p>
+<h3 id="5-1-3-资源隔离层面"><a href="#5-1-3-资源隔离层面" class="headerlink" title="5.1.3 资源隔离层面"></a>5.1.3 资源隔离层面</h3><p>（1）提升开发效率<strong>不重复造轮子</strong>。因为钱包资产中台也日常支持抖音资产发放的需求，本次春节活动也复用了现有的接口和代码流程支持发奖。</p>
+<p>（2）同时针对本次春节活动，服务层面做了<strong>集群隔离</strong>，创建专用活动集群，底层存储资源隔离，活动流量和常规流量互不影响。</p>
+<h3 id="5-1-4-存储预估"><a href="#5-1-4-存储预估" class="headerlink" title="5.1.4 存储预估"></a>5.1.4 存储预估</h3><p>（1）不但要考虑和验证了 Redis 或者 MySQL 存储能抗住对应的流量，同时也要按照实际的获取参与和发放数据等预估存储资源是否足够。</p>
+<p>（2）对于字节跳动公司的 Redis 组件来讲，</p>
+<p>可以进行<strong>垂直扩容</strong>（每个实例增加存储，最大 10G），也可以进行<strong>水平扩容</strong>（单机房上限是 500 个实例），因为 Redis 是三机房同步的，所以计算存储时只考虑一个机房的存储上限即可。</p>
+<p>要留足 buffer，因为水平扩容是很慢的一个过程，突发情况遇到存储资源不足只能通过配置开关提前下掉依赖存储，需要提前设计好。</p>
+<h3 id="5-1-5-压测层面"><a href="#5-1-5-压测层面" class="headerlink" title="5.1.5 压测层面"></a>5.1.5 压测层面</h3><p>本次春节活动，钱包奖励入账和活动钱包页做了充分的全链路压测验证，下面是一些经验总结。</p>
+<ol>
+<li>在压测前要建立好压测整条链路的监控大盘，在压测过程当中及时和方便的发现问题。</li>
+<li>对于 MySQL 数据库，在红包雨等大流量正式活动开始前，进行小流量压测预热数据库，峰值流量前提前建链，减少正式活动时的大量建链耗时，保证发红包链路数据库层面的稳定性。</li>
+<li>压测过程当中一定要传压测标，支持全链路识别压测流量做特殊逻辑处理，与线上正常业务互不干扰。</li>
+<li>针对压测流量不做特殊处理，压测流量处理流程保持和线上流量一致。</li>
+<li>压测中要验证计算资源与存储资源是否能抗住预估流量</li>
+</ol>
+<ul>
+<li><strong>梳理好压测计划</strong>，基于历史经验，设置合理初始流量，渐进提升压测流量，实时观察各项压测指标。</li>
+<li><strong>存储资源压测数据要与线上数据隔离</strong>，对于 MySQL 和 Bytekv 这种来讲是建压测表，对于 Redis 和 Abase 这种来讲是压测 key 在线上 key 基础加一下压测前缀标识 。</li>
+<li><strong>压测数据要及时清理</strong>，Redis 和 Abase 这种加短时间的过期时间，过期机制处理比较方便，如果忘记设置过期时间，可以根据写脚本识别压测标前缀去删除。</li>
+</ul>
+<ol>
+<li>压测后也要关注存储资源各项指标是否符合预期。</li>
+</ol>
+<h2 id="5-2-微服务思考"><a href="#5-2-微服务思考" class="headerlink" title="5.2 微服务思考"></a>5.2 微服务思考</h2><p>在日常技术设计中，大家都会遵守微服务设计原则和规范，根据系统职责和核心数据模型拆分不同模块，提升开发迭代效率并不互相影响。</p>
+<p>但是微服务也有它的弊端，对于超大流量的场景功能也比较复杂，会经过多个链路，这样是极其消耗计算资源的。</p>
+<p>本次春节活动<strong>资产中台提供了 sdk 包代替 rpc 进行微服务链路聚合对外提供基础能力</strong>，如查询余额、判断用户是否获取过奖励，强制入账等功能。访问流量最高上千万，与使用微服务架构对比节约了上万核 CPU 的计算资源。</p>
+<h1 id="6-系统的未来演进方向"><a href="#6-系统的未来演进方向" class="headerlink" title="6. 系统的未来演进方向"></a>6. 系统的未来演进方向</h1><p>（1）梳理上下游需求和痛点，优化资产中台设计实现，完善基础能力，优化服务架构，提供一站式服务，让接入活动方可以更专注进行活动业务逻辑的研发工作。</p>
+<p>（2）加强实时和离线数据看板能力建设，让奖励发放数据展示的更清晰更准确。</p>
+<p>（3）加强配置化和文档建设，对内减少对接活动的对接成本，对外提升活动业务方接入效率。</p>
+
+                
+                <hr>
+                <!-- Pager -->
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/架构-各种架构图-架构图/" data-toggle="tooltip" data-placement="top" title="架构图">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/架构-案例-微信红包后台系统设计-春哥大魔王/" data-toggle="tooltip" data-placement="top" title="微信红包后台系统设计-春哥大魔王">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+                <!-- tip start -->
+                
+
+                
+                <div class="comment_notes">
+                    <p>
+                        study well and make progress every day; study well and progress every day; study hard and make progress every day.
+                    </p>
+                </div>
+                
+                <!-- tip end -->
+
+                <!-- Music start-->
+                
+                <!-- Music end -->
+
+                <!-- Sharing -->
+                
+                <div class="social-share"  data-wechat-qrcode-helper="" align="center"></div>
+                <!--  css & js -->
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/css/share.min.css">
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/js/social-share.min.js"></script>
+                
+                <!-- Sharing -->
+
+                <!-- gitment start -->
+                
+                <!-- gitment end -->
+
+                <!-- 来必力City版安装代码 -->
+                
+                <!-- City版安装代码已完成 -->
+
+                <!-- disqus comment start -->
+                
+                <!-- disqus comment end -->
+            </div>
+            
+            <!-- Tabe of Content -->
+            <!-- Table of Contents -->
+
+    
+      
+        <aside id="sidebar">
+          <div id="toc" class="toc-article">
+          <strong class="toc-title">Contents</strong>
+          
+            
+              <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#1-背景-amp-挑战-amp-目标"><span class="toc-nav-number">1.</span> <span class="toc-nav-text">1. 背景&amp;挑战&amp;目标</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#1-1-业务背景"><span class="toc-nav-number">1.1.</span> <span class="toc-nav-text">1.1 业务背景</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#1-2-核心挑战"><span class="toc-nav-number">1.2.</span> <span class="toc-nav-text">1.2 核心挑战</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#1-3-最终目标"><span class="toc-nav-number">1.3.</span> <span class="toc-nav-text">1.3 最终目标</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#2-产品需求介绍"><span class="toc-nav-number">2.</span> <span class="toc-nav-text">2. 产品需求介绍</span></a></li><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#3-钱包资产中台设计与实现"><span class="toc-nav-number">3.</span> <span class="toc-nav-text">3. 钱包资产中台设计与实现</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#3-1-春节资产资产中台总体架构图如下："><span class="toc-nav-number">3.1.</span> <span class="toc-nav-text">3.1 春节资产资产中台总体架构图如下：</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#3-2-资产订单中心设计"><span class="toc-nav-number">3.2.</span> <span class="toc-nav-text">3.2 资产订单中心设计</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#4-核心难点问题解决"><span class="toc-nav-number">4.</span> <span class="toc-nav-text">4. 核心难点问题解决</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#4-1-难点一：支持八端奖励数据互通"><span class="toc-nav-number">4.1.</span> <span class="toc-nav-text">4.1 难点一：支持八端奖励数据互通</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#4-2-难点二：高场景下的奖励入账实现"><span class="toc-nav-number">4.2.</span> <span class="toc-nav-text">4.2 难点二：高场景下的奖励入账实现</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#4-2-1-红包雨-token-方案："><span class="toc-nav-number">4.2.1.</span> <span class="toc-nav-text">4.2.1 红包雨 token 方案：</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#4-3-难点三：发奖励链路依赖多的稳定性保障"><span class="toc-nav-number">4.2.2.</span> <span class="toc-nav-text">4.3 难点三：发奖励链路依赖多的稳定性保障</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#4-4-难点四：大流量发卡券预算控制"><span class="toc-nav-number">4.3.</span> <span class="toc-nav-text">4.4 难点四：大流量发卡券预算控制</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#4-5-难点五：高-QPS-场景下的热-key-的读取和写入稳定性保障"><span class="toc-nav-number">4.4.</span> <span class="toc-nav-text">4.5 难点五：高 QPS 场景下的热 key 的读取和写入稳定性保障</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#4-5-1-方案一"><span class="toc-nav-number">4.4.1.</span> <span class="toc-nav-text">4.5.1 方案一</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#4-5-2-方案二"><span class="toc-nav-number">4.4.2.</span> <span class="toc-nav-text">4.5.2 方案二</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#4-5-3-方案对比"><span class="toc-nav-number">4.4.3.</span> <span class="toc-nav-text">4.5.3 方案对比</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#4-6-难点六：大流量场景下资金安全保障"><span class="toc-nav-number">4.4.4.</span> <span class="toc-nav-text">4.6 难点六：大流量场景下资金安全保障</span></a></li></ol></li></ol></li><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#5-通用模式抽象"><span class="toc-nav-number">5.</span> <span class="toc-nav-text">5. 通用模式抽象</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#5-1-容灾降级层面"><span class="toc-nav-number">5.1.</span> <span class="toc-nav-text">5.1 容灾降级层面</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#5-1-1-限流层面"><span class="toc-nav-number">5.1.1.</span> <span class="toc-nav-text">5.1.1 限流层面</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#5-1-2-降级层面"><span class="toc-nav-number">5.1.2.</span> <span class="toc-nav-text">5.1.2 降级层面</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#5-1-3-资源隔离层面"><span class="toc-nav-number">5.1.3.</span> <span class="toc-nav-text">5.1.3 资源隔离层面</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#5-1-4-存储预估"><span class="toc-nav-number">5.1.4.</span> <span class="toc-nav-text">5.1.4 存储预估</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#5-1-5-压测层面"><span class="toc-nav-number">5.1.5.</span> <span class="toc-nav-text">5.1.5 压测层面</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#5-2-微服务思考"><span class="toc-nav-number">5.2.</span> <span class="toc-nav-text">5.2 微服务思考</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#6-系统的未来演进方向"><span class="toc-nav-number">6.</span> <span class="toc-nav-text">6. 系统的未来演进方向</span></a></li></ol>
+            
+          
+          </div>
+        </aside>
+      
+    
+
+                
+            <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <!-- no hr -->
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+                       
+                          <a class="tag" href="/tags/#architecture" title="architecture">architecture</a>
+                        
+                    </div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+
+                    
+                        <li><a href="https://blog.csdn.net/fenglepeng" target="_blank">Feng Lepeng&#39;s CSDN</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("https://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'hover',
+          placement: 'left',
+          icon: 'ℬ'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+
+
+<style  type="text/css">
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+
+                
+                    <li>
+                        <a target="_blank"  href="https://github.com/flepeng">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy;
+                    <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">京ICP备18055501号-2</a>;
+                    Feng Lepeng 2024
+                    <br>
+                    Powered by 
+                    <a href="https://github.com/dusign/hexo-theme-snail" target="_blank" rel="noopener">
+                        <i>hexo-theme-snail</i>
+                    </a> | 
+                    <iframe name="star" style="margin-left: 2px; margin-bottom:-5px;" frameborder="0" scrolling="0"
+                        width="100px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=flepeng&repo=hexo-theme-lp&type=star">
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+
+</footer>
+
+<!-- jQuery -->
+
+<script src="/js/jquery.min.js"></script>
+
+
+<!-- Bootstrap Core JavaScript -->
+
+<script src="/js/bootstrap.min.js"></script>
+
+
+<!-- Custom Theme JavaScript -->
+
+<script src="/js/hux-blog.min.js"></script>
+
+
+<!-- Search -->
+
+<script src="/js/search.js"></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("https://flepeng.github.io/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("https://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-XXXXXXXX-X';
+    var _gaDomain = 'yoursite';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+
+<!-- Baidu Tongji -->
+
+
+<!-- Search -->
+
+    <script type="text/javascript">      
+        var search_path = "search.xml";
+        if (search_path.length == 0) {
+            search_path = "search.xml";
+        }
+    var path = "/" + search_path;
+    searchFunc(path, 'local-search-input', 'local-search-result');
+    </script>
+
+
+<!-- busuanzi -->
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+
+	<a id="rocket" href="#top" class=""></a>
+	<script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+    <script type="text/javascript" src="/js/toc.js?v=1.0.0" async=""></script>
+
+    
+        <!-- background effects line -->
+        
+
+        
+            <script type="text/javascript" src="/js/mouse-click.js" content='[&quot;🌱&quot;,&quot;just do it&quot;,&quot;🍀&quot;]' color='[&quot;rgb(121,93,179)&quot; ,&quot;rgb(76,180,231)&quot; ,&quot;rgb(184,90,154)&quot;]'></script>
+        
+
+        <!-- background effects end -->
+    
+
+    <!--<script size="50" alpha='0.3' zIndex="-999" src="/js/ribbonStatic.js"></script>-->
+    
+        <script src="/js/ribbonDynamic.js"></script>
+    
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+
+</html>

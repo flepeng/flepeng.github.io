@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <script data-ad-client="ca-pub-2488174175014870" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> <!-- google ad -->
+    <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+    <meta name="baidu-site-verification" content="093lY4ziMu" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="description" content="博主用来记录和分享一些日常学到的知识">
+    <meta name="keyword"  content="hexo, java，python">
+    <link rel="shortcut icon" href="/img/hexo/ironman-draw.png">
+    <!-- Place this tag in your head or just before your close body tag. -->
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <!--<link href='http://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>-->
+    <title>
+        
+          RabbitMQ 死信队列 - Python技术分享
+        
+    </title>
+
+    <link rel="canonical" href="https://flepeng.github.io/043-RabbitMQ-31-代码使用-04-RabbitMQ-死信队列/">
+
+    <!-- Bootstrap Core CSS -->
+    
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+
+
+    <!-- Custom CSS --> 
+    
+        
+<link rel="stylesheet" href="/css/dusign-light.css">
+
+        
+<link rel="stylesheet" href="/css/dusign-common-light.css">
+
+        
+<link rel="stylesheet" href="/css/font-awesome.css">
+
+        
+<link rel="stylesheet" href="/css/toc.css">
+
+        <!-- background effects end -->
+    
+    
+    <!-- Pygments Highlight CSS -->
+    
+<link rel="stylesheet" href="/css/highlight.css">
+
+
+    
+<link rel="stylesheet" href="/css/widget.css">
+
+
+    
+<link rel="stylesheet" href="/css/rocket.css">
+
+
+    
+<link rel="stylesheet" href="/css/signature.css">
+
+
+    
+<link rel="stylesheet" href="/css/fonts.googleapis.css">
+
+
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+
+    <!-- photography -->
+    
+<link rel="stylesheet" href="/css/photography.css">
+
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- background effects start -->
+    
+    <!-- background effects end -->
+
+	<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        
+            
+                background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('/img/header_img/archive-bg.jpg')
+                /*post*/
+            
+        
+    }
+    
+    #signature{
+        background-image: url('/img/hexo/signature/dusign.png');
+    }
+    
+</style>
+
+<header class="intro-header" >
+    <!-- Signature -->
+    <div id="signature">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                
+                    <div class="post-heading">
+                        <div class="tags">
+                            
+                              <a class="tag" href="/tags/#RabbitMQ" title="RabbitMQ">RabbitMQ</a>
+                            
+                        </div>
+                        <h1>RabbitMQ 死信队列</h1>
+                        <h2 class="subheading"></h2>
+                        <span class="meta">
+                            Posted by Lepeng on
+                            2021-03-06
+                        </span>
+
+                        
+                            <div class="blank_box"></div>
+                            <span class="meta">
+                                Words <span class="post-count">1.4k</span> and
+                                Reading Time <span class="post-count">6</span> Minutes
+                            </span>
+                            <div class="blank_box"></div>
+                            <!-- 不蒜子统计 start -->
+                            <span class="meta">
+                                Viewed <span id="busuanzi_value_page_pv"><i class="fa fa-spinner fa-spin"></i></span> Times
+                            </span>
+                            <!-- 不蒜子统计 end -->
+                        
+
+                    </div>
+                
+
+                </div>
+            </div>
+        </div>      
+    </div>
+
+    
+    <div class="waveWrapper">
+        <div class="wave wave_before" style="background-image: url('/img/wave-light.png')"></div>
+        <div class="wave wave_after" style="background-image: url('/img/wave-light.png')"></div>
+    </div>
+    
+</header>
+
+	
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Lepeng</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+
+                    
+
+                        
+                    
+
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/about/">About</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/archive/">Archives</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/categories/">Categories</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/tags/">Tags</a>
+                        </li>
+                        
+                    
+                    
+                    
+                    <li>
+                        <a href="http://flepeng.com" target="_blank">chinese_blog</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Main Content -->
+    <!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+            <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <h2 id="死信的概念"><a href="#死信的概念" class="headerlink" title="死信的概念"></a>死信的概念</h2><p>先从概念解释上搞清楚这个定义，死信，顾名思义就是无法被消费的消息，一般来说，producer 将消息投递到 broker 或者直接到queue 里了，consumer 从 queue 取出消息进行消费，但某些时候由于特定的原因<strong>导致 queue 中的某些消息无法被消费</strong>，这样的消息如果没有后续的处理，就变成了死信，有死信自然就有了死信队列。</p>
+<p>应用场景：为了保证订单业务的消息数据不丢失，需要使用到 RabbitMQ 的死信队列机制，当消息消费发生异常时，将消息投入死信队列中。还有比如说：用户在商城下单成功并点击去支付后在指定时间未支付时自动失效</p>
+<h2 id="死信的来源"><a href="#死信的来源" class="headerlink" title="死信的来源"></a>死信的来源</h2><ul>
+<li><p>消息 TTL 过期：TTL 是 Time To Live 的缩写，也就是生存时间。</p>
+</li>
+<li><p>队列达到最大长度：队列满了，无法再添加数据到 mq 中。</p>
+</li>
+<li><p>消息被拒绝：(basic.reject 或 basic.nack) 并且 requeue&#x3D;false。</p>
+</li>
+</ul>
+<h2 id="死信实战"><a href="#死信实战" class="headerlink" title="死信实战"></a>死信实战</h2><p><img src="/img/rabbitmq/1690705503-1e503bbb11fc398d208241134e0f9512.png" alt="RabbitMQ-00000048"></p>
+<h3 id="死信之TTl"><a href="#死信之TTl" class="headerlink" title="死信之TTl"></a>死信之TTl</h3><p>消费者 C1 代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 死信队列 - 消费者01</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> zhiyuan</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Consumer01</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//普通交换机名称</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String NORMAL_EXCHANGE = <span class="string">"normal_exchange"</span>;</span><br><span class="line">    <span class="comment">//死信交换机名称</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String DEAD_EXCHANGE = <span class="string">"dead_exchange"</span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        Channel channel = RabbitMqUtils.getChannel();</span><br><span class="line"></span><br><span class="line">        <span class="comment">//声明死信和普通交换机 类型为 direct</span></span><br><span class="line">        channel.exchangeDeclare(NORMAL_EXCHANGE, BuiltinExchangeType.DIRECT);</span><br><span class="line">        channel.exchangeDeclare(DEAD_EXCHANGE, BuiltinExchangeType.DIRECT);</span><br><span class="line"></span><br><span class="line">        <span class="comment">//声明死信队列</span></span><br><span class="line">        String deadQueue = <span class="string">"dead-queue"</span>;</span><br><span class="line">        channel.queueDeclare(deadQueue, <span class="keyword">false</span>, <span class="keyword">false</span>, <span class="keyword">false</span>, <span class="keyword">null</span>);</span><br><span class="line">        <span class="comment">//死信队列绑定：队列、交换机、路由键（routingKey）</span></span><br><span class="line">        channel.queueBind(deadQueue, DEAD_EXCHANGE, <span class="string">"lisi"</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">//正常队列绑定死信队列信息</span></span><br><span class="line">        Map&lt;String, Object&gt; params = <span class="keyword">new</span> HashMap&lt;&gt;();</span><br><span class="line">        <span class="comment">//正常队列设置死信交换机 参数 key 是固定值</span></span><br><span class="line">        params.put(<span class="string">"x-dead-letter-exchange"</span>, DEAD_EXCHANGE);</span><br><span class="line">        <span class="comment">//正常队列设置死信 routing-key 参数 key 是固定值</span></span><br><span class="line">        params.put(<span class="string">"x-dead-letter-routing-key"</span>, <span class="string">"lisi"</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">//正常队列</span></span><br><span class="line">        String normalQueue = <span class="string">"normal-queue"</span>;</span><br><span class="line">        channel.queueDeclare(normalQueue, <span class="keyword">false</span>, <span class="keyword">false</span>, <span class="keyword">false</span>, params);</span><br><span class="line">        channel.queueBind(normalQueue, NORMAL_EXCHANGE, <span class="string">"zhangsan"</span>);</span><br><span class="line"></span><br><span class="line">        System.out.println(<span class="string">"等待接收消息........... "</span>);</span><br><span class="line">        DeliverCallback deliverCallback = (consumerTag, delivery) -&gt; &#123;</span><br><span class="line">            String message = <span class="keyword">new</span> String(delivery.getBody(), <span class="string">"UTF-8"</span>);</span><br><span class="line">            System.out.println(<span class="string">"Consumer01 接收到消息"</span> + message);</span><br><span class="line">        &#125;;</span><br><span class="line">        channel.basicConsume(normalQueue, <span class="keyword">true</span>, deliverCallback, consumerTag -&gt; &#123;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>生产者代码</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Producer</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String NORMAL_EXCHANGE = <span class="string">"normal_exchange"</span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] argv)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        Channel channel = RabbitMqUtils.getChannel();</span><br><span class="line"></span><br><span class="line">        channel.exchangeDeclare(NORMAL_EXCHANGE, BuiltinExchangeType.DIRECT);</span><br><span class="line">        <span class="comment">//设置消息的 TTL 时间 10s</span></span><br><span class="line">        AMQP.BasicProperties properties = <span class="keyword">new</span> AMQP.BasicProperties().builder().expiration(<span class="string">"10000"</span>).build();</span><br><span class="line">        <span class="comment">//该信息是用作演示队列个数限制</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; <span class="number">11</span>; i++) &#123;</span><br><span class="line">            String message = <span class="string">"info"</span> + i;</span><br><span class="line">            channel.basicPublish(NORMAL_EXCHANGE, <span class="string">"zhangsan"</span>, properties, message.getBytes());</span><br><span class="line">            System.out.println(<span class="string">"生产者发送消息:"</span> + message);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>启动 C1 ，之后关闭消费者，模拟其接收不到消息。再启动 Producer</p>
+<p><img src="/img/rabbitmq/1690705503-ecab0f638b0af8f0737b8203ab9791ad.png" alt="RabbitMQ-00000049"></p>
+<p>以上步骤完成后，启动 C2 消费者，它消费死信队列里面的消息</p>
+<p>消费者 C2 代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Consumer02</span> </span>&#123;</span><br><span class="line">    <span class="comment">//死信交换机名称</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String DEAD_EXCHANGE = <span class="string">"dead_exchange"</span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        Channel channel = RabbitMqUtils.getChannel();</span><br><span class="line"></span><br><span class="line">        <span class="comment">//声明交换机</span></span><br><span class="line">        channel.exchangeDeclare(DEAD_EXCHANGE, BuiltinExchangeType.DIRECT);</span><br><span class="line">        <span class="comment">//声明队列</span></span><br><span class="line">        String deadQueue = <span class="string">"dead-queue"</span>;</span><br><span class="line">        channel.queueDeclare(deadQueue, <span class="keyword">false</span>, <span class="keyword">false</span>, <span class="keyword">false</span>, <span class="keyword">null</span>);</span><br><span class="line">        channel.queueBind(deadQueue, DEAD_EXCHANGE, <span class="string">"lisi"</span>);</span><br><span class="line"></span><br><span class="line">        System.out.println(<span class="string">"等待接收死信消息........... "</span>);</span><br><span class="line">        DeliverCallback deliverCallback = (consumerTag, delivery) -&gt; &#123;</span><br><span class="line">            String message = <span class="keyword">new</span> String(delivery.getBody(), <span class="string">"UTF-8"</span>);</span><br><span class="line">            System.out.println(<span class="string">"Consumer02 接收到消息"</span> + message);</span><br><span class="line">        &#125;;</span><br><span class="line">        channel.basicConsume(deadQueue, <span class="keyword">true</span>, deliverCallback, consumerTag -&gt; &#123;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/img/rabbitmq/1690705503-d404165900595eba892565966cd15305.png" alt="RabbitMQ-00000050"></p>
+<h3 id="死信之最大长度"><a href="#死信之最大长度" class="headerlink" title="死信之最大长度"></a>死信之最大长度</h3><ol>
+<li><p>消息生产者代码去掉 TTL 属性：<br><img src="/img/rabbitmq/1690705503-a1997dd4923f2d9d3ce3f38218e56ff3.png" alt="image-20210628101337825"></p>
+</li>
+<li><p>C1 消费者修改以下代码 <strong>(启动之后关闭该消费者 模拟其接收不到消息)</strong>:<br><img src="/img/rabbitmq/1690705503-e7a0d7374e668af9e7e57fbd438379c0.png" alt="RabbitMQ-00000051"></p>
+<p>&#96;&#96;java<br>&#x2F;&#x2F;设置正常队列的长度限制，例如发10个，4个则为死信<br>params.put(“x-max-length”,6);</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line">    注意此时需要把原先队列删除 因为参数改变了</span><br><span class="line"></span><br><span class="line">3.  C2 消费者代码不变(启动 C2 消费者) </span><br><span class="line">    ![RabbitMQ-00000052](&#x2F;img&#x2F;rabbitmq&#x2F;1690705503-9eb9e2e730de1ecc2e8d148486a0a802.png)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">### 死信之消息被拒</span><br><span class="line"></span><br><span class="line">1、消息生产者代码同上生产者一致</span><br><span class="line"></span><br><span class="line">2、C1 消费者代码(启动之后关闭该消费者模拟其接收不到消息)</span><br><span class="line"></span><br><span class="line">拒收消息 &quot;info5&quot; </span><br><span class="line"></span><br><span class="line">&#96;&#96;&#96;java</span><br><span class="line">public class Consumer01 &#123;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F;普通交换机名称</span><br><span class="line">    private static final String NORMAL_EXCHANGE &#x3D; &quot;normal_exchange&quot;;</span><br><span class="line">    &#x2F;&#x2F;死信交换机名称</span><br><span class="line">    private static final String DEAD_EXCHANGE &#x3D; &quot;dead_exchange&quot;;</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) throws Exception &#123;</span><br><span class="line">        Channel channel &#x3D; RabbitMqUtils.getChannel();</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F;声明死信和普通交换机 类型为 direct</span><br><span class="line">        channel.exchangeDeclare(NORMAL_EXCHANGE, BuiltinExchangeType.DIRECT);</span><br><span class="line">        channel.exchangeDeclare(DEAD_EXCHANGE, BuiltinExchangeType.DIRECT);</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F;声明死信队列</span><br><span class="line">        String deadQueue &#x3D; &quot;dead-queue&quot;;</span><br><span class="line">        channel.queueDeclare(deadQueue, false, false, false, null);</span><br><span class="line">        &#x2F;&#x2F;死信队列绑定：队列、交换机、路由键（routingKey）</span><br><span class="line">        channel.queueBind(deadQueue, DEAD_EXCHANGE, &quot;lisi&quot;);</span><br><span class="line">        </span><br><span class="line">        &#x2F;&#x2F;正常队列绑定死信队列信息</span><br><span class="line">        Map&lt;String, Object&gt; params &#x3D; new HashMap&lt;&gt;();</span><br><span class="line">        &#x2F;&#x2F;正常队列设置死信交换机 参数 key 是固定值</span><br><span class="line">        params.put(&quot;x-dead-letter-exchange&quot;, DEAD_EXCHANGE);</span><br><span class="line">        &#x2F;&#x2F;正常队列设置死信 routing-key 参数 key 是固定值</span><br><span class="line">        params.put(&quot;x-dead-letter-routing-key&quot;, &quot;lisi&quot;);</span><br><span class="line">&#x2F;&#x2F;        &#x2F;&#x2F;设置正常队列的长度限制，例如发10个，4个则为死信</span><br><span class="line">&#x2F;&#x2F;        params.put(&quot;x-max-length&quot;,6);</span><br><span class="line">        </span><br><span class="line">        &#x2F;&#x2F;正常队列</span><br><span class="line">        String normalQueue &#x3D; &quot;normal-queue&quot;;</span><br><span class="line">        channel.queueDeclare(normalQueue, false, false, false, params);</span><br><span class="line">        channel.queueBind(normalQueue, NORMAL_EXCHANGE, &quot;zhangsan&quot;);</span><br><span class="line"></span><br><span class="line">        System.out.println(&quot;等待接收消息........... &quot;);</span><br><span class="line">        </span><br><span class="line">        DeliverCallback deliverCallback &#x3D; (consumerTag, delivery) -&gt; &#123;</span><br><span class="line">            String message &#x3D; new String(delivery.getBody(), &quot;UTF-8&quot;);</span><br><span class="line">            if (message.equals(&quot;info5&quot;)) &#123;</span><br><span class="line">                System.out.println(&quot;Consumer01 接收到消息&quot; + message + &quot;并拒绝签收该消息&quot;);</span><br><span class="line">                &#x2F;&#x2F;requeue 设置为 false 代表拒绝重新入队 该队列如果配置了死信交换机将发送到死信队列中</span><br><span class="line">                channel.basicReject(delivery.getEnvelope().getDeliveryTag(), false);</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                System.out.println(&quot;Consumer01 接收到消息&quot; + message);</span><br><span class="line">                channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">        &#125;;</span><br><span class="line">        &#x2F;&#x2F;开启手动应答</span><br><span class="line">        channel.basicConsume(normalQueue, false, deliverCallback, consumerTag -&gt; &#123;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ol>
+<p><img src="/img/rabbitmq/1690705503-e531c79fef3b5cada6ed7162220d42aa.png" alt="RabbitMQ-00000053"></p>
+<p>3、C2 消费者代码不变</p>
+<p>启动消费者 1 然后再启动消费者 2 </p>
+<p><img src="/img/rabbitmq/1690705503-8dec14c7434dd9041510b3535848040a.png" alt="RabbitMQ-00000054"></p>
+
+                
+                <hr>
+                <!-- Pager -->
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/043-RabbitMQ-31-代码使用-03-RabbitMQ-交换机/" data-toggle="tooltip" data-placement="top" title="RabbitMQ 交换机">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/043-RabbitMQ-31-代码使用-05-RabbitMQ-延迟队列/" data-toggle="tooltip" data-placement="top" title="RabbitMQ 延迟队列">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+                <!-- tip start -->
+                
+
+                
+                <div class="comment_notes">
+                    <p>
+                        study well and make progress every day; study well and progress every day; study hard and make progress every day.
+                    </p>
+                </div>
+                
+                <!-- tip end -->
+
+                <!-- Music start-->
+                
+                <!-- Music end -->
+
+                <!-- Sharing -->
+                
+                <div class="social-share"  data-wechat-qrcode-helper="" align="center"></div>
+                <!--  css & js -->
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/css/share.min.css">
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/js/social-share.min.js"></script>
+                
+                <!-- Sharing -->
+
+                <!-- gitment start -->
+                
+                <!-- gitment end -->
+
+                <!-- 来必力City版安装代码 -->
+                
+                <!-- City版安装代码已完成 -->
+
+                <!-- disqus comment start -->
+                
+                <!-- disqus comment end -->
+            </div>
+            
+            <!-- Tabe of Content -->
+            <!-- Table of Contents -->
+
+    
+      
+        <aside id="sidebar">
+          <div id="toc" class="toc-article">
+          <strong class="toc-title">Contents</strong>
+          
+            
+              <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#死信的概念"><span class="toc-nav-number">1.</span> <span class="toc-nav-text">死信的概念</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#死信的来源"><span class="toc-nav-number">2.</span> <span class="toc-nav-text">死信的来源</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#死信实战"><span class="toc-nav-number">3.</span> <span class="toc-nav-text">死信实战</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#死信之TTl"><span class="toc-nav-number">3.1.</span> <span class="toc-nav-text">死信之TTl</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#死信之最大长度"><span class="toc-nav-number">3.2.</span> <span class="toc-nav-text">死信之最大长度</span></a></li></ol></li></ol>
+            
+          
+          </div>
+        </aside>
+      
+    
+
+                
+            <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <!-- no hr -->
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+                       
+                          <a class="tag" href="/tags/#RabbitMQ" title="RabbitMQ">RabbitMQ</a>
+                        
+                    </div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+
+                    
+                        <li><a href="https://blog.csdn.net/fenglepeng" target="_blank">Feng Lepeng&#39;s CSDN</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("https://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'hover',
+          placement: 'left',
+          icon: 'ℬ'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+
+
+<style  type="text/css">
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+
+                
+                    <li>
+                        <a target="_blank"  href="https://github.com/flepeng">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy;
+                    <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">京ICP备18055501号-2</a>;
+                    Feng Lepeng 2024
+                    <br>
+                    Powered by 
+                    <a href="https://github.com/dusign/hexo-theme-snail" target="_blank" rel="noopener">
+                        <i>hexo-theme-snail</i>
+                    </a> | 
+                    <iframe name="star" style="margin-left: 2px; margin-bottom:-5px;" frameborder="0" scrolling="0"
+                        width="100px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=flepeng&repo=hexo-theme-lp&type=star">
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+
+</footer>
+
+<!-- jQuery -->
+
+<script src="/js/jquery.min.js"></script>
+
+
+<!-- Bootstrap Core JavaScript -->
+
+<script src="/js/bootstrap.min.js"></script>
+
+
+<!-- Custom Theme JavaScript -->
+
+<script src="/js/hux-blog.min.js"></script>
+
+
+<!-- Search -->
+
+<script src="/js/search.js"></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("https://flepeng.github.io/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("https://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-XXXXXXXX-X';
+    var _gaDomain = 'yoursite';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+
+<!-- Baidu Tongji -->
+
+
+<!-- Search -->
+
+    <script type="text/javascript">      
+        var search_path = "search.xml";
+        if (search_path.length == 0) {
+            search_path = "search.xml";
+        }
+    var path = "/" + search_path;
+    searchFunc(path, 'local-search-input', 'local-search-result');
+    </script>
+
+
+<!-- busuanzi -->
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+
+	<a id="rocket" href="#top" class=""></a>
+	<script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+    <script type="text/javascript" src="/js/toc.js?v=1.0.0" async=""></script>
+
+    
+        <!-- background effects line -->
+        
+
+        
+            <script type="text/javascript" src="/js/mouse-click.js" content='[&quot;🌱&quot;,&quot;just do it&quot;,&quot;🍀&quot;]' color='[&quot;rgb(121,93,179)&quot; ,&quot;rgb(76,180,231)&quot; ,&quot;rgb(184,90,154)&quot;]'></script>
+        
+
+        <!-- background effects end -->
+    
+
+    <!--<script size="50" alpha='0.3' zIndex="-999" src="/js/ribbonStatic.js"></script>-->
+    
+        <script src="/js/ribbonDynamic.js"></script>
+    
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+
+</html>

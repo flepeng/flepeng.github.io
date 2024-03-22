@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <script data-ad-client="ca-pub-2488174175014870" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> <!-- google ad -->
+    <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+    <meta name="baidu-site-verification" content="093lY4ziMu" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="description" content="博主用来记录和分享一些日常学到的知识">
+    <meta name="keyword"  content="hexo, java，python">
+    <link rel="shortcut icon" href="/img/hexo/ironman-draw.png">
+    <!-- Place this tag in your head or just before your close body tag. -->
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <!--<link href='http://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>-->
+    <title>
+        
+          Redis 发布订阅1 - PubSub - Python技术分享
+        
+    </title>
+
+    <link rel="canonical" href="https://flepeng.github.io/041-Redis-41-核心概念-01-Redis-发布订阅-PubSub/">
+
+    <!-- Bootstrap Core CSS -->
+    
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+
+
+    <!-- Custom CSS --> 
+    
+        
+<link rel="stylesheet" href="/css/dusign-light.css">
+
+        
+<link rel="stylesheet" href="/css/dusign-common-light.css">
+
+        
+<link rel="stylesheet" href="/css/font-awesome.css">
+
+        
+<link rel="stylesheet" href="/css/toc.css">
+
+        <!-- background effects end -->
+    
+    
+    <!-- Pygments Highlight CSS -->
+    
+<link rel="stylesheet" href="/css/highlight.css">
+
+
+    
+<link rel="stylesheet" href="/css/widget.css">
+
+
+    
+<link rel="stylesheet" href="/css/rocket.css">
+
+
+    
+<link rel="stylesheet" href="/css/signature.css">
+
+
+    
+<link rel="stylesheet" href="/css/fonts.googleapis.css">
+
+
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+
+    <!-- photography -->
+    
+<link rel="stylesheet" href="/css/photography.css">
+
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- background effects start -->
+    
+    <!-- background effects end -->
+
+	<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        
+            
+                background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('/img/header_img/archive-bg.jpg')
+                /*post*/
+            
+        
+    }
+    
+    #signature{
+        background-image: url('/img/hexo/signature/dusign.png');
+    }
+    
+</style>
+
+<header class="intro-header" >
+    <!-- Signature -->
+    <div id="signature">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                
+                    <div class="post-heading">
+                        <div class="tags">
+                            
+                              <a class="tag" href="/tags/#Redis" title="Redis">Redis</a>
+                            
+                        </div>
+                        <h1>Redis 发布订阅1 - PubSub</h1>
+                        <h2 class="subheading"></h2>
+                        <span class="meta">
+                            Posted by Lepeng on
+                            2021-01-01
+                        </span>
+
+                        
+                            <div class="blank_box"></div>
+                            <span class="meta">
+                                Words <span class="post-count">2.1k</span> and
+                                Reading Time <span class="post-count">7</span> Minutes
+                            </span>
+                            <div class="blank_box"></div>
+                            <!-- 不蒜子统计 start -->
+                            <span class="meta">
+                                Viewed <span id="busuanzi_value_page_pv"><i class="fa fa-spinner fa-spin"></i></span> Times
+                            </span>
+                            <!-- 不蒜子统计 end -->
+                        
+
+                    </div>
+                
+
+                </div>
+            </div>
+        </div>      
+    </div>
+
+    
+    <div class="waveWrapper">
+        <div class="wave wave_before" style="background-image: url('/img/wave-light.png')"></div>
+        <div class="wave wave_after" style="background-image: url('/img/wave-light.png')"></div>
+    </div>
+    
+</header>
+
+	
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Lepeng</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+
+                    
+
+                        
+                    
+
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/about/">About</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/archive/">Archives</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/categories/">Categories</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/tags/">Tags</a>
+                        </li>
+                        
+                    
+                    
+                    
+                    <li>
+                        <a href="http://flepeng.com" target="_blank">chinese_blog</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Main Content -->
+    <!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+            <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <h2 id="Redis-中的发布-x2F-订阅功能"><a href="#Redis-中的发布-x2F-订阅功能" class="headerlink" title="Redis 中的发布&#x2F;订阅功能"></a>Redis 中的发布&#x2F;订阅功能</h2><p><strong>发布&#x2F;订阅系统</strong> 是 Web 系统中比较常用的一个功能。简单说就是 <strong>发布者发布消息，订阅者接受消息</strong></p>
+<p>虽然可以用一个 <code>list</code> 列表结构结合 <code>lpush</code> 和 <code>rpop</code> 来实现消息队列的功能，但是很难实现实现 <strong>消息多播</strong> 的功能。</p>
+<p>为了支持消息多播，Redis 不能再依赖于那 5 种基础的数据结构了，它单独使用了一个模块来支持消息多播，这个模块就是 <strong>PubSub</strong>，也就是 **Publisher&#x2F;Subscriber(发布者&#x2F;订阅者模式)**。</p>
+<h2 id="PubSub-简介"><a href="#PubSub-简介" class="headerlink" title="PubSub 简介"></a>PubSub 简介</h2><p>基于 <code>list</code> 结构的消息队列，是一种 Publisher 与 Consumer 点对点的强关联关系，Redis 为了消除这样的强关联，引入了另一种概念：<strong>频道</strong> (channel)。</p>
+<p>当 Publisher 往 channel 中发布消息时，关注了相应 channel 的 Consumer 就能够同时受到消息。</p>
+<p>需要注意的是，消费者订阅一个频道是必须 <strong>明确指定频道名称</strong> 的，这意味着，如果我们想要 <strong>订阅多个</strong> 频道，那么就必须 <strong>显式地关注多个</strong> 名称。</p>
+<p>为了简化订阅的繁琐操作，Redis 提供了 <strong>模式订阅</strong> 的功能 <strong>Pattern Subscribe</strong>，这样就可以 <strong>一次性关注多个频道</strong> 了，即使生产者新增了同模式的频道，消费者也可以立即受到消息：</p>
+<p><img src="/img/redis/7896890-18ac258e4e9387da.webp"></p>
+<p>例如上图中，<code>Publisher</code> 往 <code>wmyskxz.chat</code> 这个 channel 中发送了一条消息，关注了这个频道的 <code>Consumer 1</code> 和 <code>Consumer 2</code> 能够收到消息，<code>wmyskxz.chat</code> 和模式 <code>wmyskxz.*</code> 匹配，所以 Redis 此时同样发送消息给订阅了 <code>wmyskxz.*</code> 这个模式的 <code>Consumer 3</code>。</p>
+<p>相同的，如果接收消息的频道是 <code>wmyskxz.log</code>，那么 <code>Consumer 3</code> 也会受到消息。</p>
+<h2 id="快速体验"><a href="#快速体验" class="headerlink" title="快速体验"></a>快速体验</h2><p>在 Redis 中，<strong>PubSub</strong> 模块的使用非常简单，常用的命令就下面几条：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 订阅频道：</span></span><br><span class="line">SUBSCRIBE channel [channel ....]   # 订阅给定的一个或多个频道的信息</span><br><span class="line">PSUBSCRIBE pattern [pattern ....]  # 订阅一个或多个符合给定 模式 的频道</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 发布频道：</span></span><br><span class="line">PUBLISH channel message  # 将消息发送到指定的频道</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 退订频道：</span></span><br><span class="line">UNSUBSCRIBE [channel [channel ....]]   # 退订指定的频道</span><br><span class="line">PUNSUBSCRIBE [pattern [pattern ....]]  # 退订所有给定模式的频道</span><br></pre></td></tr></table></figure>
+
+<ol>
+<li><p>consumer1 订阅 abc.com 频道</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt; SUBSCRIBE abc.com</span><br><span class="line">Reading messages... (press Ctrl-C to quit)</span><br><span class="line">1) "subscribe"</span><br><span class="line">2) "abc.com"</span><br><span class="line">3) (integer) 1</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>consumer2 模式订阅 abc.* 频道</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt; PSUBSCRIBE abc.*</span><br><span class="line">Reading messages... (press Ctrl-C to quit)</span><br><span class="line">1) "psubscribe"</span><br><span class="line">2) "abc.*"</span><br><span class="line">3) (integer) 1</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>publisher 发布消息到 abc.com 频道</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt; PUBLISH abc.com "hello"</span><br><span class="line">(integer) 2</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>此时 consumer1 和 consumer2 均收到消息</p>
+</li>
+<li><p>新增 consumer3，订阅 abc.net 频道</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt; SUBSCRIBE abc.net</span><br><span class="line">Reading messages... (press Ctrl-C to quit)</span><br><span class="line">1) "subscribe"</span><br><span class="line">2) "abc.net"</span><br><span class="line">3) (integer) 1</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>publisher 发布消息到 abc.net 频道</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt; PUBLISH abc.net "hello2"</span><br><span class="line">(integer) 2</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>此时 consumer2 和 consumer3 均收到消息，consumer1 不会收到消息。</p>
+</li>
+</ol>
+<h2 id="实现原理"><a href="#实现原理" class="headerlink" title="实现原理"></a>实现原理</h2><p>我们通过简单的两条命令，就可以简单使用一个 <strong>发布&#x2F;订阅系统</strong> 了，但具体是怎么样实现的呢？</p>
+<p><strong>每个 Redis 服务器进程维持着一个标识服务器状态</strong> 的 <code>redis.h/redisServer</code> 结构，其中 <strong>保存着有订阅的频道</strong> 以及 <strong>订阅模式</strong> 的信息：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">redisServer</span> &#123;</span></span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    dict *pubsub_channels;  <span class="comment">// 订阅频道</span></span><br><span class="line">    <span class="built_in">list</span> *pubsub_patterns;  <span class="comment">// 订阅模式</span></span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="订阅频道原理"><a href="#订阅频道原理" class="headerlink" title="订阅频道原理"></a>订阅频道原理</h3><p>当客户端订阅某一个频道之后，Redis 就会往 <code>pubsub_channels</code> 这个字典中新添加一条数据，实际上这个 <code>dict</code> 字典维护的是一张链表，比如，下图展示的 <code>pubsub_channels</code> 示例中，<code>client 1</code>、<code>client 2</code> 就订阅了 <code>channel 1</code>，而其他频道也分别被其他客户端订阅：</p>
+<p><img src="/img/redis/7896890-218fc15f7c368eee.webp"></p>
+<h4 id="SUBSCRIBE-命令"><a href="#SUBSCRIBE-命令" class="headerlink" title="SUBSCRIBE 命令"></a>SUBSCRIBE 命令</h4><p><code>SUBSCRIBE</code> 命令的行为可以用下列的伪代码表示：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">def <span class="title">SUBSCRIBE</span><span class="params">(client, channels)</span>:</span></span><br><span class="line">    # 遍历所有输入频道</span><br><span class="line">    <span class="keyword">for</span> channel in channels:</span><br><span class="line">        # 将客户端添加到链表的末尾</span><br><span class="line">        redisServer.pubsub_channels[channel].append(client)</span><br></pre></td></tr></table></figure>
+
+<p>通过 <code>pubsub_channels</code> 字典，程序只要检查某个频道是否为字典的键，就可以知道该频道是否正在被客户端订阅；只要取出某个键的值，就可以得到所有订阅该频道的客户端的信息。</p>
+<h4 id="PUBLISH-命令"><a href="#PUBLISH-命令" class="headerlink" title="PUBLISH 命令"></a>PUBLISH 命令</h4><p>了解了 <code>SUBSCRIBE</code> 那么 <code>PUBLISH</code> 命令的实现也变得十分简单了，只需要通过上述字典定位到具体的客户端，再把消息发送给它们就好了，伪代码实现如下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">def <span class="title">PUBLISH</span><span class="params">(channel, message)</span>:</span></span><br><span class="line">    # 遍历所有订阅频道 channel 的客户端</span><br><span class="line">    <span class="keyword">for</span> client in server.pubsub_channels[channel]:</span><br><span class="line">        # 将信息发送给它们</span><br><span class="line">        send_message(client, message)</span><br></pre></td></tr></table></figure>
+
+
+<h4 id="UNSUBSCRIBE-命令"><a href="#UNSUBSCRIBE-命令" class="headerlink" title="UNSUBSCRIBE 命令"></a>UNSUBSCRIBE 命令</h4><p>使用 <code>UNSUBSCRIBE</code> 命令可以退订指定的频道，这个命令执行的是订阅的反操作：它从 <code>pubsub_channels</code> 字典的给定频道（键）中，删除关于当前客户端的信息，这样被退订频道的信息就不会再发送给这个客户端。</p>
+<h3 id="订阅模式原理"><a href="#订阅模式原理" class="headerlink" title="订阅模式原理"></a>订阅模式原理</h3><p><img src="/img/redis/7896890-18ac258e4e9387da.webp"></p>
+<p>当发送一条消息到 <code>wmyskxz.chat</code> 这个频道时，Redis 不仅仅会发送到当前的频道，还会发送到匹配于当前模式的所有频道，实际上，<code>pubsub_patterns</code> 背后还维护了一个 <code>redis.h/pubsubPattern</code> 结构：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">typedefstruct pubsubPattern &#123;</span><br><span class="line">    redisClient *client;  <span class="comment">// 订阅模式的客户端</span></span><br><span class="line">    robj *pattern;        <span class="comment">// 订阅的模式</span></span><br><span class="line">&#125; pubsubPattern;</span><br></pre></td></tr></table></figure>
+
+<p>每当调用 <code>PSUBSCRIBE</code> 命令订阅一个模式时，程序就创建一个包含客户端信息和被订阅模式的 <code>pubsubPattern</code> 结构，并将该结构添加到 <code>redisServer.pubsub_patterns</code> 链表中。</p>
+<p>我们来看一个 <code>pusub_patterns</code> 链表的示例：</p>
+<p><img src="/img/redis/7896890-d0d3b1849fdb6162.webp"></p>
+<p>这个时候客户端 <code>client 3</code> 执行 <code>PSUBSCRIBE wmyskxz.java.*</code>，那么 <code>pubsub_patterns</code> 链表就会被更新成这样：</p>
+<p><img src="/img/redis/7896890-edbf11995590de50.webp"></p>
+<p>通过遍历整个 <code>pubsub_patterns</code> 链表，程序可以检查所有正在被订阅的模式，以及订阅这些模式的客户端。</p>
+<h4 id="PUBLISH-命令-1"><a href="#PUBLISH-命令-1" class="headerlink" title="PUBLISH 命令"></a>PUBLISH 命令</h4><p>上面给出的伪代码并没有 <strong>完整描述</strong> <code>PUBLISH</code> 命令的行为，因为 <code>PUBLISH</code> 除了将 <code>message</code> 发送到 <strong>所有订阅 channel 的客户端</strong> 之外，它还会将 channel 和 <code>pubsub_patterns</code> 中的 <strong>模式</strong> 进行对比，如果 <code>channel</code> 和某个模式匹配的话，那么也将 <code>message</code> 发送到 <strong>订阅那个模式的客户端</strong>。</p>
+<p>完整描述 <code>PUBLISH</code> 功能的伪代码定于如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">def <span class="title">PUBLISH</span><span class="params">(channel, message)</span>:</span></span><br><span class="line">    # 遍历所有订阅频道 channel 的客户端</span><br><span class="line">    <span class="keyword">for</span> client in server.pubsub_channels[channel]:</span><br><span class="line">        # 将信息发送给它们</span><br><span class="line">        send_message(client, message)</span><br><span class="line">    </span><br><span class="line">    # 取出所有模式，以及订阅模式的客户端</span><br><span class="line">    <span class="keyword">for</span> pattern, client in server.pubsub_patterns:</span><br><span class="line">        # 如果 channel 和模式匹配</span><br><span class="line">        <span class="function"><span class="keyword">if</span> <span class="title">match</span><span class="params">(channel, pattern)</span>:</span></span><br><span class="line">            # 那么也将信息发给订阅这个模式的客户端</span><br><span class="line">            send_message(client, message)</span><br></pre></td></tr></table></figure>
+
+
+<h4 id="PUNSUBSCRIBE-命令"><a href="#PUNSUBSCRIBE-命令" class="headerlink" title="PUNSUBSCRIBE 命令"></a>PUNSUBSCRIBE 命令</h4><p>使用 <code>PUNSUBSCRIBE</code> 命令可以退订指定的模式，这个命令执行的是订阅模式的反操作：序会删除 <code>redisServer.pubsub_patterns</code> 链表中，所有和被退订模式相关联的 <code>pubsubPattern</code> 结构，这样客户端就不会再收到和模式相匹配的频道发来的信息。</p>
+<h2 id="PubSub-的缺点"><a href="#PubSub-的缺点" class="headerlink" title="PubSub 的缺点"></a>PubSub 的缺点</h2><p>尽管 Redis 实现了 <strong>PubSub</strong> 模式来达到了 <strong>多播消息队列</strong> 的目的，但在实际的消息队列的领域，几乎 <strong>找不到特别合适的场景</strong>，因为它的缺点十分明显：</p>
+<ul>
+<li><p><strong>没有 Ack 机制，也不保证数据的连续：</strong> PubSub 的生产者传递过来一个消息，Redis 会直接找到相应的消费者传递过去。如果没有一个消费者，那么消息会被直接丢弃。如果开始有三个消费者，其中一个突然挂掉了，过了一会儿等它再重连时，那么重连期间的消息对于这个消费者来说就彻底丢失了。</p>
+</li>
+<li><p><strong>不持久化消息：</strong> 如果 Redis 停机重启，PubSub 的消息是不会持久化的，毕竟 Redis 宕机就相当于一个消费者都没有，所有的消息都会被直接丢弃。</p>
+</li>
+</ul>
+<p>基于上述缺点，Redis 的作者甚至单独开启了一个 Disque 的项目来专门用来做多播消息队列，不过该项目目前好像都没有成熟。不过后来在 2018 年 6 月，<strong>Redis 5.0</strong> 新增了 <code>Stream</code> 数据结构，这个功能给 Redis 带来了 <strong>持久化消息队列</strong>，从此 PubSub 作为消息队列的功能可以说是就消失了。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ol>
+<li><a href="https://www.cnblogs.com/wmyskxz/p/12499532.html" target="_blank" rel="noopener">https://www.cnblogs.com/wmyskxz/p/12499532.html</a></li>
+<li>Introduction to Redis Streams【官方文档】 - <a href="https://redis.io/topics/streams-intro" target="_blank" rel="noopener">https://redis.io/topics/streams-intro</a></li>
+</ol>
+
+                
+                <hr>
+                <!-- Pager -->
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/041-Redis-31-代码使用-Redis-Java-编码调用/" data-toggle="tooltip" data-placement="top" title="Redis - Java 编码使用">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/041-Redis-41-核心概念-01-Redis-五大数据类型/" data-toggle="tooltip" data-placement="top" title="Redis 五大数据类型">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+                <!-- tip start -->
+                
+
+                
+                <div class="comment_notes">
+                    <p>
+                        study well and make progress every day; study well and progress every day; study hard and make progress every day.
+                    </p>
+                </div>
+                
+                <!-- tip end -->
+
+                <!-- Music start-->
+                
+                <!-- Music end -->
+
+                <!-- Sharing -->
+                
+                <div class="social-share"  data-wechat-qrcode-helper="" align="center"></div>
+                <!--  css & js -->
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/css/share.min.css">
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/social-share.js/1.0.16/js/social-share.min.js"></script>
+                
+                <!-- Sharing -->
+
+                <!-- gitment start -->
+                
+                <!-- gitment end -->
+
+                <!-- 来必力City版安装代码 -->
+                
+                <!-- City版安装代码已完成 -->
+
+                <!-- disqus comment start -->
+                
+                <!-- disqus comment end -->
+            </div>
+            
+            <!-- Tabe of Content -->
+            <!-- Table of Contents -->
+
+    
+      
+        <aside id="sidebar">
+          <div id="toc" class="toc-article">
+          <strong class="toc-title">Contents</strong>
+          
+            
+              <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#Redis-中的发布-x2F-订阅功能"><span class="toc-nav-number">1.</span> <span class="toc-nav-text">Redis 中的发布&#x2F;订阅功能</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#PubSub-简介"><span class="toc-nav-number">2.</span> <span class="toc-nav-text">PubSub 简介</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#快速体验"><span class="toc-nav-number">3.</span> <span class="toc-nav-text">快速体验</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#实现原理"><span class="toc-nav-number">4.</span> <span class="toc-nav-text">实现原理</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#订阅频道原理"><span class="toc-nav-number">4.1.</span> <span class="toc-nav-text">订阅频道原理</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#SUBSCRIBE-命令"><span class="toc-nav-number">4.1.1.</span> <span class="toc-nav-text">SUBSCRIBE 命令</span></a></li><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#PUBLISH-命令"><span class="toc-nav-number">4.1.2.</span> <span class="toc-nav-text">PUBLISH 命令</span></a></li><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#UNSUBSCRIBE-命令"><span class="toc-nav-number">4.1.3.</span> <span class="toc-nav-text">UNSUBSCRIBE 命令</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#订阅模式原理"><span class="toc-nav-number">4.2.</span> <span class="toc-nav-text">订阅模式原理</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#PUBLISH-命令-1"><span class="toc-nav-number">4.2.1.</span> <span class="toc-nav-text">PUBLISH 命令</span></a></li><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#PUNSUBSCRIBE-命令"><span class="toc-nav-number">4.2.2.</span> <span class="toc-nav-text">PUNSUBSCRIBE 命令</span></a></li></ol></li></ol></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#PubSub-的缺点"><span class="toc-nav-number">5.</span> <span class="toc-nav-text">PubSub 的缺点</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#参考资料"><span class="toc-nav-number">6.</span> <span class="toc-nav-text">参考资料</span></a></li></ol>
+            
+          
+          </div>
+        </aside>
+      
+    
+
+                
+            <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <!-- no hr -->
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+                       
+                          <a class="tag" href="/tags/#Redis" title="Redis">Redis</a>
+                        
+                    </div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+
+                    
+                        <li><a href="https://blog.csdn.net/fenglepeng" target="_blank">Feng Lepeng&#39;s CSDN</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("https://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'hover',
+          placement: 'left',
+          icon: 'ℬ'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+
+
+<style  type="text/css">
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+
+                
+                    <li>
+                        <a target="_blank"  href="https://github.com/flepeng">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                
+
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy;
+                    <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">京ICP备18055501号-2</a>;
+                    Feng Lepeng 2024
+                    <br>
+                    Powered by 
+                    <a href="https://github.com/dusign/hexo-theme-snail" target="_blank" rel="noopener">
+                        <i>hexo-theme-snail</i>
+                    </a> | 
+                    <iframe name="star" style="margin-left: 2px; margin-bottom:-5px;" frameborder="0" scrolling="0"
+                        width="100px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=flepeng&repo=hexo-theme-lp&type=star">
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+
+</footer>
+
+<!-- jQuery -->
+
+<script src="/js/jquery.min.js"></script>
+
+
+<!-- Bootstrap Core JavaScript -->
+
+<script src="/js/bootstrap.min.js"></script>
+
+
+<!-- Custom Theme JavaScript -->
+
+<script src="/js/hux-blog.min.js"></script>
+
+
+<!-- Search -->
+
+<script src="/js/search.js"></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("https://flepeng.github.io/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("https://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-XXXXXXXX-X';
+    var _gaDomain = 'yoursite';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+
+<!-- Baidu Tongji -->
+
+
+<!-- Search -->
+
+    <script type="text/javascript">      
+        var search_path = "search.xml";
+        if (search_path.length == 0) {
+            search_path = "search.xml";
+        }
+    var path = "/" + search_path;
+    searchFunc(path, 'local-search-input', 'local-search-result');
+    </script>
+
+
+<!-- busuanzi -->
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+
+	<a id="rocket" href="#top" class=""></a>
+	<script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+    <script type="text/javascript" src="/js/toc.js?v=1.0.0" async=""></script>
+
+    
+        <!-- background effects line -->
+        
+
+        
+            <script type="text/javascript" src="/js/mouse-click.js" content='[&quot;🌱&quot;,&quot;just do it&quot;,&quot;🍀&quot;]' color='[&quot;rgb(121,93,179)&quot; ,&quot;rgb(76,180,231)&quot; ,&quot;rgb(184,90,154)&quot;]'></script>
+        
+
+        <!-- background effects end -->
+    
+
+    <!--<script size="50" alpha='0.3' zIndex="-999" src="/js/ribbonStatic.js"></script>-->
+    
+        <script src="/js/ribbonDynamic.js"></script>
+    
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+
+</html>
