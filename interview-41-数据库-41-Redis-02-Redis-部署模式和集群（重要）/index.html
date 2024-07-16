@@ -1,0 +1,1085 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="官网保平安：https:&#x2F;&#x2F;redis.io&#x2F;  分区Redis 是单线程的，如何提高多核CPU的利用率？可以在同一个服务器部署多个 Redis 的实例，并把他们当作不同的服务器来使用，在某些时候，无论如何一个服务器是不够的，所以如果你想使用多个CPU，你可以考虑一下分片（shard）。 为什么要做 Redis 分区分区可以让 Redis 管理更大的内存，Redis 将可以使用所有机器的内存。如">
+<meta property="og:type" content="article">
+<meta property="og:title" content="02-Redis 部署模式和集群（重要）">
+<meta property="og:url" content="https://flepeng.github.io/interview-41-%E6%95%B0%E6%8D%AE%E5%BA%93-41-Redis-02-Redis-%E9%83%A8%E7%BD%B2%E6%A8%A1%E5%BC%8F%E5%92%8C%E9%9B%86%E7%BE%A4%EF%BC%88%E9%87%8D%E8%A6%81%EF%BC%89/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="官网保平安：https:&#x2F;&#x2F;redis.io&#x2F;  分区Redis 是单线程的，如何提高多核CPU的利用率？可以在同一个服务器部署多个 Redis 的实例，并把他们当作不同的服务器来使用，在某些时候，无论如何一个服务器是不够的，所以如果你想使用多个CPU，你可以考虑一下分片（shard）。 为什么要做 Redis 分区分区可以让 Redis 管理更大的内存，Redis 将可以使用所有机器的内存。如">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://c1.lmlphp.com/user/master/2020/07/18/79876edd3d72080acc96636b25e1aea9.png">
+<meta property="og:image" content="https://flepeng.github.io/img/interview/redis/1667553571-4aab19ed9e2b08d8a2a824f60901b72f.png">
+<meta property="og:image" content="https://flepeng.github.io/img/interview/redis/1667553571-653b2030907f3d8d81d1369dd175e409.png">
+<meta property="og:image" content="https://flepeng.github.io/img/interview/redis/1667553571-53f3bbf65e7ec3e753eba8dfb61d5787.png">
+<meta property="og:image" content="https://flepeng.github.io/img/interview/redis/1667553571-76d3214b9723ec1dd1f73ff40b9f65eb.png">
+<meta property="og:image" content="https://flepeng.github.io/img/interview/redis/1667553571-cbe6ae72184ac8d95edbf9f2dca22383.png">
+<meta property="og:image" content="https://flepeng.github.io/img/interview/redis/1667553571-66a8377db7c197cbce0b776d3ebe2ab2.png">
+<meta property="article:published_time" content="2020-08-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2024-07-16T10:18:37.872Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="面试">
+<meta property="article:tag" content="Redis">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://c1.lmlphp.com/user/master/2020/07/18/79876edd3d72080acc96636b25e1aea9.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>02-Redis 部署模式和集群（重要） - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="02-Redis 部署模式和集群（重要）"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2020-08-08 00:00" pubdate>
+          2020年8月8日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          8.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          71 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">02-Redis 部署模式和集群（重要）</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <blockquote>
+<p>官网保平安：<a href="https://redis.io/" target="_blank" rel="noopener">https://redis.io/</a></p>
+</blockquote>
+<h1 id="分区"><a href="#分区" class="headerlink" title="分区"></a>分区</h1><h2 id="Redis-是单线程的，如何提高多核CPU的利用率？"><a href="#Redis-是单线程的，如何提高多核CPU的利用率？" class="headerlink" title="Redis 是单线程的，如何提高多核CPU的利用率？"></a>Redis 是单线程的，如何提高多核CPU的利用率？</h2><p>可以在同一个服务器部署多个 Redis 的实例，并把他们当作不同的服务器来使用，在某些时候，无论如何一个服务器是不够的，所以如果你想使用多个CPU，你可以考虑一下分片（shard）。</p>
+<h2 id="为什么要做-Redis-分区"><a href="#为什么要做-Redis-分区" class="headerlink" title="为什么要做 Redis 分区"></a>为什么要做 Redis 分区</h2><p>分区可以让 Redis 管理更大的内存，Redis 将可以使用所有机器的内存。如果没有分区，你最多只能使用一台机器的内存。分区使 Redis 的计算能力通过简单地增加计算机得到成倍提升，Redis 的网络带宽也会随着计算机和网卡的增加而成倍增长。</p>
+<h2 id="有哪些-Redis-分区实现方案"><a href="#有哪些-Redis-分区实现方案" class="headerlink" title="有哪些 Redis 分区实现方案"></a>有哪些 Redis 分区实现方案</h2><ul>
+<li><p>客户端分区：就是在客户端就已经决定数据会被存储到哪个 Redis 节点或者从哪个 Redis 节点读取。大多数客户端已经实现了客户端分区。</p>
+</li>
+<li><p>代理分区：意味着客户端将请求发送给代理，然后代理决定去哪个节点写数据或者读数据。代理根据分区规则决定请求哪些 Redis 实例，然后根据 Redis 的响应结果返回给客户端。<br>Redis 和 memcached 的一种代理实现就是 Twemproxy。</p>
+</li>
+<li><p>查询路由(Query routing)的意思是客户端随机地请求任意一个 Redis 实例，然后由 Redis 将请求转发给正确的 Redis 节点。<br>Redis Cluster 实现了一种混合形式的查询路由，但并不是直接将请求从一个 Redis 节点转发到另一个 Redis 节点，而是在客户端的帮助下直接 redirected 到正确的 Redis 节点。</p>
+</li>
+</ul>
+<h2 id="Redis-分区有什么缺点"><a href="#Redis-分区有什么缺点" class="headerlink" title="Redis 分区有什么缺点"></a>Redis 分区有什么缺点</h2><ul>
+<li><p>涉及多个 key 的操作通常不会被支持。例如你不能对两个集合求交集，因为他们可能被存储到不同的 Redis 实例（实际上这种情况也有办法，但是不能直接使用交集指令）。<br>同时操作多个 key，不能使用 Redis 事务。</p>
+</li>
+<li><p>分区使用的粒度是 key，不能使用一个非常长的排序 key 存储一个数据集。</p>
+</li>
+<li><p>当使用分区的时候，数据处理会非常复杂，例如为了备份你必须从不同的 Redis 实例和主机同时收集 RDB&#x2F;AOF 文件。</p>
+</li>
+<li><p>分区时动态扩容或缩容可能非常复杂。Redis 集群在运行时增加或者删除 Redis 节点，能做到最大程度对用户透明地数据再平衡，但其他一些客户端分区或者代理分区方法则不支持这种特性。有一种预分片的技术也可以较好的解决这个问题。</p>
+</li>
+</ul>
+<h2 id="Redis-持久化数据和缓存怎么做扩容"><a href="#Redis-持久化数据和缓存怎么做扩容" class="headerlink" title="Redis 持久化数据和缓存怎么做扩容"></a>Redis 持久化数据和缓存怎么做扩容</h2><p>如果 Redis 被当做缓存使用，使用一致性哈希实现动态扩容缩容。</p>
+<p>如果 Redis 被当做一个持久化存储使用，必须使用固定的 keys-to-nodes 映射关系，节点的数量一旦确定不能变化。否则的话(即 Redis 节点需要动态变化的情况），必须使用可以在运行时进行数据再平衡的一套系统，而当前只有 Redis 集群可以做到这样。</p>
+<h2 id="分布式-Redis-是前期做还是后期规模上来了再做好？为什么"><a href="#分布式-Redis-是前期做还是后期规模上来了再做好？为什么" class="headerlink" title="分布式 Redis 是前期做还是后期规模上来了再做好？为什么"></a>分布式 Redis 是前期做还是后期规模上来了再做好？为什么</h2><p>既然 Redis 是如此的轻量（单实例只使用 1M 内存），为防止以后的扩容，最好的办法就是一开始就启动较多实例。即便你只有一台服务器，你也可以一开始就让 Redis 以分布式的方式运行，使用分区，在同一台服务器上启动多个实例。</p>
+<p>一开始就多设置几个 Redis 实例，例如 32 或者 64 个实例，对大多数用户来说这操作起来可能比较麻烦，但是从长久来看做这点牺牲是值得的。</p>
+<p>这样的话，当你的数据不断增长，需要更多的 Redis 服务器时，你需要做的就是仅仅将 Redis 实例从一台服务迁移到另外一台服务器而已（而不用考虑重新分区的问题）。一旦你添加了另一台服务器，你需要将你一半的 Redis 实例从第一台机器迁移到第二台机器。</p>
+<h1 id="分布式寻址算法"><a href="#分布式寻址算法" class="headerlink" title="分布式寻址算法"></a>分布式寻址算法</h1><blockquote>
+<p>参考：<a href="https://www.lmlphp.com/user/6408/article/item/419025/" target="_blank" rel="noopener">https://www.lmlphp.com/user/6408/article/item/419025/</a></p>
+</blockquote>
+<h2 id="hash-算法"><a href="#hash-算法" class="headerlink" title="hash 算法"></a>hash 算法</h2><p><code>hashcode % size</code>：hash 算法是对 key 进行 hash 运算后取值，然后对节点的数量取模。接着将 key 存入对应的节点。</p>
+<p>但是，一旦其中某个节点宕机，所有的请求过来，都会基于最新的存活的节点数量进行取模运算，这就会导致大多数的请求无法拿到缓存数据。</p>
+<p>举个例子，一开始我有 3 个节点，这时大家正常的取模运算将数据基本均匀的存在了 3 个节点上，突然宕机了一台，现在只剩下 2 个有效的节点了，这时所有的运算都会基于最新的 2 个节点进行取模运算，原来的 key 对 2 进行取模运算后，显然和对 3 进行取模运算得到的结果是不一样的。结果是大量的数据请求会直接打在 DB 上，这是不可容忍的。</p>
+<p>如果 size 发生变化，比如扩容或者缩容，几乎所有的历史数据都需要重 hash、移动，代价非常大（大量缓存重建）。</p>
+<h2 id="一致性-hash-算法"><a href="#一致性-hash-算法" class="headerlink" title="一致性 hash 算法"></a>一致性 hash 算法</h2><p>一致性 hash 算法将整个 hash 值空间组织成一个虚拟的圆环（大小为<code>0-2^32-1</code>），整个空间按顺时针方向组织，下一步将各个 master 节点（使用服务器的 ip 或主机名）进行 hash。这样就能确定每个节点在其哈希环上的位置。</p>
+<p>来看一个经典的一致性 hash 算法的环状示意图：</p>
+<p><img src="https://c1.lmlphp.com/user/master/2020/07/18/79876edd3d72080acc96636b25e1aea9.png" srcset="/img/loading.gif" lazyload></p>
+<p>来了一个 key，首先计算 hash 值，并确定此数据在环上的位置，从此位置沿环顺时针「行走」，遇到的第一个 master 节点就是 key 所在位置。</p>
+<p>在一致性哈希算法中，如果一个节点挂了，受影响的数据仅仅是此节点到环空间前一个节点（沿着逆时针方向行走遇到的第一个节点）之间的数据，其它不受影响。增加一个节点也同理。</p>
+<p>一致性哈希算法在节点太少时，容易因为节点分布不均匀而造成缓存热点的问题。为了解决这种热点问题，一致性 hash 算法引入了虚拟节点机制，即对每一个节点计算多个 hash，每个计算结果位置都放置一个虚拟节点。这样就实现了数据的均匀分布，负载均衡。</p>
+<h3 id="Python-中是否有相应模块？"><a href="#Python-中是否有相应模块？" class="headerlink" title="Python 中是否有相应模块？"></a>Python 中是否有相应模块？</h3><p>模块：<code>hash_ring</code></p>
+<h2 id="Redis-Cluster-的-hash-slot"><a href="#Redis-Cluster-的-hash-slot" class="headerlink" title="Redis Cluster 的 hash slot"></a>Redis Cluster 的 hash slot</h2><p>Redis Cluster 的实现方案十分的聪明，它的分区方式采用了虚拟槽分区。</p>
+<p>Redis Cluster 首先会预设虚拟槽，每个槽就相当于一个数字，有一定范围，每个槽映射一个数据子集。</p>
+<p>Redis Cluster 会把 16384 个槽按照节点数量进行平均分配，由节点进行管理。</p>
+<ul>
+<li>当一个 key 过来的时候，会对这个 key 按照 CRC16 规则进行 hash 运算。</li>
+<li>把 hash 结果对 16383 进行取余。</li>
+<li>把余数发送给 Redis 节点。</li>
+<li>节点接收到数据，验证是否在自己管理的槽编号的范围<ul>
+<li>如果在自己管理的槽编号范围内，则把数据保存到数据槽中，然后返回执行结果。</li>
+<li>如果在自己管理的槽编号范围外，则会把数据发送给正确的节点，由正确的节点来把数据保存在对应的槽中。</li>
+</ul>
+</li>
+</ul>
+<p>虚拟槽分布方式中，由于每个节点管理一部分数据槽，数据保存到数据槽中。当节点扩容或者缩容时，对数据槽进行重新分配迁移即可，数据不会丢失。</p>
+<h1 id="部署方式"><a href="#部署方式" class="headerlink" title="部署方式"></a>部署方式</h1><p>Redis 集群就是分区的一种的实现。</p>
+<h2 id="单机版"><a href="#单机版" class="headerlink" title="单机版"></a>单机版</h2><p><img src="/img/interview/redis/1667553571-4aab19ed9e2b08d8a2a824f60901b72f.png" srcset="/img/loading.gif" lazyload></p>
+<p>特点：简单。</p>
+<p>问题：1、内存容量有限。2、处理能力有限。3、无法高可用。</p>
+<h2 id="主从复制"><a href="#主从复制" class="headerlink" title="主从复制"></a>主从复制</h2><p><img src="/img/interview/redis/1667553571-653b2030907f3d8d81d1369dd175e409.png" srcset="/img/loading.gif" lazyload></p>
+<p>Redis 的复制功能允许用户根据一个 Redis 服务器来创建任意多个该服务器的复制品，其中被复制的服务器为主服务器（master），而通过复制创建出来的服务器复制品则为从服务器（slave）。只要主从服务器之间的网络连接正常，主从服务器两者会具有相同的数据，主服务器就会一直将发生在自己身上的数据更新同步给从服务器，从而一直保证主从服务器的数据相同。</p>
+<p>特点：</p>
+<ul>
+<li>master&#x2F;slave 数据相同</li>
+<li>降低 master 读压力，转交从库</li>
+</ul>
+<p>问题：</p>
+<ul>
+<li>无法保证高可用。</li>
+<li>没有解决 master 写的压力。</li>
+</ul>
+<p>注意：</p>
+<ul>
+<li><p>如果采用主从架构，那么必须开启 master node 的持久化，不建议用 slave node 作为 master node 的数据热备，因为那样的话，如果你关掉 master 的持久化， master 突然宕机，然后重启时数据是空的，然后经过复制，slave node 的数据也丢了。</p>
+</li>
+<li><p>另外，master 的各种备份方案也需要做。万一本地的所有文件丢失了，从备份中挑选一份 rdb 去恢复 master，这样才能确保启动的时候，是有数据的。</p>
+</li>
+<li><p>slave node 可以自动接管 master node，但也可能 sentinel 还没检测到 master failure，master node 就自动重启了，还是可能导致上面所有的 slave node 数据被清空。</p>
+</li>
+</ul>
+<h3 id="Redis-如何实现主从复制？以及数据同步机制？"><a href="#Redis-如何实现主从复制？以及数据同步机制？" class="headerlink" title="Redis 如何实现主从复制？以及数据同步机制？"></a>Redis 如何实现主从复制？以及数据同步机制？</h3><p>一台服务器，启动两个 Redis 服务，分别创建 6379 和 6380 配置文件</p>
+<ul>
+<li><code>redis.conf</code>：6379 为默认配置文件，作为 Master 服务配置。  </li>
+<li><code>redis_6380.conf</code>：6380 为同步配置，作为 Slave 服务配置。</li>
+</ul>
+<p>配置 slaveof 同步指令</p>
+<ul>
+<li>在 Slave 对应的 conf 配置文件中，添加以下内容：<code>slaveof 127.0.0.1 6379</code>。</li>
+</ul>
+<p>数据同步步骤：</p>
+<ol>
+<li>当 从Redis 和 主Redis 建立主从关系后，会向主数据库发送 <code>SYNC</code> 命令。</li>
+<li>主Redis 接收到 <code>SYNC</code> 命令后会开始在后台保存快照(RDB持久化过程)，并将期间接收到的写命令缓存起来。</li>
+<li>当快照完成后，主Redis 会将快照文件和所有缓存的写命令发送给 从Redis。</li>
+<li>从Redis 接收到后，会载入快照文件并且执行收到的缓存的命令。</li>
+<li>之后，主Redis 每当接收到写命令时就会将命令发送 从Redis，从而保证数据的一致。</li>
+</ol>
+<h3 id="主从复制的原理"><a href="#主从复制的原理" class="headerlink" title="主从复制的原理"></a>主从复制的原理</h3><p><strong>1、主从架构的核心原理</strong></p>
+<p>当启动一个slave node的时候，它会发送一个PSYNC命令给master node</p>
+<p>如果这是 slave node 重新连接 master node，那么master node仅仅会复制给slave部分缺少的数据; 否则如果是slave node第一次连接master node，那么会触发一次full resynchronization</p>
+<p>开始 full resynchronization 的时候，master 会启动一个后台线程，开始生成一份 RDB 快照文件，同时还会将从客户端收到的所有写命令缓存在内存中。RDB 文件生成完毕之后，master 会将这个 RDB 发送给 slave，slave 会先写入本地磁盘，然后再从本地磁盘加载到内存中。然后 master 会将内存中缓存的写命令发送给 slave，slave 也会同步这些数据。</p>
+<p>slave node 如果跟 master node 有网络故障，断开了连接，会自动重连。master 如果发现有多个 slave node 都来重新连接，仅仅会启动一个 rdb save 操作，用一份数据服务所有 slave node。</p>
+<p><strong>2、主从复制的断点续传</strong></p>
+<p>从 Redis 2.8 开始，就支持主从复制的断点续传，如果主从复制过程中，网络连接断掉了，那么可以接着上次复制的地方，继续复制下去，而不是从头开始复制一份</p>
+<p>master node 会在内存中常见一个 backlog，master 和 slave 都会保存一个 replica offset 还有一个 master id，offset 就是保存在 backlog 中的。如果 master 和 slave 网络连接断掉了，slave 会让 master 从上次的 replica offset 开始继续复制</p>
+<p>但是如果没有找到对应的 offset，那么就会执行一次 resynchronization</p>
+<p><strong>3、无磁盘化复制</strong></p>
+<p>master在内存中直接创建rdb，然后发送给slave，不会在自己本地落地磁盘了</p>
+<p>repl-diskless-sync repl-diskless-sync-delay，等待一定时长再开始复制，因为要等更多slave重新连接过来</p>
+<p><strong>4、过期key处理</strong></p>
+<p>slave不会过期key，只会等待master过期key。如果master过期了一个key，或者通过LRU淘汰了一个key，那么会模拟一条del命令发送给slave。</p>
+<h3 id="由于主从延迟导致读取到过期数据怎么处理？"><a href="#由于主从延迟导致读取到过期数据怎么处理？" class="headerlink" title="由于主从延迟导致读取到过期数据怎么处理？"></a>由于主从延迟导致读取到过期数据怎么处理？</h3><ol>
+<li>通过scan命令扫库：当Redis中的key被scan的时候，相当于访问了该key，同样也会做过期检测，充分发挥Redis惰性删除的策略。这个方法能大大降低了脏数据读取的概率，但缺点也比较明显，会造成一定的数据库压力，否则影响线上业务的效率。</li>
+<li>Redis加入了一个新特性来解决主从不一致导致读取到过期数据问题，增加了key是否过期以及对主从库的判断，如果key已过期，当前访问的master则返回null；当前访问的是从库，且执行的是只读命令也返回null。</li>
+</ol>
+<h3 id="主从复制的过程中如果因为网络原因停止复制了会怎么样？"><a href="#主从复制的过程中如果因为网络原因停止复制了会怎么样？" class="headerlink" title="主从复制的过程中如果因为网络原因停止复制了会怎么样？"></a>主从复制的过程中如果因为网络原因停止复制了会怎么样？</h3><p>如果出现网络故障断开连接了，会自动重连的，从Redis 2.8开始，就支持主从复制的断点续传，可以接着上次复制的地方，继续复制下去，而不是从头开始复制一份。</p>
+<p>master如果发现有多个slave node都来重新连接，仅仅会启动一个rdb save操作，用一份数据服务所有slave node。</p>
+<p>master node会在内存中创建一个<code>backlog</code>，master和slave都会保存一个<code>replica offset</code>，还有一个<code>master id</code>，offset就是保存在backlog中的。如果master和slave网络连接断掉了，slave会让master从上次的replica offset开始继续复制。</p>
+<p>但是如果没有找到对应的offset，那么就会执行一次<code>resynchronization</code>全量复制。</p>
+<h3 id="Redis-主从架构数据会丢失吗，为什么？"><a href="#Redis-主从架构数据会丢失吗，为什么？" class="headerlink" title="Redis 主从架构数据会丢失吗，为什么？"></a>Redis 主从架构数据会丢失吗，为什么？</h3><ul>
+<li>Sentinel 可以防止脑裂吗？</li>
+</ul>
+<p>有两种数据丢失的情况：</p>
+<ol>
+<li>异步复制导致的数据丢失：因为 master -&gt; slave 的复制是异步的，所以可能有部分数据还没复制到slave，master就宕机了，此时这些部分数据就丢失了。</li>
+<li>脑裂导致的数据丢失：某个master所在机器突然脱离了正常的网络，跟其他slave机器不能连接，但是实际上master还运行着，此时哨兵可能就会认为master宕机了，然后开启选举，将其他slave切换成了master。这个时候，集群里就会有两个master，也就是所谓的脑裂。此时虽然某个slave被切换成了master，但是可能client还没来得及切换到新的master，还继续写向旧master的数据可能也丢失了。因此旧master再次恢复的时候，会被作为一个slave挂到新的master上去，自己的数据会清空，重新从新的master复制数据。</li>
+</ol>
+<h3 id="如何解决主从架构数据丢失的问题？"><a href="#如何解决主从架构数据丢失的问题？" class="headerlink" title="如何解决主从架构数据丢失的问题？"></a>如何解决主从架构数据丢失的问题？</h3><p>数据丢失的问题是不可避免的，但是我们可以尽量减少。</p>
+<p>在 Redis 的配置文件里设置参数</p>
+<figure class="highlight livecodeserver"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs livecodeserver"><span class="hljs-built_in">min</span>-slaves-<span class="hljs-built_in">to</span>-<span class="hljs-built_in">write</span> <span class="hljs-number">1</span><br><span class="hljs-built_in">min</span>-slaves-<span class="hljs-built_in">max</span>-lag <span class="hljs-number">10</span><br></code></pre></td></tr></table></figure>
+
+<p><code>min-slaves-to-write</code>默认情况下是0，<code>min-slaves-max-lag</code>默认情况下是10。</p>
+<p>上面的配置的意思是要求至少有1个slave，数据复制和同步的延迟不能超过10秒。如果说一旦所有的slave，数据复制和同步的延迟都超过了10秒钟，那么这个时候，master就不会再接收任何请求了。</p>
+<p>减小<code>min-slaves-max-lag</code>参数的值，这样就可以避免在发生故障时大量的数据丢失，一旦发现延迟超过了该值就不会往master中写入数据。</p>
+<p>那么对于client，我们可以采取降级措施，将数据暂时写入本地缓存和磁盘中，在一段时间后重新写入master来保证数据不丢失；也可以将数据写入kafka消息队列，隔一段时间去消费kafka中的数据。</p>
+<h2 id="哨兵（-gt-x3D-2-8版本）"><a href="#哨兵（-gt-x3D-2-8版本）" class="headerlink" title="哨兵（&gt;&#x3D;2.8版本）"></a>哨兵（&gt;&#x3D;2.8版本）</h2><p><img src="/img/interview/redis/1667553571-53f3bbf65e7ec3e753eba8dfb61d5787.png" srcset="/img/loading.gif" lazyload></p>
+<p>Redis sentinel(哨兵)是一个分布式系统，Redis sentinel 监控 Redis 主从服务器，并在主服务器下线时自动进行故障转移。其中三个特性：</p>
+<ul>
+<li>监控（Monitoring）：Sentinel 会不断地检查你的主服务器和从服务器是否运作正常。</li>
+<li>提醒（Notification）：当被监控的某个 Redis 服务器出现问题时，Sentinel 可以通过 API 向管理员或者其他应用程序发送通知。</li>
+<li>自动故障迁移（Automatic failover）：当一个主服务器不能正常工作时，Sentinel 会开始一次自动故障迁移操作。</li>
+</ul>
+<p>特点：</p>
+<ul>
+<li>监控各个节点</li>
+<li>保证高可用</li>
+<li>自动故障迁移</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>主从模式，切换需要时间，可能会丢数据。</li>
+<li>没有解决 master 写的压力。</li>
+</ul>
+<p>原理：</p>
+<ol>
+<li><p>三个定时监控任务：</p>
+<ol>
+<li>每隔10s，每个S节点（哨兵节点）会向主节点和从节点发送 <code>info</code> 命令获取最新的拓扑结构。</li>
+<li>每隔 2s，每个S节点（哨兵节点）会向某频道上发送该S节点（哨兵节点）对于主节点的判断以及当前Sl节点的信息，同时每个S节点（哨兵节点）也会订阅该频道，来了解其他S节点（哨兵节点）以及它们对主节点的判断（做客观下线依据）。</li>
+<li>每隔 1s，每个S节点（哨兵节点）会向主节点、从节点、其余S节点（哨兵节点）发送一条ping命令做一次心跳检测(心跳检测机制)，来确认这些节点当前是否可达。</li>
+</ol>
+</li>
+<li><p>主客观下线：</p>
+<ol>
+<li>主观下线：根据第三个定时任务对没有有效回复的节点做主观下线处理。</li>
+<li>客观下线：若主观下线的是主节点，会咨询其他S节点对该主节点的判断，超过半数，对该主节点做客观下线。</li>
+</ol>
+</li>
+<li><p>选举出某一哨兵节点作为领导者，来进行故障转移。<br>选举方式：raft 算法。每个S节点（哨兵节点）有一票同意权，哪个S节点（哨兵节点）做出主观下线的时候，就会询问其他S节点是否同意其为领导者。获得半数选票的则成为领导者。基本谁先做出客观下线，谁成为领导者。</p>
+</li>
+<li><p>故障转移（选举新主节点流程）：<br><img src="/img/interview/redis/1667553571-76d3214b9723ec1dd1f73ff40b9f65eb.png" srcset="/img/loading.gif" lazyload></p>
+<p>如果一个 master 被认为 odown了，而且 majority 哨兵都允许了主备切换，那么某个哨兵就会执行主备切换操作，此时首先要选举一个slave来，会考虑slave的一些信息。</p>
+<ul>
+<li>跟master断开连接的时长。如果一个slave跟master断开连接已经超过了down-after-milliseconds的10倍，外加master宕机的时长，那么slave就被认为不适合选举为master.</li>
+</ul>
+<figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs aspectj">( down-<span class="hljs-keyword">after</span>-milliseconds * 10) + milliseconds_since_master_is_in_SDOWN_state<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>slave优先级。按照slave优先级进行排序，slave priority越低，优先级就越高</p>
+</li>
+<li><p>复制offset。如果slave priority相同，那么看replica offset，哪个slave复制了越多的数据，offset越靠后，优先级就越高</p>
+</li>
+<li><p>run id。如果上面两个条件都相同，那么选择一个run id比较小的那个slave。</p>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="sentinel-的作用"><a href="#sentinel-的作用" class="headerlink" title="sentinel 的作用"></a>sentinel 的作用</h3><ol>
+<li>帮助我们自动在主从之间进行切换(哨兵)。</li>
+<li>检测主从架构中主服务器是否挂掉，且超过一半的 sentinel 检测到挂了之后才进行进行切换。  </li>
+<li>如果主修复好了，再次启动时候，会变成从。</li>
+</ol>
+<h3 id="sentinel-设置"><a href="#sentinel-设置" class="headerlink" title="sentinel 设置"></a>sentinel 设置</h3><ol>
+<li><p>启动主 Redis：<code>redis-server /etc/redis-6379.conf</code>。</p>
+</li>
+<li><p>启动从 Redis：<code>redis-server /etc/redis-6380.conf</code>。</p>
+</li>
+<li><p>找到 <code>/etc/redis-sentinel-8001.conf</code> 配置文件，修改：  </p>
+<ul>
+<li><code>port = 8001</code>：哨兵的端口。</li>
+<li><code>sentinel monitor mymaster 127.0.0.1 6379 2</code>：<ul>
+<li>mymaster 是哨兵所在分组的名称。</li>
+<li>后面的 IP+端口 是 master 的IP和端口。</li>
+<li>最后的 2，意思是 master 被认为的宕机，需要选举新的 master 时，至少要争取到 2 票的赞同，否则故障不会自动转移。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>找到 <code>/etc/redis-sentinel-8002.conf</code> 配置文件，修改：  </p>
+<ul>
+<li><code>port = 8002</code>：哨兵的端口。</li>
+<li><code>sentinel monitor mymaster 127.0.0.1 6379 2</code>。</li>
+</ul>
+</li>
+<li><p>启动两个哨兵：</p>
+<ol>
+<li>方式一：<code>redis-server --sentinel</code> 命令启动哨兵，示例：<code>redis-server /path/to/sentinel.conf --sentinel</code>。</li>
+<li>方式二：<code>redis-sentinel</code> 命令启动哨兵，示例：<code>redis-sentinel /path/to/sentinel.conf</code>。</li>
+</ol>
+<p>两个命令都可以启动哨兵服务。</p>
+</li>
+</ol>
+<h3 id="为什么Redis哨兵集群只有2个节点无法正常工作？"><a href="#为什么Redis哨兵集群只有2个节点无法正常工作？" class="headerlink" title="为什么Redis哨兵集群只有2个节点无法正常工作？"></a>为什么Redis哨兵集群只有2个节点无法正常工作？</h3><p>哨兵集群必须部署2个以上节点。</p>
+<p>如果两个哨兵实例，即两个Redis实例，一主一从的模式。</p>
+<p>则Redis的配置quorum&#x3D;1，表示一个哨兵认为master宕机即可认为master已宕机。</p>
+<p>但是如果是机器1宕机了，那哨兵1和master都宕机了，虽然哨兵2知道master宕机了，但是这个时候，需要majority，也就是大多数哨兵都是运行的，2个哨兵的majority就是2（2的majority&#x3D;2，3的majority&#x3D;2，5的majority&#x3D;3，4的majority&#x3D;2），2个哨兵都运行着，就可以允许执行故障转移。</p>
+<p>但此时哨兵1没了就只有1个哨兵了了，此时就没有majority来允许执行故障转移，所以故障转移不会执行。</p>
+<h2 id="集群（proxy-型）"><a href="#集群（proxy-型）" class="headerlink" title="集群（proxy 型）"></a>集群（proxy 型）</h2><p>Redis 集群常用的代理有 Twemproxy 和 Codis</p>
+<h3 id="Twemproxy"><a href="#Twemproxy" class="headerlink" title="Twemproxy"></a>Twemproxy</h3><p><img src="/img/interview/redis/1667553571-cbe6ae72184ac8d95edbf9f2dca22383.png" srcset="/img/loading.gif" lazyload></p>
+<p>Twemproxy 是一个 Twitter 开源的一个 Redis 和 Memcache 快速&#x2F;轻量级代理服务器；Twemproxy 是一个快速的单线程代理程序，支持 Memcached ASCII 协议和 Redis 协议。</p>
+<p>特点：</p>
+<ul>
+<li>多种 hash 算法：MD5、CRC16、CRC32、CRC32a、hsieh、murmur、Jenkins。</li>
+<li>支持失败节点自动删除。</li>
+<li>后端 Sharding 分片逻辑对业务透明，业务方的读写方式和操作单个 Redis 一致。</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>增加了新的 proxy，需要维护其高可用。</li>
+<li>failover 逻辑需要自己实现，其本身不能支持故障的自动转移可扩展性差，进行扩缩容都需要手动干预。</li>
+</ul>
+<h2 id="集群（直连型）"><a href="#集群（直连型）" class="headerlink" title="集群（直连型）"></a>集群（直连型）</h2><p>Redis 的哨兵模式基本已经可以实现高可用，读写分离，但是在这种模式下每台 Redis 服务器都存储相同的数据，很浪费内存，所以在 Redis3.0 上加入了 Cluster 集群模式，实现了 Redis 的分布式存储，对数据进行分片，也就是说每台 Redis 节点上存储不同的内容。</p>
+<p>Redis Cluster集群节点最小配置6个节点以上（3主3从），其中主节点提供读写操作，从节点作为备用节点，不提供请求，只作为故障转移使用。</p>
+<p>Redis Cluster采用虚拟槽分区，所有的键根据哈希函数映射到0～16383个整数槽内，每个节点负责维护一部分槽以及槽所印映射的键值数据。</p>
+<p><img src="/img/interview/redis/1667553571-66a8377db7c197cbce0b776d3ebe2ab2.png" srcset="/img/loading.gif" lazyload></p>
+<p>Redis-Cluster 采用无中心结构，每个节点保存数据和整个集群状态，每个节点都和其他所有节点连接。</p>
+<p>特点：</p>
+<ul>
+<li>无中心架构（不存在哪个节点影响性能瓶颈），没有 proxy 层。</li>
+<li>数据按照 slot 存储分布在多个节点，节点间数据共享，可动态调整数据分布。</li>
+<li>可扩展性，可线性扩展到 1000 个节点，节点可动态添加或删除。</li>
+<li>高可用性，部分节点不可用时，集群仍可用。通过增加 Slave 做备份数据副本。</li>
+<li>实现故障自动 failover，节点之间通过 gossip 协议交换状态信息，用投票机制完成 Slave 到 Master 的角色提升。</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>Client 实现复杂，驱动要求实现Smart Client，缓存slots mapping信息并及时更新，提高了开发难度，客户端的不成熟影响业务的稳定性。目前仅JedisCluster相对成熟，异常处理部分还不完善，比如常见的“max redirect exception”。</li>
+<li>节点会因为某些原因发生阻塞（阻塞时间大于clutser-node-timeout），被判断下线，这种failover是没有必要的。</li>
+<li>数据通过异步复制，不保证数据的强一致性。</li>
+<li>多个业务使用同一套集群时，无法根据统计区分冷热数据，资源隔离性较差，容易出现相互影响的情况。</li>
+<li>Slave 在集群中充当“冷备”，不能缓解读压力，当然可以通过SDK的合理设计来提高Slave资源的利用率。</li>
+<li>Key 批量操作限制，如使用mset、mget目前只支持具有相同slot值的Key执行批量操作。对于映射为不同slot值的Key由于Keys不支持跨slot查询，所以执行mset、mget、sunion等操作支持不友好。</li>
+<li>Key事务操作支持有限，只支持多key在同一节点上的事务操作，当多个Key分布于不同的节点上时无法使用事务功能。</li>
+<li>Key作为数据分区的最小粒度，不能将一个很大的键值对象如hash、list等映射到不同的节点。</li>
+<li>不支持多数据库空间，单机下的Redis可以支持到16个数据库，集群模式下只能使用1个数据库空间，即db 0。</li>
+<li>复制结构只支持一层，从节点只能复制主节点，不支持嵌套树状复制结构。</li>
+<li>避免产生hot-key，导致主库节点成为系统的短板。</li>
+<li>避免产生big-key，导致网卡撑爆、慢查询等。</li>
+<li>重试时间应该大于cluster-node-time时间。</li>
+<li>Redis Cluster不建议使用pipeline和multi-keys操作，减少max redirect产生的场景。</li>
+</ul>
+<p>方案说明</p>
+<ol>
+<li>通过哈希的方式，将数据分片，每个节点均分存储一定哈希槽区间的数据，默认分配了 16384 个槽位。</li>
+<li>每份数据分片会存储在多个互为主从的多节点上。</li>
+<li>数据写入先写主节点，再同步到从节点(支持配置为阻塞同步)。</li>
+<li>同一分片多个节点间的数据不保持一致性。</li>
+<li>读取数据时，当客户端操作的key没有分配在该节点上时，Redis 会返回转向指令，指向正确的节点。</li>
+<li>扩容时需要把旧节点的数据迁移一部分到新节点。</li>
+</ol>
+<p>在 Redis cluster 架构下，每个 Redis 要放开两个端口号，比如一个是 6379，另外一个就是加 1w 的端口号，比如 16379。</p>
+<p>16379 端口号是用来进行节点间通信的，也就是 cluster bus 的东西，cluster bus 的通信用来进行故障检测、配置更新、故障转移授权。</p>
+<p>cluster bus 用了另外一种二进制的协议，gossip 协议，用于节点间进行高效的数据交换，占用更少的网络带宽和处理时间。</p>
+<h3 id="如何实现-Redis-集群"><a href="#如何实现-Redis-集群" class="headerlink" title="如何实现 Redis 集群"></a>如何实现 Redis 集群</h3><p>Redis 集群是基于【分片】来完成。集群是将你的数据拆分到多个 Redis 实例的过程，可以使用很多电脑的内存总和来支持更大的数据库。如果没有分片，你就只能使用单机能支持的内存容量。</p>
+<p>Redis 将所有能放置数据的地方创建了 16384 个哈希槽。如果设置集群的话，可以为每个实例分配哈希槽：  </p>
+<ul>
+<li>192.168.1.20【0-5000】  </li>
+<li>192.168.1.21【5001-10000】  </li>
+<li>192.168.1.22【10001-16384】</li>
+</ul>
+<p>以后如果在 Redis 中写值如 <code>set k1 123</code>， Redis 会将 k1 通过 crc16 的算法转换成一个数字，然后再将该数字和 16384 求余，如果得到余数 3000，那么就将该值写入到 192.168.1.20 实例中。</p>
+<h3 id="Redis-cluster-节点间通信是什么机制？"><a href="#Redis-cluster-节点间通信是什么机制？" class="headerlink" title="Redis cluster 节点间通信是什么机制？"></a>Redis cluster 节点间通信是什么机制？</h3><p>Redis cluster 节点间采取 gossip 协议进行通信，所有节点都持有一份元数据，不同的节点如果出现了元数据的变更之后不断地将元数据发送给其他节点让其他节点进行数据变更。</p>
+<blockquote>
+<p>节点互相之间不断通信，保持整个集群所有节点的数据是完整的。<br>主要交换故障信息、节点的增加和移除、hash slot信息等。</p>
+</blockquote>
+<p>这种机制的好处在于，元数据的更新比较分散，不是集中在一个地方，更新请求会陆陆续续，打到所有节点上去更新，有一定的延时，降低了压力;</p>
+<p>缺点，元数据更新有延时，可能导致集群的一些操作会有一些滞后。</p>
+<h3 id="Redis-cluster-的高可用与主备切换原理"><a href="#Redis-cluster-的高可用与主备切换原理" class="headerlink" title="Redis cluster 的高可用与主备切换原理"></a>Redis cluster 的高可用与主备切换原理</h3><p>Redis cluster 的高可用的原理，几乎跟哨兵是类似的。</p>
+<h4 id="判断节点宕机"><a href="#判断节点宕机" class="headerlink" title="判断节点宕机"></a>判断节点宕机</h4><p>如果一个节点认为另外一个节点宕机，那么就是 <code>pfail</code> ，<strong>主观宕机</strong>。如果多个节点都认为另外一个节点宕机了，那么就是 <code>fail</code> ，<strong>客观宕机</strong>，跟哨兵的原理几乎一样，sdown，odown。</p>
+<p>在 <code>cluster-node-timeout</code> 内，某个节点一直没有返回 <code>pong</code> ，那么就被认为 <code>pfail</code> 。</p>
+<p>如果一个节点认为某个节点 <code>pfail</code> 了，那么会在 <code>gossip ping</code> 消息中， <code>ping</code> 给其他节点，如果<strong>超过半数</strong>的节点都认为 <code>pfail</code> 了，那么就会变成 <code>fail</code> 。</p>
+<h4 id="从节点过滤"><a href="#从节点过滤" class="headerlink" title="从节点过滤"></a>从节点过滤</h4><p>对宕机的 master node，从其所有的 slave node 中，选择一个切换成 master node。</p>
+<p>检查每个 slave node 与 master node 断开连接的时间，如果超过了 <code>cluster-node-timeout * cluster-slave-validity-factor</code> ，那么就<strong>没有资格</strong>切换成 <code>master</code> 。</p>
+<h4 id="从节点选举"><a href="#从节点选举" class="headerlink" title="从节点选举"></a>从节点选举</h4><p>每个从节点，都根据自己对 master 复制数据的 offset，来设置一个选举时间，offset 越大（复制数据越多）的从节点，选举时间越靠前，优先进行选举。</p>
+<p>所有的 master node 开始 slave 选举投票，给要进行选举的 slave 进行投票，如果大部分 master node <code>（N/2 + 1）</code> 都投票给了某个从节点，那么选举通过，那个从节点可以切换成 master。</p>
+<p>从节点执行主备切换，从节点切换为主节点。</p>
+<h4 id="与哨兵比较"><a href="#与哨兵比较" class="headerlink" title="与哨兵比较"></a>与哨兵比较</h4><p>整个流程跟哨兵相比，非常类似，所以说，Redis cluster 功能强大，直接集成了 replication 和 sentinel 的功能。</p>
+<h3 id="Redis-Cluster-扩容缩容期间可以提供服务吗"><a href="#Redis-Cluster-扩容缩容期间可以提供服务吗" class="headerlink" title="Redis Cluster 扩容缩容期间可以提供服务吗"></a>Redis Cluster 扩容缩容期间可以提供服务吗</h3><p>在Redis Cluster进行扩容或缩容的过程中，服务可以不间断提供。Redis Cluster采用无中心架构，其中每个节点都知道集群的所有节点和数据分布情况。当新节点加入或现有节点被移除时，集群会自动地重新分配数据。</p>
+<p>扩容时，你可以将新节点添加到集群，并且当数据迁移完成后，新节点将开始处理客户端的请求。</p>
+<p>缩容时，你可以将现有节点标记为不再使用，并将其数据迁移到其他节点。当完成迁移并确认节点可以安全地移除后，你可以将其从集群中移除。</p>
+<p>以下是一个简单的Redis Cluster扩容的例子（假设你已经有一个运行的Redis Cluster）：</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs angelscript"># 假设你已经有一个运行的Redis Cluster，并且你想要添加一个新节点<br> <br># 在新节点上安装并运行Redis<br>wget http:<span class="hljs-comment">//download.redis.io/releases/redis-6.2.6.tar.gz</span><br>tar xzf redis<span class="hljs-number">-6.2</span><span class="hljs-number">.6</span>.tar.gz<br>cd redis<span class="hljs-number">-6.2</span><span class="hljs-number">.6</span><br>make<br>src/redis-server --cluster-enabled yes --port <span class="hljs-number">6380</span> --cluster-config-file nodes<span class="hljs-number">-6380.</span>conf --cluster-node-timeout <span class="hljs-number">5000</span> --appendonly yes --appendfilename appendonly<span class="hljs-number">-6380.</span>aof --dbfilename dump<span class="hljs-number">-6380.</span>rdb --logfile <span class="hljs-number">6380.</span>log<br> <br># 将新节点添加到集群<br>redis-cli --cluster add-node <span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6380</span> <span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span><br> <br># 重新分配slots<br>redis-cli --cluster reshard <span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6380</span><br> <br># 将数据迁移到新节点<br>redis-cli --cluster rebalance <span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6380</span><br></code></pre></td></tr></table></figure>
+
+<p>缩容时，你需要先将要移除的节点数据迁移到其他节点，然后再将其移除。这个过程可以通过 redis-cli –cluster reshard 和 redis-cli –cluster forget 命令来完成。</p>
+<p>请注意，实际的 Redis Cluster 扩容和缩容操作可能涉及到数据迁移和重分配，这些操作会耗费一定的时间，在此期间，集群仍然能够提供服务，但可能会影响性能。在执行这类操作前，请确保已经做好了充分的备份和测试。</p>
+<h2 id="集群方案比较"><a href="#集群方案比较" class="headerlink" title="集群方案比较"></a>集群方案比较</h2><ol>
+<li><p>Twemproxy：Twemproxy 是 Twtter 开源的一个 Redis 和 Memcache 代理服务器，主要用于管理 Redis 和 Memcached 集群，减少与 Cache 服务器直接连接的数量。他的后端是多台 Redis 或 memcached 所以也可以被称为分布式中间件。<br>使用时在本需要连接 Redis 的地方改为连接 twemproxy，它会以一个代理的身份接收请求并使用一致性 hash 算法，将请求转接到具体 Redis，将结果再返回 Twemproxy。<br>作用：</p>
+<ul>
+<li>通过代理的方式减少缓存服务器的连接数。</li>
+<li>自动在多台缓存服务器间共享数据。</li>
+<li>通过配置的方式禁用失败的结点。</li>
+<li>运行在多个实例上，客户端可以连接到首个可用的代理服务器。</li>
+<li>支持请求的流式与批处理，因而能够降低来回的消耗。<br>缺点：</li>
+<li>Twemproxy 自身单端口实例的压力；</li>
+<li>使用一致性 hash 后，Redis 节点数量改变的时候相应的计算值也会改变，数据无法自动移动到新的节点。</li>
+</ul>
+</li>
+<li><p>Codis：豌豆荚技术团队研发的一个分布式 Redis 解决方案。<br>对于上层的应用来说,连接到 Codis-Proxy(Redis代理服务)和连接原生的 Redis-Server 没有明显的区别, 上层应用可以像使用单机的 Redis 一样使用, Codis 底层会处理请求的转发, 不停机的数据迁移等工作，所有后边的一切事情, 对于前面的客户端来说是透明的, 可以简单的认为后边连接的是一个内存无限大的 Redis 服务。<br>基本和 twemproxy 一致的效果，但它支持在节点数量改变情况下，旧节点数据可恢复到新 hash 节点。</p>
+</li>
+<li><p>Redis cluster3.0：官方提供的集群方案，特点在于他的分布式算法不是一致性 hash，而是 hash 槽的概念，以及自身支持节点设置从节点。</p>
+</li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E9%9D%A2%E8%AF%95/" class="print-no-link">#面试</a>
+      
+        <a href="/tags/Redis/" class="print-no-link">#Redis</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>02-Redis 部署模式和集群（重要）</div>
+      <div>https://flepeng.github.io/interview-41-数据库-41-Redis-02-Redis-部署模式和集群（重要）/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2020年8月8日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>
