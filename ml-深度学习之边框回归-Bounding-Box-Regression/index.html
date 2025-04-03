@@ -1,0 +1,831 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="从rcnn， fast rcnn, faster rcnn, yolo, r-fcn, ssd，到cvpr的yolo9000。这些paper中损失函数都包含了边框回归，除了rcnn详细介绍了，其他的paper都是一笔带过，或者直接引用rcnn就把损失函数写出来了。前三条网上解释比较多，后面的两条我看了很多paper，才得出这些结论。  为什么要边框回归？ 什么是边框回归？ 边框回归怎么做的？ 边框">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深度学习之边框回归(Bounding Box Regression)">
+<meta property="og:url" content="https://flepeng.github.io/ml-%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%BE%B9%E6%A1%86%E5%9B%9E%E5%BD%92-Bounding-Box-Regression/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="从rcnn， fast rcnn, faster rcnn, yolo, r-fcn, ssd，到cvpr的yolo9000。这些paper中损失函数都包含了边框回归，除了rcnn详细介绍了，其他的paper都是一笔带过，或者直接引用rcnn就把损失函数写出来了。前三条网上解释比较多，后面的两条我看了很多paper，才得出这些结论。  为什么要边框回归？ 什么是边框回归？ 边框回归怎么做的？ 边框">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20210531105847753.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2ZlbmdsZXBlbmc=,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20210531110013471.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2ZlbmdsZXBlbmc=,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20210531112517447.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2ZlbmdsZXBlbmc=,size_16,color_FFFFFF,t_70">
+<meta property="article:published_time" content="2021-05-30T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.493Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="深度学习">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://img-blog.csdnimg.cn/20210531105847753.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2ZlbmdsZXBlbmc=,size_16,color_FFFFFF,t_70">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>深度学习之边框回归(Bounding Box Regression) - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="深度学习之边框回归(Bounding Box Regression)"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-05-31 00:00" pubdate>
+          2021年5月31日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          20 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">深度学习之边框回归(Bounding Box Regression)</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>从rcnn， fast rcnn, faster rcnn, yolo, r-fcn, ssd，到cvpr的yolo9000。这些paper中损失函数都包含了边框回归，除了rcnn详细介绍了，其他的paper都是一笔带过，或者直接引用rcnn就把损失函数写出来了。前三条网上解释比较多，后面的两条我看了很多paper，才得出这些结论。</p>
+<ul>
+<li>为什么要边框回归？</li>
+<li>什么是边框回归？</li>
+<li>边框回归怎么做的？</li>
+<li><strong>边框回归为什么宽高，坐标会设计这种形式？</strong></li>
+<li><strong>为什么边框回归只能微调，在离Ground Truth近的时候才能生效？</strong></li>
+</ul>
+<h2 id="为什么要边框回归？"><a href="#为什么要边框回归？" class="headerlink" title="为什么要边框回归？"></a>为什么要边框回归？</h2><p>这里引用王斌师兄的理解，如下图所示：<br><img src="https://img-blog.csdnimg.cn/20210531105847753.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2ZlbmdsZXBlbmc=,size_16,color_FFFFFF,t_70" srcset="/img/loading.gif" lazyload alt="在这里插入图片描述"></p>
+<p>对于上图，绿色的框表示 Ground Truth, 红色的框为 Selective Search 提取的 Region Proposal。那么即便红色的框被分类器识别为飞机，但是由于红色的框定位不准(IoU&lt;0.5)， 那么这张图相当于没有正确的检测出飞机。 如果我们能对红色的框进行微调， 使得经过微调后的窗口跟 Ground Truth 更接近， 这样岂不是定位会更准确。 确实，Bounding-box regression 就是用来微调这个窗口的。</p>
+<h2 id="边框回归是什么？"><a href="#边框回归是什么？" class="headerlink" title="边框回归是什么？"></a><strong>边框回归是什么？</strong></h2><p>对于窗口一般使用四维向量 $(x,y,w,h)$ 来表示， 分别表示窗口的中心点坐标和宽高。 对于下图, 红色的框 P 代表原始的 Proposal, 绿色的框 G 代表目标的 Ground Truth， 我们的目标是寻找一种关系使得输入原始的窗口 P 经过映射得到一个跟真实窗口 G 更接近的回归窗口 $\hat{G}$。</p>
+<p><img src="https://img-blog.csdnimg.cn/20210531110013471.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2ZlbmdsZXBlbmc=,size_16,color_FFFFFF,t_70" srcset="/img/loading.gif" lazyload><br>边框回归的目的既是：给定 $(P_{x},P_{y},P_{w},P_{h})$ 寻找一种映射 $f$， 使得 $f(P_{x},P_{y},P_{w},P_{h}) &#x3D; (\hat{G_x},\hat{G_y},\hat{G_w},\hat{G_h})$ 并且$(\hat{G_x},\hat{G_y},\hat{G_w},\hat{G_h}) \approx (G_{x},G_{y},G_{w},G_{h})$</p>
+<h2 id="边框回归怎么做的？"><a href="#边框回归怎么做的？" class="headerlink" title="边框回归怎么做的？"></a>边框回归怎么做的？</h2><p>RCNN论文：<a href="https://people.eecs.berkeley.edu/~rbg/papers/r-cnn-cvpr.pdf" target="_blank" rel="noopener">Region-based Convolution Networks for Accurate Object detection and Segmentation</a> </p>
+<p>作者在完成了的<code>生成候选区域——CNN提取特征——SVM进行分类</code>以后，为了进一步的提高定位效果，在文章的附录C中介绍了 Bounding-box Regression 的处理。Bounding-box Regression 训练的过程中，输入数据为N个训练对 ${(P^{i},G^{i})},i&#x3D;1,2,…,N$，其中 $p^i&#x3D;(p^i_x,p^i_y,p^i_w,p^i_h)$ 为proposal的位置，前两个坐标表示proposal的中心坐标，后面两个坐标分别表示proposal的width和height，而 $G^i&#x3D;(G_x,G_y,G_w,G_h)$ 表示groundtruth的位置， regression的目标就是学会一种映射将P转换为G。</p>
+<p>那么经过何种变换才能从上图中的窗口 P 变为窗口 $\hat{G}$ 呢？ 比较简单的思路就是: <em>平移+尺度放缩</em></p>
+<p>作者设计了四种坐标映射方法，其中前两个表示对 proposal 中心坐标的尺度不变的平移变换，后面两个则是对 proposal 的 width 和 height 的对数空间的变换，</p>
+<ol>
+<li>先做平移 $(\Delta x,\Delta y)$， $\Delta x &#x3D; P_{w}d_{x}(P),\Delta y &#x3D; P_{h}d_{y}(P)$ 这是R-CNN论文的：($d_{ \ast }(P) &#x3D; w_{ \ast }^{T}\Phi <em>{5}(P)&#x3D;t</em>{ \ast }$)</li>
+</ol>
+<p>$$\hat{G}<em>{x} &#x3D; P</em>{w}d_{x}(P) + P_{x},\text{(1)}$$</p>
+<p>$$\hat{G}<em>{y} &#x3D; P</em>{h}d_{y}(P) + P_{y},\text{(2)}$$</p>
+<ol start="2">
+<li>然后再做尺度缩放 $(S_{w},S_{h})$,  $S_{w} &#x3D; exp(d_{w}(P)),S_{h} &#x3D; exp(d_{h}(P))$, 对应论文中：</li>
+</ol>
+<p>$$\hat{G}<em>{w} &#x3D; P</em>{w}exp(d_{w}(P)),\text{(3)}$$</p>
+<p>$$\hat{G}<em>{h} &#x3D; P</em>{h}exp(d_{h}(P)),\text{(4)}$$</p>
+<p>观察(1)-(4)我们发现， 边框回归学习就是 $d_{x}(P),d_{y}(P),d_{w}(P),d_{h}(P)$这四个变换。下一步就是设计算法那得到这四个映射。</p>
+<p>线性回归就是给定输入的特征向量 X, 学习一组参数 W, 使得经过线性回归后的值跟真实值 Y(Ground Truth)非常接近. 即 $Y \approx WX$ 。 那么 Bounding-box 中我们的输入以及输出分别是什么呢？</p>
+<h3 id="Input"><a href="#Input" class="headerlink" title="Input:"></a>Input:</h3><p>$RegionProposal\rightarrow P &#x3D; (P_{x},P_{y},P_{w},P_{h})$，这个是什么？ 输入就是这四个数值吗？不是，其实<strong>真正的输入是这个窗口对应的 CNN 特征</strong>，也就是 R-CNN 中的 Pool5 feature（特征向量）。 (注：训练阶段输入还包括 Ground Truth， 也就是下边提到的 $t_{ \ast } &#x3D; (t_{x},t_{y},t_{w},t_{h})$</p>
+<h3 id="Output"><a href="#Output" class="headerlink" title="Output:"></a>Output:</h3><p>outpue 为：需要进行的平移变换和尺度缩放  $d_{x}(P),d_{y}(P),d_{w}(P),d_{h}(P)$， 或者说是 $\Delta x,\Delta y,S_{w},S_{h}$ 。 我们的最终输出不应该是 Ground Truth 吗？ 是的， 但是有了这四个变换我们就可以直接得到 Ground Truth。</p>
+<p>这里有个问题需要注意， 根据(1)~(4)我们可以知道， P 经过 $d_{x}(P),d_{y}(P),d_{w}(P),d_{h}(P)$ 得到的并不是真实值 G， 而是预测值 $\hat{G}$。 </p>
+<p>在训练时这四个值 $\Delta x,\Delta y,S_{w},S_{h}$ 的真实值应该是经过 Ground Truth 和 Proposal 计算得到的真正需要的平移量 $(t_{x},t_{y})$ 和尺度缩放 $(t_{w},t_{h})$ 。  这也就是 R-CNN 论文中的(6)~(9)：  </p>
+<p>$$t_{x} &#x3D; (G_{x}−P_{x})&#x2F; P_{w},(6)$$</p>
+<p>$$t_{y} &#x3D; (G_{y}−P_{y})&#x2F; P_{h},(7)$$</p>
+<p>$$t_{w} &#x3D; \log ⁡(G_{w}&#x2F; P_{w}),(8)$$</p>
+<p>$$t_{h} &#x3D; \log ⁡(G_{h}&#x2F; P_{h}),(9)$$</p>
+<h3 id="目标函数"><a href="#目标函数" class="headerlink" title="目标函数"></a>目标函数</h3><p>目标函数可以表示为 $d_{ \ast }(P) &#x3D; w_{ \ast }^{T}\Phi <em>{5}(P)$， $\Phi <em>{5}(P)$ 是输入 Proposal 的特征向量，$w</em>{ \ast }$是要学习的参数（*表示 x,y,w,h， 也就是每一个变换对应一个目标函数） , $d</em>{ \ast }(P)$ 是得到的预测值。 我们要让预测值跟真实值 $t_{ \ast } &#x3D; (t_{x},t_{y},t_{w},t_{h})$差距最小， 得到损失函数为：</p>
+<p>$$Loss &#x3D; \sum \limits_{i}^{N}(t_{ \ast }^{i}−\hat{w}_{ \ast }^{T}\phi _{5}(P^{i}))^2.$$</p>
+<p>函数优化目标为：</p>
+<p>$$W_{ \ast } &#x3D; argmin_{w_{ \ast }} \sum \limits_{i}^{N}(t_{ \ast }^{i}−\hat{w}_{ \ast }^{T}\phi <em>{5}(P^{i}))^2 + \lambda ||\hat{w}</em>{ \ast }||^2.$$</p>
+<p>利用梯度下降法或者最小二乘法就可以得到 $w_{ \ast }$。</p>
+<p>最终在进行实验时，lambda &#x3D; 1000, 同时作者发现同一对中P和G相距过远时通过上面的变换是不能完成的，而相距过远实际上也基本不会是同一物体，因此作者在进行实验室，对于 pair(P,G) 的选择是选择离P较近的G进行配对，这里表示较近的方法是需要P和一个G的最大的IoU要大于0.6,否则则抛弃该P。</p>
+<h2 id="为什么宽高尺度会设计这种形式？"><a href="#为什么宽高尺度会设计这种形式？" class="headerlink" title="为什么宽高尺度会设计这种形式？"></a>为什么宽高尺度会设计这种形式？</h2><p>重点解释一下为什么设计的 $t_{x},t_{y}$为什么除以宽高，为什么 $t_{w},t_{h}$会有log形式！！！</p>
+<p>首先CNN具有<strong>尺度不变性</strong>， 以下图为例：<br><img src="https://img-blog.csdnimg.cn/20210531112517447.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2ZlbmdsZXBlbmc=,size_16,color_FFFFFF,t_70" srcset="/img/loading.gif" lazyload alt="在这里插入图片描述"></p>
+<h3 id="x-y-坐标除以宽高"><a href="#x-y-坐标除以宽高" class="headerlink" title="x,y 坐标除以宽高"></a><strong>x,y 坐标除以宽高</strong></h3><p>上图的两个人具有不同的尺度，因为他都是人，我们得到的特征相同。假设我们得到的特征为 $\phi <em>{1},\phi <em>{2}$，那么一个完好的特征应该具备 $\phi <em>{1} &#x3D; \phi$。ok，如果我们直接学习坐标差值，以x坐标为例，$x</em>{i},p</em>{i}$ 分别代表第i个框的x坐标，学习到的映射为 $f$, $f(\phi <em>{1}) &#x3D; x</em>{1}−p</em>{1}$，同理 $f(\phi <em>{2}) &#x3D; x</em>{2}−p_{2}$。从上图显而易见，$x_{1}−p_{1} \neq x_{2}−p_{1}$。也就是说同一个x对应多个y，这明显不满足函数的定义。边框回归学习的是回归函数，然而你的目标却不满足函数定义，当然学习不到什么。</p>
+<h3 id="宽高坐标Log形式"><a href="#宽高坐标Log形式" class="headerlink" title="宽高坐标Log形式"></a>宽高坐标Log形式</h3><p>我们想要得到一个放缩的尺度，也就是说这里限制尺度必须大于0。我们学习的 $t_{w},t_{h}$怎么保证满足大于0呢？直观的想法就是EXP函数，如公式(3), (4)所示，那么反过来推导就是Log函数的来源了。</p>
+<h2 id="为什么IoU较大，认为是线性变换？"><a href="#为什么IoU较大，认为是线性变换？" class="headerlink" title="为什么IoU较大，认为是线性变换？"></a>为什么IoU较大，认为是线性变换？</h2><p>当输入的 Proposal 与 Ground Truth 相差较小时(RCNN 设置的是 IoU&gt;0.6)， 可以认为这种变换是一种线性变换， 那么我们就可以用线性回归来建模对窗口进行微调， 否则会导致训练的回归模型不 work（当 Proposal跟 GT 离得较远，就是复杂的非线性问题了，此时用线性回归建模显然不合理）。这里我来解释：</p>
+<p>Log函数明显不满足线性函数，但是为什么当Proposal 和Ground Truth相差较小的时候，就可以认为是一种线性变换呢？大家还记得这个公式不？参看高数1。</p>
+<p>$$lim_{x &#x3D; 0}log(1 + x) &#x3D; x$$</p>
+<p>现在回过来看公式(8):</p>
+<p>$$t_{w} &#x3D; \log ⁡(G_{w}&#x2F; P_{w}) &#x3D; log(\frac{G_{w} + P_{w}−P_{w}}{P_{w}}) &#x3D; log(1 + \frac{G_{w}−P_{w}}{P_{w}})$$</p>
+<p>当且仅当 $G_{w}−P_{w}&#x3D;0$的时候，才会是线性函数，也就是宽度和高度必须近似相等。</p>
+<p>对于IoU大于指定值这块，我并不认同作者的说法。我个人理解，只保证Region Proposal和Ground Truth的宽高相差不多就能满足回归条件。x,y位置到没有太多限制，这点我们从YOLOv2可以看出，原始的边框回归其实x，y的位置相对来说对很大的。这也是YOLOv2的改进地方。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" class="category-chain-item">深度学习</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" class="print-no-link">#深度学习</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>深度学习之边框回归(Bounding Box Regression)</div>
+      <div>https://flepeng.github.io/ml-深度学习之边框回归-Bounding-Box-Regression/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年5月31日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/042-MongoDB-MongoDB-%E8%BF%9E%E6%8E%A5%E5%91%BD%E4%BB%A4-mongo/" title="MongoDB 连接命令 mongo">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">MongoDB 连接命令 mongo</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/001-%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BB%84%E6%88%90%E5%8E%9F%E7%90%86-%E5%86%85%E6%A0%B8%E6%80%81%E5%92%8C%E7%94%A8%E6%88%B7%E6%80%81/" title="内核态和用户态">
+                        <span class="hidden-mobile">内核态和用户态</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

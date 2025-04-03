@@ -1,0 +1,857 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="简介Supervisor是用Python开发的一套通用的进程管理程序，能将一个普通的命令行进程变为后台daemon，并监控进程状态，异常退出时能自动重启。它通过fork&#x2F;exec的方式把这些被管理的进程当作supervisor的子进程来启动，这样只要在supervisor的配置文件中，把要管理的进程的可执行文件的路径写进去即可。也实现当子进程挂掉的时候，父进程可以准确获取子进程挂掉的信息">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Python 之监控进程工具 supervisor.py">
+<meta property="og:url" content="https://flepeng.github.io/021-Python-35-%E7%BB%84%E4%BB%B6-Python-%E4%B9%8B%E7%9B%91%E6%8E%A7%E8%BF%9B%E7%A8%8B%E5%B7%A5%E5%85%B7-supervisor-py/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="简介Supervisor是用Python开发的一套通用的进程管理程序，能将一个普通的命令行进程变为后台daemon，并监控进程状态，异常退出时能自动重启。它通过fork&#x2F;exec的方式把这些被管理的进程当作supervisor的子进程来启动，这样只要在supervisor的配置文件中，把要管理的进程的可执行文件的路径写进去即可。也实现当子进程挂掉的时候，父进程可以准确获取子进程挂掉的信息">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2016-08-04T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.343Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Python">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>Python 之监控进程工具 supervisor.py - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Python 之监控进程工具 supervisor.py"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2016-08-05 00:00" pubdate>
+          2016年8月5日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          6.4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          54 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Python 之监控进程工具 supervisor.py</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>Supervisor是用Python开发的一套通用的进程管理程序，能将一个普通的命令行进程变为后台daemon，并监控进程状态，异常退出时能自动重启。它通过fork&#x2F;exec的方式把这些被管理的进程当作supervisor的子进程来启动，这样只要在supervisor的配置文件中，把要管理的进程的可执行文件的路径写进去即可。也实现当子进程挂掉的时候，父进程可以准确获取子进程挂掉的信息的，可以选择是否自己启动和报警。supervisor还提供了一个功能，可以为supervisord或者每个子进程，设置一个非root的user，这个user就可以管理它对应的进程。</p>
+<p>supervisor这东西，其实就是用来管理进程的。咱们为什么要用supervisor呢？因为，相对于我们linux传统的进程管理方式来说，它有很多的优势。</p>
+<ol>
+<li><p><strong>简单</strong></p>
+<p>因为通常管理linux进程的时候，一般来说都需要自己编写一个能够实现进程start&#x2F;stop&#x2F;restart&#x2F;reload功能的脚本，然后丢到&#x2F;etc&#x2F;init.d&#x2F;下面。这么做有很多不好的地方，第一我们要编写这个脚本，这就很耗时耗力了。第二，当这个进程挂掉的时候，linux不会自动重启它的，想要自动重启的话，我们还要自己写一个监控重启脚本。而，supervisor则可以完美的解决这些问题。好，怎么解决的呢，其实supervisor管理进程，就是通过fork&#x2F;exec的方式把这些被管理的进程，当作supervisor的子进程来启动。这样的话，我们只要在supervisor的配置文件中，把要管理的进程的可执行文件的路径写进去就OK了。这样就省下了我们如同linux管理进程的时候，自己写控制脚本的麻烦了。第二，被管理进程作为supervisor的子进程，当子进程挂掉的时候，父进程可以准确获取子进程挂掉的信息的，所以当然也就可以对挂掉的子进程进行自动重启了，当然重启还是不重启，也要看你的配置文件里面有木有设置autostart&#x3D;true了。</p>
+</li>
+<li><p><strong>精确</strong></p>
+<p>为啥说精确呢？因为linux对进程状态的反馈，有时候不太准确。为啥不准确？这个楼主也不知道啊，官方文档是这么说的，知道的告诉楼主一下吧，感激不尽。而supervisor监控子进程，得到的子进程状态无疑是准确的。</p>
+</li>
+<li><p><strong>进程组</strong></p>
+<p>supervisor可以对进程组统一管理，也就是说咱们可以把需要管理的进程写到一个组里面，然后我们把这个组作为一个对象进行管理，如启动，停止，重启等等操作。而linux系统则是没有这种功能的，我们想要停止一个进程，只能一个一个的去停止，要么就自己写个脚本去批量停止。</p>
+</li>
+<li><p><strong>集中式管理</strong></p>
+<p>supervisor管理的进程，进程组信息，全部都写在一个ini格式的文件里就OK了。而且，我们管理supervisor的时候的可以在本地进行管理，也可以远程管理，而且supervisor提供了一个web界面，我们可以在web界面上监控，管理进程。 当然了，本地，远程和web管理的时候，需要调用supervisor的xml_rpc接口。</p>
+</li>
+<li><p><strong>有效性</strong></p>
+<p>当supervisor的子进程挂掉的时候，操作系统会直接给supervisor发信号。而其他的一些类似supervisor的工具，则是通过进程的pid文件，来发送信号的，然后定期轮询来重启失败的进程。显然supervisor更加高效。。。至于是哪些类似supervisor工具，这个楼主就不太清楚了，楼主还听说过god,director，但是没用过。有兴趣的朋友可以玩玩</p>
+</li>
+<li><p><strong>可扩展性</strong></p>
+<p>supervisor是个开源软件，牛逼点的，可以直接去改软件。不过咱们大多数人还是老老实实研究supervisot提供的接口吧，supervisor主要提供了两个可扩展的功能。一个是event机制，这个就是楼主这两天干的活要用到的东西。再一个是xml_rpc,supervisor的web管理端和远程调用的时候，就要用到它了。</p>
+</li>
+<li><p><strong>权限</strong></p>
+<p>大伙都知道linux的进程，特别是侦听在1024端口之下的进程，一般用户大多数情况下，是不能对其进行控制的。想要控制的话，必须要有root权限。而supervisor提供了一个功能，可以为supervisord或者每个子进程，设置一个非root的user，这个user就可以管理它对应的进程了。</p>
+<p>不过这功能，用不用就看大伙自己的环境了</p>
+</li>
+<li><p>还有一些什么兼容性，稳定性，感觉用处不大，就不扯了。</p>
+</li>
+</ol>
+<h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><figure class="highlight vala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs vala"><span class="hljs-meta"># Debian/Ubuntu</span><br>apt-<span class="hljs-keyword">get</span> install supervisor<br><br><span class="hljs-meta"># Centos</span><br>yum install supervisor<br><br><span class="hljs-meta"># pip安装</span><br>pip install supervisor<br><br><span class="hljs-meta"># easy_install安装</span><br>easy_install supervisor<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="生成配置文件"><a href="#生成配置文件" class="headerlink" title="生成配置文件"></a>生成配置文件</h2><p>安装好supervisor之后，默认是没有生成配置文件的。可以通过以下命令生成配置文件</p>
+<figure class="highlight jboss-cli"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs jboss-cli"><span class="hljs-keyword">echo</span>_supervisord_conf &gt; <span class="hljs-string">/etc/supervisord.conf</span><br></code></pre></td></tr></table></figure>
+
+<p>我们通常是把配置文件放到&#x2F;etc&#x2F;下面，当然也可以放到任意路径下面。</p>
+<h2 id="启动"><a href="#启动" class="headerlink" title="启动"></a>启动</h2><h3 id="supervisor开机自动启动"><a href="#supervisor开机自动启动" class="headerlink" title="supervisor开机自动启动"></a>supervisor开机自动启动</h3><p>在目录&#x2F;usr&#x2F;lib&#x2F;systemd&#x2F;system&#x2F; 新建文件supervisord.service,并添加配置内容</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs ini"><span class="hljs-section">[Unit]</span><br><span class="hljs-attr">Description</span>=Process Monitoring and Control Daemon<br><span class="hljs-attr">After</span>=rc-local.service nss-user-lookup.target<br><br><span class="hljs-section">[Service]</span><br><span class="hljs-attr">Type</span>=forking<br><span class="hljs-attr">ExecStart</span>=/usr/bin/supervisord -c /usr/supervisor/supervisord.conf <span class="hljs-comment">;开机启动时执行</span><br><span class="hljs-attr">ExecStop</span>=/usr/bin/supervisord shutdown<br><span class="hljs-attr">ExecReload</span>=/usr/bin/supervisord reload<br><span class="hljs-attr">killMode</span>=process<br><span class="hljs-attr">Restart</span>=<span class="hljs-literal">on</span>-failure<br><span class="hljs-attr">RestartSec</span>=<span class="hljs-number">42</span>s<br><br><span class="hljs-section">[Install]</span><br><span class="hljs-attr">WantedBy</span>=multi-user.target<br></code></pre></td></tr></table></figure>
+
+<p>加入开机启动项</p>
+<figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs stylus">systemctl start supervisord<span class="hljs-selector-class">.service</span>     <span class="hljs-comment">//启动supervisor并加载默认配置文件</span><br>systemctl enable supervisord<span class="hljs-selector-class">.service</span>    <span class="hljs-comment">//将supervisor加入开机启动项</span><br></code></pre></td></tr></table></figure>
+
+<p>使用supervisor进程管理命令之前先启动supervisord，否则程序报错。</p>
+<p><strong>以下启动顺序由上到下优先级，依次递减</strong></p>
+<figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs stata">supervisord                             # 默认去找<span class="hljs-variable">$CWD</span>/supervisord.<span class="hljs-keyword">conf</span>，也就是当前目录<br>supervisord                             # 默认<span class="hljs-variable">$CWD</span>/etc/supervisord.<span class="hljs-keyword">conf</span>，也就当前目录下的etc目录<br>supervisord                             # 默认去找/etc/supervisord.<span class="hljs-keyword">conf</span>的配置文件<br>supervisord -c /home/supervisord.<span class="hljs-keyword">conf</span>   # 到指定路径下去找配置文件<br></code></pre></td></tr></table></figure>
+
+<p>然后就可以管理了</p>
+<figure class="highlight livecodeserver"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs livecodeserver">supervisorctl status       <span class="hljs-comment"> //查看所有进程的状态</span><br>supervisorctl <span class="hljs-built_in">stop</span> es      <span class="hljs-comment"> //停止es</span><br>supervisorctl <span class="hljs-built_in">start</span> es     <span class="hljs-comment"> //启动es</span><br>supervisorctl restart es   <span class="hljs-comment"> //重启es</span><br>supervisorctl update       <span class="hljs-comment"> //配置文件修改后使用该命令加载新的配置</span><br>supervisorctl reload       <span class="hljs-comment"> //重新启动配置中的所有程序</span><br></code></pre></td></tr></table></figure>
+
+<p>把es换成all可以管理配置中的所有进程。直接输入supervisorctl进入supervisorctl的shell交互界面，此时上面的命令不带supervisorctl可直接使用</p>
+<h3 id="web-界面"><a href="#web-界面" class="headerlink" title="web 界面"></a>web 界面</h3><p>到这一步，就可以通过 <a href="http://ip:9001/" target="_blank" rel="noopener">http://ip:9001/</a> 查看supervisor的web界面了，只不过目前还没有加入任何监控程序。</p>
+<h2 id="supervisor组件"><a href="#supervisor组件" class="headerlink" title="supervisor组件"></a>supervisor组件</h2><ol>
+<li><p>supervisord</p>
+<p>supervisord是supervisor的服务端程序。</p>
+<p>干的活：启动supervisor程序自身，启动supervisor管理的子进程，响应来自clients的请求，重启闪退或异常退出的子进程，把子进程的stderr或stdout记录到日志文件中，生成和处理Event</p>
+</li>
+<li><p>supervisorctl</p>
+<p>这东西还是有点用的，如果说supervisord是supervisor的服务端程序，那么supervisorctl就是client端程序了。supervisorctl有一个类型shell的命令行界面，我们可以利用它来查看子进程状态，启动&#x2F;停止&#x2F;重启子进程，获取running子进程的列表等等。。。最牛逼的一点是，supervisorctl不仅可以连接到本机上的supervisord，还可以连接到远程的supervisord，当然在本机上面是通过UNIX socket连接的，远程是通过TCP socket连接的。supervisorctl和supervisord之间的通信，是通过xml_rpc完成的。    相应的配置在[supervisorctl]块里面</p>
+</li>
+<li><p>Web Server</p>
+<p>Web Server主要可以在界面上管理进程，Web Server其实是通过XML_RPC来实现的，可以向supervisor请求数据，也可以控制supervisor及子进程。配置在[inet_http_server]块里面</p>
+</li>
+<li><p>XML_RPC接口</p>
+<p>这个就是远程调用的，上面的supervisorctl和Web Server就是它弄的</p>
+</li>
+</ol>
+<h2 id="配置文件详解"><a href="#配置文件详解" class="headerlink" title="配置文件详解"></a>配置文件详解</h2><figure class="highlight tcl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br><span class="line">251</span><br><span class="line">252</span><br><span class="line">253</span><br></pre></td><td class="code"><pre><code class="hljs tcl">[unix_http_server]            <br><span class="hljs-keyword">file</span>=/tmp/supervisor.sock   ;<span class="hljs-keyword">socket</span>文件的路径，supervisorctl用XML_RPC和supervisord通信就是通过它进行<br>                              的。如果不设置的话，supervisorctl也就不能用了  <br>                              不设置的话，默认为none。 非必须设置        <br>;chmod=<span class="hljs-number">0700</span>                 ; 这个简单，就是修改上面的那个<span class="hljs-keyword">socket</span>文件的权限为<span class="hljs-number">0700</span><br>                              不设置的话，默认为<span class="hljs-number">0700</span>。 非必须设置<br>;chown=nobody:nogroup       ; 这个一样，修改上面的那个<span class="hljs-keyword">socket</span>文件的属组为user.group<br>                              不设置的话，默认为启动supervisord进程的用户及属组。非必须设置<br>;username=user              ; 使用supervisorctl连接的时候，认证的用户<br>                               不设置的话，默认为不需要用户。 非必须设置<br>;password=<span class="hljs-number">123</span>               ; 和上面的用户名对应的密码，可以直接使用明码，也可以使用SHA加密<br>                              如：&#123;SHA&#125;<span class="hljs-number">82</span>ab876d1387bfafe46cc1c8a2ef074eae50cb1d<br>                              默认不设置。。。非必须设置<br><br>;[inet_http_server]         ; 侦听在TCP上的<span class="hljs-keyword">socket</span>，Web Server和远程的supervisorctl都要用到他<br>                              不设置的话，默认为不开启。非必须设置<br>;port=<span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">9001</span>        ; 这个是侦听的IP和端口，侦听所有IP用 :<span class="hljs-number">9001</span>或*:<span class="hljs-number">9001</span>。<br>                              这个必须设置，只要上面的[inet_http_server]开启了，就必须设置它<br>;username=user              ; 这个和上面的uinx_http_server一个样。非必须设置<br>;password=<span class="hljs-number">123</span>               ; 这个也一个样。非必须设置<br><br>[supervisord]                ;这个主要是定义supervisord这个服务端进程的一些参数的<br>                              这个必须设置，不设置，supervisor就不用干活了<br>logfile=/tmp/supervisord.log ; 这个是supervisord这个主进程的日志路径，注意和子进程的日志不搭嘎。<br>                               默认路径$CWD/supervisord.log，$CWD是当前目录。。非必须设置<br>logfile_maxbytes=<span class="hljs-number">50</span>MB        ; 这个是上面那个日志文件的最大的大小，当超过<span class="hljs-number">50</span>M的时候，会生成一个新的日 <br>                               志文件。当设置为<span class="hljs-number">0</span>时，表示不限制文件大小<br>                               默认值是<span class="hljs-number">50</span>M，非必须设置。              <br>logfile_backups=<span class="hljs-number">10</span>           ; 日志文件保持的数量，supervisor在启动程序时，会自动创建<span class="hljs-number">10</span>个buckup文件，用于log rotate<br>                               当设置为<span class="hljs-number">0</span>时，表示不限制文件的数量。<br>                               默认情况下为<span class="hljs-number">10</span>。。。非必须设置<br>loglevel=<span class="hljs-keyword">info</span>                ; 日志级别，有critical, <span class="hljs-keyword">error</span>, warn, <span class="hljs-keyword">info</span>, debug, <span class="hljs-keyword">trace</span>, or blather等<br>                               默认为<span class="hljs-keyword">info</span>。。。非必须设置项<br>pidfile=/tmp/supervisord.<span class="hljs-keyword">pid</span> ; supervisord的<span class="hljs-keyword">pid</span>文件路径。<br>                               默认为$CWD/supervisord.<span class="hljs-keyword">pid</span>。。。非必须设置<br>nodaemon=false               ; 如果是true，supervisord进程将在前台运行<br>                               默认为false，也就是后台以守护进程运行。。。非必须设置<br>minfds=<span class="hljs-number">1024</span>                  ; 这个是最少系统空闲的文件描述符，低于这个值supervisor将不会启动。<br>                               系统的文件描述符在这里设置cat /<span class="hljs-keyword">proc</span>/sys/fs/file-max<br>                               默认情况下为1024。。。非必须设置<br>minprocs=200                 ; 最小可用的进程描述符，低于这个值supervisor也将不会正常启动。<br><span class="hljs-title">                              ulimit</span>  -u这个命令，可以查看linux下面用户的最大进程数<br>                              默认为200。。。非必须设置<br>;umask=022                   ; 进程创建文件的掩码<br>                               默认为022。。非必须设置项<br>;user=chrism                 ; 这个参数可以设置一个非root用户，当我们以root用户启动supervisord之后。<br>                               我这里面设置的这个用户，也可以对supervisord进行管理<br>                               默认情况是不设置。。。非必须设置项<br>;identifier=supervisor       ; 这个参数是supervisord的标识符，主要是给XML_RPC用的。当你有多个<br><span class="hljs-title">                               supervisor的时候，而且想调用XML_RPC统一管理，就需要为每个</span><br><span class="hljs-title"></span> <span class="hljs-title">                              supervisor设置不同的标识符了</span><br><span class="hljs-title"></span>                               默认是supervisord。。。非必需设置<br>;directory=/tmp              ; 这个参数是当supervisord作为守护进程运行的时候，设置这个参数的话，启动<br><span class="hljs-title">                               supervisord进程之前，会先切换到这个目录</span><br><span class="hljs-title"></span>                               默认不设置。。。非必须设置<br>;nocleanup=true              ; 这个参数当为false的时候，会在supervisord进程启动的时候，把以前子进程<br>                               产生的日志文件(路径为AUTO的情况下)清除掉。有时候咱们想要看历史日志，当 <br>                               然不想日志被清除了。所以可以设置为true<br>                               默认是false，有调试需求的同学可以设置为true。。。非必须设置<br>;childlogdir=/tmp            ; 当子进程日志路径为AUTO的时候，子进程日志文件的存放路径。<br>                               默认路径是这个东西，执行下面的这个命令看看就OK了，处理的东西就默认路径<br><span class="hljs-title">                               python</span> -c "import<span class="hljs-title"> tempfile;print</span> tempfile.gettempdir()"<br>                               非必须设置<br>;environment=KEY="value"     ; 这个是用来设置环境变量的，supervisord在linux中启动默认继承了linux的<br>                               环境变量，在这里可以设置supervisord进程特有的其他环境变量。<br><span class="hljs-title">                               supervisord启动子进程时，子进程会拷贝父进程的内存空间内容。</span> 所以设置的<br>                               这些环境变量也会被子进程继承。<br>                               小例子：environment=name="haha",age="hehe"<br>                               默认为不设置。。。非必须设置<br>;strip_ansi=false            ; 这个选项如果设置为true，会清除子进程日志中的所有ANSI 序列。什么是ANSI<br>                               序列呢？就是我们的\n,\t这些东西。<br>                               默认为false。。。非必须设置<br><br>;<span class="hljs-title"> the</span> below<span class="hljs-title"> section</span> must<span class="hljs-title"> remain</span> in<span class="hljs-title"> the</span> config<span class="hljs-title"> file</span> for<span class="hljs-title"> RPC</span><br><span class="hljs-title">;</span> (supervisorctl/web<span class="hljs-title"> interface)</span> to<span class="hljs-title"> work,</span> additional<span class="hljs-title"> interfaces</span> may<span class="hljs-title"> be</span><br><span class="hljs-title">;</span> added<span class="hljs-title"> by</span> defining<span class="hljs-title"> them</span> in<span class="hljs-title"> separate</span> rpcinterface:<span class="hljs-title"> sections</span><br><span class="hljs-title">[rpcinterface:supervisor]</span>    ;这个选项是给XML_RPC用的，当然你如果想使用supervisord或者web<span class="hljs-title"> server</span> 这 <br>                              个选项必须要开启的<br>supervisor.rpcinterface_factory =<span class="hljs-title"> supervisor.rpcinterface:make_main_rpcinterface</span> <br><br>[supervisorctl]              ;这个主要是针对supervisorctl的一些配置  <br>serverurl=unix:///tmp/supervisor.sock ; 这个是supervisorctl本地连接supervisord的时候，本地UNIX<span class="hljs-title"> socket</span><br><span class="hljs-title"></span>                                        路径，注意这个是和前面的[unix_http_server]对应的<br>                                        默认值就是unix:///tmp/supervisor.sock。。非必须设置<br>;serverurl=http://127.0.0.1:9001 ; 这个是supervisorctl远程连接supervisord的时候，用到的TCP<span class="hljs-title"> socket路径</span><br><span class="hljs-title"></span>                                   注意这个和前面的[inet_http_server]对应<br>                                   默认就是http://127.0.0.1:9001。。。非必须项<br>                               <br>;username=chris              ; 用户名<br>                               默认空。。非必须设置<br>;password=123                ; 密码<br>                              默认空。。非必须设置<br>;prompt=mysupervisor         ; 输入用户名密码时候的提示符<br>                               默认supervisor。。非必须设置<br>;history_file=~/.sc_history  ; 这个参数和shell中的history类似，我们可以用上下键来查找前面执行过的命令<br>                               默认是no<span class="hljs-title"> file的。。所以我们想要有这种功能，必须指定一个文件。。。非</span><br><span class="hljs-title"></span>                               必须设置<br><br>;<span class="hljs-title"> The</span> below<span class="hljs-title"> sample</span> program<span class="hljs-title"> section</span> shows<span class="hljs-title"> all</span> possible<span class="hljs-title"> program</span> subsection<span class="hljs-title"> values,</span><br><span class="hljs-title">;</span> create<span class="hljs-title"> one</span> or<span class="hljs-title"> more</span> 'real'<span class="hljs-title"> program:</span> sections<span class="hljs-title"> to</span> be<span class="hljs-title"> able</span> to<span class="hljs-title"> control</span> them<span class="hljs-title"> under</span><br><span class="hljs-title">;</span> supervisor.<br><br>;[program:theprogramname]      ;这个就是咱们要管理的子进程了，":"后面的是名字，最好别乱写和实际进程<br>                                有点关联最好。这样的program我们可以设置一个或多个，一个program就是<br>                                要被管理的一个进程<br>;command=/bin/cat              ; 这个就是我们的要启动进程的命令路径了，可以带参数<br>                                例子：/home/test.py -a 'hehe'<br>                                有一点需要注意的是，我们的command只能是那种在终端运行的进程，不能是<br>                                守护进程。这个想想也知道了，比如说command=service<span class="hljs-title"> httpd</span> start。<br><span class="hljs-title">                                httpd这个进程被linux的service管理了，我们的supervisor再去启动这个命令</span><br><span class="hljs-title"></span>                                这已经不是严格意义的子进程了。<br>                                这个是个必须设置的项<br>;process_name=%(program_name)s ; 这个是进程名，如果我们下面的numprocs参数为1的话，就不用管这个参数<br>                                 了，它默认值%(program_name)s也就是上面的那个program冒号后面的名字，<br>                                 但是如果numprocs为多个的话，那就不能这么干了。想想也知道，不可能每个<br>                                 进程都用同一个进程名吧。<br><br>                                <br>;numprocs=1                    ; 启动进程的数目。当不为1时，就是进程池的概念，注意process_name的设置<br>                                 默认为1    。。非必须设置<br>;directory=/tmp                ; 进程运行前，会前切换到这个目录<br>                                 默认不设置。。。非必须设置<br>;umask=022                     ; 进程掩码，默认none，非必须<br>;priority=999                  ; 子进程启动关闭优先级，优先级低的，最先启动，关闭的时候最后关闭<br>                                 默认值为999 。。非必须设置<br>;autostart=true                ; 如果是true的话，子进程将在supervisord启动后被自动启动<br>                                 默认就是true   。。非必须设置<br>;autorestart=unexpected        ; 这个是设置子进程挂掉后自动重启的情况，有三个选项，false,unexpected<br>                                 和true。如果为false的时候，无论什么情况下，都不会被重新启动，<br>                                 如果为unexpected，只有当进程的退出码不在下面的exitcodes里面定义的退 <br>                                 出码的时候，才会被自动重启。当为true的时候，只要子进程挂掉，将会被无<br>                                 条件的重启<br>;startsecs=1                   ; 这个选项是子进程启动多少秒之后，此时状态如果是running，则我们认为启<br>                                 动成功了<br>                                 默认值为1 。。非必须设置<br>;startretries=3                ; 当进程启动失败后，最大尝试启动的次数。。当超过3次后，supervisor将把<br>                                 此进程的状态置为FAIL<br>                                 默认值为3 。。非必须设置<br>;exitcodes=0,2                 ; 注意和上面的的autorestart=unexpected对应。。exitcodes里面的定义的<br>                                 退出码是expected的。<br>;stopsignal=QUIT               ; 进程停止信号，可以为TERM,<span class="hljs-title"> HUP,</span> INT,<span class="hljs-title"> QUIT,</span> KILL,<span class="hljs-title"> USR1,</span> or<span class="hljs-title"> USR2等信号</span><br><span class="hljs-title"></span>                                  默认为TERM 。。当用设定的信号去干掉进程，退出码会被认为是expected<br>                                  非必须设置<br>;stopwaitsecs=10               ; 这个是当我们向子进程发送stopsignal信号后，到系统返回信息<br>                                 给supervisord，所等待的最大时间。 超过这个时间，supervisord会向该<br>                                 子进程发送一个强制kill的信号。<br>                                 默认为10秒。。非必须设置<br>;stopasgroup=false             ; 这个东西主要用于，supervisord管理的子进程，这个子进程本身还有<br>                                 子进程。那么我们如果仅仅干掉supervisord的子进程的话，子进程的子进程<br>                                 有可能会变成孤儿进程。所以咱们可以设置可个选项，把整个该子进程的<br>                                 整个进程组都干掉。 设置为true的话，一般killasgroup也会被设置为true。<br>                                 需要注意的是，该选项发送的是stop信号<br>                                 默认为false。。非必须设置。。<br>;killasgroup=false             ; 这个和上面的stopasgroup类似，不过发送的是kill信号<br>;user=chrism                   ; 如果supervisord是root启动，我们在这里设置这个非root用户，可以用来<br>                                 管理该program<br>                                 默认不设置。。。非必须设置项<br>;redirect_stderr=true          ; 如果为true，则stderr的日志会被写入stdout日志文件中<br>                                 默认为false，非必须设置<br>;stdout_logfile=/a/path        ; 子进程的stdout的日志路径，可以指定路径，AUTO，none等三个选项。<br>                                 设置为none的话，将没有日志产生。设置为AUTO的话，将随机找一个地方<br>                                 生成日志文件，而且当supervisord重新启动的时候，以前的日志文件会被<br>                                 清空。当<span class="hljs-title"> redirect_stderr=true的时候，sterr也会写进这个日志文件</span><br><span class="hljs-title">;stdout_logfile_maxbytes=1MB</span>   ; 日志文件最大大小，和[supervisord]中定义的一样。默认为50<br>;stdout_logfile_backups=10     ; 和[supervisord]定义的一样。默认10<br>;stdout_capture_maxbytes=1MB   ; 这个东西是设定capture管道的大小，当值不为0的时候，子进程可以从stdout<br>                                 发送信息，而supervisor可以根据信息，发送相应的event。<br>                                 默认为0，为0的时候表达关闭管道。。。非必须项<br>;stdout_events_enabled=false   ; 当设置为ture的时候，当子进程由stdout向文件描述符中写日志的时候，将<br>                                 触发supervisord发送PROCESS_LOG_STDOUT类型的event<br>                                 默认为false。。。非必须设置<br>;stderr_logfile=/a/path        ; 这个东西是设置stderr写的日志路径，当redirect_stderr=true。这个就不用<br>                                 设置了，设置了也是白搭。因为它会被写入stdout_logfile的同一个文件中<br>                                 默认为AUTO，也就是随便找个地存，supervisord重启被清空。。非必须设置<br>;stderr_logfile_maxbytes=1MB   ; 这个出现好几次了，就不重复了<br>;stderr_logfile_backups=10     ; 这个也是<br>;stderr_capture_maxbytes=1MB   ; 这个一样，和stdout_capture一样。 默认为0，关闭状态<br>;stderr_events_enabled=false   ; 这个也是一样，默认为false<br>;environment=A="1",B="2"       ; 这个是该子进程的环境变量，和别的子进程是不共享的<br>;serverurl=AUTO                ; <br><br>;<span class="hljs-title"> The</span> below<span class="hljs-title"> sample</span> eventlistener<span class="hljs-title"> section</span> shows<span class="hljs-title"> all</span> possible<br>;<span class="hljs-title"> eventlistener</span> subsection<span class="hljs-title"> values,</span> create<span class="hljs-title"> one</span> or<span class="hljs-title"> more</span> 'real'<br>;<span class="hljs-title"> eventlistener:</span> sections<span class="hljs-title"> to</span> be<span class="hljs-title"> able</span> to<span class="hljs-title"> handle</span> event<span class="hljs-title"> notifications</span><br><span class="hljs-title">;</span> sent<span class="hljs-title"> by</span> supervisor.<br><br>;[eventlistener:theeventlistenername] ;这个东西其实和program的地位是一样的，也是suopervisor启动的子进<br>                                       程，不过它干的活是订阅supervisord发送的event。他的名字就叫<br><span class="hljs-title">                                       listener了。我们可以在listener里面做一系列处理，比如报警等等</span><br><span class="hljs-title"></span>                                       楼主这两天干的活，就是弄的这玩意<br>;command=/bin/eventlistener    ; 这个和上面的program一样，表示listener的可执行文件的路径<br>;process_name=%(program_name)s ; 这个也一样，进程名，当下面的numprocs为多个的时候，才需要。否则默认就<br><span class="hljs-title">                                 OK了</span><br><span class="hljs-title">;numprocs=1</span>                    ; 相同的listener启动的个数<br>;events=EVENT                  ;<span class="hljs-title"> event事件的类型，也就是说，只有写在这个地方的事件类型。才会被发送</span><br><span class="hljs-title"></span>                      <br>                                 <br>;buffer_size=10                ; 这个是event队列缓存大小，单位不太清楚，楼主猜测应该是个吧。当buffer<br>                                 超过10的时候，最旧的event将会被清除，并把新的event放进去。<br>                                 默认值为10。。非必须选项<br>;directory=/tmp                ; 进程执行前，会切换到这个目录下执行<br>                                 默认为不切换。。。非必须<br>;umask=022                     ; 淹没，默认为none，不说了<br>;priority=-1                   ; 启动优先级，默认-1，也不扯了<br>;autostart=true                ; 是否随supervisord启动一起启动，默认true<br>;autorestart=unexpected        ; 是否自动重启，和program一个样，分true,false,unexpected等，注意<br><span class="hljs-title">                                  unexpected和exitcodes的关系</span><br><span class="hljs-title">;startsecs=1</span>                   ; 也是一样，进程启动后跑了几秒钟，才被认定为成功启动，默认1<br>;startretries=3                ; 失败最大尝试次数，默认3<br>;exitcodes=0,2                 ; 期望或者说预料中的进程退出码，<br>;stopsignal=QUIT               ; 干掉进程的信号，默认为TERM，比如设置为QUIT，那么如果QUIT来干这个进程<br>                                 那么会被认为是正常维护，退出码也被认为是expected中的<br>;stopwaitsecs=10               ;<span class="hljs-title"> max</span> num<span class="hljs-title"> secs</span> to<span class="hljs-title"> wait</span> b4<span class="hljs-title"> SIGKILL</span> (default 10)<br>;stopasgroup=false             ;<span class="hljs-title"> send</span> stop<span class="hljs-title"> signal</span> to<span class="hljs-title"> the</span> UNIX<span class="hljs-title"> process</span> group (default<span class="hljs-title"> false)</span><br><span class="hljs-title">;killasgroup=false</span>             ;<span class="hljs-title"> SIGKILL</span> the<span class="hljs-title"> UNIX</span> process<span class="hljs-title"> group</span> (def<span class="hljs-title"> false)</span><br><span class="hljs-title">;user=chrism</span>                   ;设置普通用户，可以用来管理该listener进程。<br>                                默认为空。。非必须设置<br>;redirect_stderr=true          ; 为true的话，stderr的log会并入stdout的log里面<br>                                默认为false。。。非必须设置<br>;stdout_logfile=/a/path        ; 这个不说了，好几遍了<br>;stdout_logfile_maxbytes=1MB   ; 这个也是<br>;stdout_logfile_backups=10     ; 这个也是<br>;stdout_events_enabled=false   ; 这个其实是错的，listener是不能发送event<br>;stderr_logfile=/a/path        ; 这个也是<br>;stderr_logfile_maxbytes=1MB   ; 这个也是<br>;stderr_logfile_backups        ; 这个不说了<br>;stderr_events_enabled=false   ; 这个也是错的，listener不能发送event<br>;environment=A="1",B="2"       ; 这个是该子进程的环境变量<br>                                 默认为空。。。非必须设置<br>;serverurl=AUTO                ;<span class="hljs-title"> override</span> serverurl<span class="hljs-title"> computation</span> (childutils)<br><br>;<span class="hljs-title"> The</span> below<span class="hljs-title"> sample</span> group<span class="hljs-title"> section</span> shows<span class="hljs-title"> all</span> possible<span class="hljs-title"> group</span> values,<br>;<span class="hljs-title"> create</span> one<span class="hljs-title"> or</span> more 'real'<span class="hljs-title"> group:</span> sections<span class="hljs-title"> to</span> create "heterogeneous"<br>;<span class="hljs-title"> process</span> groups.<br><br>;[group:thegroupname]  ;这个东西就是给programs分组，划分到组里面的program。我们就不用一个一个去操作了<br>                         我们可以对组名进行统一的操作。 注意：program被划分到组里面之后，就相当于原来<br>                         的配置从supervisor的配置文件里消失了。。。supervisor只会对组进行管理，而不再<br>                         会对组里面的单个program进行管理了<br>;programs=progname1,progname2  ; 组成员，用逗号分开<br>                                 这个是个必须的设置项<br>;priority=999                  ; 优先级，相对于组和组之间说的<br>                                 默认999。。非必须选项<br><br>;<span class="hljs-title"> The</span> [include]<span class="hljs-title"> section</span> can<span class="hljs-title"> just</span> contain<span class="hljs-title"> the</span> "files"<span class="hljs-title"> setting.</span> <span class="hljs-title"> This</span><br><span class="hljs-title">;</span> setting<span class="hljs-title"> can</span> list<span class="hljs-title"> multiple</span> files (separated<span class="hljs-title"> by</span> whitespace<span class="hljs-title"> or</span><br><span class="hljs-title">;</span> newlines).<span class="hljs-title">  It</span> can<span class="hljs-title"> also</span> contain<span class="hljs-title"> wildcards.</span> <span class="hljs-title"> The</span> filenames<span class="hljs-title"> are</span><br><span class="hljs-title">;</span> interpreted<span class="hljs-title"> as</span> relative<span class="hljs-title"> to</span> this<span class="hljs-title"> file.</span> <span class="hljs-title"> Included</span> files *cannot*<br>;<span class="hljs-title"> include</span> files<span class="hljs-title"> themselves.</span><br><span class="hljs-title"></span><br><span class="hljs-title">;[include]</span>                         ;这个东西挺有用的，当我们要管理的进程很多的时候，写在一个文件里面<br>                                    就有点大了。我们可以把配置信息写到多个文件中，然后include过来<br>;files =<span class="hljs-title"> relative/directory/*.ini</span><br></code></pre></td></tr></table></figure>
+
+<p>上面提到的非必须设置项，一般来说，都是有默认值的，可以根据自己的需要去设置。。。如果不设置的，supervisor也能用起来</p>
+<h3 id="子进程配置文件说明"><a href="#子进程配置文件说明" class="headerlink" title="子进程配置文件说明"></a>子进程配置文件说明</h3><p>给需要管理的子进程(程序)编写一个配置文件，放在&#x2F;etc&#x2F;supervisor.d&#x2F;目录下，以.ini作为扩展名（每个进程的配置文件都可以单独分拆也可以把相关的脚本放一起）。如任意定义一个和脚本相关的项目名称的选项组（&#x2F;etc&#x2F;supervisord.d&#x2F;test.conf）：</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs ini"><span class="hljs-comment">#项目名</span><br><span class="hljs-section">[program:blog]</span><br><span class="hljs-comment">#脚本目录</span><br><span class="hljs-attr">directory</span>=/opt/bin<br><span class="hljs-comment">#脚本执行命令</span><br><span class="hljs-attr">command</span>=/usr/bin/python /opt/bin/test.py<br><br><span class="hljs-comment">#supervisor启动的时候是否随着同时启动，默认True</span><br><span class="hljs-attr">autostart</span>=<span class="hljs-literal">true</span><br><span class="hljs-comment">#当程序exit的时候，这个program不会自动重启,默认unexpected，设置子进程挂掉后自动重启的情况，有三个选项，false,unexpected和true。如果为false的时候，无论什么情况下，都不会被重新启动，如果为unexpected，只有当进程的退出码不在下面的exitcodes里面定义的</span><br><span class="hljs-attr">autorestart</span>=<span class="hljs-literal">false</span><br><span class="hljs-comment">#这个选项是子进程启动多少秒之后，此时状态如果是running，则我们认为启动成功了。默认值为1</span><br><span class="hljs-attr">startsecs</span>=<span class="hljs-number">1</span><br><br><span class="hljs-comment">#脚本运行的用户身份 </span><br><span class="hljs-attr">user</span> = test<br><br><span class="hljs-comment">#日志输出 </span><br><span class="hljs-attr">stderr_logfile</span>=/tmp/blog_stderr.log <br><span class="hljs-attr">stdout_logfile</span>=/tmp/blog_stdout.log <br><span class="hljs-comment">#把stderr重定向到stdout，默认 false</span><br><span class="hljs-attr">redirect_stderr</span> = <span class="hljs-literal">true</span><br><span class="hljs-comment">#stdout日志文件大小，默认 50MB</span><br><span class="hljs-attr">stdout_logfile_maxbytes</span> = <span class="hljs-number">20</span>MB<br><span class="hljs-comment">#stdout日志文件备份数</span><br><span class="hljs-attr">stdout_logfile_backups</span> = <span class="hljs-number">20</span><br></code></pre></td></tr></table></figure>
+
+<p>子进程配置示例：</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs ini"><span class="hljs-comment">#说明同上</span><br><span class="hljs-section">[program:test]</span> <br><span class="hljs-attr">directory</span>=/opt/bin <br><span class="hljs-attr">command</span>=/opt/bin/test<br><span class="hljs-attr">autostart</span>=<span class="hljs-literal">true</span> <br><span class="hljs-attr">autorestart</span>=<span class="hljs-literal">false</span> <br><span class="hljs-attr">stderr_logfile</span>=/tmp/test_stderr.log <br><span class="hljs-attr">stdout_logfile</span>=/tmp/test_stdout.log <br><span class="hljs-comment">#user = test</span><br></code></pre></td></tr></table></figure>
+
+<h2 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h2><h3 id="unix-x2F-x2F-x2F-var-x2F-run-x2F-supervisor-sock-no-such-file"><a href="#unix-x2F-x2F-x2F-var-x2F-run-x2F-supervisor-sock-no-such-file" class="headerlink" title="unix:&#x2F;&#x2F;&#x2F;var&#x2F;run&#x2F;supervisor.sock no such file"></a>unix:&#x2F;&#x2F;&#x2F;var&#x2F;run&#x2F;supervisor.sock no such file</h3><p>问题描述：安装好supervisor没有开启服务直接使用supervisorctl报的错<br>解决办法：supervisord -c &#x2F;etc&#x2F;supervisord.conf</p>
+<h3 id="command中指定的进程已经起来，但supervisor还不断重启"><a href="#command中指定的进程已经起来，但supervisor还不断重启" class="headerlink" title="command中指定的进程已经起来，但supervisor还不断重启"></a>command中指定的进程已经起来，但supervisor还不断重启</h3><p>问题描述：command中启动方式为后台启动，导致识别不到pid，然后不断重启，这里使用的是elasticsearch，command指定的是$path&#x2F;bin&#x2F;elasticsearch -d<br>解决办法：supervisor无法检测后台启动进程的pid，而supervisor本身就是后台启动守护进程，因此不用担心这个</p>
+<h3 id="启动了多个supervisord服务，导致无法正常关闭服务"><a href="#启动了多个supervisord服务，导致无法正常关闭服务" class="headerlink" title="启动了多个supervisord服务，导致无法正常关闭服务"></a>启动了多个supervisord服务，导致无法正常关闭服务</h3><p>问题描述：在运行supervisord -c &#x2F;etc&#x2F;supervisord.conf之前，直接运行过supervisord -c &#x2F;etc&#x2F;supervisord.d&#x2F;xx.conf导致有些进程被多个superviord管理，无法正常关闭进程。<br>解决办法：使用ps -fe | grep supervisord查看所有启动过的supervisord服务，kill相关的进程。</p>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ul>
+<li><a href="http://supervisord.org/" target="_blank" rel="noopener">http://supervisord.org</a></li>
+<li><a href="https://www.cnblogs.com/zhanghuilong/p/14956121.html" target="_blank" rel="noopener">https://www.cnblogs.com/zhanghuilong/p/14956121.html</a></li>
+<li><a href="https://www.jianshu.com/p/0b9054b33db3" target="_blank" rel="noopener">https://www.jianshu.com/p/0b9054b33db3</a></li>
+<li><a href="https://www.cnblogs.com/toutou/p/supervisor.html#_nav_1" target="_blank" rel="noopener">https://www.cnblogs.com/toutou/p/supervisor.html#_nav_1</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Python/" class="category-chain-item">Python</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Python/" class="print-no-link">#Python</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Python 之监控进程工具 supervisor.py</div>
+      <div>https://flepeng.github.io/021-Python-35-组件-Python-之监控进程工具-supervisor-py/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2016年8月5日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/021-Python-36-Python-%E8%84%9A%E6%9C%AC-spider-spider-%E6%89%8B%E5%86%99/" title="spider - 手写">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">spider - 手写</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/021-Python-34-%E6%A1%86%E6%9E%B6-Django-Django-uWSGI-Nginx-%E7%94%9F%E4%BA%A7%E7%8E%AF%E5%A2%83%E9%83%A8%E7%BD%B2/" title="Django + uWSGI + Nginx 生产环境部署">
+                        <span class="hidden-mobile">Django + uWSGI + Nginx 生产环境部署</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

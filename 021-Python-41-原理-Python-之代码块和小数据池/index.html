@@ -1,0 +1,865 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="id，is，&#x3D;&#x3D;，&#x3D; id 是内存地址，那什么是内存地址呢？你只要创建一个数据（对象），Python 会在内存中开辟一个空间，这个空间有一个唯一标识，这个标识就叫做内存地址，也就是这个数据（对象）的id，可以用 id() 获取这个数据的内存地址： 12name &#x3D; &#39;lp&#39;print(id(name))  # 158xxxxxxxxx  &#x3D;&#x3D; 比较两边的数值是否相等。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Python 之代码块和小数据池">
+<meta property="og:url" content="https://flepeng.github.io/021-Python-41-%E5%8E%9F%E7%90%86-Python-%E4%B9%8B%E4%BB%A3%E7%A0%81%E5%9D%97%E5%92%8C%E5%B0%8F%E6%95%B0%E6%8D%AE%E6%B1%A0/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="id，is，&#x3D;&#x3D;，&#x3D; id 是内存地址，那什么是内存地址呢？你只要创建一个数据（对象），Python 会在内存中开辟一个空间，这个空间有一个唯一标识，这个标识就叫做内存地址，也就是这个数据（对象）的id，可以用 id() 获取这个数据的内存地址： 12name &#x3D; &#39;lp&#39;print(id(name))  # 158xxxxxxxxx  &#x3D;&#x3D; 比较两边的数值是否相等。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2016-08-10T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.344Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Python">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>Python 之代码块和小数据池 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Python 之代码块和小数据池"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2016-08-11 00:00" pubdate>
+          2016年8月11日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          15 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Python 之代码块和小数据池</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="id，is，-x3D-x3D-，-x3D"><a href="#id，is，-x3D-x3D-，-x3D" class="headerlink" title="id，is，&#x3D;&#x3D;，&#x3D;"></a>id，is，&#x3D;&#x3D;，&#x3D;</h2><ul>
+<li><p><code>id</code> 是内存地址，那什么是内存地址呢？你只要创建一个数据（对象），Python 会在内存中开辟一个空间，这个空间有一个唯一标识，这个标识就叫做内存地址，也就是这个数据（对象）的id，可以用 <code>id()</code> 获取这个数据的内存地址：</p>
+<figure class="highlight applescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs applescript"><span class="hljs-built_in">name</span> = 'lp'<br>print(<span class="hljs-built_in">id</span>(<span class="hljs-built_in">name</span>))  <span class="hljs-comment"># 158xxxxxxxxx</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p><code>==</code> 比较两边的数值是否相等。</p>
+</li>
+<li><p><code>is</code> 比较两边的内存地址是否相等。如果内存地址相等，那么这两边其实是指向同一个内存地址。<br>可以说如果内存地址相同，那么值肯定相同，但是如果值相同，内存地址不一定相同。</p>
+</li>
+<li><p><code>=</code> 为赋值，赋予的是内存地址。</p>
+</li>
+</ul>
+<h2 id="代码块"><a href="#代码块" class="headerlink" title="代码块"></a>代码块</h2><p>官方文档：</p>
+<figure class="highlight applescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs applescript">A Python program <span class="hljs-keyword">is</span> constructed <span class="hljs-keyword">from</span> code blocks. A block <span class="hljs-keyword">is</span> a piece <span class="hljs-keyword">of</span> Python program <span class="hljs-built_in">text</span> <span class="hljs-keyword">that</span> <span class="hljs-keyword">is</span> executed <span class="hljs-keyword">as</span> a unit. The following are blocks: a module, a function body, <span class="hljs-keyword">and</span> a <span class="hljs-built_in">class</span> definition. Each command typed interactively <span class="hljs-keyword">is</span> a block. A <span class="hljs-keyword">script</span> <span class="hljs-built_in">file</span> (a <span class="hljs-built_in">file</span> <span class="hljs-keyword">given</span> <span class="hljs-keyword">as</span> standard input <span class="hljs-keyword">to</span> <span class="hljs-keyword">the</span> interpreter <span class="hljs-keyword">or</span> specified <span class="hljs-keyword">as</span> a command line argument <span class="hljs-keyword">to</span> <span class="hljs-keyword">the</span> interpreter) <span class="hljs-keyword">is</span> a code block. A <span class="hljs-keyword">script</span> command (a command specified <span class="hljs-keyword">on</span> <span class="hljs-keyword">the</span> interpreter command line <span class="hljs-keyword">with</span> <span class="hljs-keyword">the</span> ‘-c‘ option) <span class="hljs-keyword">is</span> a code block. The <span class="hljs-built_in">string</span> argument passed <span class="hljs-keyword">to</span> <span class="hljs-keyword">the</span> built-<span class="hljs-keyword">in</span> functions eval() <span class="hljs-keyword">and</span> exec() <span class="hljs-keyword">is</span> a code block.<br>A code block <span class="hljs-keyword">is</span> executed <span class="hljs-keyword">in</span> an execution frame. A frame <span class="hljs-keyword">contains</span> <span class="hljs-keyword">some</span> administrative information (used <span class="hljs-keyword">for</span> debugging) <span class="hljs-keyword">and</span> determines <span class="hljs-keyword">where</span> <span class="hljs-keyword">and</span> how execution continues <span class="hljs-keyword">after</span> <span class="hljs-keyword">the</span> code block’s execution has completed.<br></code></pre></td></tr></table></figure>
+
+<p>上面的意思是：</p>
+<p>Python 程序是由代码块构造的。块是一个 Python 程序的文本，他是作为一个单元执行的。</p>
+<p>代码块包括：一个模块，一个函数，一个类，一个文件等。交互方式输入的每个命令都是一个代码块。</p>
+<p>什么叫交互方式？就是在 cmd 中进入 Python 解释器里面，每一行代码都是一个代码块，例如：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs ruby"><span class="hljs-comment"># 这是两个代码块</span><br><span class="hljs-meta">&gt;&gt;</span>&gt; b = <span class="hljs-string">"asdfsdafsfasfasgasgafasdfsdaasdgsadgasd123"</span><br><span class="hljs-meta">&gt;&gt;</span>&gt; a = <span class="hljs-string">"asdfsdafsfasfasgasgafasdfsdaasdgsadgasd123"</span><br></code></pre></td></tr></table></figure>
+
+<p>对于一个文件中的两个函数，也是两个不同的代码块：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 这是两个代码块</span><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">fun_a</span><span class="hljs-params">()</span>:</span><br>    <span class="hljs-keyword">pass</span><br>    <br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">fun_b</span><span class="hljs-params">()</span>:</span><br>    <span class="hljs-keyword">pass</span><br></code></pre></td></tr></table></figure>
+
+
+<h2 id="代码块的缓存机制"><a href="#代码块的缓存机制" class="headerlink" title="代码块的缓存机制"></a>代码块的缓存机制</h2><p><strong>前提条件</strong>：在同一个代码块内。</p>
+<p><strong>机制内容</strong>：Python 在执行同一个代码块的初始化对象的命令时，会检查是否其值是否已经存在，如果存在，会将其重用。换句话说：执行同一个代码块时，遇到初始化对象的命令时，他会将初始化的这个变量与值存储在一个字典中，在遇到新的变量时，会先在字典中查询记录，如果有同样的记录那么它会重复使用这个字典中的之前的这个值。满足缓存机制的变量在内存中只存在一个，对应着 id 相同。</p>
+<p><strong>适用对象</strong>：int（float）、str、bool。</p>
+<ul>
+<li><p>int(float)：任何数字在同一代码块下都会复用。</p>
+</li>
+<li><p>bool：True 和 False 在字典中会以 1，0 方式存在，并且复用。</p>
+</li>
+<li><p>str：几乎所有的字符串都会符合缓存机制，具体规定如下：</p>
+<ul>
+<li>非乘法得到的字符串都满足代码块的缓存机制。</li>
+<li>乘法得到的字符串分两种情况：<ul>
+<li>乘数为1时，任何字符串满足代码块的缓存机制。</li>
+<li>乘数&gt;&#x3D;2时：仅含大小写字母，数字，下划线，总长度&lt;&#x3D;20，满足代码块的缓存机制。<figure class="highlight coffeescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs coffeescript">s1 = <span class="hljs-string">'abcd'</span><br>s2 = <span class="hljs-string">'abcd'</span><br><span class="hljs-built_in">print</span>(s1 <span class="hljs-keyword">is</span> s2)  <span class="hljs-comment"># True</span><br><br>s3 = <span class="hljs-string">'abcd'</span> * <span class="hljs-number">1</span><br>s4 = <span class="hljs-string">'abcd'</span> * <span class="hljs-number">1</span><br><span class="hljs-built_in">print</span>(s3 <span class="hljs-keyword">is</span> s4)  <span class="hljs-comment"># True</span><br><br>s5 = <span class="hljs-string">'abcd'</span> * <span class="hljs-number">5</span><br>s6 = <span class="hljs-string">'abcd'</span> * <span class="hljs-number">5</span><br><span class="hljs-built_in">print</span>(s5 <span class="hljs-keyword">is</span> s6)  <span class="hljs-comment"># True</span><br></code></pre></td></tr></table></figure></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p><strong>优点</strong>：能够提高一些字符串，整数处理任务在时间和空间上的性能；需要值相同的字符串，整数的时候，直接从”字典”中取出复用，避免频繁的创建和销毁，提升效率，节约内存。</p>
+<p><strong>缺点</strong>: 在”字典”中创建或者插入新的内容会花费更多的时间。</p>
+<h2 id="小数据池"><a href="#小数据池" class="headerlink" title="小数据池"></a>小数据池</h2><p>小数据池，不同代码块的缓存机制，也称为小整数缓存机制，或者称为驻留机制等等，只要你在网上查到的这些名字其实说的都是一个意思。</p>
+<p>那么到底什么是小数据池？他有什么作用呢？</p>
+<p><strong>前提条件</strong>：在不同一个代码块内。</p>
+<p><strong>机制内容</strong>：</p>
+<ul>
+<li><p>Python 自动将 <code>-5~256</code> 的整数进行了<strong>缓存</strong>，当你将这些整数赋值给变量时，并不会重新创建对象，而是使用已经创建好的缓存对象。</p>
+</li>
+<li><p>python 也会将一定规则的字符串在<strong>字符串驻留池</strong>中，创建一份，当你将这些字符串赋值给变量时，并不会重新创建对象，而是使用在字符串驻留池中创建好的对象。</p>
+</li>
+<li><p>其实，无论是缓存还是字符串驻留池，都是 Python 做的一个优化，就是将 <code>~5-256</code> 的整数和一定规则的字符串，放在一个”池”（容器，或者字典）中，无论程序中那些变量指向这些范围内的整数或者字符串，那么他直接在这个”池”中引用。</p>
+</li>
+</ul>
+<p><strong>适用对象</strong>：int（float）、str、bool。</p>
+<ul>
+<li><p>bool：就是 True 和 False，无论创建多少个变量指向 True，False，在内存中都只存在一个。</p>
+</li>
+<li><p>int：对于整数来说，小数据池的范围是 <code>-5~256</code>，如果多个变量都是指向同一个（在这个范围内的）数字，他们在内存中指向的都是一个内存地址。</p>
+<figure class="highlight llvm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs llvm">&gt;&gt;&gt; <span class="hljs-keyword">i1</span> = <span class="hljs-number">2</span><br>&gt;&gt;&gt; <span class="hljs-keyword">i2</span> = <span class="hljs-number">2</span><br>&gt;&gt;&gt; <span class="hljs-keyword">i3</span> = <span class="hljs-number">2345</span><br>&gt;&gt;&gt; <span class="hljs-keyword">i4</span> = <span class="hljs-number">2345</span><br>&gt;&gt;&gt; id(<span class="hljs-keyword">i1</span>), id(<span class="hljs-keyword">i2</span>), id(<span class="hljs-keyword">i3</span>), id(<span class="hljs-keyword">i4</span>)  # <span class="hljs-keyword">i1</span> 和 <span class="hljs-keyword">i2</span> 相同， <span class="hljs-keyword">i3</span> 和 <span class="hljs-keyword">i4</span> 不同<br>(<span class="hljs-number">140731896340928</span>, <span class="hljs-number">140731896340928</span>, <span class="hljs-number">2863792405904</span>, <span class="hljs-number">2863792404656</span>)<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>str：</p>
+<ul>
+<li><p>字符串的长度为0或者1，默认都采用了驻留机制。</p>
+</li>
+<li><p>字符串的长度&gt;1，且只含有大小写字母，数字，下划线时，才会默认驻留。</p>
+</li>
+<li><p>用乘法得到的字符串，分两种情况。</p>
+<ul>
+<li>乘数为1时：仅含大小写字母，数字，下划线，默认驻留。</li>
+<li>乘数&gt;&#x3D;2时：仅含大小写字母，数字，下划线，总长度&lt;&#x3D;20，默认驻留。<figure class="highlight armasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs armasm">&gt;&gt;&gt; <span class="hljs-built_in">s1</span> = <span class="hljs-string">"@"</span><br>&gt;&gt;&gt; <span class="hljs-built_in">s2</span> = <span class="hljs-string">"@"</span><br>&gt;&gt;&gt; <span class="hljs-built_in">s3</span> = <span class="hljs-string">"adf@"</span><br>&gt;&gt;&gt; <span class="hljs-built_in">s4</span> = <span class="hljs-string">"adf@"</span><br>&gt;&gt;&gt; <span class="hljs-built_in">s5</span> = <span class="hljs-string">"12345689_qwertyuiop_asdfghjkl"</span><br>&gt;&gt;&gt; <span class="hljs-built_in">s6</span> = <span class="hljs-string">"12345689_qwertyuiop_asdfghjkl"</span><br>&gt;&gt;&gt; <span class="hljs-built_in">s7</span> = <span class="hljs-built_in">s5</span> * <span class="hljs-number">1</span><br>&gt;&gt;&gt; <span class="hljs-built_in">s8</span> = <span class="hljs-built_in">s6</span> * <span class="hljs-number">1</span><br>&gt;&gt;&gt; <span class="hljs-built_in">s9</span> = <span class="hljs-built_in">s5</span> * <span class="hljs-number">2</span><br>&gt;&gt;&gt; <span class="hljs-built_in">s10</span> = <span class="hljs-built_in">s6</span> * <span class="hljs-number">2</span><br>&gt;&gt;&gt; id(<span class="hljs-built_in">s1</span>),id(<span class="hljs-built_in">s2</span>),id(<span class="hljs-built_in">s3</span>),id(<span class="hljs-built_in">s4</span>),id(<span class="hljs-built_in">s5</span>),id(<span class="hljs-built_in">s6</span>),id(<span class="hljs-built_in">s7</span>),id(<span class="hljs-built_in">s8</span>),id(<span class="hljs-built_in">s9</span>),id(<span class="hljs-built_in">s10</span>)<br>(<span class="hljs-number">1780956457520</span>, <span class="hljs-number">1780956457520</span>, <span class="hljs-number">1780998980144</span>, <span class="hljs-number">1780998980464</span>, <span class="hljs-number">1780998777072</span>, <span class="hljs-number">1780998777072</span>, <span class="hljs-number">1780998777072</span>, <span class="hljs-number">1780998777072</span>, <span class="hljs-number">1780998855120</span>, <span class="hljs-number">1780998751152</span>)<br># <span class="hljs-built_in">s1</span> 和 <span class="hljs-built_in">s2</span> 相同，<span class="hljs-built_in">s3</span> 和 <span class="hljs-built_in">s4</span> 不同，<span class="hljs-built_in">s5</span>、<span class="hljs-built_in">s6</span>、<span class="hljs-built_in">s7</span>、<span class="hljs-built_in">s8</span> 相同，<span class="hljs-built_in">s9</span> 和 <span class="hljs-built_in">s10</span> 不同。<br></code></pre></td></tr></table></figure></li>
+</ul>
+</li>
+<li><p>指定驻留。指定驻留是你可以指定任意的字符串加入到小数据池中，让其只在内存中创建一个对象，多个变量都是指向这一个字符串</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs angelscript"><span class="hljs-keyword">from</span> sys <span class="hljs-keyword">import</span> <span class="hljs-built_in">int</span>ern<br>a = <span class="hljs-built_in">int</span>ern(<span class="hljs-string">'hello!@'</span>*<span class="hljs-number">20</span>)<br>b = <span class="hljs-built_in">int</span>ern(<span class="hljs-string">'hello!@'</span>*<span class="hljs-number">20</span>)<br>print(a <span class="hljs-keyword">is</span> b)  # True<br></code></pre></td></tr></table></figure></li>
+</ul>
+</li>
+</ul>
+<p><strong>优点</strong>：能够提高一些字符串，整数处理人物在时间和空间上的性能；需要值相同的字符串，整数的时候，直接从”池”里拿来用，避免频繁的创建和销毁，提升效率，节约内存</p>
+<p><strong>缺点</strong>: 在”池”中创建或者插入新的内容会花费更多的时间。</p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><ul>
+<li>如果在同一代码块下，则采用同一代码块下的换缓存机制。</li>
+<li>如果是不同代码块，则采用小数据池的驻留机制。</li>
+<li>缓存和小数据池只针对整数、字符串、布尔值。其他的数据类型不存在，如列表、元祖等，即使里面只有一个值，赋值时内存地址不一样。</li>
+</ul>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://www.shuzhiduo.com/A/VGzlQyQNJb/" target="_blank" rel="noopener">https://www.shuzhiduo.com/A/VGzlQyQNJb/</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Python/" class="category-chain-item">Python</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Python/" class="print-no-link">#Python</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Python 之代码块和小数据池</div>
+      <div>https://flepeng.github.io/021-Python-41-原理-Python-之代码块和小数据池/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2016年8月11日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/021-Python-41-%E5%8E%9F%E7%90%86-Python-%E4%B9%8B-dict-%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0/" title="Python 之 dict 底层实现">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Python 之 dict 底层实现</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/021-Python-41-%E5%8E%9F%E7%90%86-Python-%E4%B9%8B%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/" title="Python 之垃圾回收机制">
+                        <span class="hidden-mobile">Python 之垃圾回收机制</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

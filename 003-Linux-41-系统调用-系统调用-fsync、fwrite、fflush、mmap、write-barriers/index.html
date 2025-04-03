@@ -1,0 +1,841 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="1、各系统调用介绍大部分内容来自百度百科。 1.1、fsync调用 fsync 可以保证文件的修改时间也被更新。fsync 系统调用可以使您精确的强制每次写入都被更新到磁盘中。您也可以使用同步（synchronous）I&#x2F;O 操作打开一个文件，这将引起所有写数据都立刻被提交到磁盘中。通过在 open 中指定 O_SYNC 标志启用同步I&#x2F;O。 1.2、fwritefwrite(">
+<meta property="og:type" content="article">
+<meta property="og:title" content="系统调用 fsync、fwrite、fflush、mmap、write barriers">
+<meta property="og:url" content="https://flepeng.github.io/003-Linux-41-%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8-%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8-fsync%E3%80%81fwrite%E3%80%81fflush%E3%80%81mmap%E3%80%81write-barriers/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="1、各系统调用介绍大部分内容来自百度百科。 1.1、fsync调用 fsync 可以保证文件的修改时间也被更新。fsync 系统调用可以使您精确的强制每次写入都被更新到磁盘中。您也可以使用同步（synchronous）I&#x2F;O 操作打开一个文件，这将引起所有写数据都立刻被提交到磁盘中。通过在 open 中指定 O_SYNC 标志启用同步I&#x2F;O。 1.2、fwritefwrite(">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/direct/038cb1262a0b495eb4cab3bd6909eaff.png">
+<meta property="og:image" content="https://img-blog.csdn.net/20140401134231812">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20210730174626259.png">
+<meta property="article:published_time" content="2023-09-22T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.272Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Linux">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://img-blog.csdnimg.cn/direct/038cb1262a0b495eb4cab3bd6909eaff.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>系统调用 fsync、fwrite、fflush、mmap、write barriers - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="系统调用 fsync、fwrite、fflush、mmap、write barriers"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-09-23 00:00" pubdate>
+          2023年9月23日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.6k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          22 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">系统调用 fsync、fwrite、fflush、mmap、write barriers</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="1、各系统调用介绍"><a href="#1、各系统调用介绍" class="headerlink" title="1、各系统调用介绍"></a>1、各系统调用介绍</h2><p>大部分内容来自百度百科。</p>
+<h3 id="1-1、fsync"><a href="#1-1、fsync" class="headerlink" title="1.1、fsync"></a>1.1、fsync</h3><p>调用 fsync 可以保证文件的修改时间也被更新。fsync 系统调用可以使您精确的强制每次写入都被更新到磁盘中。您也可以使用同步（synchronous）I&#x2F;O 操作打开一个文件，这将引起所有写数据都立刻被提交到磁盘中。通过在 open 中指定 O_SYNC 标志启用同步I&#x2F;O。</p>
+<h3 id="1-2、fwrite"><a href="#1-2、fwrite" class="headerlink" title="1.2、fwrite"></a>1.2、fwrite</h3><p><code>fwrite()</code> 是 C 语言标准库中的一个文件处理函数，功能是向指定的文件中写入若干数据块，如成功执行则返回实际写入的数据块数目。该函数以二进制形式对文件进行操作，不局限于文本文件。</p>
+<h3 id="1-3、write"><a href="#1-3、write" class="headerlink" title="1.3、write"></a>1.3、write</h3><p>write 和 fwrite 不一样。write 用来直接将文件从应用程序直接写入到内核缓冲区。fwrite 适用于需要处理大量数据的情况，并且希望通过标准 I&#x2F;O 库提供的高级功能来管理数据写入。而 write 适用于需要直接将数据写入文件或设备，更加底层和高效的场景。</p>
+<h3 id="1-4、fclose"><a href="#1-4、fclose" class="headerlink" title="1.4、fclose"></a>1.4、fclose</h3><p>fclose 会将缓冲区的数据刷新到内核缓冲区，并释放相关资源。内核会负责将数据从内核缓冲区写入磁盘。因此 fclose 不会将数据直接写入到文件。</p>
+<h3 id="1-5、fflush"><a href="#1-5、fflush" class="headerlink" title="1.5、fflush"></a>1.5、fflush</h3><p>fflush 是一个在C语言标准输入输出库中的函数，功能是冲洗流中的信息，该函数通常用于处理磁盘文件。fflush 会强迫将缓冲区内的数据写回参数 stream 指定的文件中。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>read&#x2F;write&#x2F;fsync： </p>
+<ol>
+<li>linux 底层操作；</li>
+<li>内核调用，涉及到进程上下文的切换，即用户态到核心态的转换，这是个比较消耗性能的操作。</li>
+</ol>
+<p>fread&#x2F;fwrite&#x2F;fflush： </p>
+<ol>
+<li>c 语言标准规定的 IO 流操作，建立在read&#x2F;write&#x2F;fsync之上</li>
+<li>在用户层，又增加了一层缓冲机制，用于减少内核调用次数，但是增加了一次内存拷贝。</li>
+</ol>
+<h3 id="1-6、mmap"><a href="#1-6、mmap" class="headerlink" title="1.6、mmap"></a>1.6、mmap</h3><p>mmap 将一个文件或者其它对象映射进内存。文件被映射到多个页上，如果文件的大小不是所有页的大小之和，最后一个页不被使用的空间将会清零。mmap 在用户空间映射调用系统中作用很大。</p>
+<h2 id="2、各系统调用之间的区别"><a href="#2、各系统调用之间的区别" class="headerlink" title="2、各系统调用之间的区别"></a>2、各系统调用之间的区别</h2><p>其实熟悉的朋友都知道每个调用的作用是什么，但是他们在底层到底是一个什么关系，估计很多同学还是无法说清楚。为了搞清楚这些问题，我参考网上大牛的资料，画了下面这张图：</p>
+<p><img src="https://img-blog.csdnimg.cn/direct/038cb1262a0b495eb4cab3bd6909eaff.png" srcset="/img/loading.gif" lazyload>​<br><img src="https://img-blog.csdn.net/20140401134231812" srcset="/img/loading.gif" lazyload>​</p>
+<p>通过上图，我们可以清楚的了解到，在整个文件写入的过程中，其需要经过很多个 buffer 缓存。如 IO Buffer、Page Cache、驱动缓存、Disk cache。所有这些缓存存在的意义都是为了提升我们的文件读写速度。但是在我们需要确保数据百分之百安全的场景下（如WAL），这些 buffer 就成了一个一个的障碍。为了让数据从应用层直接万无一失的写入磁盘，我们需要合理的利用上面提到的各类方法调用。根据不同的业务需求我们可以采用不同的方法组合。</p>
+<h3 id="2-1、允许应用奔溃的写操作"><a href="#2-1、允许应用奔溃的写操作" class="headerlink" title="2.1、允许应用奔溃的写操作"></a>2.1、允许应用奔溃的写操作</h3><p>通过上图可知只有数据写入内核的 Page Cache 中之后，应用崩溃才不会导致数据丢失。通常我们有两个种方式可以将数据写入到内核中。</p>
+<h4 id="A、普通写入-write-x2F-flush-x2F-close"><a href="#A、普通写入-write-x2F-flush-x2F-close" class="headerlink" title="A、普通写入(write&#x2F;flush&#x2F;close)"></a>A、普通写入(write&#x2F;flush&#x2F;close)</h4><p>咱们平时调用 fwrite 的时候，数据仅仅是从应用写入到了C标准库的IO Buffer。此时数据还在用户空间。如果此时我们就调用 close 关闭操作。那么数据通常不会理解写入内核，更不用说磁盘了。通常需要等到C标准库的 IO Buffer 满了之后才能被主动写入内核缓存的 Page Cache。通过上图我可以看到，我们可以通过 flush 将数据主动写入到内核的 Page Cache 中。这就是为什么我们通常被建议在关闭之前 flush 文件。因为当数据进入内核之后相对于应用来说，该数据就是安全的。此时如果应用挂了，咱们的数据还是安全的。且能够被内部后续写入磁盘。</p>
+<h4 id="B、mmap"><a href="#B、mmap" class="headerlink" title="B、mmap"></a>B、mmap</h4><p>在持久化中经常被提及的mmap的数据其实也只是在Application Cache和内核Page Cache中建立了映射关系。这样所有在应用层对数据的操作实际是映射到内核的Page Cache中的。因此使用mmap我们不用调用flush，也不用担心数据会因为应用崩溃而丢失。</p>
+<p>当然mmap除了能够直接在应用层操作内核中的数据，同时也因此减少了不必要的上下文切换。比如普通写入中，我们调用flush是需要相应的上下文切换呢，这里会有一定的开销。这也是为什么在持久化场景中，我们通常使用mmap的主要原因。</p>
+<h3 id="2、允许操作系统崩溃的写操作"><a href="#2、允许操作系统崩溃的写操作" class="headerlink" title="2、允许操作系统崩溃的写操作"></a>2、允许操作系统崩溃的写操作</h3><p>通过上图可知，只有当数据被写入到磁盘缓存或者磁盘介质中之后，才能够保证当系统崩溃之后，数据不会丢失（如果数据在磁盘缓存中，则需要磁盘具有备份电源）。</p>
+<p>那么需要将内核中的Page Cache中的数据写入到磁盘（缓存）中，我们只需要调用fsync（）即可。此时就算机器宕机了，咱们的数据还是安全的。这也就是很多WAL都是fsync刷盘的原因。</p>
+<h3 id="3、磁盘缓存中的数据落盘"><a href="#3、磁盘缓存中的数据落盘" class="headerlink" title="3、磁盘缓存中的数据落盘"></a>3、磁盘缓存中的数据落盘</h3><p>通过上面1和2的操作后，数据就已经进入磁盘了。但是却并不能保证数据百分之百的落盘成功。有可能数据在磁盘的缓存中。此时如果机器掉电了，那我们的数据也就可能会丢失。针对该问题，目前主要有两种解决办法：备用电源和开启OS的 Write Barriers。</p>
+<h4 id="A、备用电源"><a href="#A、备用电源" class="headerlink" title="A、备用电源"></a>A、备用电源</h4><p>商用磁盘很多都自带有备用电源，当机器断电后，能够根据依靠备用电源将缓存中的数据落盘。</p>
+<h4 id="B、Write-Barriers"><a href="#B、Write-Barriers" class="headerlink" title="B、Write Barriers"></a>B、Write Barriers</h4><p>在linux中文件系统ext3或者ext4又被称为日志文件系统。原因是因为其写数据的的时候也有个类似WAL的操作。</p>
+<p><img src="https://img-blog.csdnimg.cn/20210730174626259.png" srcset="/img/loading.gif" lazyload>​</p>
+<p>如上图，在日志文件系统中，磁盘大概是上述结构。数据在写入的时候，首先会写入缓存，然后将这次数据写操作的元数据(根据该数据记录了数据的所有修改记录)先写入到磁盘介质中，最后在写入一个commit record标记表示日志已经写完了，此时数据已经安全了。这个时候写入指令就返回了。如fsync指令，当commit record标记写入后，就返回了。但此时真实的数据还在缓存中。但是就算此时磁盘掉电，重启之后磁盘也能够根据记录的日志恢复该数据。同时记录日志和commit record的空间都是连续的，因此写入速度回很快。这也就是日志文件系统如何做到快速写入且数据不会因掉电而丢失的。其实也是我们平常的WAL思想。</p>
+<p>但是这里有个小问题，那就是日志和commit record都是交给驱动执行的写操作，而现代驱动基本都会对所有写入进行重排序从而提高写入性能。此时就可能就将日志和commit record重排序，导致commit record先落盘，日志再后面。这样的处理会导致，如果commit record落盘后，磁盘掉电，此时由于日志没有写入，导致数据无法恢复。</p>
+<p>于是文件系统采用了write barriers。在每次写入commit record之前加入write barriers，该barriers可以确保其后面的数据在写入前，其前面的数据都已经落盘了。这样就保证了日志和commit record不会被重排序，且能够正确落盘。</p>
+<h2 id="四、疑问解答"><a href="#四、疑问解答" class="headerlink" title="四、疑问解答"></a>四、疑问解答</h2><ol>
+<li><p>fsync 和 fwrite&#x2F;fflush 组合的区别是啥？</p>
+<p>fwrite 和 fllush 组合是将数据从应用层写入C标准库 Buffer，然后刷新到内核的 Page Cache 中。</p>
+<p>fsync 是将内核 Page Cache 中的数据写入磁盘（并不一定会落盘到介质中）。</p>
+</li>
+<li><p>mmap 和 fsync 有什么关系？</p>
+<p>mmap：在 application 和内核的 Page Cache 之前建立映射。使得应用程序在应用层可以直接操作内核 Page Cache 中的数据。</p>
+<p>fsync：将内核 Page Cache 中的数据刷入磁盘。</p>
+</li>
+<li><p>为什么都说 fsync 之后数据就不会丢失了，真的不会丢失么？</p>
+<p>我们知道 fsync 的功能，是将内核中的数据直接刷盘。但是其刷盘之后数据并不一定就安全了。首先如果文件系统没有 Write Barriers，或者没有开启 Write Barriers。且磁盘也没有备用电源。那么如果系统宕机（掉电）之后，还在磁盘缓存中的数据就会丢失。所以 fsync 并不一定能确保数据不丢失。</p>
+</li>
+<li><p>数据写入磁盘就安全了么？</p>
+<p>这具体要看数据写入到磁盘的哪个位置。如果只是在磁盘缓存中，则可能存在风险。如果已经落盘或者成功写日志和 Commit record 则是安全的。</p>
+<p>其实就算数据真正落盘到介质了，也不一定是安全的。因为磁盘可能会损坏什么的。但这已经超出了本文的讨论范围，我们就不深入讨论了。</p>
+</li>
+<li><p>为什么不能直接 close 文件，而需要先 flush</p>
+<p>因为通过 write 写入的数据实际还在应用的缓存中，此时如果 flcose 文件。则可能由于应用崩溃导致数据丢失。所以在 close 之前，需要通过flush将数据刷新到内核的 page cache 中。</p>
+</li>
+</ol>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><p><a href="https://blog.csdn.net/hilaryfrank/article/details/112200420" target="_blank" rel="noopener">https://blog.csdn.net/hilaryfrank/article/details/112200420</a></p>
+</li>
+<li><p>Linux IO流程：<a href="https://blog.csdn.net/caogenwangbaoqiang/article/details/79358609" target="_blank" rel="noopener" title="Linux IO流程-CSDN博客">Linux IO流程-CSDN博客</a></p>
+</li>
+<li><p>Linux OS: Write Barriers：<a href="http://www.rosoo.net/a/201211/16373.html" target="_blank" rel="noopener" title="Linux OS: Write Barriers_罗索">Linux OS: Write Barriers_罗索</a></p>
+</li>
+<li><p>Barriers and journaling filesystems：<a href="https://lwn.net/Articles/283161/" target="_blank" rel="noopener" title="Barriers and journaling filesystems [LWN.net]">Barriers and journaling filesystems [LWN.net]</a></p>
+</li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Linux/" class="category-chain-item">Linux</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Linux/" class="print-no-link">#Linux</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>系统调用 fsync、fwrite、fflush、mmap、write barriers</div>
+      <div>https://flepeng.github.io/003-Linux-41-系统调用-系统调用-fsync、fwrite、fflush、mmap、write-barriers/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年9月23日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/00-%E5%AF%BC%E8%88%AA-%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%9D%A5%E7%82%B9%E8%BF%99%E9%87%8C/" title="00-导航(第一次来点这里)">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">00-导航(第一次来点这里)</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/197-%E8%AE%BA%E6%96%87-01-%E6%A0%B8%E5%BF%83%E6%9C%9F%E5%88%8A%E8%AE%A1%E7%AE%97%E6%9C%BA%E6%96%B9%E5%90%91/" title="01-核心期刊计算机方向">
+                        <span class="hidden-mobile">01-核心期刊计算机方向</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

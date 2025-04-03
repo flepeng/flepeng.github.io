@@ -1,0 +1,843 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="SGX从入门到放弃: https:&#x2F;&#x2F;github.com&#x2F;dingelish&#x2F;SGXfail 在这篇文章中，我首先会快速解释一下应用程序如何与其enclave的相互作用过程，然后详细介绍SDK和PSW中包含的软件，最后，总结SGX技术可能遭受的攻击方式。 相互作用方式从理论上讲，SGX enclave可以看作是一个能够执行任意算法的黑匣子。这个黑匣子可以使用下面介绍的三种不同方式与外界进行通信。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="02-TEE SGX 外部组件">
+<meta property="og:url" content="https://flepeng.github.io/081-%E6%95%B0%E6%8D%AE%E5%AE%89%E5%85%A8-TEE-02-TEE-SGX-%E5%A4%96%E9%83%A8%E7%BB%84%E4%BB%B6/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="SGX从入门到放弃: https:&#x2F;&#x2F;github.com&#x2F;dingelish&#x2F;SGXfail 在这篇文章中，我首先会快速解释一下应用程序如何与其enclave的相互作用过程，然后详细介绍SDK和PSW中包含的软件，最后，总结SGX技术可能遭受的攻击方式。 相互作用方式从理论上讲，SGX enclave可以看作是一个能够执行任意算法的黑匣子。这个黑匣子可以使用下面介绍的三种不同方式与外界进行通信。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/tee/sgx/1742190719-d9b114ee996baa12857b75db440f5a76.png">
+<meta property="og:image" content="https://flepeng.github.io/img/tee/sgx/1742190719-93ba84f9ee1e9fac300e011b380eda5d.png">
+<meta property="og:image" content="https://flepeng.github.io/img/tee/sgx/1742190719-72e572e69ecf1f97fa235c24e5f9fa5c.png">
+<meta property="article:published_time" content="2023-04-13T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.412Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="数据安全">
+<meta property="article:tag" content="隐私计算">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/tee/sgx/1742190719-d9b114ee996baa12857b75db440f5a76.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>02-TEE SGX 外部组件 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="02-TEE SGX 外部组件"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-04-14 00:00" pubdate>
+          2023年4月14日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          21 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">02-TEE SGX 外部组件</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>SGX从入门到放弃: <a href="https://github.com/dingelish/SGXfail" target="_blank" rel="noopener">https://github.com/dingelish/SGXfail</a></p>
+<p>在这篇文章中，我首先会快速解释一下应用程序如何与其enclave的相互作用过程，然后详细介绍SDK和PSW中包含的软件，最后，总结SGX技术可能遭受的攻击方式。</p>
+<h1 id="相互作用方式"><a href="#相互作用方式" class="headerlink" title="相互作用方式"></a>相互作用方式</h1><p>从理论上讲，SGX enclave可以看作是一个能够执行任意算法的黑匣子。这个黑匣子可以使用下面介绍的三种不同方式与外界进行通信。</p>
+<ul>
+<li><p>Enclave调用（ECALL）：应用程序可以在 enclave 内部调用预定义的函数，将进入参数和指针传递给应用程序内的共享内存，应用程序对enclave的调用便称为ECALL。</p>
+</li>
+<li><p>外部调用（OCALL）：当 enclave 执行时，它可以对应用程序中的预定义函数执行 OCALL，不过与 ECALL 相反，OCALL 无法与应用程序共享 enclave 内存，因此必须在 OCALL 之前将参数复制到应用程序内存中。</p>
+</li>
+<li><p>异步退出事件（AEX）：由于中断或异常，执行也可以退出 enclave，这些 enclave 退出事件被称为异步退出事件（AEX），它们可以从 enclave 内的任意位置将控制从 enclave 转移到应用程序。</p>
+</li>
+</ul>
+<h1 id="相互作用过程"><a href="#相互作用过程" class="headerlink" title="相互作用过程"></a>相互作用过程</h1><h2 id="可信代码库（TCB）"><a href="#可信代码库（TCB）" class="headerlink" title="可信代码库（TCB）"></a>可信代码库（TCB）</h2><p>开发使用 SGX enclave 的应用程序需要提前标识好那些要保护的资源，以及包含这些资源的数据结构和管理它们的代码。然后，所有已标识的内容必须放在 enclave 内。enclave 文件是一个与传统操作系统加载器兼容的库，它包含 enclave 的代码和数据，在磁盘上以明文形式显示。</p>
+<h2 id="接口函数"><a href="#接口函数" class="headerlink" title="接口函数"></a>接口函数</h2><p>应用程序与其 enclave 之间的接口必须仔细设计，由于 enclave 会提前声明应用程序可以调用哪些函数，以及它可以调用的应用程序的函数。由于 Enclave 进入参数可以被非安全代码观察和修改，因此必须对它们进行仔细的检查。另外，enclave 无法直接访问操作系统的服务，必须调用其应用程序。所以这些调用既不会保证隐私信息不被泄露，也不会保证按照 enclave 的预期执行。</p>
+<h2 id="软件开发工具包"><a href="#软件开发工具包" class="headerlink" title="软件开发工具包"></a>软件开发工具包</h2><p>软件开发工具包（SDK）为开发人员提供了开发支持 SGX 的应用程序所需的一切，它由一个生成应用程序和 enclave 之间的接口函数的工具，一个在使用它之前对 enclave 进行签名的工具，一个调试它的工具以及一个性能检查的工具组成。</p>
+<p>另外，它还包含模板和样本参数，用于在Windows 下使用 Visual Studio 开发enclave，或在 Linux 下使用 Makefile。</p>
+<h2 id="平台软件"><a href="#平台软件" class="headerlink" title="平台软件"></a>平台软件</h2><p>平台软件（PSW）是允许支持 SGX 的应用程序在目标平台上执行的软件栈，它适用于 Windows 和 Linux 操作系统，由 4 个主要部分组成：</p>
+<ol>
+<li>提供对硬件功能进行访问的驱动程序；</li>
+<li>为执行和认证提供多个支持库； </li>
+<li>运行所必需的架构型enclave；</li>
+<li>加载并与enclave进行通信的服务；</li>
+</ol>
+<h1 id="架构型-enclave"><a href="#架构型-enclave" class="headerlink" title="架构型 enclave"></a>架构型 enclave</h1><p>为了让执行环境变得更为安全，需要几个架构型 enclave（Architectural Enclave，AE）。架构型 enclave 由英特尔提供并签名，负责执行启动策略，执行provisioning和认证过程……</p>
+<h2 id="启动Enclave"><a href="#启动Enclave" class="headerlink" title="启动Enclave"></a>启动Enclave</h2><p>启动 Enclave（Launch Enclave ,LE）是负责向希望在平台上执行任务的其他 enclave 分配 EINITTOKEN 结构，该结构会检查 enclave 的签名和标识，看它们是否有效。为了生成令牌，EINITTOKEN 结构会负责启动密钥，因此启动 Enclave 是唯一能够检索 EINITTOKEN 结构的 enclave。</p>
+<h2 id="供应区域-Provisioning-enclave"><a href="#供应区域-Provisioning-enclave" class="headerlink" title="供应区域 Provisioning enclave"></a>供应区域 Provisioning enclave</h2><p>Provisioning Enclave（PvE）是负责通过与Intel Provisioning Service服务器通信来检索认证密钥的enclave。为了做到这一点，它使用PcE提供的证书认证平台的真实性。</p>
+<h2 id="预配证书-Provisioning-Certificate-Enclave"><a href="#预配证书-Provisioning-Certificate-Enclave" class="headerlink" title="预配证书 Provisioning Certificate Enclave"></a>预配证书 Provisioning Certificate Enclave</h2><p>Provisioning Certificate Enclave（PcE）是负责签名发送给PvE的处理器证书的enclave。为了做到这一点，PcE使用Provisioning Key，它是唯一能够检索到它的enclave。 PvE和PcE目前还是作为独立的enclave来实现的。</p>
+<h2 id="Quoting-Enclave"><a href="#Quoting-Enclave" class="headerlink" title="Quoting Enclave"></a>Quoting Enclave</h2><p>Quoting Enclave（QE）负责检测对enclave标识的信任程度以及它在远程认证过程中执行的环境。它会解密从PvE接收的认证密钥，并使用该密钥将REPORT结构（本地验证）转换为QUOTE结构（远程验证）。</p>
+<h2 id="平台服务-enclave"><a href="#平台服务-enclave" class="headerlink" title="平台服务 enclave"></a>平台服务 enclave</h2><p>Platform Service Enclaves (PSE)是一个架构型enclave，为其他enclave提供多种服务，如单调计数器，可信时间等。这些enclave利用管理引擎（ME），形成一个个孤立的，安全的管理平台。</p>
+<h1 id="密钥目录"><a href="#密钥目录" class="headerlink" title="密钥目录"></a>密钥目录</h1><p>每个支持SGX的CPU都包含两个存储在e-fuses存储电路中的root密钥——Root Provisioning Key（RPK）和根Seal Key（ Root Seal Key，RSK）。英特尔会支持RPK启用远程认证过程，而RSK仅被平台所支持。尽管SGX的攻击模型已经排除了物理攻击的可能性，但这反过来会使得处理器架构难以被使用，或者至少使得提取密钥成为非常复杂的事情。有了足够的硬件支持，就可以以破坏性的方式读取e-fuses存储电路。这就是为什么只有加密版本的密钥存储在e-fuses存储电路上的原因，Physical Unclonable Function（PUF）用于存储在处理器执行期间解密其他密钥的对称密钥。</p>
+<h1 id="root密钥"><a href="#root密钥" class="headerlink" title="root密钥"></a>root密钥</h1><p><strong>Root Provisioning Key（RPK）</strong></p>
+<p>英特尔在安全处理过程中创建的第一个密钥就是Root Provisioning Key（RPK）。此密钥是在位于名为Intel Key Generation Facility（iKGF）的设施内的专用硬件安全模块（HSM）上随机生成的。英特尔负责维护包含HSM生成的所有密钥的数据库，RPK也被发送到多个运行设施，并嵌入到处理器e-fuses内。</p>
+<p><strong>Root Seal Key</strong></p>
+<p>位于e-fuses内的第二个密钥被称为Root Seal Key（RSK），与第RSK的相同之处在于，RSK会保证每个单独运行之间的统计差异。与RSK相反的是，英特尔宣布从其运行环节中中删除所有这些密钥的痕迹，以便每个平台都拥有一个只有自己知道的唯一密钥。</p>
+<p><strong>访问导出密钥</strong></p>
+<p>根据安全设计原则，enclave是无法访问root密钥的。然而，它可以访问从root密钥导出的密钥。导出函数允许enclave开发者指定自己的密钥导出策略。这些策略允许使用可信值，如MRENCLAVE，MRSIGNER或enclave的属性。不过，enclave无法获得属于另一个enclave的MRENCLAVE或MRSIGNER的钥匙。此外，当密钥导出策略不使用字段时，它会自动设置为零。因此，即使非专用密钥可用，也无法从中导出专用密钥。</p>
+<p>为了添加来自用户的熵，在导出期间使用名为Owner Epoch的值作为参数。该值在启动时通过导出密码进行配置，并在每个power循环期间保存在非易失性内存中。对于enclave而言，这个值必须保持不变，才能检索相同的密钥。相反，当平台的管理者更改时，必须更改此值，因为它会阻止新所有者访问旧所有者的个人信息，直到恢复原始密码。</p>
+<p><img src="/img/tee/sgx/1742190719-d9b114ee996baa12857b75db440f5a76.png" srcset="/img/loading.gif" lazyload></p>
+<p>SGX基础设施支持TCB对其硬件和软件组件的更新，每个组件都有一个SVN，它会在每次安全更新后都递增SVN。一个新的SVN会导致一个新的Seal Key。这意味着，新的TCB可以访问旧的TCB的密钥，以进行数据迁移，但旧的TCB不能访问新TCB的密钥。</p>
+<p><img src="/img/tee/sgx/1742190719-93ba84f9ee1e9fac300e011b380eda5d.png" srcset="/img/loading.gif" lazyload></p>
+<h1 id="各种密钥的导出"><a href="#各种密钥的导出" class="headerlink" title="各种密钥的导出"></a>各种密钥的导出</h1><p><strong>Provisioning Key</strong></p>
+<p>此密钥是从RPK导出的，并用作Intel Provisioning Service与处理器之间的信任root（与TCB版本相关联）。当非SGX处理器使用一组合法的SGX处理器时，会危及所有处理器的远程认证过程，因此必须采取极端的预防措施，以禁止对Provisioning Key的访问。目前，只有当enclave由英特尔签名（英特尔的MRSIGNER在Launch Enclave代码中被硬编码）时，Launch Enclave才能访问此密钥。</p>
+<p><strong>Provisioning Seal Key</strong></p>
+<p>该密钥是从RPK和RSK导出的，在组中的处理器注册期间，使用此密钥对每个平台的私钥进行加密，并将其发送到英特尔的认证服务系统。必须注意的是，私钥不可以使用RPK加密，因为这会破坏使用的匿名注册协议。类似地，私钥也不能使用RSK加密，因为它允许非特权enclave访问平台的私钥。但问题是，已知RSK的生成过程存在不确定性，人们可能会认为英特尔知道每个平台的私钥。</p>
+<p><strong>启动密钥（Launch Key）</strong></p>
+<p>此密钥是由RSK导出的，并由Launch Enclave用于生成EINITTOKEN。未经英特尔签名的每个enclave必须获得此令牌，否则处理器无法实例化该令牌。而且只有特定的MRSIGNER（其对应的私钥只有英特尔知道）才能访问启动密钥。在SGXv2中，可以通过编程方式更改Launch Enclave的MRSIGNER，但尚不知道英特尔打算如何将访问控制应用于Provisioning Key。</p>
+<p><strong>Seal Key</strong></p>
+<p>此密钥是从RSK导出的，用于加密与当前平台相关的数据。重要的是无论是加密还是标识验证，都不要使用非专用的Seal Key ，因为这会损害enclave的安全性。</p>
+<p><strong>报告密钥（Report Key）</strong></p>
+<p>此密钥是从RSK导出的，用于本地认证过程。</p>
+<p><img src="/img/tee/sgx/1742190719-72e572e69ecf1f97fa235c24e5f9fa5c.png" srcset="/img/loading.gif" lazyload></p>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ul>
+<li><a href="https://www.4hou.com/posts/JNBJ" target="_blank" rel="noopener">SGX的外部组件概述</a></li>
+<li><a href="https://www.4hou.com/posts/V04W" target="_blank" rel="noopener">英特尔SGX概述：SGX外部组件分析研究（part2）</a></li>
+<li><a href="https://blog.quarkslab.com/overview-of-intel-sgx-part-2-sgx-externals.html" target="_blank" rel="noopener">Overview of Intel SGX - Part 2, SGX Externals</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%AE%89%E5%85%A8/" class="category-chain-item">数据安全</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%AE%89%E5%85%A8/%E9%9A%90%E7%A7%81%E8%AE%A1%E7%AE%97/" class="category-chain-item">隐私计算</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E6%95%B0%E6%8D%AE%E5%AE%89%E5%85%A8/" class="print-no-link">#数据安全</a>
+      
+        <a href="/tags/%E9%9A%90%E7%A7%81%E8%AE%A1%E7%AE%97/" class="print-no-link">#隐私计算</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>02-TEE SGX 外部组件</div>
+      <div>https://flepeng.github.io/081-数据安全-TEE-02-TEE-SGX-外部组件/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年4月14日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/081-%E6%95%B0%E6%8D%AE%E5%AE%89%E5%85%A8-TEE-02-TEE-%E7%A1%AC%E4%BB%B6/" title="02-TEE 硬件">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">02-TEE 硬件</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/081-%E6%95%B0%E6%8D%AE%E5%AE%89%E5%85%A8-TEE-TEE-%E5%BC%80%E5%8F%91/" title="TEE 开发">
+                        <span class="hidden-mobile">TEE 开发</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

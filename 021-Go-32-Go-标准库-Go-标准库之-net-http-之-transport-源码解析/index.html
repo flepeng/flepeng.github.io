@@ -1,0 +1,882 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="database&#x2F;sql 包提供了保证SQL或类SQL数据库的泛用接口，常用的数据库驱动有 github.com&#x2F;go-sql-driver&#x2F;mysql https:&#x2F;&#x2F;pkg.go.dev&#x2F;database&#x2F;sql  环境下述代码来自 golang 源码的 src&#x2F;net&#x2F;http&#x2F;transport.go 文件，不同版本的 golang 的源码有差异，不过整体思">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go 标准库之 net.http 之 transport 源码解析">
+<meta property="og:url" content="https://flepeng.github.io/021-Go-32-Go-%E6%A0%87%E5%87%86%E5%BA%93-Go-%E6%A0%87%E5%87%86%E5%BA%93%E4%B9%8B-net-http-%E4%B9%8B-transport-%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="database&#x2F;sql 包提供了保证SQL或类SQL数据库的泛用接口，常用的数据库驱动有 github.com&#x2F;go-sql-driver&#x2F;mysql https:&#x2F;&#x2F;pkg.go.dev&#x2F;database&#x2F;sql  环境下述代码来自 golang 源码的 src&#x2F;net&#x2F;http&#x2F;transport.go 文件，不同版本的 golang 的源码有差异，不过整体思">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2024-12-02T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.280Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Go">
+<meta property="article:tag" content="Go 标准库">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>Go 标准库之 net.http 之 transport 源码解析 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Go 标准库之 net.http 之 transport 源码解析"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-12-03 00:00" pubdate>
+          2024年12月3日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          8k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          67 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Go 标准库之 net.http 之 transport 源码解析</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <blockquote>
+<p>database&#x2F;sql 包提供了保证SQL或类SQL数据库的泛用接口，常用的数据库驱动有 github.com&#x2F;go-sql-driver&#x2F;mysql</p>
+<p><a href="https://pkg.go.dev/database/sql" target="_blank" rel="noopener">https://pkg.go.dev/database/sql</a></p>
+</blockquote>
+<h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><p>下述代码来自 golang 源码的 <code>src/net/http/transport.go</code> 文件，不同版本的 golang 的源码有差异，不过整体思路是一样的。</p>
+<h1 id="http-Client"><a href="#http-Client" class="headerlink" title="http.Client"></a><code>http.Client</code></h1><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> Client <span class="hljs-keyword">struct</span> &#123;<br>	<span class="hljs-comment">// Transport specifies the mechanism by which individual HTTP requests are made. </span><br>	<span class="hljs-comment">// 一个 http.RoundTripper 接口类型的对象，只包含一个方法 RoundTrip，它接受一个 *http.Request 类型的参数，表示 HTTP 请求，返回一个 *http.Response 类型的响应和一个错误对象，该方法的作用是发送HTTP请求并返回响应，同时处理可能出现的传输错误，如超时、连接错误、重定向等。</span><br>	<span class="hljs-comment">// If nil, DefaultTransport is used.</span><br>	<span class="hljs-comment">// http.RoundTripper 的默认实现是 http.Transport，该实现使用TCP连接池，支持HTTP/1.1、HTTP/2协议，同时还支持HTTPS、代理、压缩和连接复用等特性。如果需要更灵活地控制HTTP请求的传输过程，可以自定义实现http.RoundTripper接口，并将其传递给http.Client的Transport字段。</span><br>	Transport RoundTripper<br><br>	<span class="hljs-comment">// CheckRedirect specifies the policy for handling redirects. </span><br>	<span class="hljs-comment">// 指定了处理重定向的策略。用于控制 HTTP 重定向。默认情况下，http.DefaultCheckRedirect 允许自动跟随 HTTP 重定向。</span><br>	<span class="hljs-comment">//</span><br>	<span class="hljs-comment">// If CheckRedirect is not nil, the client calls it before following an HTTP redirect. </span><br>	<span class="hljs-comment">// 如果 CheckRedirect 不为nil，则客户端在执行HTTP重定向之前调用它。</span><br>	<span class="hljs-comment">// The arguments req and via are the upcoming request and the requests made already, oldest first. </span><br>	<span class="hljs-comment">// 参数 req 和 via 是即将到来的请求和已经发出的请求，最早的请求排在第一位。</span><br>	<span class="hljs-comment">// If CheckRedirect returns an error, the Client's Get method returns both the previous Response (with its Body closed) and CheckRedirect's error (wrapped in a url.Error) instead of issuing the Request req.</span><br>	<span class="hljs-comment">// 如果 CheckRedirect 返回错误，客户端的 Get 方法将返回之前的 Response（其Body已关闭）和 CheckRedirect 的错误（包裹在url.error中），而不是发出 Request 请求。</span><br>	<span class="hljs-comment">// As a special case, if CheckRedirect returns ErrUseLastResponse, then the most recent response is returned with its body unclosed, along with a nil error.</span><br>	<span class="hljs-comment">// 作为一种特殊情况，如果CheckRedirect返回ErrUseLastResponse，则返回最新的响应，其正文未关闭，同时返回nil错误。</span><br>	<span class="hljs-comment">//</span><br>	<span class="hljs-comment">// If CheckRedirect is nil, the Client uses its default policy, which is to stop after 10 consecutive requests.</span><br>    <span class="hljs-comment">// 如果CheckRedirect为nil，客户端将使用其默认策略，即在连续10个请求后停止</span><br>	CheckRedirect <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(req *Request, via []*Request)</span> <span class="hljs-title">error</span></span><br><br>	<span class="hljs-comment">// Jar specifies the cookie jar.</span><br>	<span class="hljs-comment">//</span><br>	<span class="hljs-comment">// The Jar is used to insert relevant cookies into every outbound Request and is updated with the cookie values of every inbound Response. The Jar is consulted for every redirect that the Client follows.</span><br>	<span class="hljs-comment">// 一个 http.CookieJar 接口类型的对象，用于管理 HTTP cookie。默认情况下，http.DefaultCookieJar 使用 net/http/cookiejar 包中的默认cookie实现。</span><br>	<span class="hljs-comment">//</span><br>	<span class="hljs-comment">// If Jar is nil, cookies are only sent if they are explicitly set on the Request.</span><br>	<span class="hljs-comment">// 如果 Jar 为nil，则只有在请求中明确设置 Cookie 时才会发送 Cookie。</span><br>	Jar CookieJar<br><br>	<span class="hljs-comment">// Timeout specifies a time limit for requests made by this Client. The timeout includes connection time, any redirects, and reading the response body. The timer remains running after Get, Head, Post, or Do return and will interrupt reading of the Response.Body.</span><br>	<span class="hljs-comment">// 超时指定此客户端发出的请求的时间限制。超时包括连接时间、任何重定向和读取响应正文。在Get、Head、Post或Do返回后，计时器仍在运行，并将中断响应的读取身体。</span><br>	<span class="hljs-comment">//</span><br>	<span class="hljs-comment">// A Timeout of zero means no timeout.</span><br>	<span class="hljs-comment">// 零表示没有超时。</span><br>	<span class="hljs-comment">//</span><br>	<span class="hljs-comment">// The Client cancels requests to the underlying Transport as if the Request's Context ended.</span><br>	<span class="hljs-comment">// 客户端取消对基础传输的请求，就像请求的上下文结束一样。</span><br>	<span class="hljs-comment">//</span><br>	<span class="hljs-comment">// For compatibility, the Client will also use the deprecated CancelRequest method on Transport if found. New RoundTripper implementations should use the Request's Context for cancellation instead of implementing CancelRequest.</span><br>	<span class="hljs-comment">// 为了兼容性，如果找到，客户端还将在传输上使用已弃用的CancelRequest方法。新的RoundTripper实现应使用Request的上下文进行取消，而不是实现CancelRequest。</span><br>	Timeout time.Duration<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h1 id="Transport"><a href="#Transport" class="headerlink" title="Transport"></a><code>Transport</code></h1><p><code>src/net/http/transport.go</code> 文件中的 <code>Transport</code> 实现了 RoundTripper 接口，该接口只有一个方法 <code>RoundTrip()</code>，Transport 的入口函数就是 <code>RoundTrip()</code>。</p>
+<p>Transport 的主要功能其实就是缓存了长连接，用于大量 http 请求场景下的连接复用，减少发送请求时 TCP(TLS) 连接建立的时间损耗，同时 Transport 还能对连接做一些限制，如连接超时时间，每个 host 的最大连接数等。Transport 对长连接的缓存和控制仅限于 TCP+(TLS)+HTTP1，不对 HTTP2 做缓存和限制。</p>
+<p>Transport 包含如下几个主要概念：</p>
+<ul>
+<li>连接池：在 idleConn 中保存了不同类型(connectMethodKey)的请求连接(persistConn)。当发生请求时，首先会尝试从连接池中取一条符合其请求类型的连接使用</li>
+<li>readLoop&#x2F;writeLoop：连接之上的功能，循环处理该类型的请求(发送 request，返回 response)</li>
+<li>roundTrip：请求的真正入口，接收到一个请求后会交给 writeLoop 和 readLoop 处理。</li>
+</ul>
+<p>一对 readLoop&#x2F;writeLoop 只能处理一条连接，如果这条连接上没有更多的请求，则关闭连接，退出循环，释放系统资源</p>
+<h2 id="RoundTripper-接口"><a href="#RoundTripper-接口" class="headerlink" title="RoundTripper 接口"></a><code>RoundTripper</code> 接口</h2><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> RoundTripper <span class="hljs-keyword">interface</span> &#123;<br>    <span class="hljs-comment">// RoundTrip executes a single HTTP transaction, returning</span><br>    <span class="hljs-comment">// a Response for the provided Request.</span><br>    <span class="hljs-comment">//</span><br>    <span class="hljs-comment">// RoundTrip should not attempt to interpret the response. In</span><br>    <span class="hljs-comment">// particular, RoundTrip must return err == nil if it obtained</span><br>    <span class="hljs-comment">// a response, regardless of the response's HTTP status code.</span><br>    <span class="hljs-comment">// A non-nil err should be reserved for failure to obtain a</span><br>    <span class="hljs-comment">// response. Similarly, RoundTrip should not attempt to</span><br>    <span class="hljs-comment">// handle higher-level protocol details such as redirects,</span><br>    <span class="hljs-comment">// authentication, or cookies.</span><br>    <span class="hljs-comment">//</span><br>    <span class="hljs-comment">// RoundTrip should not modify the request, except for</span><br>    <span class="hljs-comment">// consuming and closing the Request's Body. RoundTrip may</span><br>    <span class="hljs-comment">// read fields of the request in a separate goroutine. Callers</span><br>    <span class="hljs-comment">// should not mutate or reuse the request until the Response's</span><br>    <span class="hljs-comment">// Body has been closed.</span><br>    <span class="hljs-comment">//</span><br>    <span class="hljs-comment">// RoundTrip must always close the body, including on errors,</span><br>    <span class="hljs-comment">// but depending on the implementation may do so in a separate</span><br>    <span class="hljs-comment">// goroutine even after RoundTrip returns. This means that</span><br>    <span class="hljs-comment">// callers wanting to reuse the body for subsequent requests</span><br>    <span class="hljs-comment">// must arrange to wait for the Close call before doing so.</span><br>    <span class="hljs-comment">//</span><br>    <span class="hljs-comment">// The Request's URL and Header fields must be initialized.</span><br>    RoundTrip(*Request) (*Response, error)<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h1 id="Transport-1"><a href="#Transport-1" class="headerlink" title="Transport"></a><code>Transport</code></h1><h2 id="Transport-结构体定义"><a href="#Transport-结构体定义" class="headerlink" title="Transport 结构体定义"></a><code>Transport</code> 结构体定义</h2><p>Transport 结构体中的主要成员如下（非全部）：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> Transport <span class="hljs-keyword">struct</span> &#123;<br>	idleMu       sync.Mutex<br>	closeIdle    <span class="hljs-keyword">bool</span>                                <span class="hljs-comment">// 用户请求关闭所有的闲置连接</span><br>	idleConn     <span class="hljs-keyword">map</span>[connectMethodKey][]*persistConn <span class="hljs-comment">// 每个host对应的闲置连接列表</span><br>	idleConnWait <span class="hljs-keyword">map</span>[connectMethodKey]wantConnQueue  <span class="hljs-comment">// 每个host对应的等待闲置连接列表，在其它request将连接放回连接池前先看一下这个队列是否为空，不为空则直接将连接交由其中一个等待对象</span><br>	idleLRU      connLRU                             <span class="hljs-comment">// 用来清理过期的连接</span><br> <br>	reqMu       sync.Mutex<br>	reqCanceler <span class="hljs-keyword">map</span>[*Request]<span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(error)</span></span><br> <br>	connsPerHostMu   sync.Mutex<br>	connsPerHost     <span class="hljs-keyword">map</span>[connectMethodKey]<span class="hljs-keyword">int</span>           <span class="hljs-comment">// 每个host对应的等待连接个数</span><br>	connsPerHostWait <span class="hljs-keyword">map</span>[connectMethodKey]wantConnQueue <span class="hljs-comment">// 每个host对应的等待连接列表</span><br> <br>	<span class="hljs-comment">// 用于指定创建未加密的TCP连接的dial功能，如果该函数为空，则使用net包下的dial函数</span><br>	DialContext <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(ctx context.Context, network, addr <span class="hljs-keyword">string</span>)</span> <span class="hljs-params">(net.Conn, error)</span></span><br>	Dial        <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(network, addr <span class="hljs-keyword">string</span>)</span> <span class="hljs-params">(net.Conn, error)</span></span><br>	<span class="hljs-comment">// 以下两个函数处理https的请求</span><br>	DialTLSContext <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(ctx context.Context, network, addr <span class="hljs-keyword">string</span>)</span> <span class="hljs-params">(net.Conn, error)</span></span><br>	DialTLS        <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(network, addr <span class="hljs-keyword">string</span>)</span> <span class="hljs-params">(net.Conn, error)</span></span><br> <br>	DisableKeepAlives <span class="hljs-keyword">bool</span>              <span class="hljs-comment">// 是否复用连接</span><br>	DisableCompression <span class="hljs-keyword">bool</span>             <span class="hljs-comment">// 是否压缩</span><br>	MaxIdleConns <span class="hljs-keyword">int</span>                    <span class="hljs-comment">// 总的最大闲置连接的个数</span><br>	MaxIdleConnsPerHost <span class="hljs-keyword">int</span>             <span class="hljs-comment">// 每个host最大闲置连接的个数</span><br>	MaxConnsPerHost <span class="hljs-keyword">int</span>                 <span class="hljs-comment">// 每个host的最大连接个数，如果已经达到该数字，dial连接会被block住</span><br>	IdleConnTimeout time.Duration       <span class="hljs-comment">// 闲置连接的最大等待时间，一旦超过该时间，连接会被关闭</span><br>	ResponseHeaderTimeout time.Duration <span class="hljs-comment">// 读超时，从写完请求到接受到返回头的总时间</span><br>	ExpectContinueTimeout time.Duration <span class="hljs-comment">// Expect:100-continue两个请求间的超时时间</span><br>	MaxResponseHeaderBytes <span class="hljs-keyword">int64</span>	    <span class="hljs-comment">// 返回中header的限制</span><br>	WriteBufferSize <span class="hljs-keyword">int</span>	                <span class="hljs-comment">// write buffer的使用量</span><br>	ReadBufferSize <span class="hljs-keyword">int</span>	                <span class="hljs-comment">// read buffer的使用量</span><br>&#125;<br><br><br><span class="hljs-comment">// 入口</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *Transport)</span> <span class="hljs-title">RoundTrip</span><span class="hljs-params">(req *Request)</span> <span class="hljs-params">(*Response, error)</span></span> &#123;<br>	<span class="hljs-keyword">return</span> t.roundTrip(req)<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="Transport-roundTrip-入口"><a href="#Transport-roundTrip-入口" class="headerlink" title="Transport.roundTrip 入口"></a><code>Transport.roundTrip</code> 入口</h2><p><code>Transport.roundTrip</code> 是入口，它通过传入一个 request 参数，由此选择一个合适的长连接来发送该 request 并返回 response。整个流程主要分为两步：  </p>
+<ul>
+<li>使用 getConn 函数来获得底层 TCP(TLS)连接；</li>
+<li>调用 roundTrip 函数进行上层协议(HTTP)处理。</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *Transport)</span> <span class="hljs-title">roundTrip</span><span class="hljs-params">(req *Request)</span> <span class="hljs-params">(*Response, error)</span></span> &#123;<br>    t.nextProtoOnce.Do(t.onceSetNextProtoDefaults)<br>    ctx := req.Context()                       <span class="hljs-comment">// 通过context控制请求的生命周期</span><br>    trace := httptrace.ContextClientTrace(ctx) <span class="hljs-comment">// 钩子函数，在请求的各个阶段可以指定回调函数</span><br><br>    <span class="hljs-keyword">if</span> req.URL == <span class="hljs-literal">nil</span> &#123;<br>        req.closeBody()<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, errors.New(<span class="hljs-string">"http: nil Request.URL"</span>)<br>    &#125;<br>    <span class="hljs-keyword">if</span> req.Header == <span class="hljs-literal">nil</span> &#123;<br>        req.closeBody()<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, errors.New(<span class="hljs-string">"http: nil Request.Header"</span>)<br>    &#125;<br>    scheme := req.URL.Scheme<br>    isHTTP := scheme == <span class="hljs-string">"http"</span> || scheme == <span class="hljs-string">"https"</span><br>    <span class="hljs-comment">// 下面判断request首部的有效性</span><br>    <span class="hljs-keyword">if</span> isHTTP &#123;<br>        <span class="hljs-keyword">for</span> k, vv := <span class="hljs-keyword">range</span> req.Header &#123;<br>            <span class="hljs-keyword">if</span> !httpguts.ValidHeaderFieldName(k) &#123;      <span class="hljs-comment">// header key 校验</span><br>                <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, fmt.Errorf(<span class="hljs-string">"net/http: invalid header field name %q"</span>, k)<br>            &#125;<br>            <span class="hljs-keyword">for</span> _, v := <span class="hljs-keyword">range</span> vv &#123;<br>                <span class="hljs-keyword">if</span> !httpguts.ValidHeaderFieldValue(v) &#123; <span class="hljs-comment">// header values 校验</span><br>                    <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, fmt.Errorf(<span class="hljs-string">"net/http: invalid header field value %q for key %v"</span>, v, k)<br>                &#125;<br>            &#125;<br>        &#125;<br>    &#125;<br>    <span class="hljs-comment">// 判断是否使用注册的RoundTrip来处理对应的scheme。对于使用tcp+tls+http1(wss协议升级)的场景</span><br>    <span class="hljs-comment">// 不能使用注册的roundTrip。后续代码对tcp+tls+http1或tcp+http1进行了roundTrip处理</span><br>    <span class="hljs-keyword">if</span> t.useRegisteredProtocol(req) &#123;<br>        altProto, _ := t.altProto.Load().(<span class="hljs-keyword">map</span>[<span class="hljs-keyword">string</span>]RoundTripper)<br>        <span class="hljs-keyword">if</span> altRT := altProto[scheme]; altRT != <span class="hljs-literal">nil</span> &#123;<br>            <span class="hljs-keyword">if</span> resp, err := altRT.RoundTrip(req); err != ErrSkipAltProtocol &#123;<br>                <span class="hljs-keyword">return</span> resp, err<br>            &#125;<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-comment">// 后续仅处理URL scheme为http或https的连接</span><br>    <span class="hljs-keyword">if</span> !isHTTP &#123;<br>        req.closeBody()<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, &amp;badStringError&#123;<span class="hljs-string">"unsupported protocol scheme"</span>, scheme&#125;<br>    &#125;<br>    <span class="hljs-keyword">if</span> req.Method != <span class="hljs-string">""</span> &amp;&amp; !validMethod(req.Method) &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, fmt.Errorf(<span class="hljs-string">"net/http: invalid method %q"</span>, req.Method)<br>    &#125;<br>    <span class="hljs-keyword">if</span> req.URL.Host == <span class="hljs-string">""</span> &#123;<br>        req.closeBody()<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, errors.New(<span class="hljs-string">"http: no Host in request URL"</span>)<br>    &#125;<br><br>    <span class="hljs-comment">// 下面for循环用于在request出现错误的时候进行请求重试。但不是所有的请求失败都会被尝试，如请求被取消(errRequestCanceled)</span><br>    <span class="hljs-comment">// 的情况是不会进行重试的。具体参见shouldRetryRequest函数</span><br>    <span class="hljs-keyword">for</span> &#123;<br>        <span class="hljs-keyword">select</span> &#123;<br>        <span class="hljs-keyword">case</span> &lt;-ctx.Done():<br>            req.closeBody()<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, ctx.Err()<br>        <span class="hljs-keyword">default</span>:<br>        &#125;<br><br>        <span class="hljs-comment">// treq gets modified by roundTrip, so we need to recreate for each retry.</span><br>        treq := &amp;transportRequest&#123;Request: req, trace: trace&#125;<br>        <br>        <span class="hljs-comment">// connectMethodForRequest 函数通过输入一个 request 返回一个connectMethod(简称cm)，该类型通过 &#123;proxyURL,targetScheme,tartgetAddr,onlyH1&#125;,即&#123;代理URL，server端的scheme，server的地址，是否HTTP1&#125; 来表示一个请求。一个符合connectMethod描述的request将会在Transport.idleConn中匹配到一类长连接。</span><br>        cm, err := t.connectMethodForRequest(treq)<br>        <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>            req.closeBody()<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>        &#125;<br><br>        <span class="hljs-comment">// 核心函数，获取一条长连接，如果连接池中有现成的连接则直接返回，否则返回一条新建的连接。请求的发送与接受也是在这个函数内部实现的。</span><br>        <span class="hljs-comment">// 该连接可能是HTTP2格式的，存放在persistCnn.alt中，使用其自注册的RoundTrip处理。该函数描述参见下面内容。</span><br>        <span class="hljs-comment">// 从getConn的实现中可以看到，一个请求只能在idle的连接上执行，反之一条连接只能同时处理一个请求。</span><br>        pconn, err := t.getConn(treq, cm)<br>        <span class="hljs-comment">// 如果获取底层连接失败，无法继续上层协议的请求，直接返回错误</span><br>        <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>            <span class="hljs-comment">// 每个request都会在getConn中设置reqCanceler，获取连接失败，清空设置</span><br>            t.setReqCanceler(req, <span class="hljs-literal">nil</span>)<br>            req.closeBody()<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>        &#125;<br><br>        <span class="hljs-keyword">var</span> resp *Response<br>        <span class="hljs-comment">// pconn.alt就是从Transport.TLSNextProto中获取的，它表示TLS之上的协议，如HTTP2。从persistConn.alt的注释中可以看出目前alt仅支持HTTP2协议，后续可能会支持更多协议。</span><br>        <span class="hljs-keyword">if</span> pconn.alt != <span class="hljs-literal">nil</span> &#123;<br>            <span class="hljs-comment">// HTTP2处理，使用HTTP2时，由于不缓存HTTP2连接，不对其做限制</span><br>            t.decHostConnCount(cm.key()) <br>            <span class="hljs-comment">// 清除getConn中设置的标记。具体参见getConn</span><br>            t.setReqCanceler(req, <span class="hljs-literal">nil</span>)<br>            resp, err = pconn.alt.RoundTrip(req)<br>        &#125; <span class="hljs-keyword">else</span> &#123;<br>            <span class="hljs-comment">// 核心函数。pconn.roundTrip 中做了比较复杂的处理，该函数用于发送request并返回response。</span><br>            <span class="hljs-comment">// 通过writeLoop发送request，通过readLoop返回response</span><br>            resp, err = pconn.roundTrip(treq)<br>        &#125;<br>        <span class="hljs-comment">// 如果成功返回response，则整个处理结束.</span><br>        <span class="hljs-keyword">if</span> err == <span class="hljs-literal">nil</span> &#123;<br>            <span class="hljs-keyword">return</span> resp, <span class="hljs-literal">nil</span><br>        &#125;<br>        <span class="hljs-comment">// 判断该request是否满足重试条件,大部分场景是不支持重试的，仅有少部分情况支持，如 errServerClosedIdle</span><br>        <span class="hljs-comment">// err 非nil时实际并没有在原来的连接上重试，且pconn没有关闭，提了issue</span><br>        <span class="hljs-keyword">if</span> !pconn.shouldRetryRequest(req, err) &#123;<br>            <span class="hljs-comment">// Issue 16465: return underlying net.Conn.Read error from peek,</span><br>            <span class="hljs-comment">// as we've historically done.</span><br>            <span class="hljs-keyword">if</span> e, ok := err.(transportReadFromServerError); ok &#123;<br>                err = e.err<br>            &#125;<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>        &#125;<br>        testHookRoundTripRetried()<br><br>        <span class="hljs-comment">// Rewind the body if we're able to.</span><br>        <span class="hljs-comment">// 用于重定向场景</span><br>        <span class="hljs-keyword">if</span> req.GetBody != <span class="hljs-literal">nil</span> &#123;<br>            newReq := *req<br>            <span class="hljs-keyword">var</span> err error<br>            newReq.Body, err = req.GetBody()<br>            <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>                <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>            &#125;<br>            req = &amp;newReq<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="Transport-getConn-获取一个有效连接。"><a href="#Transport-getConn-获取一个有效连接。" class="headerlink" title="Transport.getConn 获取一个有效连接。"></a><code>Transport.getConn</code> 获取一个有效连接。</h2><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// 获取一个有效的连接</span><br><span class="hljs-comment">// 获取连接的方式有三种</span><br><span class="hljs-comment">// 1是从连接池中获取一个闲置连接</span><br><span class="hljs-comment">// 2是新创建一个连接</span><br><span class="hljs-comment">// 3是在等待新创建连接好期间，有别的请求释放了一个连接，则直接使用该连接</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *Transport)</span> <span class="hljs-title">getConn</span><span class="hljs-params">(treq *transportRequest, cm connectMethod)</span> <span class="hljs-params">(pc *persistConn, err error)</span></span> &#123;<br>	req := treq.Request<br>	trace := treq.trace<br>	ctx := req.Context()<br>	<span class="hljs-keyword">if</span> trace != <span class="hljs-literal">nil</span> &amp;&amp; trace.GetConn != <span class="hljs-literal">nil</span> &#123;<br>		trace.GetConn(cm.addr())<br>	&#125;<br> <br>	w := &amp;wantConn&#123; <span class="hljs-comment">// 底层连接可以复用，但wantConn一定是每个request对应一个，需要使用它进行同步</span><br>		cm:         cm,<br>		key:        cm.key(),<br>		ctx:        ctx,<br>		ready:      <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>&#123;&#125;, <span class="hljs-number">1</span>),<br>		beforeDial: testHookPrePendingDial,<br>		afterDial:  testHookPostPendingDial,<br>	&#125;<br>	<span class="hljs-keyword">defer</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;<br>		<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>			w.cancel(t, err)<br>		&#125;<br>	&#125;()<br> <br>	<span class="hljs-comment">// 核心函数，从缓存池中获取到闲置连接，如果获取到则直接使用；否则在等待连接队列中进行注册</span><br>	<span class="hljs-keyword">if</span> delivered := t.queueForIdleConn(w); delivered &#123;<br>		pc := w.pc<br>		<span class="hljs-comment">// Trace only for HTTP/1.</span><br>		<span class="hljs-comment">// HTTP/2 calls trace.GotConn itself.</span><br>		<span class="hljs-keyword">if</span> pc.alt == <span class="hljs-literal">nil</span> &amp;&amp; trace != <span class="hljs-literal">nil</span> &amp;&amp; trace.GotConn != <span class="hljs-literal">nil</span> &#123;<br>			trace.GotConn(pc.gotIdleConnTrace(pc.idleAt))<br>		&#125;<br>		<span class="hljs-comment">// set request canceler to some non-nil function so we</span><br>		<span class="hljs-comment">// can detect whether it was cleared between now and when</span><br>		<span class="hljs-comment">// we enter roundTrip</span><br>		t.setReqCanceler(req, <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(error)</span></span> &#123;&#125;)<br>		<span class="hljs-keyword">return</span> pc, <span class="hljs-literal">nil</span><br>	&#125;<br> <br>	cancelc := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> error, <span class="hljs-number">1</span>)<br>	t.setReqCanceler(req, <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(err error)</span></span> &#123; cancelc &lt;- err &#125;)<br> <br>	<span class="hljs-comment">// 新创建一个连接，与此同时，它仍可能在等待其它正在使用的连接</span><br>	t.queueForDial(w)<br> <br>	<span class="hljs-comment">// Wait for completion or cancellation.</span><br>	<span class="hljs-keyword">select</span> &#123;<br>	<span class="hljs-keyword">case</span> &lt;-w.ready: <span class="hljs-comment">// 连接已经创建好了，有以上三种情况</span><br>		<span class="hljs-comment">// Trace success but only for HTTP/1.</span><br>		<span class="hljs-comment">// HTTP/2 calls trace.GotConn itself.</span><br>		<span class="hljs-keyword">if</span> w.pc != <span class="hljs-literal">nil</span> &amp;&amp; w.pc.alt == <span class="hljs-literal">nil</span> &amp;&amp; trace != <span class="hljs-literal">nil</span> &amp;&amp; trace.GotConn != <span class="hljs-literal">nil</span> &#123;<br>			trace.GotConn(httptrace.GotConnInfo&#123;Conn: w.pc.conn, Reused: w.pc.isReused()&#125;)<br>		&#125;<br>		<span class="hljs-keyword">if</span> w.err != <span class="hljs-literal">nil</span> &#123; <span class="hljs-comment">// 有错误发生</span><br>			<span class="hljs-comment">// If the request has been cancelled, that's probably</span><br>			<span class="hljs-comment">// what caused w.err; if so, prefer to return the</span><br>			<span class="hljs-comment">// cancellation error (see golang.org/issue/16049).</span><br>			<span class="hljs-keyword">select</span> &#123;<br>			<span class="hljs-keyword">case</span> &lt;-req.Cancel:<br>				<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, errRequestCanceledConn<br>			<span class="hljs-keyword">case</span> &lt;-req.Context().Done():<br>				<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, req.Context().Err()<br>			<span class="hljs-keyword">case</span> err := &lt;-cancelc:<br>				<span class="hljs-keyword">if</span> err == errRequestCanceled &#123;<br>					err = errRequestCanceledConn<br>				&#125;<br>				<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>			<span class="hljs-keyword">default</span>:<br>				<span class="hljs-comment">// return below</span><br>			&#125;<br>		&#125;<br>		<span class="hljs-keyword">return</span> w.pc, w.err <span class="hljs-comment">// 返回连接，此时连接是connect状态</span><br>	<span class="hljs-keyword">case</span> &lt;-req.Cancel:<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, errRequestCanceledConn<br>	<span class="hljs-keyword">case</span> &lt;-req.Context().Done():<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, req.Context().Err()<br>	<span class="hljs-keyword">case</span> err := &lt;-cancelc:<br>		<span class="hljs-keyword">if</span> err == errRequestCanceled &#123;<br>			err = errRequestCanceledConn<br>		&#125;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>	&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="Transport-queueForIdleConn-从闲置连接池获取空闲连接。如果有空闲连接，delivered返回true；否则在等待连接队列里进行注册，这样如果之后有别的请求释放了一个连接，可以直接拿过来用。Transport-getConn-调用这个函数"><a href="#Transport-queueForIdleConn-从闲置连接池获取空闲连接。如果有空闲连接，delivered返回true；否则在等待连接队列里进行注册，这样如果之后有别的请求释放了一个连接，可以直接拿过来用。Transport-getConn-调用这个函数" class="headerlink" title="Transport.queueForIdleConn 从闲置连接池获取空闲连接。如果有空闲连接，delivered返回true；否则在等待连接队列里进行注册，这样如果之后有别的请求释放了一个连接，可以直接拿过来用。Transport.getConn 调用这个函数"></a><code>Transport.queueForIdleConn</code> 从闲置连接池获取空闲连接。如果有空闲连接，delivered返回true；否则在等待连接队列里进行注册，这样如果之后有别的请求释放了一个连接，可以直接拿过来用。<code>Transport.getConn</code> 调用这个函数</h2><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// 该函数的主要作用是从连接池中获取一个闲置连接</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *Transport)</span> <span class="hljs-title">queueForIdleConn</span><span class="hljs-params">(w *wantConn)</span> <span class="hljs-params">(delivered <span class="hljs-keyword">bool</span>)</span></span> &#123;<br>	t.idleMu.Lock()<br>	<span class="hljs-keyword">defer</span> t.idleMu.Unlock()<br> <br>	<span class="hljs-comment">// 设置闲置期最长的时间点</span><br>	<span class="hljs-keyword">var</span> oldTime time.Time<br>	<span class="hljs-keyword">if</span> t.IdleConnTimeout &gt; <span class="hljs-number">0</span> &#123;<br>		oldTime = time.Now().Add(-t.IdleConnTimeout)<br>	&#125;<br> <br>	<span class="hljs-comment">// 从最新的连接开始遍历</span><br>	<span class="hljs-keyword">if</span> list, ok := t.idleConn[w.key]; ok &#123;<br>		stop := <span class="hljs-literal">false</span><br>		delivered := <span class="hljs-literal">false</span><br>		<span class="hljs-keyword">for</span> <span class="hljs-built_in">len</span>(list) &gt; <span class="hljs-number">0</span> &amp;&amp; !stop &#123;<br>			pconn := list[<span class="hljs-built_in">len</span>(list)<span class="hljs-number">-1</span>] <span class="hljs-comment">// 获取连接池中最新的连接</span><br> <br>			<span class="hljs-comment">// 下面这个函数设计得很巧妙，要知道我们在把一个连接放入连接池中时设置过过期timer，它会主动清理连接</span><br>			<span class="hljs-comment">// 但在程序实际运行的过程中，很可能timer到时时，该协程并没有被cpu给调度上来，如果还继续使用的话，一旦清理协程被调度上来，会照成逻辑错误</span><br>			tooOld := !oldTime.IsZero() &amp;&amp; pconn.idleAt.Round(<span class="hljs-number">0</span>).Before(oldTime)<br>			<span class="hljs-keyword">if</span> tooOld &#123;<br>				<span class="hljs-keyword">go</span> pconn.closeConnIfStillIdle() <span class="hljs-comment">// 异步关闭连接</span><br>			&#125;<br>			<span class="hljs-keyword">if</span> pconn.isBroken() || tooOld &#123;<br>				<span class="hljs-comment">// 如果连接损坏，则使用下一个连接</span><br>				list = list[:<span class="hljs-built_in">len</span>(list)<span class="hljs-number">-1</span>]<br>				<span class="hljs-keyword">continue</span><br>			&#125;<br>			delivered = w.tryDeliver(pconn, <span class="hljs-literal">nil</span>)<br>			<span class="hljs-keyword">if</span> delivered &#123; <span class="hljs-comment">// 该连接被使用，如果delivered为false，表示已经从别的渠道接受到连接</span><br>				<span class="hljs-keyword">if</span> pconn.alt != <span class="hljs-literal">nil</span> &#123;<br>					<span class="hljs-comment">// HTTP/2: multiple clients can share pconn.</span><br>					<span class="hljs-comment">// Leave it in the list.</span><br>				&#125; <span class="hljs-keyword">else</span> &#123;<br>					<span class="hljs-comment">// HTTP/1: only one client can use pconn.</span><br>					<span class="hljs-comment">// Remove it from the list.</span><br>					t.idleLRU.remove(pconn)<br>					list = list[:<span class="hljs-built_in">len</span>(list)<span class="hljs-number">-1</span>]<br>				&#125;<br>			&#125;<br>			stop = <span class="hljs-literal">true</span><br>		&#125;<br>		<span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(list) &gt; <span class="hljs-number">0</span> &#123;<br>			t.idleConn[w.key] = list<br>		&#125; <span class="hljs-keyword">else</span> &#123;<br>			<span class="hljs-built_in">delete</span>(t.idleConn, w.key)<br>		&#125;<br>		<span class="hljs-keyword">if</span> stop &#123; <span class="hljs-comment">// 1从连接池中获取到连接，2是在运行的过程中，创建新的连接已完成，这是也不需要在等待连接了</span><br>			<span class="hljs-keyword">return</span> delivered<br>		&#125;<br>	&#125;<br> <br>	<span class="hljs-keyword">if</span> t.idleConnWait == <span class="hljs-literal">nil</span> &#123;<br>		t.idleConnWait = <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[connectMethodKey]wantConnQueue)<br>	&#125;<br>	q := t.idleConnWait[w.key]<br>	q.cleanFront() <span class="hljs-comment">// 清理过期连接</span><br>	q.pushBack(w) <span class="hljs-comment">// 放入等待连接队列中</span><br>	t.idleConnWait[w.key] = q<br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="Transport-queueForDial-创建一个新的连接。Transport-queueForIdleConn-调用这个函数"><a href="#Transport-queueForDial-创建一个新的连接。Transport-queueForIdleConn-调用这个函数" class="headerlink" title="Transport.queueForDial 创建一个新的连接。Transport.queueForIdleConn 调用这个函数"></a><code>Transport.queueForDial</code> 创建一个新的连接。<code>Transport.queueForIdleConn</code> 调用这个函数</h2><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// 创建一个新的连接</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *Transport)</span> <span class="hljs-title">queueForDial</span><span class="hljs-params">(w *wantConn)</span></span> &#123;<br>	w.beforeDial()<br>	<span class="hljs-keyword">if</span> t.MaxConnsPerHost &lt;= <span class="hljs-number">0</span> &#123; <span class="hljs-comment">// 对每个host的连接数不做限制，直接创建</span><br>		<span class="hljs-keyword">go</span> t.dialConnFor(w) <span class="hljs-comment">// 注意这里启动了一个协程，它的好处是如果在新创建连接的过程中，有一个连接被释放，可以直接使用被释放的连接，而不用一直等待</span><br>		<span class="hljs-keyword">return</span><br>	&#125;<br> <br>	t.connsPerHostMu.Lock()<br>	<span class="hljs-keyword">defer</span> t.connsPerHostMu.Unlock()<br> <br>	<span class="hljs-keyword">if</span> n := t.connsPerHost[w.key]; n &lt; t.MaxConnsPerHost &#123; <span class="hljs-comment">// 不到最大连接数，直接创建新的连接</span><br>		<span class="hljs-keyword">if</span> t.connsPerHost == <span class="hljs-literal">nil</span> &#123;<br>			t.connsPerHost = <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[connectMethodKey]<span class="hljs-keyword">int</span>)<br>		&#125;<br>		t.connsPerHost[w.key] = n + <span class="hljs-number">1</span><br>		<span class="hljs-keyword">go</span> t.dialConnFor(w)<br>		<span class="hljs-keyword">return</span><br>	&#125;<br> <br>    <span class="hljs-comment">// 此时连接已经达到设置的最大值，放入等待队列中</span><br>	<span class="hljs-keyword">if</span> t.connsPerHostWait == <span class="hljs-literal">nil</span> &#123;<br>		t.connsPerHostWait = <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[connectMethodKey]wantConnQueue)<br>	&#125;<br>	q := t.connsPerHostWait[w.key]<br>	q.cleanFront()<br>	q.pushBack(w) <span class="hljs-comment">// 放入等待列表中</span><br>	t.connsPerHostWait[w.key] = q<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="Transport-dialConnFor-创建链接。Transport-queueForDial-调用这个函数"><a href="#Transport-dialConnFor-创建链接。Transport-queueForDial-调用这个函数" class="headerlink" title="Transport.dialConnFor 创建链接。Transport.queueForDial 调用这个函数"></a><code>Transport.dialConnFor</code> 创建链接。<code>Transport.queueForDial</code> 调用这个函数</h2><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs Go"><span class="hljs-comment">// dialConnFor dials on behalf of w and delivers the result to w.</span><br><span class="hljs-comment">// dialConnFor has received permission to dial w.cm and is counted in t.connCount[w.cm.key()].</span><br><span class="hljs-comment">// If the dial is cancelled or unsuccessful, dialConnFor decrements t.connCount[w.cm.key()].</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *Transport)</span> <span class="hljs-title">dialConnFor</span><span class="hljs-params">(w *wantConn)</span></span> &#123;<br>	<span class="hljs-keyword">defer</span> w.afterDial()<br> <br>	pc, err := t.dialConn(w.ctx, w.cm)               <span class="hljs-comment">// 核心函数，创建连接</span><br>	delivered := w.tryDeliver(pc, err)               <span class="hljs-comment">// 将新创建的连接赋值给w，如果返回false，表示已经从别的渠道获取到连接</span><br>	<span class="hljs-keyword">if</span> err == <span class="hljs-literal">nil</span> &amp;&amp; (!delivered || pc.alt != <span class="hljs-literal">nil</span>) &#123; <span class="hljs-comment">// 赋值不成功，说明w已经在这期间从等待列表中获取到有效的连接</span><br>		<span class="hljs-comment">// pconn was not passed to w,</span><br>		<span class="hljs-comment">// or it is HTTP/2 and can be shared.</span><br>		<span class="hljs-comment">// Add to the idle connection pool.</span><br>		t.putOrCloseIdleConn(pc) <span class="hljs-comment">// 将新创建的连接放入闲置连接池中，或者关闭掉</span><br>	&#125;<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		t.decConnsPerHost(w.key) <span class="hljs-comment">// 创建失败，更新统计信息</span><br>	&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="Transport-dialConn-底层创建链接。Transport-dialConnFor-调用这个函数"><a href="#Transport-dialConn-底层创建链接。Transport-dialConnFor-调用这个函数" class="headerlink" title="Transport.dialConn 底层创建链接。Transport.dialConnFor 调用这个函数"></a><code>Transport.dialConn</code> 底层创建链接。<code>Transport.dialConnFor</code> 调用这个函数</h2><p>这个函数主要有三个作用:</p>
+<ol>
+<li>是创建底层的socket，</li>
+<li>是将socket与read buffer和write buffer关联起来，</li>
+<li>是启动readLoop和writeLoop</li>
+</ol>
+<p>需要注意的是一旦socket创建成功，readLoop和writeLoop会循环运行，服务不同的请求，直到退出</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><code class="hljs Go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *Transport)</span> <span class="hljs-title">dialConn</span><span class="hljs-params">(ctx context.Context, cm connectMethod)</span> <span class="hljs-params">(pconn *persistConn, err error)</span></span> &#123;<br>	pconn = &amp;persistConn&#123;<br>		t:             t,<br>		cacheKey:      cm.key(),<br>		reqch:         <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> requestAndChan, <span class="hljs-number">1</span>),<br>		writech:       <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> writeRequest, <span class="hljs-number">1</span>),<br>		closech:       <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>&#123;&#125;),<br>		writeErrCh:    <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> error, <span class="hljs-number">1</span>),<br>		writeLoopDone: <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>&#123;&#125;),<br>	&#125;<br>	trace := httptrace.ContextClientTrace(ctx)<br>	wrapErr := <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(err error)</span> <span class="hljs-title">error</span></span> &#123;<br>		<span class="hljs-keyword">if</span> cm.proxyURL != <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-comment">// Return a typed error, per Issue 16997</span><br>			<span class="hljs-keyword">return</span> &amp;net.OpError&#123;Op: <span class="hljs-string">"proxyconnect"</span>, Net: <span class="hljs-string">"tcp"</span>, Err: err&#125;<br>		&#125;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br>	<span class="hljs-keyword">if</span> cm.scheme() == <span class="hljs-string">"https"</span> &amp;&amp; t.hasCustomTLSDialer() &#123;<br>        ...<br>	&#125; <span class="hljs-keyword">else</span> &#123;<br>		conn, err := t.dial(ctx, <span class="hljs-string">"tcp"</span>, cm.addr()) <span class="hljs-comment">// 创建socket</span><br>		<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, wrapErr(err)<br>		&#125;<br>		pconn.conn = conn<br>	&#125;<br> <br>	pconn.br = bufio.NewReaderSize(pconn, t.readBufferSize())<br>	pconn.bw = bufio.NewWriterSize(persistConnWriter&#123;pconn&#125;, t.writeBufferSize())<br> <br>	<span class="hljs-keyword">go</span> pconn.readLoop()<br>	<span class="hljs-keyword">go</span> pconn.writeLoop()<br>	<span class="hljs-keyword">return</span> pconn, <span class="hljs-literal">nil</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="Transport-tryPutIdleConn-用来将一条新创建或回收的连接放回连接池中，以便后续使用。与getIdleConnCh配合使用，后者用于获取一类连接对应的chan。在如下场景会将一个连接放回idleConn中"><a href="#Transport-tryPutIdleConn-用来将一条新创建或回收的连接放回连接池中，以便后续使用。与getIdleConnCh配合使用，后者用于获取一类连接对应的chan。在如下场景会将一个连接放回idleConn中" class="headerlink" title="Transport.tryPutIdleConn 用来将一条新创建或回收的连接放回连接池中，以便后续使用。与getIdleConnCh配合使用，后者用于获取一类连接对应的chan。在如下场景会将一个连接放回idleConn中"></a><code>Transport.tryPutIdleConn</code> 用来将一条新创建或回收的连接放回连接池中，以便后续使用。与getIdleConnCh配合使用，后者用于获取一类连接对应的chan。在如下场景会将一个连接放回idleConn中</h2><ul>
+<li>在readLoop成功之后(当然还有其他判断，如底层链路没有返回EOF错误)；</li>
+<li>创建一个新连接且新连接没有被使用时；</li>
+<li>roundTrip一开始发现request被取消时</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *Transport)</span> <span class="hljs-title">tryPutIdleConn</span><span class="hljs-params">(pconn *persistConn)</span> <span class="hljs-title">error</span></span> &#123;<br>    <span class="hljs-comment">// 当不使用长连接或该主机上的连接数小于0(即不允许缓存任何连接)时，返回错误并关闭创建的连接(此处没有做关闭处理，</span><br>    <span class="hljs-comment">// 但存在不适用的连接时必须关闭，如使用putOrCloseIdleConn)。</span><br>    <span class="hljs-comment">// 可以看出当不使用长连接时，Transport不能缓存连接</span><br>    <span class="hljs-keyword">if</span> t.DisableKeepAlives || t.MaxIdleConnsPerHost &lt; <span class="hljs-number">0</span> &#123;<br>        <span class="hljs-keyword">return</span> errKeepAlivesDisabled<br>    &#125;<br>    <span class="hljs-keyword">if</span> pconn.isBroken() &#123;<br>        <span class="hljs-keyword">return</span> errConnBroken<br>    &#125;<br>    <span class="hljs-comment">// 如果是HTTP2连接，则直接返回，不缓存该连接</span><br>    <span class="hljs-keyword">if</span> pconn.alt != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> errNotCachingH2Conn<br>    &#125;<br>    <span class="hljs-comment">// 为新连接标记可重用状态，新创建的连接肯定是可以重用的，用于在Transport.roundTrip</span><br>    <span class="hljs-comment">// 中的shouldRetryRequest函数中判断连接是否可以重用</span><br>    pconn.markReused()<br>    <span class="hljs-comment">// 该key对应Transport.idleConn中的key，标识特定的连接</span><br>    key := pconn.cacheKey<br><br>    t.idleMu.Lock()<br>    <span class="hljs-keyword">defer</span> t.idleMu.Unlock()<br>    <span class="hljs-comment">// idleConnCh中的chan元素用于存放可用的连接pconn，每类连接都有一个chan</span><br>    waitingDialer := t.idleConnCh[key]<br>    <span class="hljs-keyword">select</span> &#123;<br>    <span class="hljs-comment">// 如果此时有调用者等待一个连接，则直接将该连接传递出去，不进行保存，这种做法有利于提高效率</span><br>    <span class="hljs-keyword">case</span> waitingDialer &lt;- pconn:<br>        <span class="hljs-comment">// We're done with this pconn and somebody else is</span><br>        <span class="hljs-comment">// currently waiting for a conn of this type (they're</span><br>        <span class="hljs-comment">// actively dialing, but this conn is ready</span><br>        <span class="hljs-comment">// first). Chrome calls this socket late binding. See</span><br>        <span class="hljs-comment">// https://insouciant.org/tech/connection-management-in-chromium/</span><br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>    <span class="hljs-keyword">default</span>:<br>        <span class="hljs-comment">// 如果没有调用者等待连接，则清除该chan。删除map中的chan直接会关闭该chan</span><br>        <span class="hljs-keyword">if</span> waitingDialer != <span class="hljs-literal">nil</span> &#123;<br>            <span class="hljs-comment">// They had populated this, but their dial won</span><br>            <span class="hljs-comment">// first, so we can clean up this map entry.</span><br>            <span class="hljs-built_in">delete</span>(t.idleConnCh, key)<br>        &#125;<br>    &#125;<br>    <span class="hljs-comment">// 与DisableKeepAlives有点像，当用户需要关闭所有idle的连接时，不会再缓存连接</span><br>    <span class="hljs-keyword">if</span> t.wantIdle &#123;<br>        <span class="hljs-keyword">return</span> errWantIdle<br>    &#125;<br>    <span class="hljs-keyword">if</span> t.idleConn == <span class="hljs-literal">nil</span> &#123;<br>        t.idleConn = <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[connectMethodKey][]*persistConn)<br>    &#125;<br>    idles := t.idleConn[key]<br>    <span class="hljs-comment">// 当主机上该类连接数超过Transport.MaxIdleConnsPerHost时,不能再保存新的连接，返回错误并关闭连接</span><br>    <span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(idles) &gt;= t.maxIdleConnsPerHost() &#123;<br>        <span class="hljs-keyword">return</span> errTooManyIdleHost<br>    &#125;<br>    <span class="hljs-comment">// 需要缓存的连接与连接池中已有的重复，系统退出（这种情况下系统已经发生了混乱，直接退出）</span><br>    <span class="hljs-keyword">for</span> _, exist := <span class="hljs-keyword">range</span> idles &#123;<br>        <span class="hljs-keyword">if</span> exist == pconn &#123;<br>            log.Fatalf(<span class="hljs-string">"dup idle pconn %p in freelist"</span>, pconn)<br>        &#125;<br>    &#125;<br>    <span class="hljs-comment">// 添加待缓存的连接</span><br>    t.idleConn[key] = <span class="hljs-built_in">append</span>(idles, pconn)<br>    t.idleLRU.add(pconn)<br>    <span class="hljs-comment">// 受MaxIdleConns的限制，添加策略变为：添加新的连接，删除最老的连接。</span><br>    <span class="hljs-comment">// MaxIdleConns限制了所有类型的idle状态的最大连接数目，而MaxIdleConnsPerHost限制了host上单一类型的最大连接数目</span><br>    <span class="hljs-comment">// idleLRU中保存了所有的连接，此处的作用为，找出最老的连接并移除</span><br>    <span class="hljs-keyword">if</span> t.MaxIdleConns != <span class="hljs-number">0</span> &amp;&amp; t.idleLRU.<span class="hljs-built_in">len</span>() &gt; t.MaxIdleConns &#123;<br>        oldest := t.idleLRU.removeOldest()<br>        oldest.<span class="hljs-built_in">close</span>(errTooManyIdle)<br>        t.removeIdleConnLocked(oldest)<br>    &#125;<br>    <span class="hljs-comment">// 为新添加的连接设置超时时间</span><br>    <span class="hljs-keyword">if</span> t.IdleConnTimeout &gt; <span class="hljs-number">0</span> &#123;<br>        <span class="hljs-keyword">if</span> pconn.idleTimer != <span class="hljs-literal">nil</span> &#123;<br>            <span class="hljs-comment">// 如果该连接是被释放的，则重置超时时间</span><br>            pconn.idleTimer.Reset(t.IdleConnTimeout)<br>        &#125; <span class="hljs-keyword">else</span> &#123;<br>            <span class="hljs-comment">// 如果该连接时新建的，则设置超时时间并设置超时动作pconn.closeConnIfStillIdle</span><br>            <span class="hljs-comment">// closeConnIfStillIdle用于释放连接，从Transport.idleLRU和Transport.idleConn中移除并关闭该连接</span><br>            pconn.idleTimer = time.AfterFunc(t.IdleConnTimeout, pconn.closeConnIfStillIdle)<br>        &#125;<br>    &#125;<br><br>    pconn.idleAt = time.Now()<br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h1 id="persistConn"><a href="#persistConn" class="headerlink" title="persistConn"></a><code>persistConn</code></h1><p>该类封装了底层连接，作为长链接的形式供请求使用</p>
+<h2 id="persistConn-结构体定义"><a href="#persistConn-结构体定义" class="headerlink" title="persistConn 结构体定义"></a><code>persistConn</code> 结构体定义</h2><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// persistConn wraps a connection, usually a persistent one</span><br><span class="hljs-comment">// (but may be used for non-keep-alive requests as well)</span><br><span class="hljs-keyword">type</span> persistConn <span class="hljs-keyword">struct</span> &#123;<br>	t         *Transport<br>	cacheKey  connectMethodKey  <span class="hljs-comment">// schema + host + uri</span><br>	conn      net.Conn          <span class="hljs-comment">// 底层连接</span><br>	br        *bufio.Reader       <span class="hljs-comment">// 连接的读buffer</span><br>	bw        *bufio.Writer       <span class="hljs-comment">// 连接的写buffer</span><br>	nwrite    <span class="hljs-keyword">int64</span>               <br>	reqch     <span class="hljs-keyword">chan</span> requestAndChan <span class="hljs-comment">// 作为persistConn.roundTrip和readLoop之间的同步，由roundTrip写，readLoop读</span><br>	writech   <span class="hljs-keyword">chan</span> writeRequest   <span class="hljs-comment">// 作为persistConn.roundTrip和writeLoop之间的同步，由roundTrip写，writeLoop读</span><br>	closech   <span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>&#123;&#125;       <span class="hljs-comment">// 连接关闭的channel</span><br>	sawEOF    <span class="hljs-keyword">bool</span>  <span class="hljs-comment">// 是否读完整请求内容，由readLoop负责</span><br>	readLimit <span class="hljs-keyword">int64</span> <span class="hljs-comment">// 读数据的最大值，由readLoop负责</span><br>	writeErrCh <span class="hljs-keyword">chan</span> error <span class="hljs-comment">// writeLoop和readLoop之间的同步，用以判断该连接是否可以复用</span><br>	writeLoopDone <span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>&#123;&#125; <span class="hljs-comment">// writeLoop函数退出时关闭</span><br> <br>	<span class="hljs-comment">// Both guarded by Transport.idleMu:</span><br>	idleAt    time.Time   <span class="hljs-comment">// 最后一次闲置的时间</span><br>	idleTimer *time.Timer <span class="hljs-comment">// 计数器，用来到期清理本连接</span><br> <br>	mu                   sync.Mutex <span class="hljs-comment">// guards following fields</span><br>	numExpectedResponses <span class="hljs-keyword">int</span> <span class="hljs-comment">// 连接的请求次数，大于1表示该连接被复用</span><br>	closed               error <span class="hljs-comment">// 设置连接错误的原因</span><br>	canceledErr          error <span class="hljs-comment">// 设置连接被取消的原因</span><br>	broken               <span class="hljs-keyword">bool</span>  <span class="hljs-comment">// 在使用过程中被损坏</span><br>	reused               <span class="hljs-keyword">bool</span>  <span class="hljs-comment">// 连接是否被复用</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="persistConn-roundTrip：Transport-roundTrip-调用这个函数"><a href="#persistConn-roundTrip：Transport-roundTrip-调用这个函数" class="headerlink" title="persistConn.roundTrip：Transport.roundTrip 调用这个函数"></a><code>persistConn.roundTrip</code>：<code>Transport.roundTrip</code> 调用这个函数</h2><p>在获取到底层TCP(TLS)连接后在 roundTrip 中处理上层协议：即发送HTTP request，返回HTTP response。roundTrip给writeLoop提供request，从readLoop获取response。</p>
+<p>一个 roundTrip 用于处理一类 request。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// 一次请求的发送与接受的实现</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(pc *persistConn)</span> <span class="hljs-title">roundTrip</span><span class="hljs-params">(req *transportRequest)</span> <span class="hljs-params">(resp *Response, err error)</span></span> &#123;<br>    testHookEnterRoundTrip()<br>    <span class="hljs-comment">// 此处与getConn中的"t.setReqCanceler(req, func(error) &#123;&#125;)"相对应，用于判断request是否被取消</span><br>    <span class="hljs-comment">// 返回false表示request被取消，不必继续后续请求，关闭连接并返回错误</span><br>    <span class="hljs-keyword">if</span> !pc.t.replaceReqCanceler(req.Request, pc.cancelRequest) &#123;<br>        pc.t.putOrCloseIdleConn(pc)<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, errRequestCanceled<br>    &#125;<br>    pc.mu.Lock()<br>    <span class="hljs-comment">// 与readLoop配合使用,表示期望的响应的个数</span><br>    pc.numExpectedResponses++<br>    <span class="hljs-comment">// dialConn中定义的函数，设置了proxy的认证信息</span><br>    headerFn := pc.mutateHeaderFunc<br>    pc.mu.Unlock()<br><br>    <span class="hljs-keyword">if</span> headerFn != <span class="hljs-literal">nil</span> &#123;<br>        headerFn(req.extraHeaders())<br>    &#125;<br><br>    <span class="hljs-comment">// Ask for a compressed version if the caller didn't set their</span><br>    <span class="hljs-comment">// own value for Accept-Encoding. We only attempt to</span><br>    <span class="hljs-comment">// uncompress the gzip stream if we were the layer that</span><br>    <span class="hljs-comment">// requested it.</span><br>    requestedGzip := <span class="hljs-literal">false</span><br>    <span class="hljs-comment">// 如果需要在request中设置可接受的解码方法，则在request中添加对应的首部。仅支持gzip方式且</span><br>    <span class="hljs-comment">// 仅在调用者没有设置这些首部时设置</span><br>    <span class="hljs-keyword">if</span> !pc.t.DisableCompression &amp;&amp;<br>        req.Header.Get(<span class="hljs-string">"Accept-Encoding"</span>) == <span class="hljs-string">""</span> &amp;&amp;<br>        req.Header.Get(<span class="hljs-string">"Range"</span>) == <span class="hljs-string">""</span> &amp;&amp;<br>        req.Method != <span class="hljs-string">"HEAD"</span> &#123;<br>        <span class="hljs-comment">// Request gzip only, not deflate. Deflate is ambiguous and</span><br>        <span class="hljs-comment">// not as universally supported anyway.</span><br>        <span class="hljs-comment">// See: https://zlib.net/zlib_faq.html#faq39</span><br>        <span class="hljs-comment">//</span><br>        <span class="hljs-comment">// Note that we don't request this for HEAD requests,</span><br>        <span class="hljs-comment">// due to a bug in nginx:</span><br>        <span class="hljs-comment">//   https://trac.nginx.org/nginx/ticket/358</span><br>        <span class="hljs-comment">//   https://golang.org/issue/5522</span><br>        <span class="hljs-comment">//</span><br>        <span class="hljs-comment">// We don't request gzip if the request is for a range, since</span><br>        <span class="hljs-comment">// auto-decoding a portion of a gzipped document will just fail</span><br>        <span class="hljs-comment">// anyway. See https://golang.org/issue/8923</span><br>        requestedGzip = <span class="hljs-literal">true</span><br>        req.extraHeaders().Set(<span class="hljs-string">"Accept-Encoding"</span>, <span class="hljs-string">"gzip"</span>)<br>    &#125;<br><br>    <span class="hljs-comment">// 用于处理首部含"Expect: 100-continue"的request，客户端使用该首部探测服务器是否能够</span><br>    <span class="hljs-comment">// 处理request首部中的规格要求(如长度过大的request)。</span><br>    <span class="hljs-keyword">var</span> continueCh <span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>&#123;&#125;<br>    <span class="hljs-keyword">if</span> req.ProtoAtLeast(<span class="hljs-number">1</span>, <span class="hljs-number">1</span>) &amp;&amp; req.Body != <span class="hljs-literal">nil</span> &amp;&amp; req.expectsContinue() &#123;<br>        continueCh = <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>&#123;&#125;, <span class="hljs-number">1</span>)<br>    &#125;<br>    <span class="hljs-comment">// HTTP1.1默认使用长连接，当transport设置DisableKeepAlives时会导致处理每个request时都会</span><br>    <span class="hljs-comment">// 新建一个连接。此处的处理逻辑是：如果transport设置了DisableKeepAlives，而request没有设置</span><br>    <span class="hljs-comment">// "Connection: close",则为request设置该首部。将底层表现与上层协议保持一致。</span><br>    <span class="hljs-keyword">if</span> pc.t.DisableKeepAlives &amp;&amp; !req.wantsClose() &#123;<br>        req.extraHeaders().Set(<span class="hljs-string">"Connection"</span>, <span class="hljs-string">"close"</span>)<br>    &#125;<br><br>    <span class="hljs-comment">// 用于在异常场景(如request取消)下通知readLoop，roundTrip是否已经退出，防止ReadLoop发送response阻塞</span><br>    gone := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>&#123;&#125;)<br>    <span class="hljs-keyword">defer</span> <span class="hljs-built_in">close</span>(gone)<br>    <br>    <span class="hljs-keyword">defer</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;<br>        <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>            pc.t.setReqCanceler(req.Request, <span class="hljs-literal">nil</span>)<br>        &#125;<br>    &#125;()<br><br>    <span class="hljs-keyword">const</span> debugRoundTrip = <span class="hljs-literal">false</span><br><br>    <span class="hljs-comment">// Write the request concurrently with waiting for a response,</span><br>    <span class="hljs-comment">// in case the server decides to reply before reading our full</span><br>    <span class="hljs-comment">// request body.</span><br>    <span class="hljs-comment">// 表示发送了多少个字节的request，debug使用</span><br>    startBytesWritten := pc.nwrite<br>    <span class="hljs-comment">// 给writeLoop封装并发送信息，注意此处的先后顺序。首先给writeLoop发送数据，阻塞等待writeLoop</span><br>    <span class="hljs-comment">// 接收，待writeLoop接收后才能发送数据给readLoop,因此发送request总会优先接收response</span><br>    writeErrCh := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> error, <span class="hljs-number">1</span>)<br>    pc.writech &lt;- writeRequest&#123;req, writeErrCh, continueCh&#125;<br><br>    <span class="hljs-comment">// 给readLoop封装并发送信息</span><br>    resc := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> responseAndError)<br>    pc.reqch &lt;- requestAndChan&#123;<br>        req:        req.Request,<br>        ch:         resc,<br>        addedGzip:  requestedGzip,<br>        continueCh: continueCh,<br>        callerGone: gone,<br>    &#125;<br><br>    <span class="hljs-keyword">var</span> respHeaderTimer &lt;-<span class="hljs-keyword">chan</span> time.Time<br>    cancelChan := req.Request.Cancel<br>    ctxDoneChan := req.Context().Done()<br>    <span class="hljs-comment">// 该循环主要用于处理获取response超时和request取消时的条件跳转。正常情况下收到reponse</span><br>    <span class="hljs-comment">// 退出roundtrip函数</span><br>    <span class="hljs-keyword">for</span> &#123;<br>        testHookWaitResLoop()<br>        <span class="hljs-keyword">select</span> &#123;<br>        <span class="hljs-comment">// writeLoop返回发送request后的结果</span><br>        <span class="hljs-keyword">case</span> err := &lt;-writeErrCh:<br>            <span class="hljs-keyword">if</span> debugRoundTrip &#123;<br>                req.logf(<span class="hljs-string">"writeErrCh resv: %T/%#v"</span>, err, err)<br>            &#125;<br>            <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>                pc.<span class="hljs-built_in">close</span>(fmt.Errorf(<span class="hljs-string">"write error: %v"</span>, err))<br>                <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, pc.mapRoundTripError(req, startBytesWritten, err)<br>            &#125;<br>            <span class="hljs-comment">// 设置一个接收response的定时器，如果在这段时间内没有接收到response(即没有进入下面代码</span><br>            <span class="hljs-comment">// 的"case re := &lt;-resc:"分支)，超时后进入""case &lt;-respHeaderTimer:分支，关闭连接，</span><br>            <span class="hljs-comment">// 防止readLoop一直等待读取response，导致处理阻塞;没有超时则关闭定时器</span><br>            <span class="hljs-keyword">if</span> d := pc.t.ResponseHeaderTimeout; d &gt; <span class="hljs-number">0</span> &#123;<br>                <span class="hljs-keyword">if</span> debugRoundTrip &#123;<br>                    req.logf(<span class="hljs-string">"starting timer for %v"</span>, d)<br>                &#125;<br>                timer := time.NewTimer(d)<br>                <span class="hljs-keyword">defer</span> timer.Stop() <span class="hljs-comment">// prevent leaks</span><br>                respHeaderTimer = timer.C<br>            &#125;<br>        <span class="hljs-comment">// 处理底层连接关闭。"case &lt;-cancelChan:"和”case &lt;-ctxDoneChan:“为request关闭，request</span><br>        <span class="hljs-comment">// 关闭也会导致底层连接关闭，但必须处理非上层协议导致底层连接关闭的情况。</span><br>        <span class="hljs-keyword">case</span> &lt;-pc.closech:<br>            <span class="hljs-keyword">if</span> debugRoundTrip &#123;<br>                req.logf(<span class="hljs-string">"closech recv: %T %#v"</span>, pc.closed, pc.closed)<br>            &#125;<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, pc.mapRoundTripError(req, startBytesWritten, pc.closed)<br>        <span class="hljs-comment">// 等待获取response超时,关闭连接</span><br>        <span class="hljs-keyword">case</span> &lt;-respHeaderTimer:<br>            <span class="hljs-keyword">if</span> debugRoundTrip &#123;<br>                req.logf(<span class="hljs-string">"timeout waiting for response headers."</span>)<br>            &#125;<br>            pc.<span class="hljs-built_in">close</span>(errTimeout)<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, errTimeout<br>        <span class="hljs-comment">// 接收到readLoop返回的response结果</span><br>        <span class="hljs-keyword">case</span> re := &lt;-resc:<br>            <span class="hljs-comment">// 极异常情况,直接程序panic</span><br>            <span class="hljs-keyword">if</span> (re.res == <span class="hljs-literal">nil</span>) == (re.err == <span class="hljs-literal">nil</span>) &#123;<br>                <span class="hljs-built_in">panic</span>(fmt.Sprintf(<span class="hljs-string">"internal error: exactly one of res or err should be set; nil=%v"</span>, re.res == <span class="hljs-literal">nil</span>))<br>            &#125;<br>            <span class="hljs-keyword">if</span> debugRoundTrip &#123;<br>                req.logf(<span class="hljs-string">"resc recv: %p, %T/%#v"</span>, re.res, re.err, re.err)<br>            &#125;<br>            <span class="hljs-keyword">if</span> re.err != <span class="hljs-literal">nil</span> &#123;<br>                <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, pc.mapRoundTripError(req, startBytesWritten, re.err)<br>            &#125;<br>            <span class="hljs-keyword">return</span> re.res, <span class="hljs-literal">nil</span><br>        <span class="hljs-comment">// request取消</span><br>        <span class="hljs-keyword">case</span> &lt;-cancelChan:<br>            pc.t.CancelRequest(req.Request)<br>            <span class="hljs-comment">// 将关闭之后的chan置为nil,用来防止select一直进入该case(close的chan不会阻塞读，读取的数据为0)</span><br>            cancelChan = <span class="hljs-literal">nil</span><br>        <span class="hljs-keyword">case</span> &lt;-ctxDoneChan:<br>            pc.t.cancelRequest(req.Request, req.Context().Err())<br>            cancelChan = <span class="hljs-literal">nil</span><br>            ctxDoneChan = <span class="hljs-literal">nil</span><br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="persistConn-writeLoop-实际的写循环-用于发送-request-请求。"><a href="#persistConn-writeLoop-实际的写循环-用于发送-request-请求。" class="headerlink" title="persistConn.writeLoop: 实际的写循环,用于发送 request 请求。"></a><code>persistConn.writeLoop</code>: 实际的写循环,用于发送 request 请求。</h2><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><code class="hljs Go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(pc *persistConn)</span> <span class="hljs-title">writeLoop</span><span class="hljs-params">()</span></span> &#123;<br>	<span class="hljs-keyword">defer</span> <span class="hljs-built_in">close</span>(pc.writeLoopDone)<br>	<span class="hljs-keyword">for</span> &#123;<br>		<span class="hljs-keyword">select</span> &#123;<br>		<span class="hljs-keyword">case</span> wr := &lt;-pc.writech: <span class="hljs-comment">// 收到roundTrip的写命令</span><br>			startBytesWritten := pc.nwrite<br>			err := wr.req.Request.write(pc.bw, pc.isProxy, wr.req.extra, pc.waitForContinue(wr.continueCh)) <span class="hljs-comment">// 主函数，实际写http数据</span><br>			<span class="hljs-keyword">if</span> bre, ok := err.(requestBodyReadError); ok &#123;<br>				err = bre.error<br>				wr.req.setError(err)<br>			&#125;<br>			<span class="hljs-keyword">if</span> err == <span class="hljs-literal">nil</span> &#123;<br>				err = pc.bw.Flush()<br>			&#125;<br>			<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>				wr.req.Request.closeBody()<br>				<span class="hljs-keyword">if</span> pc.nwrite == startBytesWritten &#123;<br>					err = nothingWrittenError&#123;err&#125;<br>				&#125;<br>			&#125;<br>			pc.writeErrCh &lt;- err <span class="hljs-comment">// 通知readLoop，用于判断连接是否可以回收</span><br>			wr.ch &lt;- err         <span class="hljs-comment">// 通知persistConn.roundTrip，设定读response的timeout</span><br>			<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123; <span class="hljs-comment">// 有错误发生时不再复用连接</span><br>				pc.<span class="hljs-built_in">close</span>(err)<br>				<span class="hljs-keyword">return</span><br>			&#125;<br>			<span class="hljs-comment">// 处理下一个请求</span><br>		<span class="hljs-keyword">case</span> &lt;-pc.closech: <span class="hljs-comment">// 连接被关闭</span><br>			<span class="hljs-keyword">return</span><br>		&#125;<br>	&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="persistConn-waitForContinue。persistConn-writeLoop-调用这个函数"><a href="#persistConn-waitForContinue。persistConn-writeLoop-调用这个函数" class="headerlink" title="persistConn.waitForContinue。persistConn.writeLoop 调用这个函数"></a><code>persistConn.waitForContinue</code>。<code>persistConn.writeLoop</code> 调用这个函数</h2><p>该函数用来支持Expect:100-continue功能，它返回一个闭包函数，它的作用是阻塞继续执行，直到以下三种情况发生：</p>
+<ol>
+<li>是在readLoop接受到100-continue的返回结果，会向continueCh发送一个数据，</li>
+<li>是在100-continue等待server返回结果超时的情况，这时会继续将body发送出去，</li>
+<li>是连接关闭的情况</li>
+</ol>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs Go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(pc *persistConn)</span> <span class="hljs-title">waitForContinue</span><span class="hljs-params">(continueCh &lt;-<span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>&#123;&#125;)</span> <span class="hljs-title">func</span><span class="hljs-params">()</span> <span class="hljs-title">bool</span></span> &#123;<br>	<span class="hljs-keyword">if</span> continueCh == <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>	&#125;<br>	<span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span> <span class="hljs-title">bool</span></span> &#123;<br>		timer := time.NewTimer(pc.t.ExpectContinueTimeout) <span class="hljs-comment">// 设定超时时间</span><br>		<span class="hljs-keyword">defer</span> timer.Stop()<br> <br>		<span class="hljs-keyword">select</span> &#123;<br>		<span class="hljs-keyword">case</span> _, ok := &lt;-continueCh: <span class="hljs-comment">// 如果readLoop接受到的消息表示不支持Expect:100-continue类型的请求，则会关闭channel</span><br>			<span class="hljs-keyword">return</span> ok<br>		<span class="hljs-keyword">case</span> &lt;-timer.C: <span class="hljs-comment">// 超时</span><br>			<span class="hljs-keyword">return</span> <span class="hljs-literal">true</span><br>		<span class="hljs-keyword">case</span> &lt;-pc.closech: <span class="hljs-comment">// 连接被关闭</span><br>			<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span><br>		&#125;<br>	&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="write-实现了发送一次请求的实际操作。persistConn-writeLoop-调用这个函数"><a href="#write-实现了发送一次请求的实际操作。persistConn-writeLoop-调用这个函数" class="headerlink" title="write 实现了发送一次请求的实际操作。persistConn.writeLoop 调用这个函数"></a><code>write</code> 实现了发送一次请求的实际操作。<code>persistConn.writeLoop</code> 调用这个函数</h2><p>主要的看点是Expect:100-continue的处理方式</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br></pre></td><td class="code"><pre><code class="hljs Go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(r *Request)</span> <span class="hljs-title">write</span><span class="hljs-params">(w io.Writer, usingProxy <span class="hljs-keyword">bool</span>, extraHeaders Header, waitForContinue <span class="hljs-keyword">func</span>()</span> <span class="hljs-title">bool</span>) <span class="hljs-params">(err error)</span></span> &#123;<br>	trace := httptrace.ContextClientTrace(r.Context())<br>	<span class="hljs-keyword">if</span> trace != <span class="hljs-literal">nil</span> &amp;&amp; trace.WroteRequest != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">defer</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;<br>			trace.WroteRequest(httptrace.WroteRequestInfo&#123; <span class="hljs-comment">// 完成写请求的回调函数</span><br>				Err: err,<br>			&#125;)<br>		&#125;()<br>	&#125;<br> <br>	<span class="hljs-comment">// 确定host</span><br>	host := cleanHost(r.Host)<br>	<span class="hljs-keyword">if</span> host == <span class="hljs-string">""</span> &#123;<br>		<span class="hljs-keyword">if</span> r.URL == <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">return</span> errMissingHost<br>		&#125;<br>		host = cleanHost(r.URL.Host)<br>	&#125;<br> <br>	host = removeZone(host)<br> <br>	ruri := r.URL.RequestURI()<br>	<span class="hljs-keyword">if</span> usingProxy &amp;&amp; r.URL.Scheme != <span class="hljs-string">""</span> &amp;&amp; r.URL.Opaque == <span class="hljs-string">""</span> &#123;<br>		ruri = r.URL.Scheme + <span class="hljs-string">"://"</span> + host + ruri<br>	&#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> r.Method == <span class="hljs-string">"CONNECT"</span> &amp;&amp; r.URL.Path == <span class="hljs-string">""</span> &#123;<br>		<span class="hljs-comment">// CONNECT requests normally give just the host and port, not a full URL.</span><br>		ruri = host<br>		<span class="hljs-keyword">if</span> r.URL.Opaque != <span class="hljs-string">""</span> &#123;<br>			ruri = r.URL.Opaque<br>		&#125;<br>	&#125;<br>	<span class="hljs-keyword">if</span> stringContainsCTLByte(ruri) &#123;<br>		<span class="hljs-keyword">return</span> errors.New(<span class="hljs-string">"net/http: can't write control character in Request.URL"</span>)<br>	&#125;<br> <br>	<span class="hljs-keyword">var</span> bw *bufio.Writer<br>	<span class="hljs-keyword">if</span> _, ok := w.(io.ByteWriter); !ok &#123;<br>		bw = bufio.NewWriter(w)<br>		w = bw<br>	&#125;<br>    <span class="hljs-comment">// 开始写数据</span><br>	_, err = fmt.Fprintf(w, <span class="hljs-string">"%s %s HTTP/1.1\r\n"</span>, valueOrDefault(r.Method, <span class="hljs-string">"GET"</span>), ruri)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br> <br>	<span class="hljs-comment">// Header lines</span><br>	_, err = fmt.Fprintf(w, <span class="hljs-string">"Host: %s\r\n"</span>, host)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br>	<span class="hljs-keyword">if</span> trace != <span class="hljs-literal">nil</span> &amp;&amp; trace.WroteHeaderField != <span class="hljs-literal">nil</span> &#123;<br>		trace.WroteHeaderField(<span class="hljs-string">"Host"</span>, []<span class="hljs-keyword">string</span>&#123;host&#125;)<br>	&#125;<br> <br>	userAgent := defaultUserAgent<br>	<span class="hljs-keyword">if</span> r.Header.has(<span class="hljs-string">"User-Agent"</span>) &#123;<br>		userAgent = r.Header.Get(<span class="hljs-string">"User-Agent"</span>)<br>	&#125;<br>	<span class="hljs-keyword">if</span> userAgent != <span class="hljs-string">""</span> &#123;<br>		_, err = fmt.Fprintf(w, <span class="hljs-string">"User-Agent: %s\r\n"</span>, userAgent)<br>		<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">return</span> err<br>		&#125;<br>		<span class="hljs-keyword">if</span> trace != <span class="hljs-literal">nil</span> &amp;&amp; trace.WroteHeaderField != <span class="hljs-literal">nil</span> &#123;<br>			trace.WroteHeaderField(<span class="hljs-string">"User-Agent"</span>, []<span class="hljs-keyword">string</span>&#123;userAgent&#125;)<br>		&#125;<br>	&#125;<br> <br>	<span class="hljs-comment">// Process Body,ContentLength,Close,Trailer</span><br>	tw, err := newTransferWriter(r)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br>	err = tw.writeHeader(w, trace)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br> <br>	err = r.Header.writeSubset(w, reqWriteExcludeHeader, trace)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br> <br>	<span class="hljs-keyword">if</span> extraHeaders != <span class="hljs-literal">nil</span> &#123;<br>		err = extraHeaders.write(w, trace)<br>		<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">return</span> err<br>		&#125;<br>	&#125;<br> <br>	_, err = io.WriteString(w, <span class="hljs-string">"\r\n"</span>)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br>    <span class="hljs-comment">// 完成header</span><br>	<span class="hljs-keyword">if</span> trace != <span class="hljs-literal">nil</span> &amp;&amp; trace.WroteHeaders != <span class="hljs-literal">nil</span> &#123;<br>		trace.WroteHeaders()<br>	&#125;<br> <br>	<span class="hljs-comment">// Flush and wait for 100-continue if expected.</span><br>	<span class="hljs-keyword">if</span> waitForContinue != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">if</span> bw, ok := w.(*bufio.Writer); ok &#123;<br>			err = bw.Flush() <span class="hljs-comment">// 先发送header请求</span><br>			<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>				<span class="hljs-keyword">return</span> err<br>			&#125;<br>		&#125;<br>		<span class="hljs-keyword">if</span> trace != <span class="hljs-literal">nil</span> &amp;&amp; trace.Wait100Continue != <span class="hljs-literal">nil</span> &#123;<br>			trace.Wait100Continue()<br>		&#125;<br>		<span class="hljs-keyword">if</span> !waitForContinue() &#123; <span class="hljs-comment">// 等待server的返回，在以下两种情况下继续发送body，1是server返回ok，2是超时</span><br>			r.closeBody()<br>			<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>		&#125;<br>	&#125;<br> <br>	<span class="hljs-keyword">if</span> bw, ok := w.(*bufio.Writer); ok &amp;&amp; tw.FlushHeaders &#123;<br>		<span class="hljs-keyword">if</span> err := bw.Flush(); err != <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">return</span> err<br>		&#125;<br>	&#125;<br> <br>	<span class="hljs-comment">// 写body</span><br>	err = tw.writeBody(w)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">if</span> tw.bodyReadError == err &#123;<br>			err = requestBodyReadError&#123;err&#125;<br>		&#125;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br> <br>	<span class="hljs-keyword">if</span> bw != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> bw.Flush()<br>	&#125;<br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="persistConn-readLoop-连接读循环-循环接收response响应，成功获得response后会将连接返回连接池，便于后续复用。当readLoop正常处理完一个response之后，会将连接重新放入到连接池中；"><a href="#persistConn-readLoop-连接读循环-循环接收response响应，成功获得response后会将连接返回连接池，便于后续复用。当readLoop正常处理完一个response之后，会将连接重新放入到连接池中；" class="headerlink" title="persistConn.readLoop 连接读循环,循环接收response响应，成功获得response后会将连接返回连接池，便于后续复用。当readLoop正常处理完一个response之后，会将连接重新放入到连接池中；"></a><code>persistConn.readLoop</code> 连接读循环,循环接收response响应，成功获得response后会将连接返回连接池，便于后续复用。当readLoop正常处理完一个response之后，会将连接重新放入到连接池中；</h2><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br></pre></td><td class="code"><pre><code class="hljs Go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(pc *persistConn)</span> <span class="hljs-title">readLoop</span><span class="hljs-params">()</span></span> &#123;<br>	closeErr := errReadLoopExiting <span class="hljs-comment">// default value, if not changed below</span><br>	<span class="hljs-keyword">defer</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;<br>		pc.<span class="hljs-built_in">close</span>(closeErr)<br>		pc.t.removeIdleConn(pc)<br>	&#125;()<br> <br>	tryPutIdleConn := <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(trace *httptrace.ClientTrace)</span> <span class="hljs-title">bool</span></span> &#123;<br>		<span class="hljs-keyword">if</span> err := pc.t.tryPutIdleConn(pc); err != <span class="hljs-literal">nil</span> &#123; <span class="hljs-comment">// 将连接放回空闲连接池</span><br>			closeErr = err<br>			<span class="hljs-keyword">if</span> trace != <span class="hljs-literal">nil</span> &amp;&amp; trace.PutIdleConn != <span class="hljs-literal">nil</span> &amp;&amp; err != errKeepAlivesDisabled &#123;<br>				trace.PutIdleConn(err)<br>			&#125;<br>			<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span><br>		&#125;<br>		<span class="hljs-keyword">if</span> trace != <span class="hljs-literal">nil</span> &amp;&amp; trace.PutIdleConn != <span class="hljs-literal">nil</span> &#123;<br>			trace.PutIdleConn(<span class="hljs-literal">nil</span>)<br>		&#125;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">true</span><br>	&#125;<br> <br>	<span class="hljs-comment">// eofc is used to block caller goroutines reading from Response.Body</span><br>	<span class="hljs-comment">// at EOF until this goroutines has (potentially) added the connection</span><br>	<span class="hljs-comment">// back to the idle pool.</span><br>	eofc := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>&#123;&#125;)<br>	<span class="hljs-keyword">defer</span> <span class="hljs-built_in">close</span>(eofc) <span class="hljs-comment">// unblock reader on errors</span><br> <br>	<span class="hljs-comment">// Read this once, before loop starts. (to avoid races in tests)</span><br>	testHookMu.Lock()<br>	testHookReadLoopBeforeNextRead := testHookReadLoopBeforeNextRead<br>	testHookMu.Unlock()<br> <br>	alive := <span class="hljs-literal">true</span><br>	<span class="hljs-keyword">for</span> alive &#123;<br>		pc.readLimit = pc.maxHeaderResponseSize()<br>		_, err := pc.br.Peek(<span class="hljs-number">1</span>)<br> <br>		pc.mu.Lock()<br>		<span class="hljs-keyword">if</span> pc.numExpectedResponses == <span class="hljs-number">0</span> &#123;  <span class="hljs-comment">// 表示server端主动关闭连接</span><br>			pc.readLoopPeekFailLocked(err)<br>			pc.mu.Unlock()<br>			<span class="hljs-keyword">return</span><br>		&#125;<br>		pc.mu.Unlock()<br> <br>		rc := &lt;-pc.reqch <span class="hljs-comment">// 一次新的请求，和persistConn.roundTrip进行同步</span><br>		trace := httptrace.ContextClientTrace(rc.req.Context())<br> <br>		<span class="hljs-keyword">var</span> resp *Response<br>		<span class="hljs-keyword">if</span> err == <span class="hljs-literal">nil</span> &#123;<br>			resp, err = pc.readResponse(rc, trace) <span class="hljs-comment">// 读请求的具体实现</span><br>		&#125; <span class="hljs-keyword">else</span> &#123;<br>			err = transportReadFromServerError&#123;err&#125;<br>			closeErr = err<br>		&#125;<br> <br>		<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">if</span> pc.readLimit &lt;= <span class="hljs-number">0</span> &#123;<br>				err = fmt.Errorf(<span class="hljs-string">"net/http: server response headers exceeded %d bytes; aborted"</span>, pc.maxHeaderResponseSize())<br>			&#125;<br> <br>			<span class="hljs-keyword">select</span> &#123;<br>			<span class="hljs-keyword">case</span> rc.ch &lt;- responseAndError&#123;err: err&#125;:<br>			<span class="hljs-keyword">case</span> &lt;-rc.callerGone: <span class="hljs-comment">// 调用方放弃请求，链接关闭。之所以不再复用该连接，可能是避免未知原因造成下次请求的异常</span><br>				<span class="hljs-keyword">return</span><br>			&#125;<br>			<span class="hljs-keyword">return</span><br>		&#125;<br>		pc.readLimit = maxInt64 <span class="hljs-comment">// effectively no limit for response bodies</span><br> <br>		pc.mu.Lock()<br>		pc.numExpectedResponses--<br>		pc.mu.Unlock()<br> <br>		bodyWritable := resp.bodyIsWritable()<br>		hasBody := rc.req.Method != <span class="hljs-string">"HEAD"</span> &amp;&amp; resp.ContentLength != <span class="hljs-number">0</span><br> <br>		<span class="hljs-keyword">if</span> resp.Close || rc.req.Close || resp.StatusCode &lt;= <span class="hljs-number">199</span> || bodyWritable &#123;<br>			<span class="hljs-comment">// Don't do keep-alive on error if either party requested a close</span><br>			<span class="hljs-comment">// or we get an unexpected informational (1xx) response.</span><br>			<span class="hljs-comment">// StatusCode 100 is already handled above.</span><br>			alive = <span class="hljs-literal">false</span><br>		&#125;<br> <br>		<span class="hljs-keyword">if</span> !hasBody || bodyWritable &#123;<br>			pc.t.setReqCanceler(rc.req, <span class="hljs-literal">nil</span>)<br> <br>			<span class="hljs-comment">// Put the idle conn back into the pool before we send the response</span><br>			<span class="hljs-comment">// so if they process it quickly and make another request, they'll</span><br>			<span class="hljs-comment">// get this same conn. But we use the unbuffered channel 'rc'</span><br>			<span class="hljs-comment">// to guarantee that persistConn.roundTrip got out of its select</span><br>			<span class="hljs-comment">// potentially waiting for this persistConn to close.</span><br>			<span class="hljs-comment">// but after</span><br>			alive = alive &amp;&amp;<br>				!pc.sawEOF &amp;&amp;<br>				pc.wroteRequest() &amp;&amp; <span class="hljs-comment">// 这个函数有两个作用，1是确保请求已经写完，因为不排除服务端还未完全接受到请求时就返回结果；2是判断此次请求在writeLoop中是否发生错误，如果有错误则连接失效</span><br>				tryPutIdleConn(trace) <span class="hljs-comment">// 将该连接放入连接池中</span><br> <br>			<span class="hljs-keyword">if</span> bodyWritable &#123;<br>				closeErr = errCallerOwnsConn<br>			&#125;<br> <br>			<span class="hljs-keyword">select</span> &#123;<br>			<span class="hljs-keyword">case</span> rc.ch &lt;- responseAndError&#123;res: resp&#125;: <span class="hljs-comment">// 写response，会在persistConn.roundTrip函数中获取到该结果</span><br>			<span class="hljs-keyword">case</span> &lt;-rc.callerGone:<br>				<span class="hljs-keyword">return</span><br>			&#125;<br>			<span class="hljs-keyword">continue</span> <span class="hljs-comment">// 处理下一个请求</span><br>		&#125;<br> <br>		waitForBodyRead := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> <span class="hljs-keyword">bool</span>, <span class="hljs-number">2</span>)<br>		body := &amp;bodyEOFSignal&#123;<br>			body: resp.Body,<br>			earlyCloseFn: <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span> <span class="hljs-title">error</span></span> &#123;<br>				waitForBodyRead &lt;- <span class="hljs-literal">false</span><br>				&lt;-eofc <span class="hljs-comment">// will be closed by deferred call at the end of the function</span><br>				<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br> <br>			&#125;,<br>			fn: <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(err error)</span> <span class="hljs-title">error</span></span> &#123;<br>				isEOF := err == io.EOF<br>				waitForBodyRead &lt;- isEOF<br>				<span class="hljs-keyword">if</span> isEOF &#123;<br>					&lt;-eofc <span class="hljs-comment">// see comment above eofc declaration</span><br>				&#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>					<span class="hljs-keyword">if</span> cerr := pc.canceled(); cerr != <span class="hljs-literal">nil</span> &#123;<br>						<span class="hljs-keyword">return</span> cerr<br>					&#125;<br>				&#125;<br>				<span class="hljs-keyword">return</span> err<br>			&#125;,<br>		&#125;<br> <br>		resp.Body = body<br>		<span class="hljs-keyword">if</span> rc.addedGzip &amp;&amp; strings.EqualFold(resp.Header.Get(<span class="hljs-string">"Content-Encoding"</span>), <span class="hljs-string">"gzip"</span>) &#123;<br>			resp.Body = &amp;gzipReader&#123;body: body&#125;<br>			resp.Header.Del(<span class="hljs-string">"Content-Encoding"</span>)<br>			resp.Header.Del(<span class="hljs-string">"Content-Length"</span>)<br>			resp.ContentLength = <span class="hljs-number">-1</span><br>			resp.Uncompressed = <span class="hljs-literal">true</span><br>		&#125;<br> <br>		<span class="hljs-keyword">select</span> &#123;<br>		<span class="hljs-keyword">case</span> rc.ch &lt;- responseAndError&#123;res: resp&#125;: <span class="hljs-comment">// 写response，会在persistConn.roundTrip函数中获取到该结果</span><br>		<span class="hljs-keyword">case</span> &lt;-rc.callerGone:<br>			<span class="hljs-keyword">return</span><br>		&#125;<br> <br>		<span class="hljs-comment">// Before looping back to the top of this function and peeking on</span><br>		<span class="hljs-comment">// the bufio.Reader, wait for the caller goroutine to finish</span><br>		<span class="hljs-comment">// reading the response body. (or for cancellation or death)</span><br>		<span class="hljs-keyword">select</span> &#123;<br>		<span class="hljs-keyword">case</span> bodyEOF := &lt;-waitForBodyRead:<br>			pc.t.setReqCanceler(rc.req, <span class="hljs-literal">nil</span>) <span class="hljs-comment">// before pc might return to idle pool</span><br>			alive = alive &amp;&amp;<br>				bodyEOF &amp;&amp;<br>				!pc.sawEOF &amp;&amp;<br>				pc.wroteRequest() &amp;&amp;<br>				tryPutIdleConn(trace) <span class="hljs-comment">// 将该连接放入连接池中</span><br>			<span class="hljs-keyword">if</span> bodyEOF &#123;<br>				eofc &lt;- <span class="hljs-keyword">struct</span>&#123;&#125;&#123;&#125;<br>			&#125;<br>		<span class="hljs-keyword">case</span> &lt;-rc.req.Cancel:<br>			alive = <span class="hljs-literal">false</span><br>			pc.t.CancelRequest(rc.req)<br>		<span class="hljs-keyword">case</span> &lt;-rc.req.Context().Done():<br>			alive = <span class="hljs-literal">false</span><br>			pc.t.cancelRequest(rc.req, rc.req.Context().Err())<br>		<span class="hljs-keyword">case</span> &lt;-pc.closech: <span class="hljs-comment">// 连接被关闭，可能是lru被踢出出来了</span><br>			alive = <span class="hljs-literal">false</span><br>		&#125;<br> <br>		testHookReadLoopBeforeNextRead()<br>	&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="persistConn-readResponse-读取一次http请求返回，如果是header带“Expect-100-continue”的请求，则在正常情况下会收到两次server的返回结果。persistConn-readLoop-调用这个函数"><a href="#persistConn-readResponse-读取一次http请求返回，如果是header带“Expect-100-continue”的请求，则在正常情况下会收到两次server的返回结果。persistConn-readLoop-调用这个函数" class="headerlink" title="persistConn.readResponse 读取一次http请求返回，如果是header带“Expect:100-continue”的请求，则在正常情况下会收到两次server的返回结果。persistConn.readLoop 调用这个函数"></a><code>persistConn.readResponse</code> 读取一次http请求返回，如果是header带“Expect:100-continue”的请求，则在正常情况下会收到两次server的返回结果。<code>persistConn.readLoop</code> 调用这个函数</h2><p>关于Expect:100-continue的介绍可以参考<a href="https://www.jianshu.com/p/154c310748db" target="_blank" rel="noopener">https://www.jianshu.com/p/154c310748db</a></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><code class="hljs Go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(pc *persistConn)</span> <span class="hljs-title">readResponse</span><span class="hljs-params">(rc requestAndChan, trace *httptrace.ClientTrace)</span> <span class="hljs-params">(resp *Response, err error)</span></span> &#123;<br>	<span class="hljs-keyword">if</span> trace != <span class="hljs-literal">nil</span> &amp;&amp; trace.GotFirstResponseByte != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">if</span> peek, err := pc.br.Peek(<span class="hljs-number">1</span>); err == <span class="hljs-literal">nil</span> &amp;&amp; <span class="hljs-built_in">len</span>(peek) == <span class="hljs-number">1</span> &#123;<br>			trace.GotFirstResponseByte()<br>		&#125;<br>	&#125;<br>	num1xx := <span class="hljs-number">0</span>               <span class="hljs-comment">// number of informational 1xx headers received</span><br>	<span class="hljs-keyword">const</span> max1xxResponses = <span class="hljs-number">5</span> <span class="hljs-comment">// arbitrary bound on number of informational responses</span><br> <br>	continueCh := rc.continueCh<br>	<span class="hljs-keyword">for</span> &#123;<br>		resp, err = ReadResponse(pc.br, rc.req) <span class="hljs-comment">// 读取server的返回请求结果</span><br>		<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">return</span><br>		&#125;<br>		resCode := resp.StatusCode<br>		<span class="hljs-keyword">if</span> continueCh != <span class="hljs-literal">nil</span> &#123; <span class="hljs-comment">// 表示header中带“Expect:100-continue”的请求</span><br>			<span class="hljs-keyword">if</span> resCode == <span class="hljs-number">100</span> &#123;<br>				<span class="hljs-keyword">if</span> trace != <span class="hljs-literal">nil</span> &amp;&amp; trace.Got100Continue != <span class="hljs-literal">nil</span> &#123; <span class="hljs-comment">// 回调函数</span><br>					trace.Got100Continue()<br>				&#125;<br>				continueCh &lt;- <span class="hljs-keyword">struct</span>&#123;&#125;&#123;&#125; <span class="hljs-comment">// 发送通知，让writeLoop可以继续发送请求的body</span><br>				continueCh = <span class="hljs-literal">nil</span> <span class="hljs-comment">// 重置channel</span><br>			&#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> resCode &gt;= <span class="hljs-number">200</span> &#123; <span class="hljs-comment">// 不支持Expect:100-continue，通知writeLoop取消发送</span><br>				<span class="hljs-built_in">close</span>(continueCh)<br>				continueCh = <span class="hljs-literal">nil</span> <span class="hljs-comment">// 重置channel</span><br>			&#125;<br>		&#125;<br>		<span class="hljs-keyword">break</span><br>	&#125;<br>	<span class="hljs-keyword">return</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ul>
+<li><a href="https://www.cnblogs.com/charlieroro/p/11409153.html" target="_blank" rel="noopener">https://www.cnblogs.com/charlieroro/p/11409153.html</a></li>
+<li><a href="https://blog.csdn.net/zhanglehes/article/details/122213793" target="_blank" rel="noopener">https://blog.csdn.net/zhanglehes/article/details/122213793</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Go/" class="category-chain-item">Go</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/Go/Go-%E6%A0%87%E5%87%86%E5%BA%93/" class="category-chain-item">Go 标准库</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Go/" class="print-no-link">#Go</a>
+      
+        <a href="/tags/Go-%E6%A0%87%E5%87%86%E5%BA%93/" class="print-no-link">#Go 标准库</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Go 标准库之 net.http 之 transport 源码解析</div>
+      <div>https://flepeng.github.io/021-Go-32-Go-标准库-Go-标准库之-net-http-之-transport-源码解析/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年12月3日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/021-Go-32-Go-%E6%A0%87%E5%87%86%E5%BA%93-Go-%E6%A0%87%E5%87%86%E5%BA%93%E4%B9%8B-math-%E6%95%B0%E6%8D%AE%E5%B8%B8%E6%95%B0%E5%92%8C%E5%87%BD%E6%95%B0/" title="Go 标准库之 math 数据常数和函数">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Go 标准库之 math 数据常数和函数</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/021-Go-32-Go-%E6%A0%87%E5%87%86%E5%BA%93-Go-%E6%A0%87%E5%87%86%E5%BA%93%E4%B9%8B-net-http-%E4%B9%8B-transport-%E8%87%AA%E5%AE%9A%E4%B9%89/" title="Go 标准库之 net.http 之 transport 自定义">
+                        <span class="hidden-mobile">Go 标准库之 net.http 之 transport 自定义</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

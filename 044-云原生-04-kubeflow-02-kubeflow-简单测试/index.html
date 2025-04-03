@@ -1,0 +1,863 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="1、背景当训练新的 ML 模型时，大多数据科学家和 ML 工程师会开发一些新的 Python 脚本或交互式 notebook，以进行数据提取和预处理，来构建用于训练模型的数据集； 然后创建几个其他脚本或 notebook 来尝试不同类型的模型或机器学习框架； 最后收集、调试指标，评估每个模型在测试数据集上的运行情况，来确定要部署到生产中的模型。  上图极大的简化了真正的机器学习工作流程，在实际开发">
+<meta property="og:type" content="article">
+<meta property="og:title" content="02-kubeflow 简单测试">
+<meta property="og:url" content="https://flepeng.github.io/044-%E4%BA%91%E5%8E%9F%E7%94%9F-04-kubeflow-02-kubeflow-%E7%AE%80%E5%8D%95%E6%B5%8B%E8%AF%95/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="1、背景当训练新的 ML 模型时，大多数据科学家和 ML 工程师会开发一些新的 Python 脚本或交互式 notebook，以进行数据提取和预处理，来构建用于训练模型的数据集； 然后创建几个其他脚本或 notebook 来尝试不同类型的模型或机器学习框架； 最后收集、调试指标，评估每个模型在测试数据集上的运行情况，来确定要部署到生产中的模型。  上图极大的简化了真正的机器学习工作流程，在实际开发">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/kubeflow/1687940548-d357375147a8e97fce5ce2976b539254.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubeflow/1687940548-152b208351c44eb5e8cbb3fb2b73be94.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubeflow/1687940548-dd0b5a9edc01f6cd146372a2eed50520.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubeflow/1687940548-78b858570ca0291b6e7bbdba70fd5357.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubeflow/1687940548-7a0daccaba0bf26039d6cdeb6d0af832.png">
+<meta property="article:published_time" content="2023-08-27T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.401Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="kubeflow">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/kubeflow/1687940548-d357375147a8e97fce5ce2976b539254.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>02-kubeflow 简单测试 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="02-kubeflow 简单测试"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-08-28 00:00" pubdate>
+          2023年8月28日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          20 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">02-kubeflow 简单测试</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="1、背景"><a href="#1、背景" class="headerlink" title="1、背景"></a>1、背景</h1><p>当训练新的 ML 模型时，大多数据科学家和 ML 工程师会开发一些新的 Python 脚本或交互式 notebook，以进行数据提取和预处理，来构建用于训练模型的数据集；</p>
+<p>然后创建几个其他脚本或 notebook 来尝试不同类型的模型或机器学习框架；</p>
+<p>最后收集、调试指标，评估每个模型在测试数据集上的运行情况，来确定要部署到生产中的模型。</p>
+<p><img src="/img/kubeflow/1687940548-d357375147a8e97fce5ce2976b539254.png" srcset="/img/loading.gif" lazyload></p>
+<p>上图极大的简化了真正的机器学习工作流程，在实际开发过程中需要大量的人参与，但是除了最初开发该方法的工程师之外，其他人都无法轻易重复使用其中的内容。但是我们可以使用 KubeFlow Pipelines 来解决这些问题。</p>
+<p>与其将数据准备、模型训练、模型验证和模型部署视为特定模型中的单一代码库，不如将其视为一系列独立的模块化步骤，让每个步骤都专注于具体任务。下图是 KubeFlow Pipelines。</p>
+<p><img src="/img/kubeflow/1687940548-152b208351c44eb5e8cbb3fb2b73be94.png" srcset="/img/loading.gif" lazyload></p>
+<p>将机器学习工作流程建模为机器学习流水线有很多好处：</p>
+<ul>
+<li><strong>自动化</strong>：通过消除手动干预的需求，我们可以安排流水线按照需求重新训练模型，从而确保模型能够适应随时间变化的训练数据。</li>
+<li><strong>重复使用</strong>：由于流水线的步骤与流水线本身是分开的，所以我们可以轻松地在多个流水线中重复使用单个步骤。</li>
+<li><strong>重复性</strong>：任何数据科学家或工程师都可以通过手动工作流程重新运行流水线，这样就很清楚需要以什么顺序运行不同的脚本或 notebook。</li>
+<li><strong>环境解耦</strong>：通过保持机器学习流水线的步骤解耦，我们可以在不同类型的环境中运行不同的步骤。例如，某些数据准备步骤可能需要在大型计算机集群上运行，而模型部署步骤则可能在单个计算机上运行。</li>
+</ul>
+<h1 id="2、什么是-Kubeflow"><a href="#2、什么是-Kubeflow" class="headerlink" title="2、什么是 Kubeflow"></a>2、什么是 Kubeflow</h1><p><strong>Kubeflow 是一个基于 Kubernetes 的开源平台，旨在简化机器学习系统的开发和部署</strong>。Kubeflow 在官方文档中被称为 “<strong>Kubernetes 机器学习工具包</strong>”，它由几个组件（component）组成，这些组件跨越了机器学习开发生命周期的各个步骤，包括了 notebook developent environment、超参数调试、功能管理、模型服务以及 ML Pipelines。Kubeflow 中央仪表板如下图所示</p>
+<p><img src="/img/kubeflow/1687940548-dd0b5a9edc01f6cd146372a2eed50520.png" srcset="/img/loading.gif" lazyload></p>
+<h1 id="3、Kubeflow-Pipelines"><a href="#3、Kubeflow-Pipelines" class="headerlink" title="3、Kubeflow Pipelines"></a>3、Kubeflow Pipelines</h1><p>Kubeflow 中的流水线由一个或多个组件（component）组成，它们代表流水线中的各个步骤。每个组件都在其自己的 Docker 容器中运行，这意味着流水线中的每个步骤都具有自己的一组依赖关系，与其他组件无关。</p>
+<p>我们需要：</p>
+<ul>
+<li>对于开发的每个组件，我们创建一个单独的 Docker 镜像，该镜像会接收输入、执行操作、输出。</li>
+<li>我们要有一个单独的 Python 脚本，<code>pipeline.py</code> 脚本会从每个 Docker 镜像创建 Pipelines 组件，然后使用这些组件构造流水线（Pipeline）。</li>
+</ul>
+<p>我们总共创建四个组件：</p>
+<ul>
+<li><strong>preprocess-data</strong>：该组件将从 <code>sklearn.datasets</code> 中加载 <code>Boston Housing</code> 数据集，然后将其拆分为训练集和测试集。</li>
+<li><strong>train-model</strong>：该组件将训练模型，以使用“Boston Housing”数据集来预测 Boston 房屋的中位数。</li>
+<li><strong>test-model</strong>：该组件会在测试数据集上计算并输出模型的均方误差。</li>
+<li><strong>deploy-model</strong>：在本文中，我们不会专注于模型的部署和服务，因此该组件将仅记录一条消息，指出它正在部署模型。实际情况下，这可能是将任何模型部署到 QA 或生产环境的通用组件。</li>
+</ul>
+<p><img src="/img/kubeflow/1687940548-78b858570ca0291b6e7bbdba70fd5357.png" srcset="/img/loading.gif" lazyload></p>
+<h1 id="4、环境"><a href="#4、环境" class="headerlink" title="4、环境"></a>4、环境</h1><p>我们可以在任何安装了 Kubeflow 的 Kubernetes 集群上运行示例代码。本地唯一需要的依赖是 <code>Kubeflow Pipelines SDK</code>，使用 pip 安装：<code>pip install kfp</code>。</p>
+<h1 id="5、具体步骤"><a href="#5、具体步骤" class="headerlink" title="5、具体步骤"></a>5、具体步骤</h1><p>Kubeflow 示例共分以下几步。</p>
+<ol>
+<li>制作流水线中组件所使用的镜像。</li>
+<li>编写组件的脚本。</li>
+<li>使用流水线接口把组件的脚本组装起来。</li>
+</ol>
+<h2 id="5-1、制作docker-镜像"><a href="#5-1、制作docker-镜像" class="headerlink" title="5.1、制作docker 镜像"></a>5.1、制作docker 镜像</h2><h3 id="preprocess-data-镜像"><a href="#preprocess-data-镜像" class="headerlink" title="preprocess-data 镜像"></a>preprocess-data 镜像</h3><p>第一个是 preprocess-data 用到的镜像。</p>
+<p>首先创建一个 Python 脚本，脚本作用是用 <code>sklearn.datasets</code> 加载 <code>Boston Housing</code> 数据集，用 <code>Sci-kit Learn.train_test_split</code> 函数将此数据集分为训练集和测试集，然后用 <code>np.save</code> 将数据集保存到磁盘。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># preprocess.py</span><br><span class="hljs-keyword">import</span> numpy <span class="hljs-keyword">as</span> np<br><span class="hljs-keyword">from</span> sklearn <span class="hljs-keyword">import</span> datasets<br><span class="hljs-keyword">from</span> sklearn.model_selection <span class="hljs-keyword">import</span> train_test_split<br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">_preprocess_data</span><span class="hljs-params">()</span>:</span><br>    X, y = datasets.load_boston(return_X_y=<span class="hljs-literal">True</span>)<br>    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=<span class="hljs-number">0.33</span>)<br>    np.save(<span class="hljs-string">'x_train.npy'</span>, X_train)<br>    np.save(<span class="hljs-string">'x_test.npy'</span>, X_test)<br>    np.save(<span class="hljs-string">'y_train.npy'</span>, y_train)<br>    np.save(<span class="hljs-string">'y_test.npy'</span>, y_test)<br>    <br>    <br><span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">'__main__'</span>:<br>    print(<span class="hljs-string">'Preprocessing data...'</span>)<br>    _preprocess_data()<br></code></pre></td></tr></table></figure>
+
+<p>有了脚本之后，我们需要创建一个执行该脚本的 Docker 镜像，Dockerfile 如下：</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-keyword">FROM</span> python:<span class="hljs-number">3.7</span>-slim<br><span class="hljs-keyword">WORKDIR</span><span class="bash"> /app</span><br><span class="hljs-keyword">RUN</span><span class="bash"> pip install -U scikit-learn numpy</span><br><span class="hljs-keyword">COPY</span><span class="bash"> preprocess.py ./preprocess.py</span><br><span class="hljs-keyword">ENTRYPOINT</span><span class="bash"> [ <span class="hljs-string">"python"</span>, <span class="hljs-string">"preprocess.py"</span> ]</span><br></code></pre></td></tr></table></figure>
+
+<p>然后将镜像上传到 Kubernetes 集群可以访问的镜像仓库。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta">#</span><span class="bash"> 构建镜像</span><br>docker build -t lepeng/boston_pipeline_preprocess:v1  -f Dockerfile .<br><br><span class="hljs-meta">#</span><span class="bash"> 推送镜像到远程仓库</span><br>docker push lepeng/boston_pipeline_preprocess:v1<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="train-镜像"><a href="#train-镜像" class="headerlink" title="train 镜像"></a>train 镜像</h3><p>第二个是 train 用到的镜像。</p>
+<p>创建一个 Python 脚本，该脚本使用 Sci-kit Learn 来训练回归模型。这类似于 preprocess-data 的 Python 脚本，其中最大的区别是这里用 argparse 来接受训练数据的文件路径以作为命令行参数</p>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs pgsql"># train.py<br><span class="hljs-keyword">import</span> argparse<br><span class="hljs-keyword">import</span> joblib<br><span class="hljs-keyword">import</span> numpy <span class="hljs-keyword">as</span> np<br><span class="hljs-keyword">from</span> sklearn.linear_model <span class="hljs-keyword">import</span> SGDRegressor<br><br>def train_model(x_train, y_train):<br>    x_train_data = np.<span class="hljs-keyword">load</span>(x_train)<br>    y_train_data = np.<span class="hljs-keyword">load</span>(y_train)<br><br>    model = SGDRegressor(<span class="hljs-keyword">verbose</span>=<span class="hljs-number">1</span>)<br>    model.fit(x_train_data, y_train_data)<br>    <br>    joblib.dump(model, <span class="hljs-string">'model.pkl'</span>)<br><br><br><span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">'__main__'</span>:<br>    parser = argparse.ArgumentParser()<br>    <span class="hljs-keyword">parser</span>.add_argument(<span class="hljs-string">'--x_train'</span>)<br>    <span class="hljs-keyword">parser</span>.add_argument(<span class="hljs-string">'--y_train'</span>)<br>    args = <span class="hljs-keyword">parser</span>.parse_args()<br>    train_model(args.x_train, args.y_train)<br></code></pre></td></tr></table></figure>
+
+<p>创建执行该脚本的 Docker 镜像，Dockerfile 如下：</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-keyword">FROM</span> python:<span class="hljs-number">3.7</span>-slim<br><span class="hljs-keyword">WORKDIR</span><span class="bash"> /app</span><br><span class="hljs-keyword">RUN</span><span class="bash"> pip install -U scikit-learn numpy</span><br><span class="hljs-keyword">COPY</span><span class="bash"> train.py ./train.py</span><br><span class="hljs-keyword">ENTRYPOINT</span><span class="bash"> [ <span class="hljs-string">"python"</span>, <span class="hljs-string">"train.py"</span> ]</span><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">docker build -t lepeng/boston_pipeline_train:v1  -f Dockerfile .<br>docker push lepeng/boston_pipeline_train:v1<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="test-镜像"><a href="#test-镜像" class="headerlink" title="test 镜像"></a>test 镜像</h3><figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs reasonml">import argparse<br>import joblib<br>import numpy <span class="hljs-keyword">as</span> np<br>from sklearn.metrics import mean_squared_error<br><br>def test<span class="hljs-constructor">_model(<span class="hljs-params">x_test</span>, <span class="hljs-params">y_test</span>, <span class="hljs-params">model_path</span>)</span>:<br>    x_test_data = np.load(x_test)<br>    y_test_data = np.load(y_test)<br><br>    model = joblib.load(model_path)<br>    y_pred = model.predict(x_test_data)<br><br>    err = mean<span class="hljs-constructor">_squared_error(<span class="hljs-params">y_test_data</span>, <span class="hljs-params">y_pred</span>)</span><br>    <br>    <span class="hljs-keyword">with</span> <span class="hljs-keyword">open</span>('output.txt', <span class="hljs-character">'a'</span>) <span class="hljs-keyword">as</span> f:<br>        f.write(str(err))<br><br><br><span class="hljs-keyword">if</span> __name__<span class="hljs-operator"> == </span>'__main__':<br>    parser = argparse.<span class="hljs-constructor">ArgumentParser()</span><br>    parser.add<span class="hljs-constructor">_argument('--<span class="hljs-params">x_test</span>')</span><br>    parser.add<span class="hljs-constructor">_argument('--<span class="hljs-params">y_test</span>')</span><br>    parser.add<span class="hljs-constructor">_argument('--<span class="hljs-params">model</span>')</span><br>    args = parser.parse<span class="hljs-constructor">_args()</span><br>    test<span class="hljs-constructor">_model(<span class="hljs-params">args</span>.<span class="hljs-params">x_test</span>, <span class="hljs-params">args</span>.<span class="hljs-params">y_test</span>, <span class="hljs-params">args</span>.<span class="hljs-params">model</span>)</span><br></code></pre></td></tr></table></figure>
+
+<p>Dockerfile 如下：</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-keyword">FROM</span> python:<span class="hljs-number">3.7</span>-slim<br><span class="hljs-keyword">WORKDIR</span><span class="bash"> /app</span><br><span class="hljs-keyword">RUN</span><span class="bash"> pip install -U scikit-learn numpy</span><br><span class="hljs-keyword">COPY</span><span class="bash"> test.py ./test.py</span><br><span class="hljs-keyword">ENTRYPOINT</span><span class="bash"> [ <span class="hljs-string">"python"</span>, <span class="hljs-string">"test.py"</span> ]</span><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">docker build -t lepeng/boston_pipeline_test:v1  -f Dockerfile .<br>docker push lepeng/boston_pipeline_test:v1<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="deploy-model-镜像"><a href="#deploy-model-镜像" class="headerlink" title="deploy_model 镜像"></a>deploy_model 镜像</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># deploy_model.py</span><br><span class="hljs-keyword">import</span> argparse<br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">deploy_model</span><span class="hljs-params">(model_path)</span>:</span><br>    <span class="hljs-comment"># 改成你自己</span><br>    print(<span class="hljs-string">f'deploying model <span class="hljs-subst">&#123;model_path&#125;</span>...'</span>)<br><br><br><span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">'__main__'</span>:<br>    parser = argparse.ArgumentParser()<br>    parser.add_argument(<span class="hljs-string">'--model'</span>)<br>    args = parser.parse_args()<br>    deploy_model(args.model)<br></code></pre></td></tr></table></figure>
+
+<p>Dockerfile 如下：</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-keyword">FROM</span> python:<span class="hljs-number">3.7</span>-slim<br><span class="hljs-keyword">WORKDIR</span><span class="bash"> /app</span><br><span class="hljs-keyword">COPY</span><span class="bash"> deploy_model.py ./deploy_model.py</span><br><span class="hljs-keyword">ENTRYPOINT</span><span class="bash"> [ <span class="hljs-string">"python"</span>, <span class="hljs-string">"deploy_model.py"</span> ]</span><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">docker build -t lepeng/boston_pipeline_deploy_model:v1  -f Dockerfile .<br>docker push lepeng/boston_pipeline_deploy_model:v1<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="5-2、构建组件"><a href="#5-2、构建组件" class="headerlink" title="5.2、构建组件"></a>5.2、构建组件</h2><p>现在开始构建流水线所需的组件。每个组件都要定义为一个返回 ContainerOp 类型的对象（object）。preprocess-data 组件定义如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># pipeline.py</span><br><span class="hljs-keyword">import</span> kfp<br><span class="hljs-keyword">from</span> kfp <span class="hljs-keyword">import</span> dsl<br><br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">preprocess_op</span><span class="hljs-params">()</span>:</span><br>    <span class="hljs-keyword">return</span> dsl.ContainerOp(<br>        name=<span class="hljs-string">'Preprocess Data'</span>,<br>        image=<span class="hljs-string">'wintfru/boston_pipeline_preprocess:v1'</span>,  <span class="hljs-comment"># 上文 Dockerfile 定义的 Docker 镜像的名称</span><br>        arguments=[],<br>        file_outputs=&#123;  <span class="hljs-comment"># file_outputs 参数指定了 Python 脚本组件保存到磁盘的四个 .npy 文件的文件路径。通过将这四个文件指定为“File Output”，我们可以将它们用于流水线中的其他组件。</span><br>            <span class="hljs-string">'x_train'</span>: <span class="hljs-string">'/app/x_train.npy'</span>,<br>            <span class="hljs-string">'x_test'</span>: <span class="hljs-string">'/app/x_test.npy'</span>,<br>            <span class="hljs-string">'y_train'</span>: <span class="hljs-string">'/app/y_train.npy'</span>,<br>            <span class="hljs-string">'y_test'</span>: <span class="hljs-string">'/app/y_test.npy'</span>,<br>        &#125;<br>    )<br><br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">train_op</span><span class="hljs-params">(x_train, y_train)</span>:</span><br>    <span class="hljs-keyword">return</span> dsl.ContainerOp(<br>        name=<span class="hljs-string">'Train Model'</span>,<br>        image=<span class="hljs-string">'wintfru/boston_pipeline_train:v1'</span>,<br>        arguments=[    <span class="hljs-comment"># arguments 指定接受参数，x_train 和 y_train，其将作为命令行参数传递给容器并进行解析。</span><br>            <span class="hljs-string">'--x_train'</span>, x_train,<br>            <span class="hljs-string">'--y_train'</span>, y_train<br>        ],<br>        file_outputs=&#123;<br>            <span class="hljs-string">'model'</span>: <span class="hljs-string">'/app/model.pkl'</span><br>        &#125;<br>    )<br><br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_op</span><span class="hljs-params">(x_test, y_test, model)</span>:</span><br>    <span class="hljs-keyword">return</span> dsl.ContainerOp(<br>        name=<span class="hljs-string">'Test Model'</span>,<br>        image=<span class="hljs-string">'wintfru/boston_pipeline_test:v1'</span>,<br>        arguments=[<br>            <span class="hljs-string">'--x_test'</span>, x_test,<br>            <span class="hljs-string">'--y_test'</span>, y_test,<br>            <span class="hljs-string">'--model'</span>, model<br>        ],<br>        file_outputs=&#123;<br>            <span class="hljs-string">'mean_squared_error'</span>: <span class="hljs-string">'/app/output.txt'</span><br>        &#125;<br>    )<br><br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">deploy_model_op</span><span class="hljs-params">(model)</span>:</span><br>    <span class="hljs-keyword">return</span> dsl.ContainerOp(<br>        name=<span class="hljs-string">'Deploy Model'</span>,<br>        image=<span class="hljs-string">'wintfru/boston_pipeline_deploy:v1'</span>,<br>        arguments=[<br>            <span class="hljs-string">'--model'</span>, model<br>        ]<br>    )<br></code></pre></td></tr></table></figure>
+
+<p><strong>注意</strong>：在组件中对文件路径进行硬编码不是一个很好的做法，就如上面的代码中那样，这要求创建组件定义的人员要了解有关组件实现的特定细节。这会让组件接受文件路径作为命令行参数更加干净，定义组件的人员也可以完全控制输出文件的位置。</p>
+<h2 id="5-3、定义流水线"><a href="#5-3、定义流水线" class="headerlink" title="5.3、定义流水线"></a>5.3、定义流水线</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># pipeline.py</span><br><span class="hljs-meta">@dsl.pipeline(</span><br>    name=<span class="hljs-string">'Boston Housing Pipeline'</span>,<br>    description=<span class="hljs-string">'An example pipeline that trains and logs a regression model.'</span><br>)<br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">boston_pipeline</span><span class="hljs-params">()</span>:</span><br>    _preprocess_op = preprocess_op()    <span class="hljs-comment"># 要访问 preprocess-data 组件的输出，可以使用 _preprocess_op.outputs['NAME_OF_OUTPUT']。</span><br><br>    _train_op = train_op(               <span class="hljs-comment"># 默认情况下，当我们从组件访问 file_outputs 时，我们获取的是文件内容而不是文件路径。在本文中，由于这些不是纯文本文件，因此我们不能仅将文件内容作为命令行参数传递到 Docker 容器组件中。要访问文件路径，我们需要使用 dsl.InputArgumentPath() 并传入组件输出。</span><br>        dsl.InputArgumentPath(_preprocess_op.outputs[<span class="hljs-string">'x_train'</span>]),<br>        dsl.InputArgumentPath(_preprocess_op.outputs[<span class="hljs-string">'y_train'</span>])<br>    ).after(_preprocess_op)<br><br>    _test_op = test_op(<br>        dsl.InputArgumentPath(_preprocess_op.outputs[<span class="hljs-string">'x_test'</span>]),<br>        dsl.InputArgumentPath(_preprocess_op.outputs[<span class="hljs-string">'y_test'</span>]),<br>        dsl.InputArgumentPath(_train_op.outputs[<span class="hljs-string">'model'</span>])<br>    ).after(_train_op)<br><br>    deploy_model_op(<br>        dsl.InputArgumentPath(_train_op.outputs[<span class="hljs-string">'model'</span>])<br>    ).after(_test_op)<br><br><br><span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">'__main__'</span>:<br>    <span class="hljs-comment"># 提交运行pipelines有2种方法：</span><br>    <span class="hljs-comment">#   第一种：使用sdk提交pipelines至服务中心，直接可以在UI中查看pipelines实验运行进度。</span><br>    client = kfp.Client()<br>    client.create_run_from_pipeline_func(boston_pipeline, arguments=&#123;&#125;)<br>    <br>    <span class="hljs-comment">#   第二种：把脚本编译成 Kubernetes 的 yaml 文件，然后提交。打包成 yaml 有两种实现方式：</span><br>    <span class="hljs-comment">#       第一种是在命令行使用 dsl-compile --py pipeline.py --output pipeline.tar.gz 命令生成 yaml 文件并打包</span><br>    <span class="hljs-comment">#       第二种实现方式是使用 sdk 打包，打包命令如下：</span><br>    <span class="hljs-comment"># kfp.compiler.Compiler().compile(boston_pipeline, __file__ + '.yaml')</span><br>    <span class="hljs-comment">#   运行方式也许有两种：</span><br>    <span class="hljs-comment">#       第一种 通过 kubeflow 的 ui 界面上传 yaml 文件来执行任务。</span><br>    <span class="hljs-comment">#       第二种使用如下命令进行提交</span><br>    <span class="hljs-comment"># exp = client.get_experiment(experiment_name=pipeline_name)</span><br>    <span class="hljs-comment"># client.run_pipeline(exp.id, job_name, __file__ + '.yaml')</span><br></code></pre></td></tr></table></figure>
+
+<p>流水线由一个注解 <code>@dsl.pipeline</code> 修饰的 Python 函数定义。在函数内，我们可以像使用其他任何函数一样使用组件。为了运行流水线，我们创建一个 <code>kfp.Client</code> 对象，再调用 <code>create_run_from_pipeline_func</code> 函数，并传入定义流水线的函数。</p>
+<p>现在，如果我们执行 <code>pipeline.py</code> 并导航到 Kubeflow 中央仪表板中的“Pipelines UI”，我们可以看到流水线图中显示的所有四个组件。我们也可以查看每个组件的输入和输出结果以及控制台日志等。</p>
+<p><img src="/img/kubeflow/1687940548-7a0daccaba0bf26039d6cdeb6d0af832.png" srcset="/img/loading.gif" lazyload></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/kubeflow/" class="category-chain-item">kubeflow</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/kubeflow/" class="print-no-link">#kubeflow</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>02-kubeflow 简单测试</div>
+      <div>https://flepeng.github.io/044-云原生-04-kubeflow-02-kubeflow-简单测试/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年8月28日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/044-%E4%BA%91%E5%8E%9F%E7%94%9F-04-kubeflow-00-kubeflow-%E5%8F%82%E8%80%83%E7%BD%91%E5%9D%80/" title="00-kubeflow 参考网址">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">00-kubeflow 参考网址</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/044-%E4%BA%91%E5%8E%9F%E7%94%9F-04-kubeflow-01-kubeflow-%E4%BB%8B%E7%BB%8D/" title="01-kubeflow 介绍">
+                        <span class="hidden-mobile">01-kubeflow 介绍</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

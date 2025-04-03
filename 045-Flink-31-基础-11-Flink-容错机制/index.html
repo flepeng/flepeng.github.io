@@ -1,0 +1,1136 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Flink 官网主页地址：https:&#x2F;&#x2F;flink.apache.org  Flink 官方中文地址：https:&#x2F;&#x2F;nightlies.apache.org&#x2F;flink&#x2F;flink-docs-stable&#x2F;zh&#x2F;  1、容错机制在 Flink 中，有一套完整的容错机制来保证故障后的恢复，其中最重要的就是检查点。 1.1、检查点（CheckPoint）在流处理中，我们可以用存档读档的思路，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="11-Flink 容错机制">
+<meta property="og:url" content="https://flepeng.github.io/045-Flink-31-%E5%9F%BA%E7%A1%80-11-Flink-%E5%AE%B9%E9%94%99%E6%9C%BA%E5%88%B6/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="Flink 官网主页地址：https:&#x2F;&#x2F;flink.apache.org  Flink 官方中文地址：https:&#x2F;&#x2F;nightlies.apache.org&#x2F;flink&#x2F;flink-docs-stable&#x2F;zh&#x2F;  1、容错机制在 Flink 中，有一套完整的容错机制来保证故障后的恢复，其中最重要的就是检查点。 1.1、检查点（CheckPoint）在流处理中，我们可以用存档读档的思路，">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/Snipaste_2023-06-14_09-30-07.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/Snipaste_2023-06-14_09-36-35.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/Snipaste_2023-06-14_09-43-51.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/Snipaste_2023-06-14_09-47-00.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/Snipaste_2023-06-14_09-48-40.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/Snipaste_2023-06-14_09-50-20.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/Snipaste_2023-06-14_09-39-35.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/Snipaste_2023-06-14_09-56-35.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/Snipaste_2023-06-14_10-00-26.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/Snipaste_2023-06-14_10-02-30.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/Snipaste_2023-06-14_10-06-01.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/Snipaste_2023-06-14_10-08-31.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/Snipaste_2023-06-14_10-06-01.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/Snipaste_2023-06-14_10-19-43.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/Snipaste_2023-06-14_10-22-11.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/Snipaste_2023-06-14_10-22-12.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/Snipaste_2023-06-14_10-22-13.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/Snipaste_2023-06-14_10-22-14.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/Snipaste_2023-06-14_10-37-50.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/Snipaste_2023-06-14_10-48-33.png">
+<meta property="article:published_time" content="2021-03-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.404Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Flink">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/flink/00/Snipaste_2023-06-14_09-30-07.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>11-Flink 容错机制 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="11-Flink 容错机制"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-03-08 00:00" pubdate>
+          2021年3月8日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          12k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          104 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">11-Flink 容错机制</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <blockquote>
+<p>  Flink 官网主页地址：<a href="https://flink.apache.org/" target="_blank" rel="noopener">https://flink.apache.org</a><br>  Flink 官方中文地址：<a href="https://nightlies.apache.org/flink/flink-docs-stable/zh/" target="_blank" rel="noopener">https://nightlies.apache.org/flink/flink-docs-stable/zh/</a></p>
+</blockquote>
+<h2 id="1、容错机制"><a href="#1、容错机制" class="headerlink" title="1、容错机制"></a>1、容错机制</h2><p>在 Flink 中，有一套完整的容错机制来保证故障后的恢复，其中最重要的就是检查点。</p>
+<h3 id="1-1、检查点（CheckPoint）"><a href="#1-1、检查点（CheckPoint）" class="headerlink" title="1.1、检查点（CheckPoint）"></a>1.1、检查点（CheckPoint）</h3><p>在流处理中，我们可以用存档读档的思路，就是将之前某个时间点所有的状态保存下来，这份“存档”就是所谓的“检查点”（checkpoint）。</p>
+<p><img src="/img/flink/00/Snipaste_2023-06-14_09-30-07.png" srcset="/img/loading.gif" lazyload></p>
+<p>遇到故障重启的时候，我们可以从检查点中“读档”，恢复出之前的状态，这样就可以回到当时保存的一刻接着处理数据了。</p>
+<p>这里所谓的“检查”，其实是针对故障恢复的结果而言的：故障恢复之后继续处理的结果，应该与发生故障前完全一致，我们需要“检查”结果的正确性。所以，有时又会把checkpoint叫做“一致性检查点”。</p>
+<h4 id="1-1-1、检查点的保存"><a href="#1-1-1、检查点的保存" class="headerlink" title="1.1.1、检查点的保存"></a>1.1.1、检查点的保存</h4><ol>
+<li><p>周期性的触发保存  </p>
+<p>“随时存档”确实恢复起来方便，可是需要我们不停地做存档操作。如果每处理一条数据就进行检查点的保存，当大量数据同时到来时，就会耗费很多资源来频繁做检查点，数据处理的速度就会受到影响。所以在 Flink 中，检查点的保存是周期性触发的，间隔时间可以进行设置。</p>
+</li>
+<li><p>保存的时间点  </p>
+<p>我们应该在所有任务（算子）都恰好处理完一个相同的输入数据的时候，将它们的状态保存下来。</p>
+<p>这样做可以实现一个数据被所有任务（算子）完整地处理完，状态得到了保存。</p>
+<p>如果出现故障，我们恢复到之前保存的状态，故障时正在处理的所有数据都需要重新处理；我们只需要让源（source）任务向数据源重新提交偏移量、请求重放数据就可以了。当然这需要源任务可以把偏移量作为算子状态保存下来，而且外部数据源能够重置偏移量；Kafka 就是满足这些要求的一个最好的例子。</p>
+</li>
+<li><p>保存的具体流程  </p>
+<p>检查点的保存，最关键的就是要等所有任务将“同一个数据”处理完毕。下面我们通过一个具体的例子，来详细描述一下检查点具体的保存过程。</p>
+<p>回忆一下我们最初实现的统计词频的程序——word count。这里为了方便，我们直接从数据源读入已经分开的一个个单词，例如这里输入的是：“hello”，“world”，“hello”，“flink”，“hello”，“world”，“hello”，“flink”…  </p>
+<p>我们所需要的就是每个任务都处理完“hello”之后保存自己的状态。</p>
+<p><img src="/img/flink/00/Snipaste_2023-06-14_09-36-35.png" srcset="/img/loading.gif" lazyload></p>
+</li>
+</ol>
+<h4 id="1-1-2、从检查点恢复状态"><a href="#1-1-2、从检查点恢复状态" class="headerlink" title="1.1.2、从检查点恢复状态"></a>1.1.2、从检查点恢复状态</h4><ol>
+<li><p>处理数据过程发生故障</p>
+<p>当发生故障时，就需要找到最近一次成功保存的检查点来恢复状态。<br>例如在前面的 word count 示例中，我们处理完三个数据后保存了一个检查点。之后继续运行，又正常处理了一个数据“flink”，在处理第五个数据“hello”时发生了故障。这里 Source 任务已经处理完毕，所以偏移量为 5；Map 任务也处理完成了。而 Sum 任务在处理中发生了故障，此时状态并未保存。</p>
+<p><img src="/img/flink/00/Snipaste_2023-06-14_09-43-51.png" srcset="/img/loading.gif" lazyload></p>
+</li>
+<li><p>重启应用 -&gt; 读取检查点，重置状态</p>
+<p>接下来就需要从检查点来恢复状态了。具体的步骤为：</p>
+<ol>
+<li>重启应用。遇到故障之后，第一步当然就是重启。我们将应用重新启动后，所有任务的状态会清空。</li>
+<li>读取检查点，重置状态。找到最近一次保存的检查点，从中读出每个算子任务状态的快照，分别填充到对应的状态中。这样，Flink 内部所有任务的状态，就恢复到了保存检查点的那一时刻，也就是刚好处理完第三个数据的时候。<br><img src="/img/flink/00/Snipaste_2023-06-14_09-47-00.png" srcset="/img/loading.gif" lazyload></li>
+</ol>
+</li>
+<li><p>重置偏移量</p>
+<p>从检查点恢复状态后还有一个问题：如果直接继续处理数据，那么保存检查点之后、到发生故障这段时间内的数据，也就是第 4、5 个数据（“flink”“hello”）就相当于丢掉了；这会造成计算结果的错误。<br>为了不丢数据，我们应该从保存检查点后开始重新读取数据，这可以通过 Source 任务向外部数据源重新提交偏移量（offset）来实现。<br>这样，整个系统的状态已经完全回退到了检查点保存完成的那一时刻。<br><img src="/img/flink/00/Snipaste_2023-06-14_09-48-40.png" srcset="/img/loading.gif" lazyload></p>
+</li>
+<li><p>继续处理数据</p>
+<p>接下来，我们就可以正常处理数据了。首先是重放第4、5个数据，然后继续读取后面的数据。<br>当处理到第5个数据时，就已经追上了发生故障时的系统状态。之后继续处理，就好像没有发生过故障一样；我们既没有丢掉数据、也没有重复计算数据，这就保证了计算结果的正确性。在分布式系统中，这叫做实现了“精确一次”（exactly-once）的状态一致性保证。<br><img src="/img/flink/00/Snipaste_2023-06-14_09-50-20.png" srcset="/img/loading.gif" lazyload></p>
+</li>
+</ol>
+<h4 id="1-1-3、检查点算法"><a href="#1-1-3、检查点算法" class="headerlink" title="1.1.3、检查点算法"></a>1.1.3、检查点算法</h4><p>在 Flink 中，采用了基于 Chandy-Lamport 算法的分布式快照，可以在不暂停整体流处理的前提下，将状态备份保存到检查点。</p>
+<h5 id="1-1-3-1、检查点分界线（barrier）"><a href="#1-1-3-1、检查点分界线（barrier）" class="headerlink" title="1.1.3.1、检查点分界线（barrier）"></a>1.1.3.1、检查点分界线（barrier）</h5><p>借鉴水位线的设计，在数据流中插入一个特殊的数据结构，专门用来表示触发检查点保存的时间点。收到保存检查点的指令后，Source 任务可以在当前数据流中插入这个结构；之后的所有任务只要遇到它就开始对状态做持久化快照保存。由于数据流是保持顺序依次处理的，因此遇到这个标识就代表之前的数据都处理完了，可以保存一个检查点；而在它之后的数据，引起的状态改变就不会体现在这个检查点中，而需要保存到下一个检查点。</p>
+<p>这种特殊的数据形式，把一条流上的数据按照不同的检查点分隔开，所以就叫做检查点的“分界线”（Checkpoint Barrier）。</p>
+<p>在 JobManager 中有一个“检查点协调器”，专门用来协调处理检查点的相关工作。检查点协调器会定期向TaskManager 发出指令，要求保存检查点（带着检查点ID）；TaskManager 会让所有的 Source 任务把自己的偏移量（算子状态）保存起来，并将带有检查点 ID 的分界线插入到当前的数据流中，然后像正常的数据一样像下游传递；之后 Source 任务就可以继续读入新的数据了。</p>
+<p><img src="/img/flink/00/Snipaste_2023-06-14_09-39-35.png" srcset="/img/loading.gif" lazyload></p>
+<h5 id="1-1-3-2、分布式快照算法（Barrier-对齐的精准一次）"><a href="#1-1-3-2、分布式快照算法（Barrier-对齐的精准一次）" class="headerlink" title="1.1.3.2、分布式快照算法（Barrier 对齐的精准一次）"></a>1.1.3.2、分布式快照算法（Barrier 对齐的精准一次）</h5><p>watermark 指示的是“之前的数据全部到齐了”，而 barrier 指示的是“之前所有数据的状态更改保存入当前检查点”：它们都是一个“截止时间”的标志。所以在处理多个分区的传递时，也要以是否还会有数据到来作为一个判断标准。</p>
+<p>具体实现上，Flink 使用了 Chandy-Lamport 算法的一种变体，被称为“异步分界线快照”算法。算法的核心就是两个原则：</p>
+<ul>
+<li><p>当上游任务向多个并行下游任务发送 barrier 时，需要广播出去；</p>
+</li>
+<li><p>当多个上游任务向同一个下游任务传递分界线时，需要在下游任务执行“分界线对齐”操作，也就是需要等到所有并行分区的 barrier 都到齐，才可以开始状态的保存。</p>
+</li>
+</ul>
+<p><strong>检查点算法的并行场景</strong></p>
+<p>为了详细解释检查点算法的原理，我们对之前的word count程序进行扩展，考虑所有算子并行度为2的场景。</p>
+<p>我们有两个并行的 Source 任务，会分别读取两个数据流（或者是一个源的不同分区）。这里每条流中的数据都是一个个的单词：第一条流数据是“hello”“hello”“hello”“flink” “hello”，第二条流是交替出现。此时第一条流的 Source 任务（为了方便，下文中我们直接叫它“Source 1”，其它任务类似）读取了3个数据，偏移量为3；而第二条流的Source任务（Source 2）只读取了一个“hello”数据，偏移量为1。</p>
+<p><img src="/img/flink/00/Snipaste_2023-06-14_09-56-35.png" srcset="/img/loading.gif" lazyload></p>
+<ol>
+<li><p>触发检查点。JobManager 向 Source 发送 Barrier  </p>
+<p>JobManager 发送指令，触发检查点的保存；Source 任务中插入一个分界线，并将偏移量保存到远程的持久化存储中。</p>
+<p><img src="/img/flink/00/Snipaste_2023-06-14_10-00-26.png" srcset="/img/loading.gif" lazyload></p>
+<p>说明：并行的 Source 任务保存的状态为 3 和 1，表示当前的 1 号检查点应该包含：第一条流中截至第三个数据、第二条流中截至第一个数据的所有状态更改。可以发现 Source 任务做这些的时候并不影响后面任务的处理，Sum 任务已经处理完了第一条流中传来的<code>（world, 1）</code>，对应的状态也有了更改。</p>
+</li>
+<li><p>Barrier 向下游广播发送。状态快照保存完成，分界线向下游传递</p>
+<p>状态存入持久化存储之后，会返回通知给 Source 任务；Source 任务就会向 JobManager 确认检查点完成，然后跟数据一样把分界线向下游任务传递。</p>
+<p><img src="/img/flink/00/Snipaste_2023-06-14_10-02-30.png" srcset="/img/loading.gif" lazyload></p>
+<p>说明：由于 Source 和 Map 之间是一对一（forward）的传输关系（这里没有考虑算子链），所以 barrier可以直接传递给对应的 Map 任务。之后 Source 任务就可以继续读取新的数据了。与此同时，Sum 1 已经将第二条流传来的 <code>（hello，1）</code> 处理完毕，更新了状态。</p>
+</li>
+<li><p>Barrier 对齐。向下游多个并行子任务广播分界线，执行分界线对齐。下游需要收到上游所有并行度传递过来的 Barrier 才做自身状态的保存；</p>
+<p>Map 任务没有状态，所以直接将 barrier 继续向下游传递。这时由于进行了 keyBy 分区，所以需要将barrier 广播到下游并行的两个 Sum 任务。同时，Sum 任务可能收到来自上游两个并行 Map 任务的barrier，所以需要执行“分界线对齐”操作。</p>
+<p><img src="/img/flink/00/Snipaste_2023-06-14_10-06-01.png" srcset="/img/loading.gif" lazyload></p>
+<p>此时的 Sum 2 收到了来自上游两个 Map 任务的barrier，说明第一条流第三个数据、第二条流第一个数据都已经处理完，可以进行状态的保存了；</p>
+<p>而 Sum 1 只收到了来自 Map 2的 barrier，所以这时需要等待分界线对齐。在等待的过程中，如果分界线尚未到达的分区任务 Map 1 又传来了数据（hello, 1），说明这是需要保存到检查点的，Sum 任务应该正常继续处理数据，状态更新为 3；而如果分界线已经到达的分区任务 Map 2 又传来数据，这已经是下一个检查点要保存的内容了，就不应立即处理，而是要缓存起来等到状态保存之后再做处理。</p>
+</li>
+<li><p>状态保存：有状态的算子将状态保存至持久化。分界线对齐后，保存状态到持久化存储</p>
+<p>各个分区的分界线都对齐后，就可以对当前状态做快照，保存到持久化存储了。存储完成之后，同样将 barrier 向下游继续传递，并通知 JobManager 保存完毕。</p>
+<p><img src="/img/flink/00/Snipaste_2023-06-14_10-08-31.png" srcset="/img/loading.gif" lazyload></p>
+<p>这个过程中，每个任务保存自己的状态都是相对独立的，互不影响。我们可以看到，当 Sum 将当前状态保存完毕时，Source 1 任务已经读取到第一条流的第五个数据了。</p>
+</li>
+<li><p>先处理缓存数据，然后正常继续处理  </p>
+<p>完成检查点保存之后，任务就可以继续正常处理数据了。这时如果有等待分界线对齐时缓存的数据，需要先做处理；然后再按照顺序依次处理新到的数据。当 JobManager 收到所有任务成功保存状态的信息，就可以确认当前检查点成功保存。之后遇到故障就可以从这里恢复了。</p>
+</li>
+</ol>
+<p>（补充）由于分界线对齐要求先到达的分区做缓存等待，一定程度上会影响处理的速度；当出现背压时，下游任务会堆积大量的缓冲数据，检查点可能需要很久才可以保存完毕。</p>
+<p>为了应对这种场景，Barrier 对齐中提供了至少一次语义以及 Flink 1.11 之后提供了不对齐的检查点保存方式，可以将未处理的缓冲数据也保存进检查点。这样，当我们遇到一个分区 barrier 时就不需等待对齐，而是可以直接启动状态的保存了。</p>
+<h5 id="1-1-3-3、分布式快照算法（Barrier-对齐的至少一次）"><a href="#1-1-3-3、分布式快照算法（Barrier-对齐的至少一次）" class="headerlink" title="1.1.3.3、分布式快照算法（Barrier 对齐的至少一次）"></a>1.1.3.3、分布式快照算法（Barrier 对齐的至少一次）</h5><p>至少一次和精准一次整体流程相同，只有一个地方不同，即：</p>
+<ol>
+<li><p>触发检查点。JobManager 向 Source 发送 Barrier（同上）  </p>
+</li>
+<li><p>Barrier 向下游广播发送。状态快照保存完成，分界线向下游传递（同上）</p>
+</li>
+<li><p>Barrier 对齐。向下游多个并行子任务广播分界线，执行分界线对齐。下游需要收到上游所有并行度传递过来的 Barrier 才做自身状态的保存；</p>
+<p>Map 任务没有状态，所以直接将 barrier 继续向下游传递。这时由于进行了 keyBy 分区，所以需要将 barrier 广播到下游并行的两个 Sum 任务。同时，Sum 任务可能收到来自上游两个并行 Map 任务的 barrier，所以需要执行“分界线对齐”操作。</p>
+<p><img src="/img/flink/00/Snipaste_2023-06-14_10-06-01.png" srcset="/img/loading.gif" lazyload></p>
+<p>此时的 Sum 2 收到了来自上游两个 Map 任务的 barrier，说明第一条流第三个数据、第二条流第一个数据都已经处理完，可以进行状态的保存了；</p>
+<p>而 Sum 1 只收到了来自 Map 2 的 barrier，所以这时需要等待分界线对齐。而如果分界线已经到达的分区任务 Map 2 又传来数据，<strong>直接计算等到下一个Barrier 到达时做状态的保存。重新启动时介于两个 Barrier 之间分界线已经到达的分区任务 Map 2 传过来的数据会再次计算（至少一次）</strong>。</p>
+</li>
+<li><p>状态保存：有状态的算子将状态保存至持久化。分界线对齐后，保存状态到持久化存储（同上）</p>
+</li>
+<li><p>先处理缓存数据，然后正常继续处理（同上）</p>
+</li>
+</ol>
+<h5 id="1-1-3-4、分布式快照算法（非-Barrier-对齐的精准一次）"><a href="#1-1-3-4、分布式快照算法（非-Barrier-对齐的精准一次）" class="headerlink" title="1.1.3.4、分布式快照算法（非 Barrier 对齐的精准一次）"></a>1.1.3.4、分布式快照算法（非 Barrier 对齐的精准一次）</h5><p>非 Barrier 对齐和 Barrier 对齐整体流程相同，在对齐之后的流程才不同，故前面的流程可以参考 Barrier 对齐</p>
+<ol>
+<li>触发检查点。JobManager 向 Source 发送 Barrier（同上）  </li>
+<li>Barrier 向下游广播发送。状态快照保存完成，分界线向下游传递（同上）</li>
+<li>向下游多个并行子任务广播分界线，执行非 Barrier 对齐<br>Map 任务没有状态，所以直接将 barrier 继续向下游传递。这时由于进行了 keyBy 分区，所以需要将 barrier 广播到下游并行的两个 Sum 任务。同时，Sum 任务可能收到来自上游两个并行 Map 任务的 barrier，执行“非 Barrier 对齐”操作。<br><img src="/img/flink/00/Snipaste_2023-06-14_10-19-43.png" srcset="/img/loading.gif" lazyload><br>这里我们我只关注 Sum 1 的细节，Sum 1 在第一个 barrier 到达时就开始执行非对齐检查点。</li>
+<li>向下游多个并行子任务广播分界线，执行非 Barrier 对齐<br><img src="/img/flink/00/Snipaste_2023-06-14_10-22-11.png" srcset="/img/loading.gif" lazyload><br>   核心思想：只要 in-flight 的数据也存到状态里，barrier 就可以越过所有 in-flight 的数据继续往下游传递。<br>此时的 Sum 1 任务在第一个 Barrier 到达输入缓冲区时： <ol>
+<li>直接将 barrier 放到输出缓冲区末端，向下游传递。</li>
+<li>标记数据（图中标颜色部分）。一是被第一个 barrier 越过的输入缓冲区和输出缓冲区的数据。二是在其他 barrier 之前的所有数据</li>
+<li>把标记数据和状态一起保存到 checkpoint 中，从 checkpoint 恢复时这些数据也会一起恢复到对应位置。</li>
+</ol>
+</li>
+</ol>
+<h4 id="1-1-4、检查点配置"><a href="#1-1-4、检查点配置" class="headerlink" title="1.1.4、检查点配置"></a>1.1.4、检查点配置</h4><p>检查点的作用是为了故障恢复，我们不能因为保存检查点占据了大量时间、导致数据处理性能明显降低。为了兼顾容错性和处理性能，我们可以在代码中对检查点进行各种配置。</p>
+<h5 id="1-1-4-1、启用检查点"><a href="#1-1-4-1、启用检查点" class="headerlink" title="1.1.4.1、启用检查点"></a>1.1.4.1、启用检查点</h5><p>默认情况下，Flink 程序是禁用检查点的。如果想要为 Flink 应用开启自动保存快照的功能，需要在代码中显式地调用执行环境的 <code>.enableCheckpointing()</code> 方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs java">StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();<br><br><span class="hljs-comment">// 每隔1秒启动一次检查点保存</span><br>env.enableCheckpointing(<span class="hljs-number">1000</span>);<br></code></pre></td></tr></table></figure>
+
+<p>这里需要传入一个长整型的毫秒数，表示周期性保存检查点的间隔时间。如果不传参数直接启用检查点，默认的间隔周期为 500 毫秒，这种方式已经被弃用。</p>
+<p>检查点的间隔时间是对处理性能和故障恢复速度的一个权衡。如果我们希望对性能的影响更小，可以调大间隔时间；而如果希望故障重启后迅速赶上实时的数据处理，就需要将间隔时间设小一些。</p>
+<h5 id="1-1-4-2、检查点储存"><a href="#1-1-4-2、检查点储存" class="headerlink" title="1.1.4.2、检查点储存"></a>1.1.4.2、检查点储存</h5><p>检查点具体的持久化存储位置，取决于“检查点存储”的设置。默认情况下，检查点存储在 JobManager 的堆内存中。而对于大状态的持久化保存，Flink也提供了在其他存储位置进行保存的接口。</p>
+<p>具体可以通过调用检查点配置的 <code>.setCheckpointStorage()</code> 来配置，需要传入一个 CheckpointStorage 的实现类。Flink 主要提供了两种 CheckpointStorage：作业管理器的堆内存和文件系统。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">// 配置存储检查点到 JobManager 堆内存</span><br>env.getCheckpointConfig().setCheckpointStorage(<span class="hljs-keyword">new</span> JobManagerCheckpointStorage());<br><br><span class="hljs-comment">// 配置存储检查点到文件系统</span><br>env.getCheckpointConfig().setCheckpointStorage(<span class="hljs-keyword">new</span> FileSystemCheckpointStorage(<span class="hljs-string">"hdfs://namenode:40010/flink/checkpoints"</span>));<br></code></pre></td></tr></table></figure>
+
+
+<h5 id="1-1-4-3、其它高级配置"><a href="#1-1-4-3、其它高级配置" class="headerlink" title="1.1.4.3、其它高级配置"></a>1.1.4.3、其它高级配置</h5><p>检查点还有很多可以配置的选项，可以通过获取检查点配置（CheckpointConfig）来进行设置。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java">CheckpointConfig checkpointConfig = env.getCheckpointConfig();<br></code></pre></td></tr></table></figure>
+
+<p>1、常用高级配置</p>
+<ul>
+<li><p>检查点模式（CheckpointingMode）<br>设置检查点一致性的保证级别，有“精确一次”（exactly-once）和“至少一次”（at-least-once）两个选项。默认级别为 exactly-once，而对于大多数低延迟的流处理程序，at-least-once 就够用了，而且处理效率会更高。</p>
+</li>
+<li><p>超时时间（checkpointTimeout）<br>用于指定检查点保存的超时时间，超时没完成就会被丢弃掉。传入一个长整型毫秒数作为参数，表示超时时间。</p>
+</li>
+<li><p>最小间隔时间（minPauseBetweenCheckpoints）<br>用于指定在上一个检查点完成之后，检查点协调器最快等多久可以出发保存下一个检查点的指令。这就意味着即使已经达到了周期触发的时间点，只要距离上一个检查点完成的间隔不够，就依然不能开启下一次检查点的保存。这就为正常处理数据留下了充足的间隙。当指定这个参数时，实际并发为1。</p>
+</li>
+<li><p>最大并发检查点数量（maxConcurrentCheckpoints）<br>用于指定运行中的检查点最多可以有多少个。由于每个任务的处理进度不同，完全可能出现后面的任务还没完成前一个检查点的保存、前面任务已经开始保存下一个检查点了。这个参数就是限制同时进行的最大数量。</p>
+</li>
+<li><p>开启外部持久化存储（enableExternalizedCheckpoints）<br>用于开启检查点的外部持久化，而且默认在作业失败的时候不会自动清理，如果想释放空间需要自己手工清理。里面传入的参数 ExternalizedCheckpointCleanup 指定了当作业取消的时候外部的检查点该如何清理。</p>
+<p><code>DELETE_ON_CANCELLATION</code>：在作业取消的时候会自动删除外部检查点，但是如果是作业失败退出，则会保留检查点。<br><code>RETAIN_ON_CANCELLATION</code>：作业取消的时候也会保留外部检查点。</p>
+</li>
+<li><p>检查点连续失败次数（tolerableCheckpointFailureNumber）<br>用于指定检查点连续失败的次数，当达到这个次数，作业就失败退出。默认为0，这意味着不能容忍检查点失败，并且作业将在第一次报告检查点失败时失败。</p>
+</li>
+</ul>
+<p>2、开启非对齐检查点</p>
+<ul>
+<li><p>非对齐检查点（enableUnalignedCheckpoints）<br>不再执行检查点的分界线对齐操作，启用之后可以大大减少产生背压时的检查点保存时间。这个设置要求检查点模式（CheckpointingMode）必须为 exctly-once，并且最大并发的检查点个数为1。</p>
+</li>
+<li><p>对齐检查点超时时间（alignedCheckpointTimeout）<br>该参数只有在启用非对齐检查点的时候有效。参数默认是0，表示一开始就直接用非对齐检查点。如果设置大于0，一开始会使用对齐的检查点，当对齐时间超过该参数设定的时间，则会自动切换成非对齐检查点。</p>
+</li>
+</ul>
+<p>代码中具体设置如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">CheckpointConfigDemo</span> </span>&#123;<br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(String[] args)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>        StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(<span class="hljs-keyword">new</span> Configuration());<br>        env.setParallelism(<span class="hljs-number">1</span>);<br><br>        <span class="hljs-comment">// 代码中用到hdfs，需要导入hadoop依赖、指定访问hdfs的用户名</span><br>        System.setProperty(<span class="hljs-string">"HADOOP_USER_NAME"</span>, <span class="hljs-string">"atguigu"</span>);<br><br>        <span class="hljs-comment">// TODO 检查点配置</span><br>        <span class="hljs-comment">// 1、启用检查点: 默认是barrier对齐的，周期为5s, 精准一次</span><br>        env.enableCheckpointing(<span class="hljs-number">5000</span>, CheckpointingMode.EXACTLY_ONCE);<br>        CheckpointConfig checkpointConfig = env.getCheckpointConfig();<br>        <span class="hljs-comment">// 2、指定检查点的存储位置</span><br>        checkpointConfig.setCheckpointStorage(<span class="hljs-string">"hdfs://hadoop102:8020/chk"</span>);<br>        <span class="hljs-comment">// 3、checkpoint的超时时间: 默认10分钟</span><br>        checkpointConfig.setCheckpointTimeout(<span class="hljs-number">60000</span>);<br>        <span class="hljs-comment">// 4、同时运行中的checkpoint的最大数量</span><br>        checkpointConfig.setMaxConcurrentCheckpoints(<span class="hljs-number">1</span>);<br>        <span class="hljs-comment">// 5、最小等待间隔: 上一轮checkpoint结束 到 下一轮checkpoint开始 之间的间隔，设置了&gt;0,并发就会变成1</span><br>        checkpointConfig.setMinPauseBetweenCheckpoints(<span class="hljs-number">1000</span>);<br>        <span class="hljs-comment">// 6、取消作业时，checkpoint的数据 是否保留在外部系统</span><br>        <span class="hljs-comment">// DELETE_ON_CANCELLATION:主动cancel时，删除存在外部系统的chk-xx目录 （如果是程序突然挂掉，不会删）</span><br>        <span class="hljs-comment">// RETAIN_ON_CANCELLATION:主动cancel时，外部系统的chk-xx目录会保存下来</span><br>        checkpointConfig.setExternalizedCheckpointCleanup(CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION);<br>        <span class="hljs-comment">// 7、允许 checkpoint 连续失败的次数，默认0--》表示checkpoint一失败，job就挂掉</span><br>        checkpointConfig.setTolerableCheckpointFailureNumber(<span class="hljs-number">10</span>);<br><br>        <span class="hljs-comment">// TODO 开启 非对齐检查点（barrier非对齐）</span><br>        <span class="hljs-comment">// 开启的要求： Checkpoint模式必须是精准一次，最大并发必须设为1</span><br>        checkpointConfig.enableUnalignedCheckpoints();<br>        <span class="hljs-comment">// 开启非对齐检查点才生效： 默认0，表示一开始就直接用 非对齐的检查点</span><br>        <span class="hljs-comment">// 如果大于0， 一开始用 对齐的检查点（barrier对齐）， 对齐的时间超过这个参数，自动切换成 非对齐检查点（barrier非对齐）</span><br>        checkpointConfig.setAlignedCheckpointTimeout(Duration.ofSeconds(<span class="hljs-number">1</span>));<br><br><br>        env<br>                .socketTextStream(<span class="hljs-string">"hadoop102"</span>, <span class="hljs-number">7777</span>)<br>                .flatMap(<br>                        (String value, Collector&lt;Tuple2&lt;String, Integer&gt;&gt; out) -&gt; &#123;<br>                            String[] words = value.split(<span class="hljs-string">" "</span>);<br>                            <span class="hljs-keyword">for</span> (String word : words) &#123;<br>                                out.collect(Tuple2.of(word, <span class="hljs-number">1</span>));<br>                            &#125;<br>                        &#125;<br>                )<br>                .returns(Types.TUPLE(Types.STRING, Types.INT))<br>                .keyBy(value -&gt; value.f0)<br>                .sum(<span class="hljs-number">1</span>)<br>                .print();<br><br>        env.execute();<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h5 id="1-1-4-4、通用增量-checkpoint-changelog"><a href="#1-1-4-4、通用增量-checkpoint-changelog" class="headerlink" title="1.1.4.4、通用增量 checkpoint (changelog)"></a>1.1.4.4、通用增量 checkpoint (changelog)</h5><p>在 1.15 之前，只有 RocksDB 支持增量快照。不同于产生一个包含所有数据的全量备份，增量快照中只包含自上一次快照完成之后被修改的记录，因此可以显著减少快照完成的耗时。  </p>
+<p>Rocksdb 状态后端启用增量 checkpoint：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java">EmbeddedRocksDBStateBackend backend = <span class="hljs-keyword">new</span> EmbeddedRocksDBStateBackend(<span class="hljs-keyword">true</span>);<br></code></pre></td></tr></table></figure>
+
+<p>从 1.15 开始，不管 hashmap 还是 rocksdb 状态后端都可以通过开启 changelog 实现通用的增量 checkpoint。</p>
+<p>1、执行过程  </p>
+<ol>
+<li>带状态的算子任务将状态更改写入变更日志（记录状态）<br><img src="/img/flink/00/Snipaste_2023-06-14_10-22-12.png" srcset="/img/loading.gif" lazyload></li>
+<li>状态物化：状态表定期保存，独立于检查点<br><img src="/img/flink/00/Snipaste_2023-06-14_10-22-13.png" srcset="/img/loading.gif" lazyload></li>
+<li>状态物化完成后，状态变更日志就可以被截断到相应的点<br><img src="/img/flink/00/Snipaste_2023-06-14_10-22-14.png" srcset="/img/loading.gif" lazyload></li>
+</ol>
+<p>2、注意事项  </p>
+<p>（1）目前标记为实验性功能，开启后可能会造成资源消耗增大：</p>
+<ul>
+<li>HDFS上保存的文件数变多</li>
+<li>消耗更多的IO带宽用于上传变更日志</li>
+<li>更多的CPU用于序列化状态更改</li>
+<li>TaskManager使用更多内存来缓存状态更改</li>
+</ul>
+<p>（2）使用限制</p>
+<ul>
+<li>Checkpoint 的最大并发必须为1</li>
+<li>从 Flink 1.15 开始，只有文件系统的存储类型实现可用（memory测试阶段）</li>
+<li>不支持 NO_CLAIM 模式</li>
+</ul>
+<p>3、使用方式  </p>
+<p>（1）方式一：配置文件指定</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs java">state.backend.changelog.enabled: <span class="hljs-keyword">true</span><br>state.backend.changelog.storage: filesystem <br># 存储 changelog 数据<br>dstl.dfs.base-path: hdfs:<span class="hljs-comment">//hadoop102:8020/changelog </span><br>execution.checkpointing.max-concurrent-checkpoints: <span class="hljs-number">1</span><br>execution.savepoint-restore-mode: CLAIM<br></code></pre></td></tr></table></figure>
+
+<p>（2）方式二：在代码中设置  </p>
+<p>需要引入依赖：</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs java">&lt;dependency&gt;<br>    &lt;groupId&gt;org.apache.flink&lt;/groupId&gt;<br>    &lt;artifactId&gt;flink-statebackend-changelog&lt;/artifactId&gt;<br>    &lt;version&gt;$&#123;flink.version&#125;&lt;/version&gt;<br>    &lt;scope&gt;runtime&lt;/scope&gt;<br>&lt;/dependency&gt;<br></code></pre></td></tr></table></figure>
+
+<p>开启changelog:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java">env.enableChangelogStateBackend(<span class="hljs-keyword">true</span>);<br></code></pre></td></tr></table></figure>
+
+
+<h5 id="1-1-4-5、最终检查点"><a href="#1-1-4-5、最终检查点" class="headerlink" title="1.1.4.5、最终检查点"></a>1.1.4.5、最终检查点</h5><p>如果数据源是有界的，就可能出现部分 Task 已经处理完所有数据，变成 finished 状态，不继续工作。从 Flink 1.14 开始，这些 finished 状态的 Task，也可以继续执行检查点。自 1.15 起默认启用此功能，并且可以通过功能标志禁用它：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs java">Configuration config = <span class="hljs-keyword">new</span> Configuration();<br>config.set(ExecutionCheckpointingOptions.ENABLE_CHECKPOINTS_AFTER_TASKS_FINISH, <span class="hljs-keyword">false</span>);<br>StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment(config);<br></code></pre></td></tr></table></figure>
+
+
+<h4 id="1-1-5、保存点（Savepoint）"><a href="#1-1-5、保存点（Savepoint）" class="headerlink" title="1.1.5、保存点（Savepoint）"></a>1.1.5、保存点（Savepoint）</h4><p>除了检查点外，Flink 还提供了另一个非常独特的镜像保存功能——保存点（savepoint）。  </p>
+<p>从名称就可以看出，这也是一个存盘的备份，它的原理和算法与检查点完全相同，只是多了一些额外的元数据。</p>
+<h5 id="1-1-5-1、保存点的用途"><a href="#1-1-5-1、保存点的用途" class="headerlink" title="1.1.5.1、保存点的用途"></a>1.1.5.1、保存点的用途</h5><p>保存点与检查点最大的区别，就是触发的时机。检查点是由 Flink 自动管理的，定期创建，发生故障之后自动读取进行恢复，这是一个“自动存盘”的功能；而保存点不会自动创建，必须由用户明确地手动触发保存操作，所以就是“手动存盘”。  </p>
+<p>保存点可以当作一个强大的运维工具来使用。我们可以在需要的时候创建一个保存点，然后停止应用，做一些处理调整之后再从保存点重启。它适用的具体场景有：</p>
+<ul>
+<li>版本管理和归档存储</li>
+<li>更新 Flink 版本</li>
+<li>更新应用程序</li>
+<li>调整并行度</li>
+<li>暂停应用程序<br>需要注意的是，保存点能够在程序更改的时候依然兼容，前提是状态的拓扑结构和数据类型不变。我们知道保存点中状态都是以算子ID-状态名称这样的key-value组织起来的，算子ID可以在代码中直接调用SingleOutputStreamOperator 的 <code>.uid()</code> 方法来进行指定：</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs java">DataStream&lt;String&gt; stream = env<br>    .addSource(<span class="hljs-keyword">new</span> StatefulSource()).uid(<span class="hljs-string">"source-id"</span>)<br>    .map(<span class="hljs-keyword">new</span> StatefulMapper()).uid(<span class="hljs-string">"mapper-id"</span>)<br>    .print();<br></code></pre></td></tr></table></figure>
+
+<p>对于没有设置 ID 的算子，Flink 默认会自动进行设置，所以在重新启动应用后可能会导致 ID 不同而无法兼容以前的状态。所以为了方便后续的维护，强烈建议在程序中为每一个算子手动指定 ID。</p>
+<h5 id="1-1-5-2、使用保存点"><a href="#1-1-5-2、使用保存点" class="headerlink" title="1.1.5.2、使用保存点"></a>1.1.5.2、使用保存点</h5><p>保存点的使用非常简单，我们可以使用命令行工具来创建保存点，也可以从保存点恢复作业。</p>
+<p>（1）创建保存点<br>要在命令行中为运行的作业创建一个保存点镜像，只需要执行：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java">bin/flink savepoint :jobId [:targetDirectory]<br></code></pre></td></tr></table></figure>
+
+<p>这里 jobId 需要填充要做镜像保存的作业 ID，目标路径 targetDirectory 可选，表示保存点存储的路径。<br>对于保存点的默认路径，可以通过配置文件 <code>flink-conf.yaml</code> 中的 <code>state.savepoints.dir</code> 项来设定：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java">state.savepoints.dir: hdfs:<span class="hljs-comment">///flink/savepoints</span><br></code></pre></td></tr></table></figure>
+
+<p>当然对于单独的作业，我们也可以在程序代码中通过执行环境来设置：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java">env.setDefaultSavepointDir(<span class="hljs-string">"hdfs:///flink/savepoints"</span>);<br></code></pre></td></tr></table></figure>
+
+<p>由于创建保存点一般都是希望更改环境之后重启，所以创建之后往往紧接着就是停掉作业的操作。除了对运行的作业创建保存点，我们也可以在停掉一个作业时直接创建保存点：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java">bin/flink stop --savepointPath [:targetDirectory] :jobId<br></code></pre></td></tr></table></figure>
+
+<p>（2）从保存点重启应用<br>我们已经知道，提交启动一个 Flink 作业，使用的命令是 flink run；现在要从保存点重启一个应用，其实本质是一样的：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java">bin/flink run -s :savepointPath [:runArgs]<br></code></pre></td></tr></table></figure>
+
+<p>这里只要增加一个 <code>-s</code> 参数，指定保存点的路径就可以了，其它启动时的参数还是完全一样的，如果是基于yarn 的运行模式还需要加上 <code>-yid application-id</code>。使用 web UI 进行作业提交时，可以填入的参数除了入口类、并行度和运行参数，还有一个“Savepoint Path”，这就是从保存点启动应用的配置。</p>
+<h5 id="1-1-5-3、使用保存点切换状态后端"><a href="#1-1-5-3、使用保存点切换状态后端" class="headerlink" title="1.1.5.3、使用保存点切换状态后端"></a>1.1.5.3、使用保存点切换状态后端</h5><p>使用 savepoint 恢复状态的时候，也可以更换状态后端。但是有一点需要注意的是，不要在代码中指定状态后端了，通过配置文件来配置或者 <code>-D</code> 参数配置。</p>
+<p>打包时，服务器上有的就 provided，可能遇到依赖问题，报错：<code>javax.annotation.Nullable</code> 找不到，可以导入如下依赖：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-string">&lt;dependency&gt;</span><br>    <span class="hljs-string">&lt;groupId&gt;com.google.code.findbugs&lt;/groupId&gt;</span><br>    <span class="hljs-string">&lt;artifactId&gt;jsr305&lt;/artifactId&gt;</span><br>    <span class="hljs-string">&lt;version&gt;1.3.9&lt;/version&gt;</span><br><span class="hljs-string">&lt;/dependency&gt;</span><br></code></pre></td></tr></table></figure>
+
+<p>（1）提交Flink作业</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java">bin/flink run-application -d -t yarn-application -Dstate.backend=hashmap -c com.atguigu.checkpoint.SavepointDemo FlinkTutorial-<span class="hljs-number">1.0</span>-SNAPSHOT.jar<br></code></pre></td></tr></table></figure>
+
+<p>（2）停止flink作业时，触发保存点  </p>
+<p>方式一：stop优雅停止并触发保存点，要求source实现StoppableFunction接口</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java">bin/flink stop -p savepoint路径 job-id -yid application-id<br></code></pre></td></tr></table></figure>
+
+<p>方式二：cancel立即停止并触发保存点</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java">bin/flink cancel -s savepoint路径 job-id -yid application-id<br></code></pre></td></tr></table></figure>
+
+<p>案例中source是socket，不能用stop</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java">bin/flink cancel -s hdfs:<span class="hljs-comment">//hadoop102:8020/sp cffca338509ea04f38f03b4b77c8075c -yid application_1681871196375_0001</span><br></code></pre></td></tr></table></figure>
+
+<p>（3）从savepoint恢复作业，同时修改状态后端</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java">bin/flink run-application -d -t yarn-application -s hdfs:<span class="hljs-comment">//hadoop102:8020/sp/savepoint-267cc0-47a214b019d5 -Dstate.backend=rocksdb -c com.atguigu.checkpoint.SavepointDemo FlinkTutorial-1.0-SNAPSHOT.jar</span><br></code></pre></td></tr></table></figure>
+
+<p>（4）从保存下来的checkpoint恢复作业</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java">bin/flink run-application -d -t yarn-application -Dstate.backend=rocksdb -s hdfs:<span class="hljs-comment">//hadoop102:8020/chk/532f87ef4146b2a2968a1c137d33d4a6/chk-175 -c com.atguigu.checkpoint.SavepointDemo ./FlinkTutorial-1.0-SNAPSHOT.jar</span><br></code></pre></td></tr></table></figure>
+
+<p>如果停止作业时，忘了触发保存点也不用担心，现在版本的flink支持从保留在外部系统的checkpoint恢复作业，但是恢复时不支持切换状态后端。</p>
+<h3 id="1-2、状态一致性"><a href="#1-2、状态一致性" class="headerlink" title="1.2、状态一致性"></a>1.2、状态一致性</h3><h4 id="1-2-1、一致性的概念和级别"><a href="#1-2-1、一致性的概念和级别" class="headerlink" title="1.2.1、一致性的概念和级别"></a>1.2.1、一致性的概念和级别</h4><p>一致性其实就是结果的正确性，一般从数据丢失、数据重复来评估。</p>
+<p>流式计算本身就是一个一个来的，所以正常处理的过程中结果肯定是正确的；但在发生故障、需要恢复状态进行回滚时就需要更多的保障机制了。我们通过检查点的保存来保证状态恢复后结果的正确，所以主要讨论的就是“状态的一致性”。  </p>
+<p>一般说来，状态一致性有三种级别：</p>
+<ul>
+<li>最多一次（At-Most-Once）</li>
+<li>至少一次（At-Least-Once）</li>
+<li>精确一次（Exactly-Once）</li>
+</ul>
+<h4 id="1-2-2、端到端的状态一致性"><a href="#1-2-2、端到端的状态一致性" class="headerlink" title="1.2.2、端到端的状态一致性"></a>1.2.2、端到端的状态一致性</h4><p>我们已经知道检查点可以保证 Flink 内部状态的一致性，而且可以做到精确一次。那是不是说，只要开启了检查点，发生故障进行恢复，结果就不会有任何问题呢？  </p>
+<p>没那么简单。在实际应用中，一般要保证从用户的角度看来，最终消费的数据是正确的。而用户或者外部应用不会直接从 Flink 内部的状态读取数据，往往需要我们将处理结果写入外部存储中。这就要求我们不仅要考虑Flink 内部数据的处理转换，还涉及到从外部数据源读取，以及写入外部持久化系统，整个应用处理流程从头到尾都应该是正确的。  </p>
+<p>所以完整的流处理应用，应该包括了数据源、流处理器和外部存储系统三个部分。这个完整应用的一致性，就叫做“端到端（end-to-end）的状态一致性”，它取决于三个组件中最弱的那一环。一般来说，能否达到 at-least-once 一致性级别，主要看数据源能够重放数据；而能否达到 exactly-once 级别，流处理器内部、数据源、外部存储都要有相应的保证机制。</p>
+<h3 id="1-3、端到端精确一次（End-To-End-Exactly-Once）"><a href="#1-3、端到端精确一次（End-To-End-Exactly-Once）" class="headerlink" title="1.3、端到端精确一次（End-To-End Exactly-Once）"></a>1.3、端到端精确一次（End-To-End Exactly-Once）</h3><p>实际应用中，最难做到、也最希望做到的一致性语义，无疑就是端到端（end-to-end）的“精确一次”。我们知道，对于 Flink 内部来说，检查点机制可以保证故障恢复后数据不丢（在能够重放的前提下），并且只处理一次，所以已经可以做到 exactly-once 的一致性语义了。  </p>
+<p>所以端到端一致性的关键点，就在于输入的数据源端和输出的外部存储端。  </p>
+<p><img src="/img/flink/00/Snipaste_2023-06-14_10-37-50.png" srcset="/img/loading.gif" lazyload></p>
+<h4 id="1-3-1、输入端保证"><a href="#1-3-1、输入端保证" class="headerlink" title="1.3.1、输入端保证"></a>1.3.1、输入端保证</h4><p>输入端主要指的就是 Flink 读取的外部数据源。对于一些数据源来说，并不提供数据的缓冲或是持久化保存，数据被消费之后就彻底不存在了，例如 socket 文本流。对于这样的数据源，故障后我们即使通过检查点恢复之前的状态，可保存检查点之后到发生故障期间的数据已经不能重发了，这就会导致数据丢失。所以就只能保证 at-most-once 的一致性语义，相当于没有保证。  </p>
+<p>想要在故障恢复后不丢数据，外部数据源就必须拥有重放数据的能力。常见的做法就是对数据进行持久化保存，并且可以重设数据的读取位置。一个最经典的应用就是 Kafka。在 Flink 的 Source 任务中将数据读取的偏移量保存为状态，这样就可以在故障恢复时从检查点中读取出来，对数据源重置偏移量，重新获取数据。  </p>
+<p>数据源可重放数据，或者说可重置读取数据偏移量，加上 Flink 的 Source 算子将偏移量作为状态保存进检查点，就可以保证数据不丢。这是达到 at-least-once 一致性语义的基本要求，当然也是实现端到端 exactly-once 的基本要求。</p>
+<h4 id="1-3-2、输出端保证"><a href="#1-3-2、输出端保证" class="headerlink" title="1.3.2、输出端保证"></a>1.3.2、输出端保证</h4><p>有了 Flink 的检查点机制，以及可重放数据的外部数据源，我们已经能做到 at-least-once 了。但是想要实现 exactly-once 却有更大的困难：数据有可能重复写入外部系统。  </p>
+<p>因为检查点保存之后，继续到来的数据也会一一处理，任务的状态也会更新，最终通过 Sink 任务将计算结果输出到外部系统；只是状态改变还没有存到下一个检查点中。这时如果出现故障，这些数据都会重新来一遍，就计算了两次。我们知道对 Flink 内部状态来说，重复计算的动作是没有影响的，因为状态已经回滚，最终改变只会发生一次；但对于外部系统来说，已经写入的结果就是泼出去的水，已经无法收回了，再次执行写入就会把同一个数据写入两次。  </p>
+<p>所以这时，我们只保证了端到端的 at-least-once 语义。  </p>
+<p>为了实现端到端 exactly-once，我们还需要对外部存储系统、以及 Sink 连接器有额外的要求。能够保证 exactly-once 一致性的写入方式有两种：</p>
+<ul>
+<li>幂等写入</li>
+<li>事务写入</li>
+</ul>
+<p>我们需要外部存储系统对这两种写入方式的支持，而 Flink 也为提供了一些 Sink 连接器接口。接下来我们进行展开讲解。</p>
+<p>1、幂等写入  </p>
+<p>所谓“幂等”操作，就是说一个操作可以重复执行很多次，但只导致一次结果更改。也就是说，后面再重复执行就不会对结果起作用了。  </p>
+<p>这相当于说，我们并没有真正解决数据重复计算、写入的问题；而是说，重复写入也没关系，结果不会改变。所以这种方式主要的限制在于外部存储系统必须支持这样的幂等写入：比如 Redis 中键值存储，或者关系型数据库（如MySQL）中满足查询条件的更新操作。  </p>
+<p>需要注意，对于幂等写入，遇到故障进行恢复时，有可能会出现短暂的不一致。因为保存点完成之后到发生故障之间的数据，其实已经写入了一遍，回滚的时候并不能消除它们。如果有一个外部应用读取写入的数据，可能会看到奇怪的现象：短时间内，结果会突然“跳回”到之前的某个值，然后“重播”一段之前的数据。不过当数据的重放逐渐超过发生故障的点的时候，最终的结果还是一致的。</p>
+<p>2、事务写入  </p>
+<p>如果说幂等写入对应用场景限制太多，那么事务写入可以说是更一般化的保证一致性的方式。  </p>
+<p>输出端最大的问题，就是写入到外部系统的数据难以撤回。而利用事务就可以实现对已写入数据的撤回。  </p>
+<p>事务是应用程序中一系列严密的操作，所有操作必须成功完成，否则在每个操作中所作的所有更改都会被撤消。</p>
+<p>事务有四个基本特性：原子性、一致性、隔离性和持久性，这就是著名的ACID。  </p>
+<p>在 Flink 流处理的结果写入外部系统时，如果能够构建一个事务，让写入操作可以随着检查点来提交和回滚，那么自然就可以解决重复写入的问题了。所以事务写入的基本思想就是：用一个事务来进行数据向外部系统的写入，这个事务是与检查点绑定在一起的。当 Sink 任务遇到 barrier 时，开始保存状态的同时就开启一个事务，接下来所有数据的写入都在这个事务中；待到当前检查点保存完毕时，将事务提交，所有写入的数据就真正可用了。如果中间过程出现故障，状态会回退到上一个检查点，而当前事务没有正常关闭（因为当前检查点没有保存完），所以也会回滚，写入到外部的数据就被撤销了。  </p>
+<p>具体来说，又有两种实现方式：预写日志（WAL）和两阶段提交（2PC）</p>
+<p>（1）预写日志（write-ahead-log，WAL）<br>我们发现，事务提交是需要外部存储系统支持事务的，否则没有办法真正实现写入的回撤。那对于一般不支持事务的存储系统，能够实现事务写入呢？<br>预写日志（WAL）就是一种非常简单的方式。具体步骤是：  </p>
+<ol>
+<li>先把结果数据作为日志（log）状态保存起来  </li>
+<li>进行检查点保存时，也会将这些结果数据一并做持久化存储  </li>
+<li>在收到检查点完成的通知时，将所有结果一次性写入外部系统。  </li>
+<li>在成功写入所有数据后，在内部再次确认相应的检查点，将确认信息也进行持久化保存。这才代表着检查点的真正完成。</li>
+</ol>
+<p>我们会发现，这种方式类似于检查点完成时做一个批处理，一次性的写入会带来一些性能上的问题；而优点就是比较简单，由于数据提前在状态后端中做了缓存，所以无论什么外部存储系统，理论上都能用这种方式一批搞定。在 Flink 中 DataStream API 提供了一个模板类 GenericWriteAheadSink，用来实现这种事务型的写入方式。  </p>
+<p>需要注意的是，预写日志这种一批写入的方式，有可能会写入失败；所以在执行写入动作之后，必须等待发送成功的返回确认消息。在成功写入所有数据后，在内部再次确认相应的检查点，这才代表着检查点的真正完成。这里需要将确认信息也进行持久化保存，在故障恢复时，只有存在对应的确认信息，才能保证这批数据已经写入，可以恢复到对应的检查点位置。  </p>
+<p>但这种“再次确认”的方式，也会有一些缺陷。如果我们的检查点已经成功保存、数据也成功地一批写入到了外部系统，但是最终保存确认信息时出现了故障，Flink 最终还是会认为没有成功写入。于是发生故障时，不会使用这个检查点，而是需要回退到上一个；这样就会导致这批数据的重复写入。</p>
+<p>（2）两阶段提交（two-phase-commit，2PC）  </p>
+<p>前面提到的各种实现 exactly-once 的方式，多少都有点缺陷；而更好的方法就是传说中的两阶段提交（2PC）。<br>顾名思义，它的想法是分成两个阶段：先做“预提交”，等检查点完成之后再正式提交。这种提交方式是真正基于事务的，它需要外部系统提供事务支持。  </p>
+<p>具体的实现步骤为：  </p>
+<ol>
+<li>当第一条数据到来时，或者收到检查点的分界线时，Sink 任务都会启动一个事务。  </li>
+<li>接下来接收到的所有数据，都通过这个事务写入外部系统；这时由于事务没有提交，所以数据尽管写入了外部系统，但是不可用，是“预提交”的状态。  </li>
+<li>当 Sink 任务收到 JobManager 发来检查点完成的通知时，正式提交事务，写入的结果就真正可用了。</li>
+</ol>
+<p>当中间发生故障时，当前未提交的事务就会回滚，于是所有写入外部系统的数据也就实现了撤回。这种两阶段提交（2PC）的方式充分利用了 Flink 现有的检查点机制：分界线的到来，就标志着开始一个新事务；而收到来自 JobManager 的 checkpoint 成功的消息，就是提交事务的指令。每个结果数据的写入，依然是流式的，不再有预写日志时批处理的性能问题；最终提交时，也只需要额外发送一个确认信息。所以 2PC 协议不仅真正意义上实现了 exactly-once，而且通过搭载 Flink 的检查点机制来实现事务，只给系统增加了很少的开销。  </p>
+<p>Flink提供了 TwoPhaseCommitSinkFunction 接口，方便我们自定义实现两阶段提交的 SinkFunction 的实现，提供了真正端到端的 exactly-once 保证。新的 Sink 架构，使用的是 TwoPhaseCommittingSink 接口。<br>不过两阶段提交虽然精巧，却对外部系统有很高的要求。这里将 2PC 对外部系统的要求列举如下：</p>
+<ul>
+<li>外部系统必须提供事务支持，或者 Sink 任务必须能够模拟外部系统上的事务。</li>
+<li>在检查点的间隔期间里，必须能够开启一个事务并接受数据写入。</li>
+<li>在收到检查点完成的通知之前，事务必须是“等待提交”的状态。在故障恢复的情况下，这可能需要一些时间。如果这个时候外部系统关闭事务（例如超时了），那么未提交的数据就会丢失。</li>
+<li>Sink 任务必须能够在进程失败后恢复事务。</li>
+<li>提交事务必须是幂等操作。也就是说，事务的重复提交应该是无效的。</li>
+</ul>
+<p>可见，2PC 在实际应用同样会受到比较大的限制。具体在项目中的选型，最终还应该是一致性级别和处理性能的权衡考量。</p>
+<h4 id="1-3-3、Flink-和-Kafka-连接时的精确一次保证"><a href="#1-3-3、Flink-和-Kafka-连接时的精确一次保证" class="headerlink" title="1.3.3、Flink 和 Kafka 连接时的精确一次保证"></a>1.3.3、Flink 和 Kafka 连接时的精确一次保证</h4><p>在流处理的应用中，最佳的数据源当然就是可重置偏移量的消息队列了；它不仅可以提供数据重放的功能，而且天生就是以流的方式存储和处理数据的。所以作为大数据工具中消息队列的代表，Kafka 可以说与 Flink 是天作之合，实际项目中也经常会看到以 Kafka 作为数据源和写入的外部系统的应用。在本小节中，我们就来具体讨论一下 Flink 和 Kafka 连接时，怎样保证端到端的 exactly-once 状态一致性。  </p>
+<p><img src="/img/flink/00/Snipaste_2023-06-14_10-48-33.png" srcset="/img/loading.gif" lazyload></p>
+<p>1、整体介绍  </p>
+<p>既然是端到端的exactly-once，我们依然可以从三个组件的角度来进行分析：  </p>
+<ol>
+<li>Flink内部。Flink内部可以通过检查点机制保证状态和处理结果的exactly-once语义。  </li>
+<li>输入端。输入数据源端的 Kafka 可以对数据进行持久化保存，并可以重置偏移量（offset）。所以我们可以在 Source 任务（FlinkKafkaConsumer）中将当前读取的偏移量保存为算子状态，写入到检查点中；当发生故障时，从检查点中读取恢复状态，并由连接器 FlinkKafkaConsumer 向 Kafka 重新提交偏移量，就可以重新消费数据、保证结果的一致性了。  </li>
+<li>输出端。输出端保证 exactly-once 的最佳实现，当然就是两阶段提交（2PC）。作为与 Flink 天生一对的Kafka，自然需要用最强有力的一致性保证来证明自己。也就是说，我们写入 Kafka 的过程实际上是一个两段式的提交：处理完毕得到结果，写入Kafka时是基于事务的“预提交”；等到检查点保存完毕，才会提交事务进行“正式提交”。如果中间出现故障，事务进行回滚，预提交就会被放弃；恢复状态之后，也只能恢复所有已经确认提交的操作。</li>
+</ol>
+<p>2、需要的配置</p>
+<p>在具体应用中，实现真正的端到端 exactly-once，还需要有一些额外的配置：  </p>
+<ol>
+<li>必须启用检查点  </li>
+<li>指定 KafkaSink 的发送级别为 <code>DeliveryGuarantee.EXACTLY_ONCE</code>  </li>
+<li>配置 Kafka 读取数据的消费者的隔离级别<br>这里所说的 Kafka，是写入的外部系统。预提交阶段数据已经写入，只是被标记为“未提交”（uncommitted），而 Kafka 中默认的隔离级别 <code>isolation.level</code> 是 <code>read_uncommitted</code>，也就是可以读取未提交的数据。这样一来，外部应用就可以直接消费未提交的数据，对于事务性的保证就失效了。所以应该将隔离级别配置为 <code>read_committed</code>，表示消费者遇到未提交的消息时，会停止从分区中消费数据，直到消息被标记为已提交才会再次恢复消费。当然，这样做的话，外部应用消费数据就会有显著的延迟。  </li>
+<li>事务超时配置。Flink 的 Kafka 连接器中配置的事务超时时间 <code>transaction.timeout.ms</code> 默认是 1 小时，而 Kafka 集群配置的事务最大超时时间 <code>transaction.max.timeout.ms</code> 默认是15分钟。所以在检查点保存时间很长时，有可能出现 Kafka 已经认为事务超时了，丢弃了预提交的数据；而 Sink 任务认为还可以继续等待。如果接下来检查点保存成功，发生故障后回滚到这个检查点的状态，这部分数据就被真正丢掉了。所以这两个超时时间，前者应该小于等于后者。</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">KafkaEOSDemo</span> </span>&#123;<br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(String[] args)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();<br>        <span class="hljs-comment">// 代码中用到hdfs，需要导入hadoop依赖、指定访问hdfs的用户名</span><br>        System.setProperty(<span class="hljs-string">"HADOOP_USER_NAME"</span>, <span class="hljs-string">"atguigu"</span>);<br>        <br>        <br>        <span class="hljs-comment">// TODO 1、启用检查点,设置为精准一次</span><br>        env.enableCheckpointing(<span class="hljs-number">5000</span>, CheckpointingMode.EXACTLY_ONCE);<br>        CheckpointConfig checkpointConfig = env.getCheckpointConfig();<br>        checkpointConfig.setCheckpointStorage(<span class="hljs-string">"hdfs://hadoop102:8020/chk"</span>);<br>        checkpointConfig.setExternalizedCheckpointCleanup(CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION);<br><br><br>        <span class="hljs-comment">// TODO 2.读取kafka</span><br>        KafkaSource&lt;String&gt; kafkaSource = KafkaSource.&lt;String&gt;builder()<br>                .setBootstrapServers(<span class="hljs-string">"hadoop102:9092,hadoop103:9092,hadoop104:9092"</span>)<br>                .setGroupId(<span class="hljs-string">"atguigu"</span>)<br>                .setTopics(<span class="hljs-string">"topic_1"</span>)<br>                .setValueOnlyDeserializer(<span class="hljs-keyword">new</span> SimpleStringSchema())<br>                .setStartingOffsets(OffsetsInitializer.latest())<br>                .build();<br><br>        DataStreamSource&lt;String&gt; kafkasource = env<br>                .fromSource(kafkaSource, WatermarkStrategy.forBoundedOutOfOrderness(Duration.ofSeconds(<span class="hljs-number">3</span>)), <span class="hljs-string">"kafkasource"</span>);<br>        <br><br>        <span class="hljs-comment">/**</span><br><span class="hljs-comment">         * TODO 3.写出到Kafka</span><br><span class="hljs-comment">         * 精准一次 写入Kafka，需要满足以下条件，缺一不可</span><br><span class="hljs-comment">         * 1、开启checkpoint</span><br><span class="hljs-comment">         * 2、sink设置保证级别为 精准一次</span><br><span class="hljs-comment">         * 3、sink设置事务前缀</span><br><span class="hljs-comment">         * 4、sink设置事务超时时间： checkpoint间隔 &lt;  事务超时时间  &lt; max的15分钟</span><br><span class="hljs-comment">         */</span><br>        KafkaSink&lt;String&gt; kafkaSink = KafkaSink.&lt;String&gt;builder()<br>                <span class="hljs-comment">// 指定 kafka 的地址和端口</span><br>                .setBootstrapServers(<span class="hljs-string">"hadoop102:9092,hadoop103:9092,hadoop104:9092"</span>)<br>                <span class="hljs-comment">// 指定序列化器：指定Topic名称、具体的序列化</span><br>                .setRecordSerializer(<br>                        KafkaRecordSerializationSchema.&lt;String&gt;builder()<br>                                .setTopic(<span class="hljs-string">"ws"</span>)<br>                                .setValueSerializationSchema(<span class="hljs-keyword">new</span> SimpleStringSchema())<br>                                .build()<br>                )<br>                <span class="hljs-comment">// TODO 3.1 精准一次,开启 2pc</span><br>                .setDeliveryGuarantee(DeliveryGuarantee.EXACTLY_ONCE)<br>                <span class="hljs-comment">// TODO 3.2 精准一次，必须设置 事务的前缀</span><br>                .setTransactionalIdPrefix(<span class="hljs-string">"atguigu-"</span>)<br>                <span class="hljs-comment">// TODO 3.3 精准一次，必须设置 事务超时时间: 大于checkpoint间隔，小于 max 15分钟</span><br>                .setProperty(ProducerConfig.TRANSACTION_TIMEOUT_CONFIG, <span class="hljs-number">10</span>*<span class="hljs-number">60</span>*<span class="hljs-number">1000</span>+<span class="hljs-string">""</span>)<br>                .build();<br><br><br>        kafkasource.sinkTo(kafkaSink);<br><br>        env.execute();<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>后续读取“ws”这个topic的消费者，要设置事务的隔离级别为“读已提交”，如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">KafkaEOSDemo2</span> </span>&#123;<br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(String[] args)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();<br><br>        <span class="hljs-comment">// 消费 在前面使用两阶段提交写入的Topic</span><br>        KafkaSource&lt;String&gt; kafkaSource = KafkaSource.&lt;String&gt;builder()<br>                .setBootstrapServers(<span class="hljs-string">"hadoop102:9092,hadoop103:9092,hadoop104:9092"</span>)<br>                .setGroupId(<span class="hljs-string">"atguigu"</span>)<br>                .setTopics(<span class="hljs-string">"ws"</span>)<br>                .setValueOnlyDeserializer(<span class="hljs-keyword">new</span> SimpleStringSchema())<br>                .setStartingOffsets(OffsetsInitializer.latest())<br>                <span class="hljs-comment">// TODO 作为 下游的消费者，要设置 事务的隔离级别 = 读已提交</span><br>                .setProperty(ConsumerConfig.ISOLATION_LEVEL_CONFIG, <span class="hljs-string">"read_committed"</span>)<br>                .build();<br><br><br>        env<br>                .fromSource(kafkaSource, WatermarkStrategy.forBoundedOutOfOrderness(Duration.ofSeconds(<span class="hljs-number">3</span>)), <span class="hljs-string">"kafkasource"</span>)<br>                .print();<br><br>        env.execute();<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Flink/" class="category-chain-item">Flink</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Flink/" class="print-no-link">#Flink</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>11-Flink 容错机制</div>
+      <div>https://flepeng.github.io/045-Flink-31-基础-11-Flink-容错机制/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年3月8日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/045-Flink-31-%E5%9F%BA%E7%A1%80-09-Flink-%E5%A4%84%E7%90%86%E5%87%BD%E6%95%B0%E4%B9%8B%E5%B9%BF%E6%92%AD%E6%B5%81-%E5%8A%A8%E6%80%81%E6%9B%B4%E6%96%B0%E9%98%88%E5%80%BC/" title="09-Flink 处理函数之广播流-动态更新阈值">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">09-Flink 处理函数之广播流-动态更新阈值</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/045-Flink-31-%E5%9F%BA%E7%A1%80-10-Flink-%E7%8A%B6%E6%80%81%E7%AE%A1%E7%90%86/" title="10-Flink 状态管理">
+                        <span class="hidden-mobile">10-Flink 状态管理</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

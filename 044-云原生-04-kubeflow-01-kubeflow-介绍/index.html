@@ -1,0 +1,978 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Kubeflow 组件较多，容易搞不清每个组件是干什么的，本文先对 Kubeflow 进行一个系统的概括，让大家明白各个组件分别的用处，并对组件间的关系进行理顺，帮助大家合理快速的选择自己需要的组件，随后会对每个组件的底层架构和流程分别进行详细的介绍和剖析，供大家针对性的进一步学习。 什么是 KubeflowKubeflow 在官方文档中被称为 Kubernetes 机器学习工具包 Kubeflo">
+<meta property="og:type" content="article">
+<meta property="og:title" content="01-kubeflow 介绍">
+<meta property="og:url" content="https://flepeng.github.io/044-%E4%BA%91%E5%8E%9F%E7%94%9F-04-kubeflow-01-kubeflow-%E4%BB%8B%E7%BB%8D/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="Kubeflow 组件较多，容易搞不清每个组件是干什么的，本文先对 Kubeflow 进行一个系统的概括，让大家明白各个组件分别的用处，并对组件间的关系进行理顺，帮助大家合理快速的选择自己需要的组件，随后会对每个组件的底层架构和流程分别进行详细的介绍和剖析，供大家针对性的进一步学习。 什么是 KubeflowKubeflow 在官方文档中被称为 Kubernetes 机器学习工具包 Kubeflo">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/kubeflow/4115150bbdbb85bfcd9c76781632ac88.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubeflow/b3e3618006c31d413bc7a5876b7194d8.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubeflow/e78d609c5c6ed406dd42fdb9c62bcf24.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubeflow/4841b4b13a4e934a0632faab19579b70.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubeflow/15942529-584b063662553809.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubeflow/1687936395-9ff219f4db76c52844caf83af5ad6fa7.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubeflow/1687936395-c490dcbfc1da07e364e669ce4b5963e5.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubeflow/1687936395-2c9e7bfabbc14f835a90b29c544ccbcd.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubeflow/1687936395-ba43823bfd036e109056a77f645b3afe.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubeflow/1687936395-056f05b28a42682950a66644d368b0be.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubeflow/1687936395-fc632611d530401dd4dff81ee7041692.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubeflow/1687936395-c10c1833b0d450cd3f8f642acb53101b.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubeflow/1687936395-46a573128bc263b2ebe002cd5e10737f.png">
+<meta property="article:published_time" content="2023-08-27T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.401Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="kubeflow">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/kubeflow/4115150bbdbb85bfcd9c76781632ac88.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>01-kubeflow 介绍 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="01-kubeflow 介绍"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-08-28 00:00" pubdate>
+          2023年8月28日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.9k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          41 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">01-kubeflow 介绍</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p><strong>Kubeflow</strong> 组件较多，容易搞不清每个组件是干什么的，本文先对 Kubeflow 进行一个系统的概括，让大家明白各个组件分别的用处，并对组件间的关系进行理顺，帮助大家合理快速的选择自己需要的组件，随后会对每个组件的底层架构和流程分别进行详细的介绍和剖析，供大家针对性的进一步学习。</p>
+<h1 id="什么是-Kubeflow"><a href="#什么是-Kubeflow" class="headerlink" title="什么是 Kubeflow"></a>什么是 Kubeflow</h1><p>Kubeflow 在官方文档中被称为 <strong>Kubernetes 机器学习工具包</strong></p>
+<p>Kubeflow 项目是基于容器和 Kubernetes 构建，旨在为数据科学家、机器学习工程师、系统运维人员提供面向机器学习业务的敏捷部署、开发、训练、发布和管理平台。它利用了云原生技术的优势，让用户更快速、方便的部署、使用和管理当前最流行的机器学习软件。</p>
+<p>Kubeflow 集成了很多领域的开源项目，比如 Jupyter、TF Serving、Katib、Fairing、Argo 等。可以针对机器学习的不同阶段：数据预处理、模型训练、模型预测、服务管理等进行管理。</p>
+<p>只要安装了 Kubernetes，可以在本地、机房、云环境中部署。</p>
+<p>Kubeflow 是运行在 Kubernetes 之上的一套技术栈，这套技术栈包含了很多组件，组件之间的关系比较松散，我们可以配合起来用，也可以单独用其中的一部分。下图是官网显示 Kubeflow 作为在 Kubernetes 上安排 ML 系统组件的平台：  </p>
+<p><img src="/img/kubeflow/4115150bbdbb85bfcd9c76781632ac88.png" srcset="/img/loading.gif" lazyload></p>
+<p>我们先大体看一眼 Kubeflow 都有哪些组件，是不是很多？接下来我会带大家逐步了解每个组件都有哪些作用。  </p>
+<p>开发 ML 系统是一个反复的过程。我们需要评估 ML 工作流各个阶段的输出，并在必要时对模型和参数进行更改，以确保模型不断产生所需的结果。</p>
+<p>开发和部署 ML 系统时，ML 工作流程通常包括几个阶段。为了便于理解，下图按顺序显示了工作流程阶段，并将 Kubeflow 添加到工作流中，显示在每个阶段都有哪些 Kubeflow 组件有用。工作流末尾的箭头指向流程，以表示流程的迭代性质：  </p>
+<p><img src="/img/kubeflow/b3e3618006c31d413bc7a5876b7194d8.png" srcset="/img/loading.gif" lazyload></p>
+<p><img src="/img/kubeflow/e78d609c5c6ed406dd42fdb9c62bcf24.png" srcset="/img/loading.gif" lazyload></p>
+<ul>
+<li><p><strong>在实验阶段</strong>，我们将基于初始假设来开发模型，并反复测试和更新模型以产生所需的结果：</p>
+<ul>
+<li>确定要解决的问题。</li>
+<li>收集和分析训练 ML 模型所需的数据。</li>
+<li>选择一个 ML 框架和算法，并为模型的初始版本编码。</li>
+<li>试验数据并训练模型。</li>
+<li>调整模型超参数以确保最有效的处理和最准确的结果。</li>
+</ul>
+</li>
+<li><p><strong>在生产阶段</strong>，我们将部署执行以下过程的系统：</p>
+<ul>
+<li>将数据转换为训练系统所需的格式（为了确保我们的模型在训练和预测过程中行为始终一致，转换过程在实验阶段和生产阶段必须相同）。</li>
+<li>训练 ML 模型。</li>
+<li>服务模型以进行在线预测或以批处理模式运行。</li>
+<li>监督模型的性能，并将结果输入到我们的程序中，以调整或重新训练模型。</li>
+</ul>
+</li>
+</ul>
+<p>由此可以看出，Kubeflow 的目标是基于 K8S，构建一整套统一的机器学习平台，覆盖最主要的机器学习流程（数据-&gt;特征-&gt;建模-&gt;服务→监控），同时兼顾机器学习的实验探索阶段和正式的生产环境。</p>
+<h1 id="Kubeflow-组件"><a href="#Kubeflow-组件" class="headerlink" title="Kubeflow 组件"></a>Kubeflow 组件</h1><p>Kubeflow 提供了一大堆组件，涵盖了机器学习的方方面面，先整体看一下 Kubeflow 都有哪些组件：</p>
+<ul>
+<li><p>Central Dashboard：Kubeflow 的看板页面</p>
+</li>
+<li><p>Metadata：用于跟踪各数据集、作业与模型</p>
+</li>
+<li><p><strong>Jupyter Notebooks</strong>：一个交互式业务 IDE 编码环境，Kubeflow 代码编辑器。</p>
+</li>
+<li><p>Frameworks for Training：支持的 ML 框架</p>
+<ul>
+<li>Chainer</li>
+<li>MPI</li>
+<li>MXNet</li>
+<li>PyTorch</li>
+<li>TensorFlow</li>
+</ul>
+</li>
+<li><p>Hyperparameter Tuning: Katib，超参数服务器</p>
+</li>
+<li><p>Argo: 基于 Kubernetes 的工作流引擎</p>
+</li>
+<li><p><strong>Pipelines</strong>：一个基于 Argo 实现了面向机器学习场景的工作流项目，提供机器学习流程的创建、编排调度和管理，还提供了一个 Web UI</p>
+</li>
+<li><p>Tools for Serving：提供在 Kubernetes 上对机器学习模型的部署</p>
+<ul>
+<li>KFServing（发布部署服务）</li>
+<li>Seldon Core Serving（在 Kubernetes 上对机器学习模型的部署）</li>
+<li>TensorFlow Serving(TFJob)：提供对 Tensorflow 模型的在线部署，支持版本控制及无需停止线上服务、切换模型等</li>
+<li>NVIDIA Triton Inference Server(Triton以前叫TensorRT)</li>
+<li>TensorFlow Batch Prediction</li>
+</ul>
+</li>
+<li><p>Multi-Tenancy in Kubeflow：Kubeflow 中的多租户</p>
+</li>
+<li><p><strong>Fairing</strong>：一个将代码打包构建 image 的组件</p>
+</li>
+<li><p>Ambassador: 对外提供统一服务的网关(API Gateway)</p>
+</li>
+<li><p>Istio: 提供微服务的管理，Telemetry 收集</p>
+</li>
+<li><p>Ksonnet: Kubeflow 使用 ksonnet 来向 kubernetes 集群部署需要的 k8s 资源</p>
+</li>
+<li><p>Operator：针对不同的机器学习框架提供资源调度和分布式训练的能力（TF-Operator，PyTorch-Operator，Caffe2-Operator，MPI-Operator，MXNet-Operator）</p>
+</li>
+<li><p>Katib：基于各个Operator实现的超参数搜索和简单的模型结构搜索的系统，支持并行搜索和分布式训练等。超参优化在实际的工作中还没有被大规模的应用，所以这部分的技术还需要一些时间来成熟</p>
+</li>
+<li><p>Pachyderm：Pachyderm 版本控制数据，类似于 Git 对代码的处理。 您可以跟踪一段时间内的数据状态，对历史数据进行回溯测试，与队友共享数据，以及恢复到以前的数据状态</p>
+</li>
+</ul>
+<p>Kubeflow 中大多数组件的实现都是通过定义 CRD（Custom Resource Definition，Kubernetes 内置的资源类型，即自定义资源的定义，用于描述用户定义的资源是什么样子）来工作。目前 Kubeflow 主要的组件有：</p>
+<ul>
+<li><strong>Operator</strong> 是针对不同的机器学习框架提供资源调度和分布式训练的能力（<code>TF-Operator</code>，<code>PyTorch-Operator</code>，<code>Caffe2-Operator</code>，<code>MPI-Operator</code>，<code>MXNet-Operator</code>）;</li>
+<li><strong>Pipelines</strong> 是一个基于 <code>Argo</code> 实现了面向机器学习场景的流水线项目，提供机器学习流程的创建、编排调度和管理，还提供了一个 <code>Web UI</code>。</li>
+<li><strong>Katib（调参）</strong> 是基于各个 <code>Operator</code> 实现的超参数搜索和简单的模型结构搜索的系统，支持并行搜索和分布式训练等。超参优化在实际的工作中还没有被大规模的应用，所以这部分的技术还需要一些时间来成熟；</li>
+<li><strong>Serving</strong> 支持部署各个框架训练好的模型的服务化部署和离线预测。Kubeflow 提供基于<code>TFServing</code>，<code>KFServing</code>，<code>Seldon</code>等好几种方案。由于机器学习框架很多，算法模型也各种各样。工业界一直缺少一种能真正统一的部署框架和方案。这方面 Kubeflow 也仅仅是把常见的都集成了进来，但是并没有做更多的抽象和统一。</li>
+</ul>
+<p>以上，对 Kubeflow 组件进行了系统的概括，来帮助我们对各个组件有一个基本的了解和整体的把握。趁热打铁，接下来我们详细介绍每一个组件的架构和工作流程。</p>
+<h1 id="Jupyter-Notebooks"><a href="#Jupyter-Notebooks" class="headerlink" title="Jupyter Notebooks"></a>Jupyter Notebooks</h1><p>Jupyter 本身包含很多组件。对于个人用户，使用 <code>JupyterLab+Notebook</code> 就足够了。但是如果把 Jupyter 当成一个公司级的平台来看待的话就远远不够了。这时候需要考虑的事情就比较多了，比如多用户、资源分配、数据持久化、数据隔离、高可用、权限控制等等。而这些问题恰恰是 Kubernetes 的特长。因此把  Jupyter 和 Kubernetes 结合起来使用就非常顺理成章。  </p>
+<p>JupyterHub 是一个多用户的 Jupyter 门户，在设计之初就把多用户创建、资源分配、数据持久化等功能做成了插件模式。其工作机制如下图所示:  </p>
+<p><img src="/img/kubeflow/4841b4b13a4e934a0632faab19579b70.png" srcset="/img/loading.gif" lazyload></p>
+<p>既然 JupyterHub 是个框架，因此出现了各种各样的插件。比如可以单机部署利用 OS 用户实现多用户和数据隔离；也可以使用 OAuth 完成用户鉴权等。当然，将整个 JupyterHub 和 Kubernetes 结合起来，是最完美的姿势。 Kubeflow 中的 <code>Multi-Tenancy in Kubeflow</code> 多租户组件我还没看，后面可以对比研究一下是否是基于此实现的。  </p>
+<p>下面我们再来说说 Kubeflow ，因为缺乏隔离和资源限制，目前仅适用数据科学家的 solo 场景，无法支持数据科学家团队合作场景。</p>
+<p>Kubeflow 将 <code>default-editor ServiceAccount</code> 分配给 <code>Jupyter notebook Pod</code>。该服务帐户绑定到 <code>kubeflow-edit ClusterRole</code>，它对许多 Kubernetes 资源具有命名空间范围的权限，其中包括：</p>
+<ul>
+<li><code>Pod</code></li>
+<li><code>Deployment</code></li>
+<li><code>Service</code></li>
+<li><code>Job</code></li>
+<li><code>TFJob</code></li>
+<li><code>PyTorchJob</code></li>
+</ul>
+<p>因此，可以直接从 Kubeflow 中的 <code>Jupyter notebook</code> 创建上述 Kubernetes 资源。notebook 中已预装了 <code>Kubernetes kubectl</code> 命令行工具，可以说也是非常简单了。  </p>
+<p>将 <code>Jupyter notebook</code> 绑定在 Kubeflow 中时，可以使用 <code>Fairing</code> 库使用 <code>TFJob</code> 提交训练作业。训练作业可以运行在单个节点，也可以分布在同一个 Kubernetes 集群上，但不能在 <code>notebook pod</code> 内部运行。通过 <code>Fairing</code> 库提交作业可以使数据科学家清楚地了解 Docker 容器化和 pod 分配等流程。  </p>
+<p>总体而言，<code>Kubeflow-hosted notebooks</code> 可以更好地与其他组件集成，同时提供 <code>notebook image</code> 的可扩展性。</p>
+<h1 id="Pipelines"><a href="#Pipelines" class="headerlink" title="Pipelines"></a>Pipelines</h1><p>在 Kubeflow v0.1.3 之后，<code>pipeline</code> 已经成为 Kubeflow 的核心组件。Kubeflow 的目的主要是为了简化在 Kubernetes 上运行机器学习任务的流程，最终希望能够实现一套完整可用的流水线, 来实现机器学习从数据到模型的一整套端到端的过程。 而 <code>pipeline</code> 是一个工作流平台，能够编译部署机器学习的工作流。所以从这个层面来说，<code>pipeline</code> 能够成为 Kubeflow 的核心组件一点也不意外。  </p>
+<p><code>kubeflow/pipelines</code> 实现了一个工作流模型。所谓工作流，或者称之为流水线（<code>pipeline</code>），可以将其当做一个有向无环图（<code>DAG</code>）。其中的每一个节点被称作组件（<code>component</code>）。组件处理真正的逻辑，比如预处理，数据清洗，模型训练等。每一个组件负责的功能不同，但有一个共同点，即组件都是以 Docker 镜像的方式被打包，以容器的方式被运行的。  </p>
+<p>下图显示了 Kubeflow Pipelines UI 中管道的运行时执行图：  </p>
+<p><img src="/img/kubeflow/15942529-584b063662553809.png" srcset="/img/loading.gif" lazyload></p>
+<p>实验（<code>experiment</code>）是一个工作空间，在其中可以针对流水线尝试不同的配置。用户在执行的过程中可以看到每一步的输出文件，以及日志。</p>
+<p>步（<code>step</code>）是组件的一次运行，输出工件（<code>step output artifacts</code>）是在组件的一次运行结束后输出的，能被系统的前端理解并渲染可视化的文件。</p>
+<p>Kubeflow Pipelines 平台包括：</p>
+<ul>
+<li>用于管理和跟踪实验、作业和运行的用户界面 (UI)。</li>
+<li>用于调度多个步骤 ML 工作流的引擎。</li>
+<li>用于定义和操作管道和组件的 SDK。</li>
+<li>使用 SDK 用于与系统交互的 Notebooks。</li>
+</ul>
+<h2 id="Pipelines-架构"><a href="#Pipelines-架构" class="headerlink" title="Pipelines 架构"></a>Pipelines 架构</h2><p>下图是官方提供的 <code>Kubeflow Pipelines</code> 架构图：  </p>
+<p><img src="/img/kubeflow/1687936395-9ff219f4db76c52844caf83af5ad6fa7.png" srcset="/img/loading.gif" lazyload></p>
+<p>可以将 pipeline 主要划分为八部分：</p>
+<ul>
+<li><strong>Python SDK</strong>: 用于创建 <code>kubeflow pipelines</code> 组件的特定语言（<a href="https://github.com/kubeflow/pipelines/tree/master/sdk/python/kfp/dsl" target="_blank" rel="noopener">DSL</a>）。</li>
+<li><strong>DSL compiler</strong>: 将 Python 代码转换成 YAML 静态配置文件（<a href="https://github.com/kubeflow/pipelines/tree/master/sdk/python/kfp/compiler" target="_blank" rel="noopener">DSL编译器</a>）。</li>
+<li><strong>Pipeline Web Server</strong>：pipeline 的前端服务，它收集各种数据以显示相关视图：当前正在运行的 pipeline 列表，pipeline 执行的历史记录，有关各个 pipeline 运行的调试信息和执行状态等。</li>
+<li><strong>Pipeline Service</strong>：pipeline 的后端服务，调用 kubernetes 服务从 YAML 创建 pipeline 运行。</li>
+<li><strong>Kubernetes Resources</strong>：pipeline service 调用 Kubernetes api 服务器去创建用来运行 pipeline 所必须的 Kubernetes 资源<a href="https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/" target="_blank" rel="noopener">kubernetes resources-CRDs</a>。</li>
+<li><strong>Machine Learning Metadata Service</strong>: 用于监视由<code>Pipeline Service</code>创建的 Kubernetes 资源，并将这些资源的状态持久化在ML元数据服务中(存储任务流容器之间的<code>input</code>&#x2F;<code>output</code>数据交互）。</li>
+<li><strong>Artifact Storage</strong>：<code>Kubeflow Pipelines</code> 将元数据存储在 MySQL 数据库中，将工件存储在<a href="https://docs.minio.io/" target="_blank" rel="noopener">Minio服务器</a>或<a href="https://cloud.google.com/storage/docs/" target="_blank" rel="noopener">Cloud Storage</a>等工件存储中。<br>pods 存储两种类型的数据：<ol>
+<li>Metadata(元数据): 实验、任务、运行的管道还有单梯度的指标。pipeline 将这些元数据存放在 MySQL 数据库中。</li>
+<li>Artifacts(归档文件)：pipeline 的包、视图以及大规模指标。大规模指标可以用来 debug 运行中的 pipeline 或者调查单个运行的 pipelien 的性能。pipeline 存放这些归档文件到 minio server 或者云存储上。</li>
+</ol>
+</li>
+<li><strong>Orchestration Controllers</strong>：一组用来编排运行 pipeline 所需要执行的容器的控制器。这些容器运行在 Kubernetes 的 pod 中。任务编排，比如 <a href="https://github.com/argoproj/argo-workflows" target="_blank" rel="noopener">Argo Workflow</a> 控制器，它可以协调任务驱动的工作流。</li>
+</ul>
+<h2 id="Pipelines-工作原理"><a href="#Pipelines-工作原理" class="headerlink" title="Pipelines 工作原理"></a>Pipelines 工作原理</h2><p>流水线的定义可以分为两步，</p>
+<ol>
+<li><p>第一步是定义组件，组件可以从镜像开始完全自定义。自定义的方式：</p>
+<ol>
+<li>首先需要打包一个 Docker 镜像，这个镜像是组件的依赖，每一个组件的运行，就是一个 Docker 容器。</li>
+<li>其次需要为其定义一个 Python 函数，描述组件的输入输出等信息，这一定义是为了能够让流水线理解组件在流水线中的结构，有几个输入节点，几个输出节点等。</li>
+<li>接下来组件的使用就与普通的组件并无二致了。</li>
+</ol>
+</li>
+<li><p>第二步是根据定义好的组件组成流水线，在流水线中，由输入输出关系会确定图上的边以及方向。在定义好流水线后，可以通过 Python 中实现好的流水线客户端提交到系统中运行。</p>
+</li>
+</ol>
+<p>虽然 <code>kubeflow/pipelines</code> 的使用略显复杂，但它的实现其实并不麻烦。整个的架构可以分为五个部分，分别是 <code>ScheduledWorkflow CRD</code> 以及其 <code>operator 流水线前端</code>，<code>流水线后端</code>，<code>Python SDK</code> 和 <code>persistence agent</code>。</p>
+<ul>
+<li><code>ScheduledWorkflow CRD</code> 扩展了 <code>argoproj/argo</code> 的 <code>Workflow</code> 定义。这也是流水线项目中的核心部分，它负责真正地在 Kubernetes 上按照拓扑序创建出对应的容器完成流水线的逻辑。</li>
+<li><code>Python SDK</code> 负责构造出流水线，并且根据流水线构造出 <code>ScheduledWorkflow</code> 的 <code>YAML</code> 定义，随后将其作为参数传递给流水线系统的后端服务。</li>
+<li>后端服务依赖关系存储数据库（如 MySQL）和对象存储（如 S3），处理所有流水线中的 <code>CRUD</code> 请求。</li>
+<li>前端负责可视化整个流水线的过程，以及获取日志，发起新的运行等。</li>
+<li><code>Persistence agent</code> 负责把数据从 <code>Kubernetes Master</code> 的 <code>etcd</code> 中 <code>sync</code> 到后端服务的关系型数据库中，其实现的方式与<code>CRD operator</code> 类似，通过 <code>informer</code> 来监听 <code>Kubernetes apiserver</code> 对应资源实现。</li>
+</ul>
+<p>Pipelines 提供机器学习流程的创建、编排调度和管理，还提供了一个 <code>Web UI</code>。这部分主要基于 <code>Argo Workflow</code>。</p>
+<h1 id="Fairing"><a href="#Fairing" class="headerlink" title="Fairing"></a>Fairing</h1><p><code>Kubeflow Fairing</code> 是一个 Python 软件包，可轻松在 Kubeflow 上训练和部署 ML 模型。<code>Fairing</code> 还可以扩展为在其他平台上进行训练或部署。目前，<code>Fairing</code> 已扩展为可在<a href="https://cloud.google.com/ai-platform/doc" target="_blank" rel="noopener">Google AI Platform</a>上进行训练。  </p>
+<p><code>Fairing</code> 简化了在混合云环境中构建，训练和部署机器学习（ML）训练 job 的过程。通过使用 <code>Fairing</code> 并添加几行代码，可以直接从 <code>Jupyter notebook</code> 在本地或在云中使用 Python 代码运行ML训练作业。训练工作完成后，可以使用 <code>Fairing</code> 将训练后的模型部署为预测端点。  </p>
+<h1 id="Katib"><a href="#Katib" class="headerlink" title="Katib"></a>Katib</h1><p>在了解 <code>katib</code> 的处理流程之前，先介绍下 <code>katib</code> 目前有哪些组件：</p>
+<ul>
+<li><strong>Experiment Controller</strong>：提供对 <code>Experiment CRD</code> 的生命周期管理。</li>
+<li><strong>Trial Controller</strong>：提供对 <code>Trial CRD</code>的生命周期管理。</li>
+<li><strong>Suggestions</strong>：以 <code>Deployment</code> 的方式部署，用<code> Service</code> 方式暴露服务，提供超参数搜索服务。目前有随机搜索，网格搜索，贝叶斯优化等。</li>
+<li><strong>Katib Manager</strong>：一个 <code>GRPC server</code>，提供了对 <code>Katib DB</code> 的操作接口，同时充当 <code>Suggestion</code> 与 <code>Experiment</code> 之间的代理。</li>
+<li><strong>Katib DB</strong>：数据库。其中会存储 <code>Trial</code> 和 <code>Experiment</code>，以及 <code>Trial</code> 的训练指标。目前默认的数据库为 MySQL。</li>
+</ul>
+<p>Katib 架构</p>
+<p><img src="/img/kubeflow/1687936395-c490dcbfc1da07e364e669ce4b5963e5.png" srcset="/img/loading.gif" lazyload></p>
+<h2 id="Katib-工作原理"><a href="#Katib-工作原理" class="headerlink" title="Katib 工作原理"></a>Katib 工作原理</h2><p>当一个 <code>Experiment</code> 被创建的时候，<code>Experiment Controller</code> 会先通过 <code>Katib Manager</code> 在 <code>Katib DB</code> 中创建一个 <code>Experiment</code> 对象，并且打上<code> Finalizer</code> 表明这一对象使用了外部资源（数据库）。<br>随后，<code>Experiment Controller</code> 会根据自身的状态和关于并行的定义，通过 <code>Katib Manager</code> 提供的<code>GRPC</code>接口，让 <code>Manager</code> 通过 <code>Suggestion</code> 提供的 <code>GRPC</code> 接口获取超参数取值，然后再转发给 <code>Experiment Controller</code> 。<br>在这个过程中，<code>Katib Manager</code> 是一个代理的角色，它代理了 <code>Experiment Controller</code> 对<code>Suggestion</code> 的请求。拿到超参数取值后，<code>Experiment Controller</code> 会根据 <code>Trial Template</code> 和超参数的取值，构造出 <code>Trial</code> 的定义，然后在集群中创建它。<br><code>Trial</code> 被创建后，与 <code>Experiment Controller</code> 的行为类似，<code>Trial Controller</code> 同样会通过 <code>Katib Manager</code> 在 <code>Katib DB</code> 中创建一个 <code>Trial</code> 对象。随后会构造出期望的 <code>Job</code>（如<code>batchv1 Job</code>，<code>TFJob</code>，<code>PyTorchJob</code>等）和 <code>Metrics Collector Job</code>，然后在集群上创建出来。这些 <code>Job</code> 运行结束后，<code>Trial Controller</code> 会更新 <code>Trial</code> 的状态，进而 <code>Experiment Controller</code> 会更新 <code>Experiment</code> 的状态。<br>然后 <code>Experiment</code> 会继续下一轮的迭代。之前的 <code>Trial</code> 已经被训练完成，而且训练的指标已经被收集起来了。<code>Experiment</code> 会根据配置，判断是否要再创建新的 <code>Trial</code>，如果需要则再重复之前的流程。  </p>
+<p>下图是从网络上（知乎@高策）找到的 <code>Katib</code> 竞品对比分析图，可供参考：  </p>
+<p><img src="/img/kubeflow/1687936395-2c9e7bfabbc14f835a90b29c544ccbcd.png" srcset="/img/loading.gif" lazyload></p>
+<p>超参优化是一种 <code>AutoML</code> 的方法。 Kubeflow 把 <code>Katib</code> 集成进来作为超参优化的一种方案。超参优化在实际的工作中还没有被大规模的应用，所以这部分的技术还需要一些时间来成熟。</p>
+<h1 id="KFServing"><a href="#KFServing" class="headerlink" title="KFServing"></a>KFServing</h1><p>对于深度学习的产品化来说，训练只是手段不是目的，目的是将通过训练产生的模型放到手机的程序里或者互联网的应用中，用于语音或者文字的识别等应用场景中。  </p>
+<p><img src="/img/kubeflow/1687936395-ba43823bfd036e109056a77f645b3afe.png" srcset="/img/loading.gif" lazyload></p>
+<p>模型的服务化部署和离线预测也是机器学习流程中非常重要的部分。Kubeflow 组件中可以看到，它提供基于<code>TF Serving</code>，<code>KFServing</code>，<code>Seldon Core Serving</code>等好几种方案。由于机器学习框架很多，算法模型也各种各样。工业界一直缺少一种能真正统一的部署框架和方案。这方面 Kubeflow 也仅仅是把常见的都集成了进来，但是并没有做更多的抽象和统一。  </p>
+<p>Kubeflow 提供两个支持多框架的模型服务工具：<code>KFServing</code> 和 <code>Seldon Core Serving</code>。或者，可以使用独立的模型服务系统，以便可以选择最能满足模型服务要求的框架。  </p>
+<p>对于 TensorFlow 模型，可以使用 <code>TensorFlow Serving</code> 将 <code>TFJob</code> 导出的模型进行实时预测。但是，如果打算使用多个框架，则应考虑如上所述使用 <code>KFServing</code> 或 <code>Seldon Core Serving</code>。<code>KFServing</code> 是 Kubeflow 项目生态系统的一部分，<code>Seldon Core Serving</code> 是 Kubeflow 支持的外部项目。看起来 Kubeflow 社区更倾向 <code>KFServing</code> 这套方案。  </p>
+<p><img src="/img/kubeflow/1687936395-056f05b28a42682950a66644d368b0be.png" srcset="/img/loading.gif" lazyload alt="KFServing/Seldon Core Serving对比图"></p>
+<p><code>KFServing</code> 提供了 <a href="https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/" target="_blank" rel="noopener">Kubernetes CRD</a>，用于在任意框架上服务机器学习（ML）模型。它旨在通过为常见ML框架（<code>Tensorflow</code>，<code>XGBoost</code>，<code>ScikitLearn</code>，<code>PyTorch</code>和<code>ONNX</code>等）提供高性能，高抽象的接口来解决模型服务用例。  </p>
+<p><img src="/img/kubeflow/1687936395-fc632611d530401dd4dff81ee7041692.png" srcset="/img/loading.gif" lazyload alt="KFSerivng所处平台架构位置示意图"></p>
+<p><code>NVIDIA Triton Inference Server</code> 是一项 <code>REST</code> 和 <code>GRPC</code> 服务，用于对 <code>TensorRT</code>，<code>TensorFlow</code>，<code>Pytorch</code>，<code>ONNX</code> 和 <code>Caffe2</code> 模型进行深度学习推理。该服务器经过优化，可以在GPU和CPU上大规模部署机器学习算法。<code>Triton</code> 推理服务器以前称为 <code>TensorRT</code> 推理服务器。  </p>
+<p>我们可以将 <code>NVIDIA Triton Inference Server</code> 用作独立系统，但如上所述，更应该考虑使用 <code>KFServing</code>。<code>KFServing</code> 也包括对 <code>NVIDIA Triton Inference Server</code> 的支持。  </p>
+<p>赞！现在我们终于知道如何发布我们训练好的服务了！  </p>
+<p><img src="/img/kubeflow/1687936395-c10c1833b0d450cd3f8f642acb53101b.png" srcset="/img/loading.gif" lazyload alt="生产模型部署过程示意图"></p>
+<p>虽然 Kubeflow 最开始只是基于 <code>tf-operator</code>，但后来随着项目发展最后变成一个基于云原生构建的机器学习任务工具大集合。从数据采集，验证，到模型训练和服务发布，几乎所有步骤 Kubeflow 都提供解决方案的组件。  </p>
+<p><img src="/img/kubeflow/1687936395-46a573128bc263b2ebe002cd5e10737f.png" srcset="/img/loading.gif" lazyload alt="基于Kubeflow的ML流程图"></p>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ul>
+<li><a href="https://www.jianshu.com/p/98079bc7a514" target="_blank" rel="noopener">https://www.jianshu.com/p/98079bc7a514</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/kubeflow/" class="category-chain-item">kubeflow</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/kubeflow/" class="print-no-link">#kubeflow</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>01-kubeflow 介绍</div>
+      <div>https://flepeng.github.io/044-云原生-04-kubeflow-01-kubeflow-介绍/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年8月28日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/044-%E4%BA%91%E5%8E%9F%E7%94%9F-04-kubeflow-02-kubeflow-%E7%AE%80%E5%8D%95%E6%B5%8B%E8%AF%95/" title="02-kubeflow 简单测试">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">02-kubeflow 简单测试</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/021-frontend-04-Vue-01-course-00-%E7%AE%80%E4%BB%8B/" title="00-简介">
+                        <span class="hidden-mobile">00-简介</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

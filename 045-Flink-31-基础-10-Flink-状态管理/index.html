@@ -1,0 +1,907 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Flink 官网主页地址：https:&#x2F;&#x2F;flink.apache.org  Flink 官方中文地址：https:&#x2F;&#x2F;nightlies.apache.org&#x2F;flink&#x2F;flink-docs-stable&#x2F;zh&#x2F;  1、状态管理1.1、Flink 中的状态1.1.1、概述 1.1.2、状态的分类1、托管状态（Managed State）和原始状态（Raw State）   Flink 的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="10-Flink 状态管理">
+<meta property="og:url" content="https://flepeng.github.io/045-Flink-31-%E5%9F%BA%E7%A1%80-10-Flink-%E7%8A%B6%E6%80%81%E7%AE%A1%E7%90%86/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="Flink 官网主页地址：https:&#x2F;&#x2F;flink.apache.org  Flink 官方中文地址：https:&#x2F;&#x2F;nightlies.apache.org&#x2F;flink&#x2F;flink-docs-stable&#x2F;zh&#x2F;  1、状态管理1.1、Flink 中的状态1.1.1、概述 1.1.2、状态的分类1、托管状态（Managed State）和原始状态（Raw State）   Flink 的">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/20230611165456.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/20230611170122.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/20230611170231.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/20230611170937.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/20230611171903.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/20230611172134.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/20230611172422.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/20230611172737.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/20230611173134.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/20230611173932.png">
+<meta property="article:published_time" content="2021-03-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.404Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Flink">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/flink/00/20230611165456.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>10-Flink 状态管理 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="10-Flink 状态管理"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-03-08 00:00" pubdate>
+          2021年3月8日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          6.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          54 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">10-Flink 状态管理</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <blockquote>
+<p>  Flink 官网主页地址：<a href="https://flink.apache.org/" target="_blank" rel="noopener">https://flink.apache.org</a><br>  Flink 官方中文地址：<a href="https://nightlies.apache.org/flink/flink-docs-stable/zh/" target="_blank" rel="noopener">https://nightlies.apache.org/flink/flink-docs-stable/zh/</a></p>
+</blockquote>
+<h2 id="1、状态管理"><a href="#1、状态管理" class="headerlink" title="1、状态管理"></a>1、状态管理</h2><h3 id="1-1、Flink-中的状态"><a href="#1-1、Flink-中的状态" class="headerlink" title="1.1、Flink 中的状态"></a>1.1、Flink 中的状态</h3><h4 id="1-1-1、概述"><a href="#1-1-1、概述" class="headerlink" title="1.1.1、概述"></a>1.1.1、概述</h4><p><img src="/img/flink/00/20230611165456.png" srcset="/img/loading.gif" lazyload></p>
+<h4 id="1-1-2、状态的分类"><a href="#1-1-2、状态的分类" class="headerlink" title="1.1.2、状态的分类"></a>1.1.2、状态的分类</h4><p>1、托管状态（Managed State）和原始状态（Raw State）  </p>
+<p>Flink 的状态有两种：托管状态（Managed State）和原始状态（Raw State）。</p>
+<ul>
+<li>托管状态就是由 Flink 统一管理的，状态的存储访问、故障恢复和重组等一系列问题都由 Flink 实现，我们只要调接口就可以；</li>
+<li>原始状态则是自定义的，相当于就是开辟了一块内存，需要我们自己管理，实现状态的序列化和故障恢复。</li>
+</ul>
+<p>通常我们采用 Flink 托管状态来实现需求。  </p>
+<p>2、算子状态（Operator）和按键分区状态（Keyed State）  </p>
+<p>接下来我们的重点就是托管状态（Managed State）。  </p>
+<p>我们知道在 Flink 中，一个算子任务会按照并行度分为多个并行子任务执行，而不同的子任务会占据不同的任务槽（task slot）。由于不同的 slot 在计算资源上是物理隔离的，所以 Flink 能管理的状态在并行任务间是无法共享的，每个状态只能针对当前子任务的实例有效。</p>
+<p>而很多有状态的操作（比如聚合、窗口）都是要先做 keyBy 进行按键分区的。按键分区之后，任务所进行的所有计算都应该只针对当前 key 有效，所以状态也应该按照 key 彼此隔离。在这种情况下，状态的访问方式又会有所不同。</p>
+<p>基于这样的想法，我们又可以将托管状态分为两类：算子状态和按键分区状态。  </p>
+<p><img src="/img/flink/00/20230611170122.png" srcset="/img/loading.gif" lazyload><br><img src="/img/flink/00/20230611170231.png" srcset="/img/loading.gif" lazyload></p>
+<p>另外，也可以通过富函数类（Rich Function）来自定义 Keyed State，所以只要提供了富函数类接口的算子，也都可以使用 Keyed State。所以即使是 map、filter 这样无状态的基本转换算子，我们也可以通过富函数类给它们“追加”Keyed State。比如 RichMapFunction、RichFilterFunction。在富函数中，我们可以调用 <code>.getRuntimeContext()</code> 获取当前的运行时上下文（RuntimeContext），进而获取到访问状态的句柄；这种富函数中自定义的状态也是 Keyed State。从这个角度讲，Flink 中所有的算子都可以是有状态的。  </p>
+<p>无论是 Keyed State 还是 Operator State，它们都是在本地实例上维护的，也就是说每个并行子任务维护着对应的状态，算子的子任务之间状态不共享。</p>
+<h3 id="1-2、按键分区状态（Keyed-State）"><a href="#1-2、按键分区状态（Keyed-State）" class="headerlink" title="1.2、按键分区状态（Keyed State）"></a>1.2、按键分区状态（Keyed State）</h3><p>按键分区状态（Keyed State）顾名思义，是任务按照键（key）来访问和维护的状态。它的特点非常鲜明，就是以 key 为作用范围进行隔离。  </p>
+<p>需要注意，使用 Keyed State 必须基于 KeyedStream。没有进行 keyBy 分区的 DataStream，即使转换算子实现了对应的富函数类，也不能通过运行时上下文访问 Keyed Stat</p>
+<h4 id="1-2-1、值状态（ValueState）"><a href="#1-2-1、值状态（ValueState）" class="headerlink" title="1.2.1、值状态（ValueState）"></a>1.2.1、值状态（ValueState）</h4><p>顾名思义，状态中只保存一个“值”（value）。ValueState 本身是一个接口，源码中定义如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">interface</span> <span class="hljs-title">ValueState</span>&lt;<span class="hljs-title">T</span>&gt; <span class="hljs-keyword">extends</span> <span class="hljs-title">State</span> </span>&#123;<br>    <span class="hljs-function">T <span class="hljs-title">value</span><span class="hljs-params">()</span> <span class="hljs-keyword">throws</span> IOException</span>;<br>    <span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">update</span><span class="hljs-params">(T value)</span> <span class="hljs-keyword">throws</span> IOException</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>这里的 T 是泛型，表示状态的数据内容可以是任何具体的数据类型。如果想要保存一个长整型值作为状态，那么类型就是 ValueState。  </p>
+<p>我们可以在代码中读写值状态，实现对于状态的访问和更新。</p>
+<ul>
+<li>T value()：获取当前状态的值；</li>
+<li>update(T value)：对状态进行更新，传入的参数value就是要覆写的状态值。</li>
+</ul>
+<p>在具体使用时，为了让运行时上下文清楚到底是哪个状态，我们还需要创建一个“状态描述器”（StateDescriptor）来提供状态的基本信息。例如源码中，ValueState 的状态描述器构造方法如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-title">ValueStateDescriptor</span><span class="hljs-params">(String name, Class&lt;T&gt; typeClass)</span> </span>&#123;<br>    <span class="hljs-keyword">super</span>(name, typeClass, <span class="hljs-keyword">null</span>);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>这里需要传入状态的名称和类型——这跟我们声明一个变量时做的事情完全一样。</p>
+<p>案例</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><code class="hljs java">**<br> * keyedState在使用时，只需要先keyBy<br> *      在后续的处理函数中，自带生命周期方法<br> *      open():需要再Task启动时，从之前的备份中根据描述取出状态<br> *<br> *      特点：每一个 Task 上，各种 key 各有各的 State，互不干扰<br> *      ------------------------------------------------<br> *      ValueState 储存单个值，可以是任意类型<br> *      -------------------------------------------------<br> *      检测每种传感器的水位值，如果连续的两个水位值超过 <span class="hljs-number">10</span> 就输出报警<br> */<br><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Demo01_ValueState</span> </span>&#123;<br>     <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(String[] args)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>         <span class="hljs-comment">//创建Flink配置类（空参创建的话都是默认值）</span><br>          Configuration configuration = <span class="hljs-keyword">new</span> Configuration();<br>          <span class="hljs-comment">//修改配置类中的WebUI端口号</span><br>          configuration.setInteger(<span class="hljs-string">"rest.port"</span>,<span class="hljs-number">3333</span>);<br>          <span class="hljs-comment">//创建Flink环境（并且传入配置对象）</span><br>          StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment(configuration);<br><br>          env.socketTextStream(<span class="hljs-string">"hadoop102"</span>,<span class="hljs-number">9999</span>)<br>                          .map(<span class="hljs-keyword">new</span> WaterSensorFunction())<br>                                  .keyBy(WaterSensor::getId)<br>                                          .process(<span class="hljs-keyword">new</span> KeyedProcessFunction&lt;String, WaterSensor, String&gt;() &#123;<br><br>                                              <span class="hljs-keyword">private</span> ValueState&lt;Integer&gt; state;<br><br>                                              <span class="hljs-meta">@Override</span><br>                                              <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">open</span><span class="hljs-params">(Configuration parameters)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>                                                  <span class="hljs-comment">//设置状态存储的描述器</span><br>                                                  ValueStateDescriptor&lt;Integer&gt; stateDescriptor = <span class="hljs-keyword">new</span> ValueStateDescriptor&lt;&gt;(<span class="hljs-string">"state"</span>, Integer<span class="hljs-class">.<span class="hljs-keyword">class</span>)</span>;<br>                                                  <span class="hljs-comment">//获取状态的存储</span><br>                                                  state = getRuntimeContext().getState(stateDescriptor);<br>                                              &#125;<br><br>                                              <span class="hljs-meta">@Override</span><br>                                              <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">processElement</span><span class="hljs-params">(WaterSensor value, KeyedProcessFunction&lt;String, WaterSensor, String&gt;.Context ctx, Collector&lt;String&gt; out)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>                                                  <span class="hljs-comment">//如果状态中从来没有存储过数据，此时lastVc是null</span><br>                                                  Integer lastVc = state.value();<br><br>                                                  <span class="hljs-comment">//连续两个水位值超过10，就输出报警</span><br>                                                  <span class="hljs-keyword">if</span> (lastVc!=<span class="hljs-keyword">null</span>&amp;&amp;lastVc&gt;<span class="hljs-number">10</span>&amp;&amp;value.getVc()&gt;<span class="hljs-number">10</span>)&#123;<br>                                                      out.collect(ctx.getCurrentKey()+<span class="hljs-string">"连续两个传感器的vc("</span>+lastVc+<span class="hljs-string">","</span>+value.getVc()+<span class="hljs-string">")超过10....."</span>);<br>                                                  &#125;<br>                                                  state.update(value.getVc());<br>                                              &#125;<br>                                          &#125;).print();<br><br>          env.execute();<br>     &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>测试截图：</p>
+<p><img src="/img/flink/00/20230611170937.png" srcset="/img/loading.gif" lazyload></p>
+<h4 id="1-2-2、列表状态（ListState）"><a href="#1-2-2、列表状态（ListState）" class="headerlink" title="1.2.2、列表状态（ListState）"></a>1.2.2、列表状态（ListState）</h4><p>将需要保存的数据，以列表（List）的形式组织起来。在 ListState 接口中同样有一个类型参数 T，表示列表中数据的类型。ListState 也提供了一系列的方法来操作状态，使用方式与一般的List非常相似。</p>
+<ul>
+<li>Iterable get()：获取当前的列表状态，返回的是一个可迭代类型 Iterable；</li>
+<li>update(List values)：传入一个列表 values，直接对状态进行覆盖；</li>
+<li>add(T value)：在状态列表中添加一个元素 value；</li>
+<li>addAll(List values)：向列表中添加多个元素，以列表 values 形式传入。</li>
+</ul>
+<p>类似地，ListState 的状态描述器就叫作 ListStateDescriptor，用法跟 ValueStateDescriptor 完全一致。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * keyedState在使用时，只需要先keyBy</span><br><span class="hljs-comment"> *      在后续的处理函数中，自带生命周期方法</span><br><span class="hljs-comment"> *      open():需要再Task启动时，从之前的备份中根据描述取出状态</span><br><span class="hljs-comment"> *</span><br><span class="hljs-comment"> *      特点：每一个Task上，各种key各有各的State，互不干扰</span><br><span class="hljs-comment"> *      ------------------------------------------------</span><br><span class="hljs-comment"> *      ListState 储存多个类型相同的值，可以是任意类型</span><br><span class="hljs-comment"> *      -------------------------------------------------</span><br><span class="hljs-comment"> *      取水位最高的前三</span><br><span class="hljs-comment"> */</span><br><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Demo02_ListState</span> </span>&#123;<br>     <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(String[] args)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>         <span class="hljs-comment">//创建Flink配置类（空参创建的话都是默认值）</span><br>          Configuration configuration = <span class="hljs-keyword">new</span> Configuration();<br>          <span class="hljs-comment">//修改配置类中的WebUI端口号</span><br>          configuration.setInteger(<span class="hljs-string">"rest.port"</span>,<span class="hljs-number">3333</span>);<br>          <span class="hljs-comment">//创建Flink环境（并且传入配置对象）</span><br>          StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment(configuration);<br><br>          env.socketTextStream(<span class="hljs-string">"hadoop102"</span>,<span class="hljs-number">9999</span>)<br>                          .map(<span class="hljs-keyword">new</span> WaterSensorFunction())<br>                                  .keyBy(WaterSensor::getId)<br>                                          .process(<span class="hljs-keyword">new</span> KeyedProcessFunction&lt;String, WaterSensor, String&gt;() &#123;<br><br>                                              <span class="hljs-keyword">private</span> ListState&lt;Integer&gt; state;<br><br>                                              <span class="hljs-meta">@Override</span><br>                                              <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">open</span><span class="hljs-params">(Configuration parameters)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>                                                  <span class="hljs-comment">//设置状态存储的描述器</span><br>                                                  ListStateDescriptor&lt;Integer&gt; listStateDescriptor = <span class="hljs-keyword">new</span> ListStateDescriptor&lt;&gt;(<span class="hljs-string">"state"</span>, Integer<span class="hljs-class">.<span class="hljs-keyword">class</span>)</span>;<br>                                                  <span class="hljs-comment">//获取状态的存储</span><br>                                                  state = getRuntimeContext().getListState(listStateDescriptor);<br>                                              &#125;<br><br>                                              <span class="hljs-meta">@Override</span><br>                                              <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">processElement</span><span class="hljs-params">(WaterSensor value, KeyedProcessFunction&lt;String, WaterSensor, String&gt;.Context ctx, Collector&lt;String&gt; out)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br><br>                                                  state.add(value.getVc());<br><br>                                                  List&lt;Integer&gt; top3 = StreamSupport.stream(state.get().spliterator(), <span class="hljs-keyword">true</span>).sorted(Comparator.reverseOrder()).limit(<span class="hljs-number">3</span>).collect(Collectors.toList());<br><br>                                                  out.collect(ctx.getCurrentKey()+<span class="hljs-string">"最新Top水位："</span>+top3);<br><br>                                                  state.update(top3);<br><br>                                              &#125;<br>                                          &#125;).print();<br><br>          env.execute();<br>     &#125;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyMapFunction</span> <span class="hljs-keyword">implements</span> <span class="hljs-title">MapFunction</span>&lt;<span class="hljs-title">String</span> ,<span class="hljs-title">String</span>&gt;, <span class="hljs-title">CheckpointedFunction</span></span><br><span class="hljs-class">    </span>&#123;<br><br>        <span class="hljs-comment">//private List&lt;String&gt; strs = new ArrayList&lt;&gt;();</span><br>        <span class="hljs-comment">/*</span><br><span class="hljs-comment">                把它当List集合用。</span><br><span class="hljs-comment">                    添加元素:</span><br><span class="hljs-comment">                           ListState.add()</span><br><span class="hljs-comment">                           ListState.addAll()</span><br><span class="hljs-comment">                    删除:  ListState.clear()</span><br><span class="hljs-comment">                    修改:  ListState.update() 覆盖修改</span><br><span class="hljs-comment">                                等价于 先清空，再写入</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">                    读取:  ListState.get()</span><br><span class="hljs-comment">         */</span><br>        <span class="hljs-keyword">private</span> ListState&lt;String&gt; strs;<br>        <span class="hljs-keyword">private</span> ListState&lt;String&gt; strs1;<br>        <span class="hljs-keyword">private</span> ListState&lt;String&gt; strs2;<br>        <span class="hljs-meta">@Override</span><br>        <span class="hljs-function"><span class="hljs-keyword">public</span> String <span class="hljs-title">map</span><span class="hljs-params">(String value)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>            strs.add(value);<br>            <span class="hljs-keyword">return</span> strs.get().toString();<br>        &#125;<br><br>        <span class="hljs-comment">//备份状态  周期性(ck设置的周期)执行。</span><br>        <span class="hljs-meta">@Override</span><br>        <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">snapshotState</span><span class="hljs-params">(FunctionSnapshotContext context)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>             System.out.println(<span class="hljs-string">"MyMapFunction.snapshotState"</span>);<br>        &#125;<br><br>        <span class="hljs-comment">//Task重启后，做初始化。为声明的状态去赋值和恢复。 在Task启动时，只执行一次</span><br>        <span class="hljs-meta">@Override</span><br>        <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">initializeState</span><span class="hljs-params">(FunctionInitializationContext context)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>             System.out.println(<span class="hljs-string">"MyMapFunction.initializeState"</span>);<br><br>            <span class="hljs-comment">//找到之前OperatorState的备份</span><br>            OperatorStateStore operatorStateStore = context.getOperatorStateStore();<br>            <span class="hljs-comment">//准备要取出的状态的描述</span><br>            ListStateDescriptor&lt;String&gt; strsListStateDescriptor = <span class="hljs-keyword">new</span> ListStateDescriptor&lt;&gt;(<span class="hljs-string">"list1"</span>, String<span class="hljs-class">.<span class="hljs-keyword">class</span>)</span>;<br>            <span class="hljs-comment">//从备份中找到指定的状态，取出</span><br>            strs = operatorStateStore.getListState(strsListStateDescriptor);<br><br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>测试截图：  </p>
+<p><img src="/img/flink/00/20230611171903.png" srcset="/img/loading.gif" lazyload></p>
+<h4 id="1-2-3、Map-状态（MapState）"><a href="#1-2-3、Map-状态（MapState）" class="headerlink" title="1.2.3、Map 状态（MapState）"></a>1.2.3、Map 状态（MapState）</h4><p>把一些键值对（key-value）作为状态整体保存起来，可以认为就是一组 key-value 映射的列表。对应的 <code>MapState&lt;UK, UV&gt;</code> 接口中，就会有 UK、UV 两个泛型，分别表示保存的 key 和 value 的类型。同样，MapState 提供了操作映射状态的方法，与 Map 的使用非常类似。</p>
+<ul>
+<li>UV get(UK key)：传入一个 key 作为参数，查询对应的 value 值；</li>
+<li>put(UK key, UV value)：传入一个键值对，更新 key 对应的 value 值；</li>
+<li>putAll(Map&lt;UK, UV&gt; map)：将传入的映射 map 中所有的键值对，全部添加到映射状态中；</li>
+<li>remove(UK key)：将指定 key 对应的键值对删除；</li>
+<li>boolean contains(UK key)：判断是否存在指定的 key，返回一个 boolean 值。另外，MapState 也提供了获取整个映射相关信息的方法；</li>
+<li>Iterable&lt;Map.Entry&lt;UK, UV&gt;&gt; entries()：获取映射状态中所有的键值对；</li>
+<li>Iterable keys()：获取映射状态中所有的键（key），返回一个可迭代 Iterable 类型；</li>
+<li>Iterable values()：获取映射状态中所有的值（value），返回一个可迭代 Iterable 类型；</li>
+<li>boolean isEmpty()：判断映射是否为空，返回一个 boolean 值。</li>
+</ul>
+<p>案例</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * keyedState在使用时，只需要先keyBy</span><br><span class="hljs-comment"> *      在后续的处理函数中，自带生命周期方法</span><br><span class="hljs-comment"> *      open():需要再Task启动时，从之前的备份中根据描述取出状态</span><br><span class="hljs-comment"> *</span><br><span class="hljs-comment"> *      特点：每一个Task上，各种key各有各的State，互不干扰</span><br><span class="hljs-comment"> *      ------------------------------------------------</span><br><span class="hljs-comment"> *      mapState储存多个值，可以是任意类型</span><br><span class="hljs-comment"> *      -------------------------------------------------</span><br><span class="hljs-comment"> *      统计每种传感器每种水位值出现的次数</span><br><span class="hljs-comment"> */</span><br><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Demo03_MapState</span> </span>&#123;<br>     <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(String[] args)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>         <span class="hljs-comment">//创建Flink配置类（空参创建的话都是默认值）</span><br>          Configuration configuration = <span class="hljs-keyword">new</span> Configuration();<br>          <span class="hljs-comment">//修改配置类中的WebUI端口号</span><br>          configuration.setInteger(<span class="hljs-string">"rest.port"</span>,<span class="hljs-number">3333</span>);<br>          <span class="hljs-comment">//创建Flink环境（并且传入配置对象）</span><br>          StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment(configuration);<br><br>          env.socketTextStream(<span class="hljs-string">"hadoop102"</span>,<span class="hljs-number">9999</span>)<br>                          .map(<span class="hljs-keyword">new</span> WaterSensorFunction())<br>                                  .keyBy(WaterSensor::getId)<br>                                          .process(<span class="hljs-keyword">new</span> KeyedProcessFunction&lt;String, WaterSensor, String&gt;() &#123;<br><br>                                              <span class="hljs-keyword">private</span> MapState&lt;Integer,Integer&gt; state;<br><br>                                              <span class="hljs-meta">@Override</span><br>                                              <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">open</span><span class="hljs-params">(Configuration parameters)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>                                                  <span class="hljs-comment">//设置状态存储的描述器</span><br>                                                  MapStateDescriptor&lt;Integer, Integer&gt; mapStateDescriptor = <span class="hljs-keyword">new</span> MapStateDescriptor&lt;&gt;(<span class="hljs-string">"state"</span>, Integer<span class="hljs-class">.<span class="hljs-keyword">class</span>, <span class="hljs-title">Integer</span>.<span class="hljs-title">class</span>)</span>;<br>                                                  <span class="hljs-comment">//获取状态的存储</span><br>                                                  state = getRuntimeContext().getMapState(mapStateDescriptor);<br>                                              &#125;<br><br>                                              <span class="hljs-meta">@Override</span><br>                                              <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">processElement</span><span class="hljs-params">(WaterSensor value, KeyedProcessFunction&lt;String, WaterSensor, String&gt;.Context ctx, Collector&lt;String&gt; out)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>                                                  <span class="hljs-keyword">if</span> (state.get(value.getVc())!=<span class="hljs-keyword">null</span>)&#123;<br>                                                      Integer nums = state.get(value.getVc());<br>                                                          state.put(value.getVc(),nums+<span class="hljs-number">1</span>);<br>                                                  &#125;<span class="hljs-keyword">else</span> &#123;<br>                                                      state.put(value.getVc(),<span class="hljs-number">1</span>);<br>                                                  &#125;<br>                                                  out.collect(ctx.getCurrentKey()+<span class="hljs-string">":"</span>+state.entries().toString());<br><br>                                              &#125;<br>                                          &#125;).print();<br><br>          env.execute();<br>     &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>测试截图：  </p>
+<p><img src="/img/flink/00/20230611172134.png" srcset="/img/loading.gif" lazyload></p>
+<h4 id="1-2-4、归约状态（ReducingState）"><a href="#1-2-4、归约状态（ReducingState）" class="headerlink" title="1.2.4、归约状态（ReducingState）"></a>1.2.4、归约状态（ReducingState）</h4><p>类似于值状态（Value），不过需要对添加进来的所有数据进行归约，将归约聚合之后的值作为状态保存下来。ReducingState 这个接口调用的方法类似于 ListState，只不过它保存的只是一个聚合值，所以调用 <code>.add()</code> 方法时，不是在状态列表里添加元素，而是直接把新数据和之前的状态进行归约，并用得到的结果更新状态。  </p>
+<p>归约逻辑的定义，是在归约状态描述器（ReducingStateDescriptor）中，通过传入一个归约函数（ReduceFunction）来实现的。这里的归约函数，就是我们之前介绍 reduce 聚合算子时讲到的 ReduceFunction，所以状态类型跟输入的数据类型是一样的。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-title">ReducingStateDescriptor</span><span class="hljs-params">(</span></span><br><span class="hljs-function"><span class="hljs-params">    String name, ReduceFunction&lt;T&gt; reduceFunction, Class&lt;T&gt; typeClass)</span> </span>&#123;...&#125;<br></code></pre></td></tr></table></figure>
+
+<p>这里的描述器有三个参数，其中第二个参数就是定义了归约聚合逻辑的 ReduceFunction，另外两个参数则是状态的名称和类型。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * 带有聚合功能的状态，需要吧数据存入状态，可以自动根据逻辑聚合</span><br><span class="hljs-comment"> *      获取状态的值，就是聚合后的结果</span><br><span class="hljs-comment"> *</span><br><span class="hljs-comment"> *</span><br><span class="hljs-comment"> *      计算每个传感器的水位和</span><br><span class="hljs-comment"> *</span><br><span class="hljs-comment"> */</span><br><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Demo04_ReduceState</span> </span>&#123;<br>     <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(String[] args)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>         <span class="hljs-comment">//创建Flink配置类（空参创建的话都是默认值）</span><br>          Configuration configuration = <span class="hljs-keyword">new</span> Configuration();<br>          <span class="hljs-comment">//修改配置类中的WebUI端口号</span><br>          configuration.setInteger(<span class="hljs-string">"rest.port"</span>,<span class="hljs-number">3333</span>);<br>          <span class="hljs-comment">//创建Flink环境（并且传入配置对象）</span><br>          StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment(configuration);<br><br>          env.socketTextStream(<span class="hljs-string">"hadoop102"</span>,<span class="hljs-number">9999</span>)<br>                          .map(<span class="hljs-keyword">new</span> WaterSensorFunction())<br>                                  .keyBy(WaterSensor::getId)<br>                                          .process(<span class="hljs-keyword">new</span> KeyedProcessFunction&lt;String, WaterSensor, String&gt;() &#123;<br><br>                                              <span class="hljs-keyword">private</span> ReducingState&lt;Integer&gt; state;<br><br>                                              <span class="hljs-meta">@Override</span><br>                                              <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">open</span><span class="hljs-params">(Configuration parameters)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>                                                  <span class="hljs-comment">//设置状态存储的描述器</span><br>                                                  ReducingStateDescriptor stateDescriptor = <span class="hljs-keyword">new</span> ReducingStateDescriptor&lt;&gt;(<span class="hljs-string">"state"</span>,<br>                                                          <span class="hljs-keyword">new</span> ReduceFunction&lt;Integer&gt;() &#123;<br>                                                              <span class="hljs-meta">@Override</span><br>                                                              <span class="hljs-function"><span class="hljs-keyword">public</span> Integer <span class="hljs-title">reduce</span><span class="hljs-params">(Integer value1, Integer value2)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>                                                                  <span class="hljs-keyword">return</span> value1+value2;<br>                                                              &#125;<br>                                                          &#125;,<br>                                                          Integer<span class="hljs-class">.<span class="hljs-keyword">class</span>)</span>;<br>                                                  <span class="hljs-comment">//获取状态的存储</span><br>                                                  state = getRuntimeContext().getReducingState(stateDescriptor);<br>                                              &#125;<br><br>                                              <span class="hljs-meta">@Override</span><br>                                              <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">processElement</span><span class="hljs-params">(WaterSensor value, KeyedProcessFunction&lt;String, WaterSensor, String&gt;.Context ctx, Collector&lt;String&gt; out)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>                                                 state.add(value.getVc());<br>                                                 out.collect(ctx.getCurrentKey()+<span class="hljs-string">":"</span>+state.get());<br>                                              &#125;<br>                                          &#125;).print();<br><br>          env.execute();<br>     &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>测试截图：</p>
+<p><img src="/img/flink/00/20230611172422.png" srcset="/img/loading.gif" lazyload></p>
+<h4 id="1-2-5、聚合状态（AggregatingState）"><a href="#1-2-5、聚合状态（AggregatingState）" class="headerlink" title="1.2.5、聚合状态（AggregatingState）"></a>1.2.5、聚合状态（AggregatingState）</h4><p>与归约状态非常类似，聚合状态也是一个值，用来保存添加进来的所有数据的聚合结果。与 ReducingState 不同的是，它的聚合逻辑是由在描述器中传入一个更加一般化的聚合函数（AggregateFunction）来定义的；这也就是之前我们讲过的 AggregateFunction，里面通过一个累加器（Accumulator）来表示状态，所以聚合的状态类型可以跟添加进来的数据类型完全不同，使用更加灵活。  </p>
+<p>同样地，AggregatingState 接口调用方法也与 ReducingState 相同，调用 <code>.add()</code> 方法添加元素时，会直接使用指定的 AggregateFunction 进行聚合并更新状态。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * 带有聚合功能的状态，需要吧数据存入状态，可以自动根据逻辑聚合</span><br><span class="hljs-comment"> *      获取状态的值，就是聚合后的结果</span><br><span class="hljs-comment"> *</span><br><span class="hljs-comment"> *      计算每个传感器的水位平均值</span><br><span class="hljs-comment"> */</span><br><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Demo06_AggregatingState</span> </span>&#123;<br>     <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(String[] args)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>         <span class="hljs-comment">//创建Flink配置类（空参创建的话都是默认值）</span><br>          Configuration configuration = <span class="hljs-keyword">new</span> Configuration();<br>          <span class="hljs-comment">//修改配置类中的WebUI端口号</span><br>          configuration.setInteger(<span class="hljs-string">"rest.port"</span>,<span class="hljs-number">3333</span>);<br>          <span class="hljs-comment">//创建Flink环境（并且传入配置对象）</span><br>          StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment(configuration);<br><br>          env.socketTextStream(<span class="hljs-string">"hadoop102"</span>,<span class="hljs-number">9999</span>)<br>                  .map(<span class="hljs-keyword">new</span> WaterSensorFunction())<br>                          .keyBy(WaterSensor::getId)<br>                                  .process(<span class="hljs-keyword">new</span> KeyedProcessFunction&lt;String, WaterSensor, String&gt;() &#123;<br><br><br>                                      <span class="hljs-keyword">private</span> AggregatingState&lt;Integer, Double&gt; state;<br><br>                                      <span class="hljs-meta">@Override</span><br>                                      <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">open</span><span class="hljs-params">(Configuration parameters)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>                                          <span class="hljs-comment">//设置状态存储的描述器</span><br>                                          <span class="hljs-comment">//获取状态的存储</span><br>                                          state = getRuntimeContext()<br>                                                  .getAggregatingState(<br>                                                          <span class="hljs-keyword">new</span> AggregatingStateDescriptor&lt;&gt;(<br>                                                                  <span class="hljs-string">"state"</span>,<br>                                                                  <span class="hljs-keyword">new</span> AggregateFunction&lt;Integer, Tuple2&lt;Integer, Double&gt;, Double&gt;()<br>                                                                  &#123;<br>                                                                      <span class="hljs-meta">@Override</span><br>                                                                      <span class="hljs-function"><span class="hljs-keyword">public</span> Tuple2&lt;Integer, Double&gt; <span class="hljs-title">createAccumulator</span><span class="hljs-params">()</span> </span>&#123;<br>                                                                          <span class="hljs-keyword">return</span> Tuple2.of(<span class="hljs-number">0</span>, <span class="hljs-number">0</span>d);<br>                                                                      &#125;<br><br>                                                                      <span class="hljs-meta">@Override</span><br>                                                                      <span class="hljs-function"><span class="hljs-keyword">public</span> Tuple2&lt;Integer, Double&gt; <span class="hljs-title">add</span><span class="hljs-params">(Integer value, Tuple2&lt;Integer, Double&gt; accumulator)</span> </span>&#123;<br>                                                                          accumulator.f0 += <span class="hljs-number">1</span>;<br>                                                                          accumulator.f1 += value;<br>                                                                          <span class="hljs-keyword">return</span> accumulator;<br>                                                                      &#125;<br><br>                                                                      <span class="hljs-meta">@Override</span><br>                                                                      <span class="hljs-function"><span class="hljs-keyword">public</span> Double <span class="hljs-title">getResult</span><span class="hljs-params">(Tuple2&lt;Integer, Double&gt; accumulator)</span> </span>&#123;<br>                                                                          <span class="hljs-keyword">return</span> accumulator.f1 / accumulator.f0;<br>                                                                      &#125;<br><br>                                                                      <span class="hljs-comment">//不用写</span><br>                                                                      <span class="hljs-meta">@Override</span><br>                                                                      <span class="hljs-function"><span class="hljs-keyword">public</span> Tuple2&lt;Integer, Double&gt; <span class="hljs-title">merge</span><span class="hljs-params">(Tuple2&lt;Integer, Double&gt; a, Tuple2&lt;Integer, Double&gt; b)</span> </span>&#123;<br>                                                                          <span class="hljs-keyword">return</span> <span class="hljs-keyword">null</span>;<br>                                                                      &#125;<br>                                                                  &#125;,<br>                                                                  Types.TUPLE(Types.INT, Types.DOUBLE)<br>                                                          )<br>                                                  );<br>                                      &#125;<br><br>                                      <span class="hljs-meta">@Override</span><br>                                      <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">processElement</span><span class="hljs-params">(WaterSensor value, KeyedProcessFunction&lt;String, WaterSensor, String&gt;.Context ctx, Collector&lt;String&gt; out)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>                                          state.add(value.getVc());<br>                                          <span class="hljs-comment">//取出结果</span><br>                                          out.collect(ctx.getCurrentKey() +<span class="hljs-string">" avgVc："</span> +state.get());<br>                                      &#125;<br>                                  &#125;).print();<br><br>          env.execute();<br>     &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>测试截图：</p>
+<p><img src="/img/flink/00/20230611172737.png" srcset="/img/loading.gif" lazyload></p>
+<h4 id="1-2-6、状态生存时间（TTL）"><a href="#1-2-6、状态生存时间（TTL）" class="headerlink" title="1.2.6、状态生存时间（TTL）"></a>1.2.6、状态生存时间（TTL）</h4><p>在实际应用中，很多状态会随着时间的推移逐渐增长，如果不加以限制，最终就会导致存储空间的耗尽。一个优化的思路是直接在代码中调用 <code>.clear()</code> 方法去清除状态，但是有时候我们的逻辑要求不能直接清除。这时就需要配置一个状态的“生存时间”（time-to-live，TTL），当状态在内存中存在的时间超出这个值时，就将它清除。  </p>
+<p>具体实现上，如果用一个进程不停地扫描所有状态看是否过期，显然会占用大量资源做无用功。状态的失效其实不需要立即删除，所以我们可以给状态附加一个属性，也就是状态的“失效时间”。状态创建的时候，设置 <code>失效时间 = 当前时间 + TTL</code>；之后如果有对状态的访问和修改，我们可以再对失效时间进行更新；当设置的清除条件被触发时（比如，状态被访问的时候，或者每隔一段时间扫描一次失效状态），就可以判断状态是否失效、从而进行清除了。  </p>
+<p>配置状态的 TTL 时，需要创建一个 StateTtlConfig 配置对象，然后调用状态描述器的 <code>.enableTimeToLive()</code> 方法启动 TTL 功能。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs java">StateTtlConfig ttlConfig = StateTtlConfig<br>    .newBuilder(Time.seconds(<span class="hljs-number">10</span>))<br>    .setUpdateType(StateTtlConfig.UpdateType.OnCreateAndWrite)<br>    .setStateVisibility(StateTtlConfig.StateVisibility.NeverReturnExpired)<br>    .build();<br><br>ValueStateDescriptor&lt;String&gt; stateDescriptor = <span class="hljs-keyword">new</span> ValueStateDescriptor&lt;&gt;(<span class="hljs-string">"my state"</span>, String<span class="hljs-class">.<span class="hljs-keyword">class</span>)</span>;<br><br>stateDescriptor.enableTimeToLive(ttlConfig);<br></code></pre></td></tr></table></figure>
+
+<p>这里用到了几个配置项：</p>
+<ul>
+<li><code>.newBuilder()</code><br>状态 TTL 配置的构造器方法，必须调用，返回一个 Builder 之后再调用 <code>.build()</code> 方法就可以得到 StateTtlConfig 了。方法需要传入一个 Time 作为参数，这就是设定的状态生存时间。</li>
+<li><code>.setUpdateType()</code><br>设置更新类型。更新类型指定了什么时候更新状态失效时间，这里的 OnCreateAndWrite 表示只有创建状态和更改状态（写操作）时更新失效时间。另一种类型 OnReadAndWrite 则表示无论读写操作都会更新失效时间，也就是只要对状态进行了访问，就表明它是活跃的，从而延长生存时间。这个配置默认为 OnCreateAndWrite。</li>
+<li><code>.setStateVisibility()</code><br>设置状态的可见性。所谓的“状态可见性”，是指因为清除操作并不是实时的，所以当状态过期之后还有可能继续存在，这时如果对它进行访问，能否正常读取到就是一个问题了。这里设置的 NeverReturnExpired 是默认行为，表示从不返回过期值，也就是只要过期就认为它已经被清除了，应用不能继续读取；这在处理会话或者隐私数据时比较重要。对应的另一种配置是 ReturnExpireDefNotCleanedUp，就是如果过期状态还存在，就返回它的值。<br>除此之外，TTL 配置还可以设置在保存检查点（checkpoint）时触发清除操作，或者配置增量的清理（incremental cleanup），还可以针对RocksDB 状态后端使用压缩过滤器（compaction filter）进行后台清理。这里需要注意，目前的 TTL 设置只支持处理时间。</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * 程序是7*24小时一直运行</span><br><span class="hljs-comment"> *  状态是储存在内存中。如果不动手清理(Clear())，状态会越存越多。</span><br><span class="hljs-comment"> *  内存是有限的，当状态过多时，需要把一些可以清理的状态，清理掉。</span><br><span class="hljs-comment"> *      实现方式：</span><br><span class="hljs-comment"> *          自己调用clear()</span><br><span class="hljs-comment"> *          自动清理（设置一个过期时间）</span><br><span class="hljs-comment"> *          ----------------------------------------------</span><br><span class="hljs-comment"> *          过期时间： ttl  time to live</span><br><span class="hljs-comment"> *</span><br><span class="hljs-comment"> *          1、设置一个过期对象</span><br><span class="hljs-comment"> *          2、讲对象传入在open方法中的状态描述的方法中</span><br><span class="hljs-comment"> *</span><br><span class="hljs-comment"> */</span><br><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Demo09_Ttl</span></span>&#123;<br>     <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(String[] args)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>         <span class="hljs-comment">//创建Flink配置类（空参创建的话都是默认值）</span><br>          Configuration configuration = <span class="hljs-keyword">new</span> Configuration();<br>          <span class="hljs-comment">//修改配置类中的WebUI端口号</span><br>          configuration.setInteger(<span class="hljs-string">"rest.port"</span>,<span class="hljs-number">3333</span>);<br>          <span class="hljs-comment">//创建Flink环境（并且传入配置对象）</span><br>          StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment(configuration);<br><br>          <span class="hljs-comment">//并行度</span><br>          env.setParallelism(<span class="hljs-number">1</span>);<br><br>          <span class="hljs-comment">//构造状态的过期时间对象</span><br>         StateTtlConfig ttlConfig = StateTtlConfig<br>                 <span class="hljs-comment">//传入状态的存活时间</span><br>                 .newBuilder(Time.seconds(<span class="hljs-number">15</span>))<br>                 <span class="hljs-comment">//状态过期了就不返回了</span><br>                 .neverReturnExpired()<br>                 <span class="hljs-comment">/**</span><br><span class="hljs-comment">                  * 清理过期状态的原理：</span><br><span class="hljs-comment">                  *     如果设置了ttl，此时每个状态在存储的时候，会多储存一个lastAccessTime字段</span><br><span class="hljs-comment">                  *</span><br><span class="hljs-comment">                  * 设置状态中存活时间的更新策略。用来更新lastAccessTime</span><br><span class="hljs-comment">                  *     OnCreateAndWrite：lastAccessTime会在状态被写的时候更新</span><br><span class="hljs-comment">                  *     OnReadAndWrite：lastAccessTime会在状态被读或写的时候更新</span><br><span class="hljs-comment">                  *  如何判断过期</span><br><span class="hljs-comment">                  *     没有事件时间的概念，只和物理时钟有关</span><br><span class="hljs-comment">                  *</span><br><span class="hljs-comment">                  *     当前读写时间-lastAccessTime&gt;ttl,此时标记这个状态已经过期</span><br><span class="hljs-comment">                  *     之后会在后台启动一个清理的线程，定期把标记为过期的状态删除</span><br><span class="hljs-comment">                  */</span><br>                 .setUpdateType(StateTtlConfig.UpdateType.OnReadAndWrite)<br>                 .build();<br><br>                 env.socketTextStream(<span class="hljs-string">"hadoop102"</span>,<span class="hljs-number">9999</span>)<br>                                 .map(<span class="hljs-keyword">new</span> WaterSensorFunction())<br>                                         .keyBy(WaterSensor::getId)<br>                                                 .process(<span class="hljs-keyword">new</span> KeyedProcessFunction&lt;String, WaterSensor, String&gt;() &#123;<br><br>                                                     <span class="hljs-keyword">private</span> ListState&lt;Integer&gt; listState;<br><br>                                                     <span class="hljs-meta">@Override</span><br>                                                     <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">open</span><span class="hljs-params">(Configuration parameters)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>                                                         ListStateDescriptor&lt;Integer&gt; listStateDescriptor = <span class="hljs-keyword">new</span> ListStateDescriptor&lt;&gt;(<span class="hljs-string">"state"</span>, Integer<span class="hljs-class">.<span class="hljs-keyword">class</span>)</span>;<br>                                                         <span class="hljs-comment">//应用存货策略</span><br>                                                         listStateDescriptor.enableTimeToLive(ttlConfig);<br><br>                                                         listState = getRuntimeContext().getListState(listStateDescriptor);<br>                                                     &#125;<br><br>                                                     <span class="hljs-meta">@Override</span><br>                                                     <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">processElement</span><span class="hljs-params">(WaterSensor value, KeyedProcessFunction&lt;String, WaterSensor, String&gt;.Context ctx, Collector&lt;String&gt; out)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>                                                         listState.add(value.getVc());<br>                                                         Iterable&lt;Integer&gt; integers = listState.get();<br>                                                         List&lt;Integer&gt; top3 = StreamSupport.stream(integers.spliterator(), <span class="hljs-keyword">true</span>)<br>                                                                 .sorted(Comparator.reverseOrder())<br>                                                                 .limit(<span class="hljs-number">3</span>)<br>                                                                 .collect(Collectors.toList());<br>                                                         out.collect(ctx.getCurrentKey()+<span class="hljs-string">"最新Top3："</span>+top3);<br>                                                         listState.update(top3);<br><br>                                                     &#125;<br>                                                 &#125;).print();<br><br>         env.execute();<br>     &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>测试截图：  </p>
+<p><img src="/img/flink/00/20230611173134.png" srcset="/img/loading.gif" lazyload></p>
+<p>注意：最后一条记录要在上一条记录发送之后15秒之后再发</p>
+<h3 id="1-3、算子状态（Operator-State）"><a href="#1-3、算子状态（Operator-State）" class="headerlink" title="1.3、算子状态（Operator State）"></a>1.3、算子状态（Operator State）</h3><p>算子状态（Operator State）就是一个算子并行实例上定义的状态，作用范围被限定为当前算子任务。算子状态跟数据的 key 无关，所以不同 key 的数据只要被分发到同一个并行子任务，就会访问到同一个 Operator State。  </p>
+<p>算子状态的实际应用场景不如 Keyed State 多，一般用在 Source 或 Sink 等与外部系统连接的算子上，或者完全没有 key 定义的场景。比如 Flink 的 Kafka 连接器中，就用到了算子状态。</p>
+<p>当算子的并行度发生变化时，算子状态也支持在并行的算子任务实例之间做重组分配。根据状态的类型不同，重组分配的方案也会不同。</p>
+<p>算子状态也支持不同的结构类型，主要有三种：ListState、UnionListState 和 BroadcastState。</p>
+<h4 id="1-3-1、列表状态（ListState）"><a href="#1-3-1、列表状态（ListState）" class="headerlink" title="1.3.1、列表状态（ListState）"></a>1.3.1、列表状态（ListState）</h4><p>与 Keyed State 中的 ListState 一样，将状态表示为一组数据的列表。</p>
+<p>与 Keyed State 中的列表状态的区别是：在算子状态的上下文中，不会按键（key）分别处理状态，所以每一个并行子任务上只会保留一个“列表”（list），也就是当前并行子任务上所有状态项的集合。列表中的状态项就是可以重新分配的最细粒度，彼此之间完全独立。</p>
+<p>当算子并行度进行缩放调整时，算子的列表状态中的所有元素项会被统一收集起来，相当于把多个分区的列表合并成了一个“大列表”，然后再均匀地分配给所有并行任务。这种“均匀分配”的具体方法就是“轮询”（round-robin），与之前介绍的 rebanlance 数据传输方式类似，是通过逐一“发牌”的方式将状态项平均分配的。这种方式也叫作“平均分割重组”（even-split redistribution）。</p>
+<p>算子状态中不会存在“键组”（key group）这样的结构，所以为了方便重组分配，就把它直接定义成了“列表”（list）。这也就解释了，为什么算子状态中没有最简单的值状态（ValueState）。</p>
+<p>案例实操：在 map 算子中计算数据的个数。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">OperatorListStateDemo</span> </span>&#123;<br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(String[] args)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();<br>        env.setParallelism(<span class="hljs-number">2</span>);<br><br>        env<br>                .socketTextStream(<span class="hljs-string">"hadoop102"</span>, <span class="hljs-number">7777</span>)<br>                .map(<span class="hljs-keyword">new</span> MyCountMapFunction())<br>                .print();<br><br><br>        env.execute();<br>    &#125;<br><br><br>    <span class="hljs-comment">// TODO 1.实现 CheckpointedFunction 接口</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyCountMapFunction</span> <span class="hljs-keyword">implements</span> <span class="hljs-title">MapFunction</span>&lt;<span class="hljs-title">String</span>, <span class="hljs-title">Long</span>&gt;, <span class="hljs-title">CheckpointedFunction</span> </span>&#123;<br><br>        <span class="hljs-keyword">private</span> Long count = <span class="hljs-number">0L</span>;<br>        <span class="hljs-keyword">private</span> ListState&lt;Long&gt; state;<br><br><br>        <span class="hljs-meta">@Override</span><br>        <span class="hljs-function"><span class="hljs-keyword">public</span> Long <span class="hljs-title">map</span><span class="hljs-params">(String value)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>            <span class="hljs-keyword">return</span> ++count;<br>        &#125;<br><br>        <span class="hljs-comment">/**</span><br><span class="hljs-comment">         * TODO 2.本地变量持久化：将 本地变量 拷贝到 算子状态中,开启checkpoint时才会调用</span><br><span class="hljs-comment">         *</span><br><span class="hljs-comment">         * <span class="hljs-doctag">@param</span> context</span><br><span class="hljs-comment">         * <span class="hljs-doctag">@throws</span> Exception</span><br><span class="hljs-comment">         */</span><br>        <span class="hljs-meta">@Override</span><br>        <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">snapshotState</span><span class="hljs-params">(FunctionSnapshotContext context)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>            System.out.println(<span class="hljs-string">"snapshotState..."</span>);<br>            <span class="hljs-comment">// 2.1 清空算子状态</span><br>            state.clear();<br>            <span class="hljs-comment">// 2.2 将 本地变量 添加到 算子状态 中</span><br>            state.add(count);<br>        &#125;<br><br>        <span class="hljs-comment">/**</span><br><span class="hljs-comment">         * TODO 3.初始化本地变量：程序启动和恢复时， 从状态中 把数据添加到 本地变量，每个子任务调用一次</span><br><span class="hljs-comment">         *</span><br><span class="hljs-comment">         * <span class="hljs-doctag">@param</span> context</span><br><span class="hljs-comment">         * <span class="hljs-doctag">@throws</span> Exception</span><br><span class="hljs-comment">         */</span><br>        <span class="hljs-meta">@Override</span><br>        <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">initializeState</span><span class="hljs-params">(FunctionInitializationContext context)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>            System.out.println(<span class="hljs-string">"initializeState..."</span>);<br>            <span class="hljs-comment">// 3.1 从 上下文 初始化 算子状态</span><br>            state = context<br>                    .getOperatorStateStore()<br>                    .getListState(<span class="hljs-keyword">new</span> ListStateDescriptor&lt;Long&gt;(<span class="hljs-string">"state"</span>, Types.LONG));<br><br>            <span class="hljs-comment">// 3.2 从 算子状态中 把数据 拷贝到 本地变量</span><br>            <span class="hljs-keyword">if</span> (context.isRestored()) &#123;<br>                <span class="hljs-keyword">for</span> (Long c : state.get()) &#123;<br>                    count += c;<br>                &#125;<br>            &#125;<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h4 id="1-3-2、联合列表状态（UnionListState）"><a href="#1-3-2、联合列表状态（UnionListState）" class="headerlink" title="1.3.2、联合列表状态（UnionListState）"></a>1.3.2、联合列表状态（UnionListState）</h4><p>与 ListState 类似，联合列表状态也会将状态表示为一个列表。它与常规列表状态的区别在于，算子并行度进行缩放调整时对于状态的分配方式不同。<br>UnionListState 的重点就在于“联合”（union）。在并行度调整时，常规列表状态是轮询分配状态项，而联合列表状态的算子则会直接广播状态的完整列表。这样，并行度缩放之后的并行子任务就获取到了联合后完整的“大列表”，可以自行选择要使用的状态项和要丢弃的状态项。这种分配也叫作“联合重组”（union redistribution）。如果列表中状态项数量太多，为资源和效率考虑一般不建议使用联合重组的方式。  </p>
+<p>使用方式同 ListState，区别在如下部分：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs java">state = context<br>              .getOperatorStateStore()<br>              .getUnionListState(<span class="hljs-keyword">new</span> ListStateDescriptor&lt;Long&gt;(<span class="hljs-string">"union-state"</span>, Types.LONG));<br></code></pre></td></tr></table></figure>
+
+
+<h4 id="1-3-3、广播状态（BroadCastState）"><a href="#1-3-3、广播状态（BroadCastState）" class="headerlink" title="1.3.3、广播状态（BroadCastState）"></a>1.3.3、广播状态（BroadCastState）</h4><p>有时我们希望算子并行子任务都保持同一份“全局”状态，用来做统一的配置和规则设定。这时所有分区的所有数据都会访问到同一个状态，状态就像被“广播”到所有分区一样，这种特殊的算子状态，就叫作广播状态（BroadcastState）。</p>
+<p>因为广播状态在每个并行子任务上的实例都一样，所以在并行度调整的时候就比较简单，只要复制一份到新的并行任务就可以实现扩展；而对于并行度缩小的情况，可以将多余的并行子任务连同状态直接砍掉——因为状态都是复制出来的，并不会丢失。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * 场景单一：</span><br><span class="hljs-comment"> *      用于一个配置流在更新配置时，可以将更新的信息放入广播状态</span><br><span class="hljs-comment"> *      数据流，可以提供广播状态及时获取更新的配置信息</span><br><span class="hljs-comment"> */</span><br><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Demo04_BroadCastState</span> </span>&#123;<br>     <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(String[] args)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>         <span class="hljs-comment">//创建Flink配置类（空参创建的话都是默认值）</span><br>          Configuration configuration = <span class="hljs-keyword">new</span> Configuration();<br>          <span class="hljs-comment">//修改配置类中的WebUI端口号</span><br>          configuration.setInteger(<span class="hljs-string">"rest.port"</span>,<span class="hljs-number">3333</span>);<br>          <span class="hljs-comment">//创建Flink环境（并且传入配置对象）</span><br>          StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment(configuration);<br><br>          env.setParallelism(<span class="hljs-number">2</span>);<br><br>          env.enableCheckpointing(<span class="hljs-number">2000</span>);<br><br>         <span class="hljs-comment">//数据流</span><br>         SingleOutputStreamOperator&lt;WaterSensor&gt; dataDS = env<br>                 .socketTextStream(<span class="hljs-string">"hadoop102"</span>, <span class="hljs-number">9999</span>)<br>                 .map(<span class="hljs-keyword">new</span> WaterSensorFunction());<br><br>         <span class="hljs-comment">//配置流</span><br>         SingleOutputStreamOperator&lt;MyConf&gt; configDS = env.socketTextStream(<span class="hljs-string">"hadoop102"</span>, <span class="hljs-number">9998</span>)<br>                 .map(<span class="hljs-keyword">new</span> MapFunction&lt;String, MyConf&gt;() &#123;<br>                     <span class="hljs-meta">@Override</span><br>                     <span class="hljs-function"><span class="hljs-keyword">public</span> MyConf <span class="hljs-title">map</span><span class="hljs-params">(String value)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>                         String[] split = value.split(<span class="hljs-string">","</span>);<br>                         <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> MyConf(split[<span class="hljs-number">0</span>], split[<span class="hljs-number">1</span>]);<br>                     &#125;<br>                 &#125;);<br><br>         <span class="hljs-comment">//只有把普通流制作为广播流，才能用广播状态</span><br>         MapStateDescriptor&lt;String, MyConf&gt; mapStateDescriptor = <span class="hljs-keyword">new</span> MapStateDescriptor&lt;&gt;(<span class="hljs-string">"config"</span>, String<span class="hljs-class">.<span class="hljs-keyword">class</span>, <span class="hljs-title">MyConf</span>.<span class="hljs-title">class</span>)</span>;<br><br>         BroadcastStream&lt;MyConf&gt; confBroadcastStream = configDS.broadcast(mapStateDescriptor);<br><br>         <span class="hljs-comment">//数据流希望读取配置流中的信息，必须让两个流连接</span><br>         dataDS.connect(confBroadcastStream)<br>                         .process(<span class="hljs-keyword">new</span> BroadcastProcessFunction&lt;WaterSensor, MyConf, WaterSensor&gt;() &#123;<br>                             <span class="hljs-comment">//处理数据流的数据</span><br>                             <span class="hljs-meta">@Override</span><br>                             <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">processElement</span><span class="hljs-params">(WaterSensor value, BroadcastProcessFunction&lt;WaterSensor, MyConf, WaterSensor&gt;.ReadOnlyContext ctx, Collector&lt;WaterSensor&gt; out)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>                                 <span class="hljs-comment">//获取广播状态</span><br>                                 ReadOnlyBroadcastState&lt;String, MyConf&gt; broadcastState = ctx.getBroadcastState(mapStateDescriptor);<br>                                 MyConf myConf = broadcastState.get(value.getId());<br><br>                                 <span class="hljs-comment">//用收到的配置信息，更新数据中的属性</span><br>                                 value.setId(myConf.getName());<br>                                 out.collect(value);<br><br>                             &#125;<br>                             <span class="hljs-comment">//处理配置流的数据</span><br>                             <span class="hljs-meta">@Override</span><br>                             <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">processBroadcastElement</span><span class="hljs-params">(MyConf value, BroadcastProcessFunction&lt;WaterSensor, MyConf, WaterSensor&gt;.Context ctx, Collector&lt;WaterSensor&gt; out)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>                                 <span class="hljs-comment">//一旦收到了新的配置，就存入广播状态</span><br>                                 <span class="hljs-comment">//当作map用</span><br>                                 BroadcastState&lt;String, MyConf&gt; broadcastState = ctx.getBroadcastState(mapStateDescriptor);<br>                                 broadcastState.put(value.id,value);<br>                             &#125;<br>                         &#125;).print();<br>         env.execute();<br>     &#125;<br><br>     <span class="hljs-meta">@Data</span><br>     <span class="hljs-meta">@AllArgsConstructor</span><br>     <span class="hljs-meta">@NoArgsConstructor</span><br>     <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyConf</span></span>&#123;<br>         <span class="hljs-keyword">private</span> String id;<br>         <span class="hljs-keyword">private</span> String name;<br>     &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>测试截图：  </p>
+<p><img src="/img/flink/00/20230611173932.png" srcset="/img/loading.gif" lazyload></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Flink/" class="category-chain-item">Flink</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Flink/" class="print-no-link">#Flink</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>10-Flink 状态管理</div>
+      <div>https://flepeng.github.io/045-Flink-31-基础-10-Flink-状态管理/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年3月8日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/045-Flink-31-%E5%9F%BA%E7%A1%80-11-Flink-%E5%AE%B9%E9%94%99%E6%9C%BA%E5%88%B6/" title="11-Flink 容错机制">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">11-Flink 容错机制</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/045-Flink-31-%E5%9F%BA%E7%A1%80-12-Flink-%E6%B5%81%E6%8E%A7%E5%92%8C%E5%8F%8D%E5%8E%8B/" title="12-Flink 流控和反压">
+                        <span class="hidden-mobile">12-Flink 流控和反压</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

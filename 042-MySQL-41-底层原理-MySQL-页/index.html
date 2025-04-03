@@ -1,0 +1,843 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="页是什么首先，我们需要知道，页（Pages）是 InnoDB 中管理数据的最小单元。 Buffer Pool 中存的就是一页一页的数据。再比如，当我们要查询的数据不在 Buffer Pool 中时，InnoDB 会将记录所在的页整个加载到 Buffer Pool 中去；同样的，将 Buffer Pool 中的脏页刷入磁盘时，也是按照页为单位刷入磁盘的。 页的概览我们往 MySQL 插入的数据最终都">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL 页">
+<meta property="og:url" content="https://flepeng.github.io/042-MySQL-41-%E5%BA%95%E5%B1%82%E5%8E%9F%E7%90%86-MySQL-%E9%A1%B5/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="页是什么首先，我们需要知道，页（Pages）是 InnoDB 中管理数据的最小单元。 Buffer Pool 中存的就是一页一页的数据。再比如，当我们要查询的数据不在 Buffer Pool 中时，InnoDB 会将记录所在的页整个加载到 Buffer Pool 中去；同样的，将 Buffer Pool 中的脏页刷入磁盘时，也是按照页为单位刷入磁盘的。 页的概览我们往 MySQL 插入的数据最终都">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/02/1669369728-0bb343c7154be5d60ba9ee5500666cd8.jpeg">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/02/1669369728-b7e8c70e7d52d911bfa13161c51f1854.jpeg">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/02/1669369728-f36c4b7a89bd4d6d83d8b18a159c690f.jpeg">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/02/1669369728-6fac40fee8966926d0006cbee03b98d7.jpeg">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/02/1669369728-84253885bca73188ba121d00efc9b288.jpeg">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/02/1669369728-450be97ad51a9e86f1c07c43fa4bd2cb.jpeg">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/02/1669369728-6d2ab2bb276d1036a2eecfdeec2dd897.jpeg">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/02/1669369728-0f3ea59f3783ee10db976144645e9f09.jpeg">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/02/1669369728-cd883d79f554df134516f94f7a80c03e.jpeg">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/02/1669369728-f556a672d7eca7b3efeccc5e9835f83a.jpeg">
+<meta property="article:published_time" content="2020-08-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.360Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="MySQL">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/mysql/02/1669369728-0bb343c7154be5d60ba9ee5500666cd8.jpeg">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>MySQL 页 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="MySQL 页"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2020-08-08 00:00" pubdate>
+          2020年8月8日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          18 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">MySQL 页</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h3 id="页是什么"><a href="#页是什么" class="headerlink" title="页是什么"></a>页是什么</h3><p>首先，我们需要知道，<strong>页（Pages）</strong>是 InnoDB 中管理数据的<strong>最小单元</strong>。</p>
+<p>Buffer Pool 中存的就是一页一页的数据。再比如，当我们要查询的数据不在 Buffer Pool 中时，InnoDB 会将记录所在的页整个加载到 Buffer Pool 中去；同样的，将 Buffer Pool 中的脏页刷入磁盘时，也是按照页为单位刷入磁盘的。</p>
+<h3 id="页的概览"><a href="#页的概览" class="headerlink" title="页的概览"></a>页的概览</h3><p>我们往 MySQL 插入的数据最终都是存在页中的。在 InnoDB 中的设计中，页与页之间是通过一个<strong>双向链表</strong>连接起来。</p>
+<p><img src="/img/mysql/02/1669369728-0bb343c7154be5d60ba9ee5500666cd8.jpeg" srcset="/img/loading.gif" lazyload></p>
+<p>而存储在页中的一行一行的数据则是通过<strong>单链表</strong>连接起来的。</p>
+<p><img src="/img/mysql/02/1669369728-b7e8c70e7d52d911bfa13161c51f1854.jpeg" srcset="/img/loading.gif" lazyload></p>
+<p>上图中的 <code>User Records</code> 的区域就是用来存储行数据的。</p>
+<p>那 InnoDB 为什么要这么设计？假设我们没有页这个概念，那么当我们查询时，成千上万的数据要如何做到快速的查询出结果？</p>
+<p>众所周知，MySQL 的性能是不错的，而如果没有页，我们剩下的只能是逐条逐条的遍历数据了。</p>
+<p>那页是如何做到快速查询的呢？在当前页中，可以通过 <code>User Records</code> 中的连接每条记录的单链表来进行遍历，如果在当前页中没有找到，则可以通过<strong>下一页指针</strong>快速的跳到下一页进行查询。</p>
+<h3 id="Infimum-和-Supremum"><a href="#Infimum-和-Supremum" class="headerlink" title="Infimum 和 Supremum"></a>Infimum 和 Supremum</h3><p>有人可能会说了，你在 <code>User Records</code> 中还不是通过遍历来解决的，你就是简单的把数据分了个组而已。如果我的数据根本不在当前这个页中，那我难道还是得把之前的页中的每一条数据全部遍历完？这效率也太低了</p>
+<p>当然，MySQL 也考虑到了这个问题，所以实际上在页中还存在一块区域叫做 <code>The Infimum and Supremum Records</code> ，代表了当前页中<strong>最大</strong>和<strong>最小</strong>的记录。</p>
+<p><img src="/img/mysql/02/1669369728-f36c4b7a89bd4d6d83d8b18a159c690f.jpeg" srcset="/img/loading.gif" lazyload></p>
+<p>有了 <code>Infimum Record</code> 和 <code>Supremum Record</code> ，现在查询不需要将某一页的 <code>User Records</code> 全部遍历完，只需要将这两个记录和待查询的目标记录进行比较。比如我要查询的数据 <code>id = 101</code> ，那很明显不在当前页。接下来就可以通过<strong>下一页指针</strong>跳到下页进行检索。</p>
+<h3 id="使用-Page-Directory"><a href="#使用-Page-Directory" class="headerlink" title="使用 Page Directory"></a>使用 Page Directory</h3><p>可能有人又会说了，你这 <code>User Records</code> 里不也全是单链表吗？即使我知道我要找的数据在当前页，那最坏的情况下，不还是得挨个挨个的遍历 100 次才能找到我要找的数据？你管这也叫效率高？</p>
+<p>不得不说，这的确是个问题，不过是一个 MySQL 已经考虑到的问题。不错，挨个遍历确实效率很低。为了解决这个问题，MySQL 又在页中加入了另一个区域 <code>Page Directory</code> 。</p>
+<p><img src="/img/mysql/02/1669369728-6fac40fee8966926d0006cbee03b98d7.jpeg" srcset="/img/loading.gif" lazyload></p>
+<p>顾名思义，<code>Page Directory</code> 是个目录，里面有很多个<strong>槽位（Slots）</strong>，每一个槽位都指向了一条 <code>User Records</code> 中的记录。大家可以看到，每隔几条数据，就会创建一个槽位。其实我图中给出的数据是非常严格按照其设定来的，在一个完整的页中，<strong>每隔 6 条数据就会有一个 Slot。</strong></p>
+<blockquote>
+<p>Page Directory 的设计不知道有没有让你想起另一个数据结构——跳表，只不过这里只抽象了一层索引</p>
+</blockquote>
+<p>MySQL 会在新增数据的时候就将对应的 Slot 创建好，有了 <code>Page Directory</code> ，就可以对一张页的数据进行粗略的<strong>二分查找</strong>。至于为什么是粗略，毕竟 <code>Page Directory</code> 中不是完整的数据，二分查找出来的结果只能是个大概的位置，找到了这个大概的位置之后，还需要回到 <code>User Records</code> 中继续的进行挨个遍历匹配。</p>
+<p>不过这样的效率已经比我们刚开始聊的原始版本高了很多了。</p>
+<p><img src="/img/mysql/02/1669369728-84253885bca73188ba121d00efc9b288.jpeg" srcset="/img/loading.gif" lazyload></p>
+<h3 id="页的真实面貌"><a href="#页的真实面貌" class="headerlink" title="页的真实面貌"></a>页的真实面貌</h3><p>如果我开篇就把页的各种组成部分，各种概念直接抛出来，首先我自己接受不了，这样显得很僵硬。其次，对页不熟悉的人应该是不太能理解页为什么要这么设计的。所以我按照查询一条数据的一套思路，把页的大致的面貌呈现给了大家。</p>
+<p>实际上，页上还存储了很多其他的字段，也还有其他的区域，但是这些都不会影响到我们对页的理解。所以，在对页有了一个较为清晰的认知之后，我们就可以来看看真实的页到底长啥样了。</p>
+<p><img src="/img/mysql/02/1669369728-450be97ad51a9e86f1c07c43fa4bd2cb.jpeg" srcset="/img/loading.gif" lazyload></p>
+<p>上图就是页的实际全部组成，除了我们之前提到过的，还多了一些之前没有聊过的，例如 <code>File Header</code>、<code>Page Header</code>、<code>Free Space</code>、<code>File Tailer</code> 。我们一个一个来看。</p>
+<h4 id="File-Header"><a href="#File-Header" class="headerlink" title="File Header"></a>File Header</h4><p>其实<code>File Header</code> 在上文已经聊过了，只是不叫这个名字。上面提到的<strong>上一页指针</strong>和<strong>下一页指针</strong>其实就是属于<code>File Header</code>的，除此之外还有很多其他的数据。</p>
+<p><img src="/img/mysql/02/1669369728-6d2ab2bb276d1036a2eecfdeec2dd897.jpeg" srcset="/img/loading.gif" lazyload></p>
+<p>其实我比较抗拒把一堆参数列出来，告诉你这个大小多少，那个用来干嘛。对于我们需要详细了解页来说，其实暂时只需要知道两个就足够了，分别是：</p>
+<ul>
+<li><code>FIL_PAGE_PREV</code></li>
+<li><code>FIL_PAGE_NEXT</code></li>
+</ul>
+<p>这两个变量就是上文提到过的<strong>上一页指针</strong>和<strong>下一页指针</strong>，说是指针，是为了方便大家理解，实际上是页在磁盘上的偏移量。</p>
+<h4 id="Page-Header"><a href="#Page-Header" class="headerlink" title="Page Header"></a>Page Header</h4><p>比起 <code>File Header</code> ，<code>Page Header</code> 中的数据对我们来说就显得更加熟悉了，我这里画了一张图，把里面的内容详细的列了出来。</p>
+<p><img src="/img/mysql/02/1669369728-0f3ea59f3783ee10db976144645e9f09.jpeg" srcset="/img/loading.gif" lazyload></p>
+<p>这里全列出来是因为了解这些参数的含义和为什么要设置参数，能够更好的帮助我们了解页的原理和构造，具体的看图说话就行。</p>
+<p>这里也很想吐槽，太多博客都写的太<strong>僵硬</strong>，比如参数 <code>PAGE_HEAP_TOP</code> ，这里的 <code>HEAP</code> 很多博客都直接叫<strong>堆</strong>。这就跟你给<code>Init</code>写注释叫初始化一样，还不如不写。实际上你去研究一下就会知道，这里的堆实际上就是指 <strong>User Records</strong>。</p>
+<p>里面有个两个参数可能会有点混淆，分别是<code>PAGE_N_HEAP</code>和<code>PAGE_N_RECS</code> ，都是当前 <code>User Records</code> 中记录的数量，唯一的不同在于，<code>PAGE_N_HEAP</code> 中是包含了<strong>被标记为删除</strong>的记录的， 而 <code>PAGE_N_RECS</code> 中就是实际上我们能够查询到的所有数据。</p>
+<h4 id="Infimum-amp-Supremum-Records"><a href="#Infimum-amp-Supremum-Records" class="headerlink" title="Infimum &amp; Supremum Records"></a>Infimum &amp; Supremum Records</h4><p>上文中提到，<code>Infimum &amp; Supremum Records</code>会记录当前页最大最小记录。实际上不准确，更准确的描述是最小记录和最大纪录的开区间。因为实际上 <code>Infimum Records</code> 会比当前页中的最小值还要小，而 <code>Supremum Records</code> 会比当前页中的最大值要大。</p>
+<h4 id="User-Records"><a href="#User-Records" class="headerlink" title="User Records"></a>User Records</h4><p><code>User Records</code> 可以说是我们平时接触的最多的部分了，毕竟我们的数据最终都在这。页被初始化之后，<code>User Records</code> 中是没有数据的，随着系统运行，数据产生，<code>User Records</code> 中的数据会不断的膨胀，相应的 <code>Free Space</code> 空间会慢慢的变小。</p>
+<p>关于 <code>User Records</code> 中的概念，之前已经聊过了。这里只聊我认为很关键的一点，那就是<strong>顺序</strong>。</p>
+<p>我们知道，在聚簇索引中，Key 实际上会按照 <code>Primary Key</code> 的顺序来进行排列。那在 <code>User Records</code> 中也会这样吗？我们插入一条新的数据到 <code>User Records</code> 中时，是否也会按照 <code>Primary Key</code> 的顺序来对已有的数据重排序？</p>
+<p>答案是<strong>不会</strong>，因为这样会拉低 MySQL 处理的效率。</p>
+<p><code>User Records</code> 中的数据是由单链表指针的指向来保证的，也就是说，行数据实际在磁盘上的表现，是按照<strong>插入顺序</strong>来排队的，先到的数据在前面，后来的数据在后面。只不过通过 <code>User Records</code> 中的行数据之间的单链表形成了一个按照 <code>Primary Key</code>排列的顺序。</p>
+<p>用图来表示，大概如下：</p>
+<p><img src="/img/mysql/02/1669369728-cd883d79f554df134516f94f7a80c03e.jpeg" srcset="/img/loading.gif" lazyload></p>
+<h4 id="Free-Space"><a href="#Free-Space" class="headerlink" title="Free Space"></a>Free Space</h4><p>这块其实变相的在其他的模块中讨论了，最初 <code>User Records</code> 是完全空的，当有新数据进来时，会来 <code>Free Space</code> 中申请空间，当 <code>Free Space</code> 没空间了，则说明需要申请新的页了，其他没什么特别之处。</p>
+<h4 id="Page-Directory"><a href="#Page-Directory" class="headerlink" title="Page Directory"></a>Page Directory</h4><p>这跟上文讨论的没什么出入，就直接跳过了。</p>
+<h4 id="File-Trailer"><a href="#File-Trailer" class="headerlink" title="File Trailer"></a>File Trailer</h4><p>这块主要是为了防止页在刷入磁盘的过程中，由于极端的意外情况（网络问题、火灾、自然灾害）导致失败，而造成数据不一致的情况，也就是说形成了脏页。</p>
+<p>里面有只有一个组成部分：</p>
+<p><img src="/img/mysql/02/1669369728-f556a672d7eca7b3efeccc5e9835f83a.jpeg" srcset="/img/loading.gif" lazyload></p>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://xie.infoq.cn/article/e5a721616fc4cf100b73fa296" target="_blank" rel="noopener">https://xie.infoq.cn/article/e5a721616fc4cf100b73fa296</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/635230263" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/635230263</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/MySQL/" class="category-chain-item">MySQL</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/MySQL/" class="print-no-link">#MySQL</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>MySQL 页</div>
+      <div>https://flepeng.github.io/042-MySQL-41-底层原理-MySQL-页/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2020年8月8日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/042-MySQL-41-%E5%BA%95%E5%B1%82%E5%8E%9F%E7%90%86-MySQL-%E9%9A%90%E5%BC%8F%E8%BD%AC%E6%8D%A2/" title="MySQL 隐式转换">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">MySQL 隐式转换</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/042-MySQL-41-%E5%BA%95%E5%B1%82%E5%8E%9F%E7%90%86-MySQL-%E4%B8%BB%E4%BB%8E%E5%90%8C%E6%AD%A5%E4%B8%89%E7%A7%8D%E6%A8%A1%E5%BC%8F%EF%BC%9A%E5%BC%82%E6%AD%A5%E5%A4%8D%E5%88%B6%E3%80%81%E5%8D%8A%E5%90%8C%E6%AD%A5%E5%A4%8D%E5%88%B6%E3%80%81%E5%85%A8%E5%90%8C%E6%AD%A5%E5%A4%8D%E5%88%B6-%E5%BC%82%E6%AD%A5%E5%A4%8D%E5%88%B6/" title="MySQL 主从同步三种模式：异步复制、半同步复制、全同步复制 异步复制">
+                        <span class="hidden-mobile">MySQL 主从同步三种模式：异步复制、半同步复制、全同步复制 异步复制</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

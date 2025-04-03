@@ -1,0 +1,852 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="1 主从复制 主从复制 是指将一台 Redis 服务器的数据，复制到其他的 Redis 服务器。前者称为 **主节点(master)**，后者称为 **从节点(slave)**。 数据的复制是 单向 的，只能由主节点到从节点。 默认情况下，每台Redis服务器都是主节点；且一个主节点可以有多个从节点(或没有从节点)，但一个从节点只能有一个主节点。 Redis 主从复制支持 主从同步 和 从从同步">
+<meta property="og:type" content="article">
+<meta property="og:title" content="05-Redis 多机之1 - 主从复制">
+<meta property="og:url" content="https://flepeng.github.io/042-Redis-41-%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5-05-Redis-%E5%A4%9A%E6%9C%BA%E4%B9%8B1-%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="1 主从复制 主从复制 是指将一台 Redis 服务器的数据，复制到其他的 Redis 服务器。前者称为 **主节点(master)**，后者称为 **从节点(slave)**。 数据的复制是 单向 的，只能由主节点到从节点。 默认情况下，每台Redis服务器都是主节点；且一个主节点可以有多个从节点(或没有从节点)，但一个从节点只能有一个主节点。 Redis 主从复制支持 主从同步 和 从从同步">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/redis/1691290697-8d4438d579b188fed9d074aa3a355b6b.png">
+<meta property="og:image" content="https://flepeng.github.io/img/redis/1691290697-c6fc1dbcf1460e227d2f35885a6649a2.png">
+<meta property="article:published_time" content="2020-12-31T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.365Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Redis">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/redis/1691290697-8d4438d579b188fed9d074aa3a355b6b.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>05-Redis 多机之1 - 主从复制 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="05-Redis 多机之1 - 主从复制"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-01-01 00:00" pubdate>
+          2021年1月1日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.8k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          15 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">05-Redis 多机之1 - 主从复制</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="1-主从复制"><a href="#1-主从复制" class="headerlink" title="1 主从复制"></a>1 主从复制</h2><p><img src="/img/redis/1691290697-8d4438d579b188fed9d074aa3a355b6b.png" srcset="/img/loading.gif" lazyload></p>
+<p><strong>主从复制</strong> 是指将一台 Redis 服务器的数据，复制到其他的 Redis 服务器。前者称为 **主节点(master)**，后者称为 **从节点(slave)**。</p>
+<p>数据的复制是 <strong>单向</strong> 的，只能由主节点到从节点。</p>
+<p>默认情况下，每台Redis服务器都是主节点；且一个主节点可以有多个从节点(或没有从节点)，但一个从节点只能有一个主节点。</p>
+<p>Redis 主从复制支持 <strong>主从同步</strong> 和 <strong>从从同步</strong> 两种，后者是 Redis 后续版本新增的功能，以减轻主节点的同步负担。</p>
+<h2 id="2-主从复制的作用"><a href="#2-主从复制的作用" class="headerlink" title="2 主从复制的作用"></a>2 主从复制的作用</h2><ul>
+<li><strong>数据冗余：</strong> 主从复制实现了数据的热备份，是持久化之外的一种数据冗余方式。</li>
+<li><strong>故障恢复：</strong> 当主节点出现问题时，可以由从节点提供服务，实现快速的故障恢复(实际上是一种服务的冗余)。</li>
+<li><strong>负载均衡：</strong> 在主从复制的基础上，配合读写分离，可以由主节点提供写服务，由从节点提供读服务（即写 Redis 数据时应用连接主节点，读 Redis 数据时应用连接从节点），分担服务器负载。尤其是在写少读多的场景下，通过多个从节点分担读负载，可以大大提高 Redis 服务器的并发量。</li>
+<li><strong>高可用基石：</strong> 除了上述作用以外，主从复制还是哨兵和集群能够实施的 <strong>基础</strong>，因此说主从复制是 Redis 高可用的基础。</li>
+</ul>
+<h2 id="3-快速体验"><a href="#3-快速体验" class="headerlink" title="3 快速体验"></a>3 快速体验</h2><p>在 <strong>Redis</strong> 中，用户可以通过执行 <code>SLAVEOF</code> 命令或者设置 <code>slaveof</code> 选项，让一个服务器去复制另一个服务器，以下三种方式是 <strong>完全等效</strong> 的：</p>
+<ul>
+<li><strong>配置文件</strong>：在从服务器的配置文件中加入：<code>slaveof &lt;masterip&gt; &lt;masterport&gt;</code></li>
+<li><strong>启动命令</strong>：redis-server 启动命令后加入 <code>--slaveof &lt;masterip&gt; &lt;masterport&gt;</code></li>
+<li><strong>客户端命令</strong>：Redis 服务器启动后，直接通过客户端执行命令：<code>slaveof &lt;masterip&gt; &lt;masterport&gt;</code>，让该 Redis 实例成为从节点。</li>
+</ul>
+<p>注意：<strong>主从复制的开启，完全是在从节点发起的，不需要我们在主节点做任何事情。</strong></p>
+<p>实验所使用的主从节点是在一台机器上的不同Redis实例，其中主节点监听6379端口，从节点监听6380端口</p>
+<h3 id="3-1-第一步：本地启动两个节点"><a href="#3-1-第一步：本地启动两个节点" class="headerlink" title="3.1 第一步：本地启动两个节点"></a>3.1 第一步：本地启动两个节点</h3><p>安装好 Redis 之后，我们可以使用 <code>redis-server --port &lt;port&gt;</code> 的方式指定创建两个不同端口的 Redis 实例，例如分别创建端口为 <code>6379</code> 和 <code>6380</code> 两个 Redis 实例：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta">#</span><span class="bash"> 创建一个端口为 6379 的 Redis 实例</span><br>redis-server --port 6379<br><br><span class="hljs-meta">#</span><span class="bash"> 创建一个端口为 6380 的 Redis 实例</span><br>redis-server --port 6380<br></code></pre></td></tr></table></figure>
+
+<p>此时两个 Redis 节点启动后，都默认为 <strong>主节点</strong>。</p>
+<h3 id="3-2-第二步：建立复制"><a href="#3-2-第二步：建立复制" class="headerlink" title="3.2 第二步：建立复制"></a>3.2 第二步：建立复制</h3><p>我们在 <code>6380</code> 端口的节点中执行 <code>slaveof</code> 命令，使之变为从节点：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta">#</span><span class="bash"> 在 6380 端口的 Redis 实例中使用控制台</span><br>redis-cli -p 6380<br>127.0.0.1:6380&gt; SLAVEOF 127.0.0.1ø 6379OK       # 成为本地 6379 端口实例的从节点<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="3-3-第三步：观察效果"><a href="#3-3-第三步：观察效果" class="headerlink" title="3.3 第三步：观察效果"></a>3.3 第三步：观察效果</h3><p>下面我们来验证一下，主节点的数据是否会复制到从节点之中：</p>
+<ul>
+<li><p>先在 <strong>从节点</strong> 中查询一个 <strong>不存在</strong> 的 key：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">127.0.0.1:6380&gt; GET mykey<br>(nil)<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>再在 <strong>主节点</strong> 中添加这个 key：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">127.0.0.1:6379&gt; SET mykey myvalueOK<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>此时再从 <strong>从节点</strong> 中查询，会发现已经从 <strong>主节点</strong> 同步到 <strong>从节点</strong>：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">127.0.0.1:6380&gt; GET mykey<br>"myvalue"<br></code></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="3-4-第四步：断开复制"><a href="#3-4-第四步：断开复制" class="headerlink" title="3.4 第四步：断开复制"></a>3.4 第四步：断开复制</h3><p>通过 <code>slaveof &lt;masterip&gt; &lt;masterport&gt;</code> 命令建立主从复制关系以后，可以通过 <code>slaveof no one</code> 断开。</p>
+<p>需要注意的是，从节点断开复制后，<strong>不会删除已有的数据</strong>，只是不再接受主节点新的数据变化。</p>
+<p>从节点执行 <code>slaveof no one</code> 之后，从节点和主节点分别打印日志如下：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta">#</span><span class="bash"> 从节点打印日志</span><br>61496:M 17 Mar 2020 08:10:22.749 # Connection with master lost.<br>61496:M 17 Mar 2020 08:10:22.749 * Caching the disconnected master state.<br>61496:M 17 Mar 2020 08:10:22.749 * Discarding previously cached master state.<br>61496:M 17 Mar 2020 08:10:22.749 * MASTER MODE enabled (user request from 'id=4 addr=127.0.0.1:55096 fd=8 name= age=1664 idle=0 flags=N db=0 sub=0 psub=0 multi=-1 qbuf=34 qbuf-free=32734 obl=0 oll=0 omem=0 events=r cmd=slaveof')<br><br><span class="hljs-meta">#</span><span class="bash"> 主节点打印日志</span><br>61467:M 17 Mar 2020 08:10:22.749 # Connection with replica 127.0.0.1:6380 lost.<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="4-实现原理简析"><a href="#4-实现原理简析" class="headerlink" title="4 实现原理简析"></a>4 实现原理简析</h2><p><img src="/img/redis/1691290697-c6fc1dbcf1460e227d2f35885a6649a2.png" srcset="/img/loading.gif" lazyload></p>
+<p>上图为 Redis 主从复制的原理， <strong>可以分为成三个阶段：准备阶段-数据同步阶段-命令传播阶段</strong>。</p>
+<blockquote>
+<p>更详细的步骤请参考：<a href="https://www.cnblogs.com/kismetv/p/9236731.html" target="_blank" rel="noopener">https://www.cnblogs.com/kismetv/p/9236731.html</a></p>
+</blockquote>
+<p>除此之外，我们还要进行一些其他说明。</p>
+<h3 id="4-1-身份验证-主从复制安全问题"><a href="#4-1-身份验证-主从复制安全问题" class="headerlink" title="4.1 身份验证 | 主从复制安全问题"></a>4.1 身份验证 | 主从复制安全问题</h3><p>如果 <strong>主节点</strong> 配置 <code>requirepass</code> 设置了密码，那 <strong>从节点</strong> 该怎么设置呢？</p>
+<p>我们可以在 <strong>从节点</strong> 中对应配置 <code>masterauth</code> 参数 (与主节点 <code>_requirepass_</code> 保持一致)， 这样就能够进行正常复制了。</p>
+<h3 id="4-2-SYNC-命令是一个非常耗费资源的操作"><a href="#4-2-SYNC-命令是一个非常耗费资源的操作" class="headerlink" title="4.2 SYNC 命令是一个非常耗费资源的操作"></a>4.2 SYNC 命令是一个非常耗费资源的操作</h3><p>每次执行 <code>SYNC</code> 命令，主从服务器需要执行如下动作：</p>
+<ol>
+<li><strong>主服务器</strong> 需要执行 <code>BGSAVE</code> 命令来生成 RDB 文件，这个生成操作会 <strong>消耗</strong> 主服务器大量的 <strong>CPU、内存和磁盘 I&#x2F;O 的资源</strong>；</li>
+<li><strong>主服务器</strong> 需要将自己生成的 RDB 文件 发送给从服务器，这个发送操作会 <strong>消耗</strong> 主服务器 <strong>大量的网络资源</strong> (带宽和流量)，并对主服务器响应命令请求的时间产生影响；</li>
+<li>接收到 RDB 文件的 <strong>从服务器</strong> 需要载入主服务器发来的 RBD 文件，并且在载入期间，从服务器 <strong>会因为阻塞而没办法处理命令请求</strong>；</li>
+</ol>
+<p>特别是当出现 <strong>断线重复制</strong> 的情况是时，为了让从服务器补足断线时确实的那一小部分数据，却要执行一次如此耗资源的 <code>SYNC</code> 命令，显然是不合理的。</p>
+<h4 id="PSYNC-命令的引入"><a href="#PSYNC-命令的引入" class="headerlink" title="PSYNC 命令的引入"></a>PSYNC 命令的引入</h4><p>所以在 <strong>Redis 2.8</strong> 中引入了 <code>PSYNC</code> 命令来代替 <code>SYNC</code>，它具有两种模式：</p>
+<ol>
+<li><p><strong>全量复制：</strong> 用于初次复制或其他无法进行部分复制的情况，将主节点中的所有数据都发送给从节点，是一个非常重型的操作；</p>
+</li>
+<li><p><strong>部分复制：</strong> 用于网络中断等情况后的复制，只将 <strong>中断期间主节点执行的写命令</strong> 发送给从节点，与全量复制相比更加高效。<br><strong>需要注意</strong> 的是，如果网络中断时间过长，导致主节点没有能够完整地保存中断期间执行的写命令，则无法进行部分复制，仍使用全量复制；</p>
+<p>部分复制的原理主要是靠主从节点分别维护一个 <strong>复制偏移量</strong>，有了这个偏移量之后断线重连之后一比较，之后就可以仅仅把从服务器断线之后确实的这部分数据给补回来了。</p>
+</li>
+</ol>
+<blockquote>
+<p>更多的详细内容可以参考：<a href="https://www.cnblogs.com/kismetv/p/9236731.html" target="_blank" rel="noopener">https://www.cnblogs.com/kismetv/p/9236731.html</a></p>
+</blockquote>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ol>
+<li><a href="https://www.cnblogs.com/wmyskxz/p/12511834.html" target="_blank" rel="noopener">https://www.cnblogs.com/wmyskxz/p/12511834.html</a></li>
+<li>《Redis 设计与实现》 | 黄健宏 著 - <a href="http://redisbook.com/" target="_blank" rel="noopener">http://redisbook.com/</a></li>
+<li>深入学习Redis（3）：主从复制 - <a href="https://www.cnblogs.com/kismetv/p/9236731.html" target="_blank" rel="noopener">https://www.cnblogs.com/kismetv/p/9236731.html</a></li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Redis/" class="category-chain-item">Redis</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Redis/" class="print-no-link">#Redis</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>05-Redis 多机之1 - 主从复制</div>
+      <div>https://flepeng.github.io/042-Redis-41-核心概念-05-Redis-多机之1-主从复制/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年1月1日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/042-Redis-41-%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5-05-Redis-%E5%A4%9A%E6%9C%BA%E4%B9%8B2-%E5%93%A8%E5%85%B5-%E8%84%91%E8%A3%82/" title="05-Redis 多机之2 - 哨兵 脑裂">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">05-Redis 多机之2 - 哨兵 脑裂</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/042-Redis-41-%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5-05-Redis-%E5%A4%9A%E6%9C%BA%E4%B9%8B2-%E5%93%A8%E5%85%B5/" title="05-Redis 多机之2 - 哨兵">
+                        <span class="hidden-mobile">05-Redis 多机之2 - 哨兵</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

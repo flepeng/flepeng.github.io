@@ -1,0 +1,991 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Request request对象和response对象的原理  request和response对象是由服务器创建的。我们来使用它们 request对象是来获取请求消息，response对象是来设置响应消息   request对象继承体系结构： ServletRequest – 接口 |    继承 HttpServletRequest – 接口 |    实现 org.apache.catal">
+<meta property="og:type" content="article">
+<meta property="og:title" content="038-BeanUtils&amp;Request笔记">
+<meta property="og:url" content="https://flepeng.github.io/021-Java-01-course-038-BeanUtils-Request%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="Request request对象和response对象的原理  request和response对象是由服务器创建的。我们来使用它们 request对象是来获取请求消息，response对象是来设置响应消息   request对象继承体系结构： ServletRequest – 接口 |    继承 HttpServletRequest – 接口 |    实现 org.apache.catal">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-02-01T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.290Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Java">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>038-BeanUtils&amp;Request笔记 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="038-BeanUtils&amp;Request笔记"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2020-02-02 00:00" pubdate>
+          2020年2月2日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.6k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          14 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">038-BeanUtils&amp;Request笔记</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="Request"><a href="#Request" class="headerlink" title="Request"></a>Request</h2><ol>
+<li><p>request对象和response对象的原理</p>
+<ol>
+<li>request和response对象是由服务器创建的。我们来使用它们</li>
+<li>request对象是来获取请求消息，response对象是来设置响应消息</li>
+</ol>
+</li>
+<li><p>request对象继承体系结构：<br> ServletRequest – 接口<br> |    继承<br> HttpServletRequest – 接口<br> |    实现<br> org.apache.catalina.connector.RequestFacade 类(tomcat实现的，并把它传入server)</p>
+</li>
+<li><p>request功能：</p>
+<ol>
+<li><p>获取请求消息数据</p>
+<ol>
+<li><p>获取请求行数据</p>
+<ul>
+<li>GET &#x2F;day14&#x2F;demo1?name&#x3D;zhangsan HTTP&#x2F;1.1</li>
+<li>方法：<ol>
+<li><p>获取请求方式 ：GET</p>
+<ul>
+<li>String getMethod()</li>
+</ul>
+</li>
+<li><p>(*)获取虚拟目录：&#x2F;day14</p>
+<ul>
+<li>String getContextPath()</li>
+</ul>
+</li>
+<li><p>获取Servlet路径: &#x2F;demo1</p>
+<ul>
+<li>String getServletPath()</li>
+</ul>
+</li>
+<li><p>获取get方式请求参数：name&#x3D;zhangsan</p>
+<ul>
+<li>String getQueryString()</li>
+</ul>
+</li>
+<li><p>(*)获取请求URI：&#x2F;day14&#x2F;demo1</p>
+<ul>
+<li><p>String getRequestURI(): &#x2F;day14&#x2F;demo1</p>
+</li>
+<li><p>StringBuffer getRequestURL() :<a href="http://localhost/day14/demo1" target="_blank" rel="noopener">http://localhost/day14/demo1</a></p>
+</li>
+<li><p>URL:统一资源定位符 ： <a href="http://localhost/day14/demo1" target="_blank" rel="noopener">http://localhost/day14/demo1</a>    中华人民共和国</p>
+</li>
+<li><p>URI：统一资源标识符 : &#x2F;day14&#x2F;demo1                    共和国</p>
+</li>
+</ul>
+</li>
+<li><p>获取协议及版本：HTTP&#x2F;1.1</p>
+<ul>
+<li>String getProtocol()</li>
+</ul>
+</li>
+<li><p>获取客户机的IP地址：</p>
+<ul>
+<li>String getRemoteAddr()</li>
+</ul>
+</li>
+</ol>
+</li>
+</ul>
+</li>
+<li><p>获取请求头数据</p>
+<ul>
+<li>方法：<ul>
+<li>(*)String getHeader(String name):通过请求头的名称获取请求头的值</li>
+<li>Enumeration<String> getHeaderNames():获取所有的请求头名称</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>获取请求体数据:</p>
+<ul>
+<li>请求体：只有POST请求方式，才有请求体，在请求体中封装了POST请求的请求参数</li>
+<li>步骤：<ol>
+<li><p>获取流对象</p>
+<ul>
+<li>BufferedReader getReader()：获取字符输入流，只能操作字符数据</li>
+<li>ServletInputStream getInputStream()：获取字节输入流，可以操作所有类型数据<ul>
+<li>在文件上传知识点后讲解</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>再从流对象中拿数据</p>
+</li>
+</ol>
+</li>
+</ul>
+</li>
+</ol>
+</li>
+<li><p>其他功能：</p>
+<ol>
+<li><p>获取请求参数通用方式：不论get还是post请求方式都可以使用下列方法来获取请求参数</p>
+<ol>
+<li>(*)String getParameter(String name):根据参数名称获取参数值    username&#x3D;zs&amp;password&#x3D;123</li>
+<li>String[] getParameterValues(String name):根据参数名称获取参数值的数组  hobby&#x3D;xx&amp;hobby&#x3D;game</li>
+<li>Enumeration<String> getParameterNames():获取所有请求的参数名称</li>
+<li>(*)Map&lt;String,String[]&gt; getParameterMap():获取所有参数的map集合</li>
+</ol>
+<ul>
+<li>中文乱码问题：<ul>
+<li>get方式：tomcat 8 已经将get方式乱码问题解决了</li>
+<li>post方式：会乱码<ul>
+<li>解决：在获取参数前，设置request的编码request.setCharacterEncoding(“utf-8”);</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>请求转发：一种在服务器内部的资源跳转方式</p>
+<ol>
+<li><p>步骤：</p>
+<ol>
+<li>通过request对象获取请求转发器对象：RequestDispatcher getRequestDispatcher(String path)</li>
+<li>使用RequestDispatcher对象来进行转发：forward(ServletRequest request, ServletResponse response)</li>
+</ol>
+</li>
+<li><p>特点：</p>
+<ol>
+<li>浏览器地址栏路径不发生变化。</li>
+<li>只能转发到当前服务器内部资源中。</li>
+<li>转发是一次请求。</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>共享数据：</p>
+<ul>
+<li>域对象：一个有作用范围的对象，可以在范围内共享数据</li>
+<li>request域：代表一次请求的范围，一般用于请求转发的多个资源中共享数据</li>
+<li>方法：<ol>
+<li>void setAttribute(String name,Object obj):存储数据</li>
+<li>Object getAttitude(String name):通过键获取值</li>
+<li>void removeAttribute(String name):通过键移除键值对</li>
+</ol>
+</li>
+</ul>
+</li>
+<li><p>获取ServletContext：</p>
+<ul>
+<li>ServletContext getServletContext()</li>
+</ul>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+<h2 id="BeanUtils"><a href="#BeanUtils" class="headerlink" title="BeanUtils"></a>BeanUtils</h2><p>BeanUtils工具类，简化数据封装，用于封装JavaBean的</p>
+<ol>
+<li><p>JavaBean：标准的Java类</p>
+<ol>
+<li>要求：<ol>
+<li>类必须被public修饰</li>
+<li>必须提供空参的构造器</li>
+<li>成员变量必须使用private修饰</li>
+<li>提供公共setter和getter方法</li>
+</ol>
+</li>
+<li>功能：封装数据</li>
+</ol>
+</li>
+<li><p>概念：<br> 成员变量：<br> 属性：setter和getter方法截取后的产物<br> 例如：getUsername() –&gt; Username–&gt; username</p>
+</li>
+<li><p>方法：</p>
+<ol>
+<li>setProperty()</li>
+<li>getProperty()</li>
+<li>populate(Object obj , Map map):将map集合的键值对信息，封装到对应的JavaBean对象中</li>
+</ol>
+</li>
+</ol>
+<h2 id="案例：用户登录"><a href="#案例：用户登录" class="headerlink" title="案例：用户登录"></a>案例：用户登录</h2><ul>
+<li><p>用户登录案例需求：</p>
+<ol>
+<li>编写login.html登录页面<br>username &amp; password 两个输入框</li>
+<li>使用Druid数据库连接池技术,操作mysql，day14数据库中user表</li>
+<li>使用JdbcTemplate技术封装JDBC</li>
+<li>登录成功跳转到SuccessServlet展示：登录成功！用户名,欢迎您</li>
+<li>登录失败跳转到FailServlet展示：登录失败，用户名或密码错误</li>
+</ol>
+</li>
+<li><p>分析</p>
+</li>
+<li><p>开发步骤</p>
+<ol>
+<li><p>创建项目，导入html页面，配置文件，jar包</p>
+</li>
+<li><p>创建数据库环境</p>
+ <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">DATABASE</span> day14;<br><span class="hljs-keyword">USE</span> day14;<br><span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">TABLE</span> <span class="hljs-keyword">USER</span>(<br><br>    <span class="hljs-keyword">id</span> <span class="hljs-built_in">INT</span> PRIMARY <span class="hljs-keyword">KEY</span> AUTO_INCREMENT,<br>    username <span class="hljs-built_in">VARCHAR</span>(<span class="hljs-number">32</span>) <span class="hljs-keyword">UNIQUE</span> <span class="hljs-keyword">NOT</span> <span class="hljs-literal">NULL</span>,<br>    <span class="hljs-keyword">PASSWORD</span> <span class="hljs-built_in">VARCHAR</span>(<span class="hljs-number">32</span>) <span class="hljs-keyword">NOT</span> <span class="hljs-literal">NULL</span><br>);<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>创建包cn.itcast.domain,创建类User</p>
+ <figure class="highlight arduino"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><code class="hljs arduino">package cn.itcast.domain;<br><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * 用户的实体类</span><br><span class="hljs-comment"> */</span><br><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">User</span> &#123;</span><br><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">int</span> id;<br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">String</span> username;<br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">String</span> password;<br><br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">int</span> <span class="hljs-title">getId</span><span class="hljs-params">()</span> </span>&#123;<br>        <span class="hljs-keyword">return</span> id;<br>    &#125;<br><br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">setId</span><span class="hljs-params">(<span class="hljs-keyword">int</span> id)</span> </span>&#123;<br>        <span class="hljs-keyword">this</span>.id = id;<br>    &#125;<br><br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">String</span> <span class="hljs-title">getUsername</span><span class="hljs-params">()</span> </span>&#123;<br>        <span class="hljs-keyword">return</span> username;<br>    &#125;<br><br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">setUsername</span><span class="hljs-params">(<span class="hljs-keyword">String</span> username)</span> </span>&#123;<br>        <span class="hljs-keyword">this</span>.username = username;<br>    &#125;<br><br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">String</span> <span class="hljs-title">getPassword</span><span class="hljs-params">()</span> </span>&#123;<br>        <span class="hljs-keyword">return</span> password;<br>    &#125;<br><br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">setPassword</span><span class="hljs-params">(<span class="hljs-keyword">String</span> password)</span> </span>&#123;<br>        <span class="hljs-keyword">this</span>.password = password;<br>    &#125;<br><br>    @Override<br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">String</span> <span class="hljs-title">toString</span><span class="hljs-params">()</span> </span>&#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-string">"User&#123;"</span> +<br>                <span class="hljs-string">"id="</span> + id +<br>                <span class="hljs-string">", username='"</span> + username + <span class="hljs-string">'\''</span> +<br>                <span class="hljs-string">", password='"</span> + password + <span class="hljs-string">'\''</span> +<br>                <span class="hljs-string">'&#125;'</span>;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>创建包cn.itcast.util,编写工具类JDBCUtils</p>
+ <figure class="highlight swift"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><code class="hljs swift">package cn.itcast.util;<br><br><span class="hljs-keyword">import</span> com.alibaba.druid.pool.DruidDataSourceFactory;<br><br><span class="hljs-keyword">import</span> javax.sql.DataSource;<br><span class="hljs-keyword">import</span> javax.xml.crypto.Data;<br><span class="hljs-keyword">import</span> java.io.IOException;<br><span class="hljs-keyword">import</span> java.io.InputStream;<br><span class="hljs-keyword">import</span> java.sql.Connection;<br><span class="hljs-keyword">import</span> java.sql.SQLException;<br><span class="hljs-keyword">import</span> java.util.Properties;<br><br><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * JDBC工具类 使用Durid连接池</span><br><span class="hljs-comment"> */</span><br><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">JDBCUtils</span> </span>&#123;<br><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-type">DataSource</span> ds ;<br><br>    <span class="hljs-keyword">static</span> &#123;<br><br>        <span class="hljs-keyword">try</span> &#123;<br>            <span class="hljs-comment">//1.加载配置文件</span><br>            <span class="hljs-type">Properties</span> pro = new <span class="hljs-type">Properties</span>();<br>            <span class="hljs-comment">//使用ClassLoader加载配置文件，获取字节输入流</span><br>            <span class="hljs-type">InputStream</span> <span class="hljs-keyword">is</span> = <span class="hljs-type">JDBCUtils</span><span class="hljs-class">.<span class="hljs-keyword">class</span>.<span class="hljs-title">getClassLoader</span>().<span class="hljs-title">getResourceAsStream</span>("<span class="hljs-title">druid</span>.<span class="hljs-title">properties</span>");</span><br><span class="hljs-class">            <span class="hljs-title">pro</span>.<span class="hljs-title">load</span>(<span class="hljs-title">is</span>);</span><br><span class="hljs-class"></span><br><span class="hljs-class">            //2.初始化连接池对象</span><br><span class="hljs-class">            <span class="hljs-title">ds</span> = <span class="hljs-title">DruidDataSourceFactory</span>.<span class="hljs-title">createDataSource</span>(<span class="hljs-title">pro</span>);</span><br><span class="hljs-class"></span><br><span class="hljs-class">        &#125; <span class="hljs-title">catch</span> (<span class="hljs-title">IOException</span> <span class="hljs-title">e</span>) </span>&#123;<br>            e.printStackTrace();<br>        &#125; <span class="hljs-keyword">catch</span> (<span class="hljs-type">Exception</span> e) &#123;<br>            e.printStackTrace();<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-comment">/**</span><br><span class="hljs-comment">     * 获取连接池对象</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-type">DataSource</span> getDataSource()&#123;<br>        <span class="hljs-keyword">return</span> ds;<br>    &#125;<br><br><br>    <span class="hljs-comment">/**</span><br><span class="hljs-comment">     * 获取连接Connection对象</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-type">Connection</span> getConnection() <span class="hljs-keyword">throws</span> <span class="hljs-type">SQLException</span> &#123;<br>        <span class="hljs-keyword">return</span>  ds.getConnection();<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+<li><p>创建包cn.itcast.dao,创建类UserDao,提供login方法</p>
+ <figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">package cn.itcast.dao;<br><br><span class="hljs-keyword">import</span> cn.itcast.<span class="hljs-keyword">domain</span>.<span class="hljs-keyword">User</span>;<br><span class="hljs-keyword">import</span> cn.itcast.util.JDBCUtils;<br><span class="hljs-keyword">import</span> org.springframework.dao.DataAccessException;<br><span class="hljs-keyword">import</span> org.springframework.jdbc.core.BeanPropertyRowMapper;<br><span class="hljs-keyword">import</span> org.springframework.jdbc.core.JdbcTemplate;<br><br><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * 操作数据库中User表的类</span><br><span class="hljs-comment"> */</span><br><span class="hljs-built_in">public</span> <span class="hljs-keyword">class</span> UserDao &#123;<br><br>    //声明JDBCTemplate对象共用<br>    private JdbcTemplate template = <span class="hljs-built_in">new</span> JdbcTemplate(JDBCUtils.getDataSource());<br><br>    <span class="hljs-comment">/**</span><br><span class="hljs-comment">     * 登录方法</span><br><span class="hljs-comment">     * @param loginUser 只有用户名和密码</span><br><span class="hljs-comment">     * @return user包含用户全部数据,没有查询到，返回null</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-built_in">public</span> <span class="hljs-keyword">User</span> <span class="hljs-keyword">login</span>(<span class="hljs-keyword">User</span> loginUser)&#123;<br>        try &#123;<br>            //<span class="hljs-number">1.</span>编写<span class="hljs-keyword">sql</span><br>            String <span class="hljs-keyword">sql</span> = "select * from user where username = ? and password = ?";<br>            //<span class="hljs-number">2.</span>调用query方法<br>            <span class="hljs-keyword">User</span> <span class="hljs-keyword">user</span> = <span class="hljs-keyword">template</span>.queryForObject(<span class="hljs-keyword">sql</span>,<br>                    <span class="hljs-built_in">new</span> BeanPropertyRowMapper&lt;<span class="hljs-keyword">User</span>&gt;(<span class="hljs-keyword">User</span>.<span class="hljs-keyword">class</span>),<br>                    loginUser.getUsername(), loginUser.getPassword());<br><br><br>            <span class="hljs-keyword">return</span> <span class="hljs-keyword">user</span>;<br>        &#125; catch (DataAccessException e) &#123;<br>            e.printStackTrace();//记录日志<br>            <span class="hljs-keyword">return</span> <span class="hljs-keyword">null</span>;<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>编写cn.itcast.web.servlet.LoginServlet类</p>
+ <figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><code class="hljs scala"><span class="hljs-keyword">package</span> cn.itcast.web.servlet;<br><br><span class="hljs-keyword">import</span> cn.itcast.dao.<span class="hljs-type">UserDao</span>;<br><span class="hljs-keyword">import</span> cn.itcast.domain.<span class="hljs-type">User</span>;<br><br><span class="hljs-keyword">import</span> javax.servlet.<span class="hljs-type">ServletException</span>;<br><span class="hljs-keyword">import</span> javax.servlet.annotation.<span class="hljs-type">WebServlet</span>;<br><span class="hljs-keyword">import</span> javax.servlet.http.<span class="hljs-type">HttpServlet</span>;<br><span class="hljs-keyword">import</span> javax.servlet.http.<span class="hljs-type">HttpServletRequest</span>;<br><span class="hljs-keyword">import</span> javax.servlet.http.<span class="hljs-type">HttpServletResponse</span>;<br><span class="hljs-keyword">import</span> java.io.<span class="hljs-type">IOException</span>;<br><br><br><span class="hljs-meta">@WebServlet</span>(<span class="hljs-string">"/loginServlet"</span>)<br>public <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">LoginServlet</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">HttpServlet</span> </span>&#123;<br><br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">protected</span> void doGet(<span class="hljs-type">HttpServletRequest</span> req, <span class="hljs-type">HttpServletResponse</span> resp) <span class="hljs-keyword">throws</span> <span class="hljs-type">ServletException</span>, <span class="hljs-type">IOException</span> &#123;<br>        <span class="hljs-comment">//1.设置编码</span><br>        req.setCharacterEncoding(<span class="hljs-string">"utf-8"</span>);<br>        <span class="hljs-comment">//2.获取请求参数</span><br>        <span class="hljs-type">String</span> username = req.getParameter(<span class="hljs-string">"username"</span>);<br>        <span class="hljs-type">String</span> password = req.getParameter(<span class="hljs-string">"password"</span>);<br>        <span class="hljs-comment">//3.封装user对象</span><br>        <span class="hljs-type">User</span> loginUser = <span class="hljs-keyword">new</span> <span class="hljs-type">User</span>();<br>        loginUser.setUsername(username);<br>        loginUser.setPassword(password);<br><br>        <span class="hljs-comment">//4.调用UserDao的login方法</span><br>        <span class="hljs-type">UserDao</span> dao = <span class="hljs-keyword">new</span> <span class="hljs-type">UserDao</span>();<br>        <span class="hljs-type">User</span> user = dao.login(loginUser);<br><br>        <span class="hljs-comment">//5.判断user</span><br>        <span class="hljs-keyword">if</span>(user == <span class="hljs-literal">null</span>)&#123;<br>            <span class="hljs-comment">//登录失败</span><br>            req.getRequestDispatcher(<span class="hljs-string">"/failServlet"</span>).forward(req,resp);<br>        &#125;<span class="hljs-keyword">else</span>&#123;<br>            <span class="hljs-comment">//登录成功</span><br>            <span class="hljs-comment">//存储数据</span><br>            req.setAttribute(<span class="hljs-string">"user"</span>,user);<br>            <span class="hljs-comment">//转发</span><br>            req.getRequestDispatcher(<span class="hljs-string">"/successServlet"</span>).forward(req,resp);<br>        &#125;<br><br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">protected</span> void doPost(<span class="hljs-type">HttpServletRequest</span> req, <span class="hljs-type">HttpServletResponse</span> resp) <span class="hljs-keyword">throws</span> <span class="hljs-type">ServletException</span>, <span class="hljs-type">IOException</span> &#123;<br>        <span class="hljs-keyword">this</span>.doGet(req,resp);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>编写FailServlet和SuccessServlet类</p>
+ <figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><code class="hljs scala"><span class="hljs-meta">@WebServlet</span>(<span class="hljs-string">"/successServlet"</span>)<br>public <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SuccessServlet</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">HttpServlet</span> </span>&#123;<br>    <span class="hljs-keyword">protected</span> void doPost(<span class="hljs-type">HttpServletRequest</span> request, <span class="hljs-type">HttpServletResponse</span> response) <span class="hljs-keyword">throws</span> <span class="hljs-type">ServletException</span>, <span class="hljs-type">IOException</span> &#123;<br>        <span class="hljs-comment">//获取request域中共享的user对象</span><br>        <span class="hljs-type">User</span> user = (<span class="hljs-type">User</span>) request.getAttribute(<span class="hljs-string">"user"</span>);<br><br>        <span class="hljs-keyword">if</span>(user != <span class="hljs-literal">null</span>)&#123;<br>            <span class="hljs-comment">//给页面写一句话</span><br><br>            <span class="hljs-comment">//设置编码</span><br>            response.setContentType(<span class="hljs-string">"text/html;charset=utf-8"</span>);<br>            <span class="hljs-comment">//输出</span><br>            response.getWriter().write(<span class="hljs-string">"登录成功！"</span>+user.getUsername()+<span class="hljs-string">",欢迎您"</span>);<br>        &#125;<br><br><br>    &#125;<br><br><br><span class="hljs-meta">@WebServlet</span>(<span class="hljs-string">"/failServlet"</span>)<br>public <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">FailServlet</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">HttpServlet</span> </span>&#123;<br>    <span class="hljs-keyword">protected</span> void doPost(<span class="hljs-type">HttpServletRequest</span> request, <span class="hljs-type">HttpServletResponse</span> response) <span class="hljs-keyword">throws</span> <span class="hljs-type">ServletException</span>, <span class="hljs-type">IOException</span> &#123;<br>        <span class="hljs-comment">//给页面写一句话</span><br><br>        <span class="hljs-comment">//设置编码</span><br>        response.setContentType(<span class="hljs-string">"text/html;charset=utf-8"</span>);<br>        <span class="hljs-comment">//输出</span><br>        response.getWriter().write(<span class="hljs-string">"登录失败，用户名或密码错误"</span>);<br><br>    &#125;<br><br>    <span class="hljs-keyword">protected</span> void doGet(<span class="hljs-type">HttpServletRequest</span> request, <span class="hljs-type">HttpServletResponse</span> response) <span class="hljs-keyword">throws</span> <span class="hljs-type">ServletException</span>, <span class="hljs-type">IOException</span> &#123;<br>        <span class="hljs-keyword">this</span>.doPost(request,response);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>login.html中form表单的action路径的写法</p>
+<ul>
+<li>虚拟目录+Servlet的资源路径</li>
+</ul>
+</li>
+</ol>
+</li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Java/" class="category-chain-item">Java</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Java/" class="print-no-link">#Java</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>038-BeanUtils&amp;Request笔记</div>
+      <div>https://flepeng.github.io/021-Java-01-course-038-BeanUtils-Request笔记/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2020年2月2日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/021-Java-01-course-036-XML/" title="036-XML">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">036-XML</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/021-Java-01-course-043-Filter-Listener/" title="043-Filter&amp;Listener">
+                        <span class="hidden-mobile">043-Filter&amp;Listener</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

@@ -1,0 +1,805 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="太长不看的提前总结：  内核态，或者说CPU的特权模式，是CPU的一种工作状态，它影响CPU对不同指令的执行结果。操作系统通过跟CPU配合，设置特权模式和用户模式，来防止应用程序进行越权的操作 防止应用程序越权访问内存时使用了虚拟地址空间映射的技术，这是操作系统软件配合硬件的MMU共同实现的。在用户模式下，应用程序访问的内存地址是虚拟内存地址，会映射到操作系统指定的物理地址上。这个虚拟内存地址空间">
+<meta property="og:type" content="article">
+<meta property="og:title" content="内核态和用户态">
+<meta property="og:url" content="https://flepeng.github.io/001-%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BB%84%E6%88%90%E5%8E%9F%E7%90%86-%E5%86%85%E6%A0%B8%E6%80%81%E5%92%8C%E7%94%A8%E6%88%B7%E6%80%81/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="太长不看的提前总结：  内核态，或者说CPU的特权模式，是CPU的一种工作状态，它影响CPU对不同指令的执行结果。操作系统通过跟CPU配合，设置特权模式和用户模式，来防止应用程序进行越权的操作 防止应用程序越权访问内存时使用了虚拟地址空间映射的技术，这是操作系统软件配合硬件的MMU共同实现的。在用户模式下，应用程序访问的内存地址是虚拟内存地址，会映射到操作系统指定的物理地址上。这个虚拟内存地址空间">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-05-18T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.269Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>内核态和用户态 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="内核态和用户态"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-05-19 00:00" pubdate>
+          2021年5月19日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.9k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          41 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">内核态和用户态</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>太长不看的提前总结：</p>
+<ol>
+<li>内核态，或者说CPU的特权模式，是CPU的一种工作状态，它影响CPU对不同指令的执行结果。操作系统通过跟CPU配合，设置特权模式和用户模式，来防止应用程序进行越权的操作</li>
+<li>防止应用程序越权访问内存时使用了虚拟地址空间映射的技术，这是操作系统软件配合硬件的MMU共同实现的。在用户模式下，应用程序访问的内存地址是虚拟内存地址，会映射到操作系统指定的物理地址上。这个虚拟内存地址空间就是你说的用户空间。</li>
+<li>内核态是个操作系统概念，虽然对应到CPU的特权模式，但一般如果没有操作系统，就不说内核态了，直接说运行在CPU的特权模式应该没毛病。</li>
+<li>应用程序无法自由进入内核态，只能通过操作系统提供的接口调用进入，或者在硬件中断到来时被动进入</li>
+<li>应用程序通过操作系统功能来使用硬件</li>
+</ol>
+<p>首先从问题最关键的地方开始：归根到底为什么需要保护模式？</p>
+<p>从计算机组成原理的最基础的理论开始讲起。说到计算机，从冯诺依曼体系讲起，最重要的就是五部分：运算器、控制器、存储器、输入设备、输出设备。</p>
+<p>其中，运算器是无状态的；控制器配合一部分寄存器，但是寄存器数量很少，而且通常都很容易被修改；输入设备、输出设备只有接受指令的时候才动作。归根结底来说，整个计算机的运行状态几乎完全由存储器和少数几个寄存器控制。</p>
+<p>也就是说，如果一段程序能够完全控制物理内存，那么它就能做到任意改变计算机的状态，包括<strong>干掉整个操作系统然后把自己变成操作系统；把自己变成操作系统的一部分等等</strong>。通常来说操作系统肯定是不乐意的了。</p>
+<p>早期的DOS这样的操作系统，运行在实模式上，就遇到的是这样的情况：它其实将要执行的应用程序加载变成了操作系统的一部分，然后混合起来运行，哪一段是用户程序、哪一段是操作系统并没有很明确的界限：用户程序退出就回到操作系统；用户程序触发软中断就到操作系统，返回又回到用户程序；用户程序自己可以访问大部分的硬件设备；用户程序甚至可以随意修改属于操作系统的数据。于是，当时的许多病毒也毫不客气地把自己直接连接到了操作系统的程序里面，一旦执行就永远驻留成为操作系统的一部分。当时在DOS上流行的病毒可谓多种多样、五花八门。</p>
+<p>单任务的情况下已经有不少问题了，到了多任务模式下，问题就更严重了：</p>
+<ol>
+<li>因为多个应用程序要独立加载，如果两个应用程序执意要使用同一个内存地址，那就会发生严重的问题，操作系统必须防止这种事情发生</li>
+<li>外部设备一般来说都是很傻的，它并不知道多任务的存在，不管谁操作外部设备它都是一样响应。这样如果多个应用程序自己直接去操纵硬件设备，就会出现相互冲突，有可能一个程序的数据被发送到了另一个程序等等</li>
+<li>操作系统必须自己响应硬件中断，通过硬件中断来切换任务上下文，让合适的任务在合适的时机继续执行。如果应用程序自己把中断响应程序改掉了，整个操作系统都会崩溃</li>
+<li>操作系统必须有能力在单个应用程序崩溃的情况下清理这个应用程序使用的资源，保证不影响其他应用程序；这就要求它必须清楚知道每个应用程序使用了哪些资源</li>
+</ol>
+<p>这还只是考虑到应用程序都是善良的情况下，要对付恶意程序就需要更强的手段。</p>
+<p>可我们前面说了，物理内存就是整个计算机状态的全部，如果程序有办法读写所有的物理内存和寄存器，那任何保护手段都无济于事。<strong>所以要限制应用程序的行为，必须在应用程序和操作系统执行时有不同的状态，核心问题在于保护关键寄存器和重要的物理内存</strong>。</p>
+<p>这个目标显然是必须要硬件配合的，否则CPU如何区分当前究竟是执行操作系统（开放所有能力）还是应用程序（限制危险功能）呢？那么我们如果不考虑实际结果，只从需求上面分析如何解决这个问题，应该可以得到以下结论：</p>
+<ol>
+<li>CPU必须至少有两种不同的状态：操作系统状态和应用程序状态。不同状态下，相同指令会产生不同的结果，也就保证某些任务只有操作系统能执行，某些只有应用程序能执行。</li>
+<li>操作系统必须有办法配合CPU，设置哪些内存可以访问，哪些内存不能访问（或者说只有操作系统状态下能访问），不能访问的包括操作系统自己的代码区和数据区、中断向量表等。</li>
+<li>应用程序状态下不能直接访问硬件设备</li>
+<li>CPU在触发中断时需要自动切换到操作系统状态（否则无法进行多任务切换）</li>
+<li>操作系统状态可以自由切换到应用程序状态；应用程序状态不能任意切换到操作系统状态，但也需要有触发进入操作系统代码并切换到操作系统状态的能力（否则无法调用操作系统功能）</li>
+</ol>
+<p>现在我们回到实际CPU的设计上，显然实际CPU的设计者的思路跟我们是差不多的。这里我们叫做操作系统状态的，在实际操作系统概念中就叫做内核态，在CPU设计上则叫做特权模式；我们叫做应用程序状态的，在实际操作系统概念中叫做用户态，CPU设计上叫做用户模式。</p>
+<p>注意到，内核态并不是一个东西，没有处于什么地方一说，<strong>它是CPU的两种状态之一</strong>。如果不是说进入内核态，而是说<strong>切换</strong>到内核态，可能你就没有这种误解了。都怪intel将系统调用的指令起名字叫sysenter，所以大家都比较习惯说“进入”内核态。</p>
+<p>实际上CPU可能被细分为更多的运行模式，而不仅仅是特权和用户两种模式，不过操作系统至少需要这两种。有的时候特权和用户模式也指的并不是一种真正的模式，而是一类模式，比如好几种类似的但略有区别的运行模式都合成特权模式之类。</p>
+<p>这种 <code>特权+用户</code> 的多模式切换的运行方式，就叫做（x86）CPU的保护模式功能。保护模式之所以也是一个模式，有一定的历史原因，因为intel CPU每一代产品都会尽量兼容之前的产品，早期的CPU启动时是实模式，没有这种模式切换的功能，后来的CPU为了兼容早期的CPU，启动时也处于实模式，需要引导程序主动进入保护模式，然后才拥有多模式切换的能力。这些是历史原因和一些细节问题。</p>
+<p>对于CPU本身来说，CPU是不知道究竟哪一段代码属于应用程序、哪一段代码属于操作系统的，它没有能力识别当前执行的代码究竟应不应该有权限，因此它只负责按照程序逻辑来执行：如果指令自己要求自己进入用户模式，CPU就进入用户模式，但进去之后，就只有特定的方法才能再回到特权模式。所以并不是说进入特权模式就一定是操作系统代码了，CPU并没有这个保证。但是，我们说了，保护模式设计的目标就是为了让应用程序代码受到限制，如果应用程序的代码进入了特权模式，这个限制就完全失效了，所以操作系统设计上会使用各种各样的巧妙手段，配合CPU的功能，保障应用程序只能通过跳转到操作系统代码的方式来切换到内核态上，这样也就间接保障了内核态下执行的都是操作系统（包括驱动）的代码。</p>
+<p>接下来我们讨论如何限制内存访问的问题，这也是这个设计中最困难的一部分。相比来说，在用户模式下禁用一部分指令功能比较简单，无非是控制器里加入相应的组合逻辑，判断当前状态，如果状态为用户模式则拒绝执行特权指令而已。而内存读写则不一样，指令是相同的，只是访问的内存地址不同，这时候有些地址是可以访问的，有些地址则不能访问，能不能访问的区别仅仅在内存地址上。要知道，CPU是支持利用寄存器间接寻址的，因此这个非法的指令不可能在译码的阶段就发现，而是必须在执行期间发现；同时，哪些地址可以访问，哪些地址不能访问，必须完全是可配置的，操作系统有极大的自由。最后，这个系统还必须对应用程序有最基础的友好性，不能让应用程序太难写。</p>
+<p>既然内存里每一个单元是否允许访问都需要能够设置，而内存的大小是不确定的，那这个设置的数量也不确定，而且会较为庞大，在寸土寸金（？）的CPU里放这么多、这么复杂的设置是很不合适的，唯一可行的方案就是通过内存自己来管理内存——使用一部分内存用来存储其他内存应该如何使用的配置。这样，实际访问内存时，就需要——</p>
+<p><em>先访问内存中的内存配置，根据内存配置判断要访问的内存是否允许访问，如果不允许访问需要触发非法操作的中断，而如果允许访问则正常访问；同时，内存中的内存配置也是内存的一部分，所以内存中的内存配置也会受到内存中的内存配置的管理。</em></p>
+<p>仅仅从这个拗口程度上也能知道这是一件多么复杂的事情，使用内存自己来管理内存，这就好比左脚踩着右脚上天梯，一个不小心玩脱了就出大事了。而且为了让带配置的内存使用起来有效率，还需要大量使用缓存技术。</p>
+<p>CPU中引入了一种称为MMU的单元，它可能是现代CPU最复杂的组件之一了。它能从内存中以指定格式加载配置，从而影响用户模式下访问内存的特性。为了方便进程切换，这个格式往往有复杂的数据结构，还要支持多种多样的配置功能。在用户模式下，所有内存访问经过MMU，从而对内存的访问受到了保护；在特权模式下，内存访问绕过MMU，直接访问物理内存，从而获得完整的权限。</p>
+<p>从具体设计上来说，最直接的想法就是用户模式和特权模式都使用相同的内存地址，只是在用户模式下设置哪些内存可访问，哪些不可访问。这种方法是否可行呢？实际上是可行的，不过略有一些缺陷：</p>
+<ol>
+<li>在保护模式出现之前，编译器都是针对实模式设计的，在编译过程中，使用哪些内存地址范围、内存的什么位置放什么数据，都完全是编译器可以自己决定的。即使是保护模式出现之后，操作系统的部分也需要相同的编译方式。如果应用程序的编译需要放弃这一套逻辑，改成所有地址都由操作系统分配，那现有的汇编程序和编译器都需要重写，这个代价难以接受。</li>
+<li>应用程序经常会需要使用一大片连续的内存空间，比如说涉及数组的一系列算法。如果内存空间全部都是动态分配的，那有些程序可能会不断地申请小块小块的空间，从而让内存空间碎片化，没有连续成片的内存。等这些程序退出之后，释放出来的内存都是小块、不连续的，操作系统就没法让其他应用程序使用连续成片的内存了。</li>
+<li>安全上有隐患，虽然应用程序没法读取其他内存，但是应用程序可以知道哪些内存已经被其他应用程序用了，于是可以从内存地址的分配上分析出一些信息，例如当前操作系统可能执行了哪些其他应用程序，这些应用程序可能处于什么状态等等。还有可能因为CPU实现的bug导致应用程序能以意想不到的方式读取到不应当能读取的数据。</li>
+<li>现代操作系统希望支持一些高级的内存管理方式，例如虚拟内存——将一部分不使用的内存暂时放在磁盘上，这样可以用较少的内存支撑更多的应用程序；写时复制——两个应用程序使用相同的内存块，希望能暂时使用同一个物理内存地址，但是其中一个需要修改的时候再将它复制成两份独立的内存块，从而节约内存。</li>
+</ol>
+<p>现代MMU通常使用虚拟地址空间的技术来解决这个问题，也就是你说的“用户空间”。在用户模式下，所有访问内存的地址实际上都是<strong>虚拟地址</strong>，它与实际的物理地址是对应不上的。这样，即便两个应用程序使用了相同的地址，它们也可以做到互不干扰，只需要通过技术手段让它们实际映射到不同的物理地址就行了。MMU和操作系统通过称作页表的数据结构来实现虚拟地址到物理地址的映射，一般来说在x86-64系统中，内存按照4KB的大小分成页，每个地址对齐的页可以独立从任意一个虚拟地址段，映射到任意一个物理内存地址段，两个起始地址的低12位都是0（也就是所谓地址对齐，这样任意一个虚拟地址映射到物理地址时，最低12位不需要动）。页表的结构在每次进入用户模式之前都可以重新设置，这样切换进程之后，页表发生了变化，同一个虚拟地址就会映射到不同的物理地址上，这就同时实现了多个目标：</p>
+<ol>
+<li>应用程序有独立的虚拟地址空间</li>
+<li>应用程序只能访问已经映射了的虚拟地址空间，未映射的物理地址无法访问（实现了保护内存）</li>
+<li>页表和中断向量表，理所当然不会被映射出来</li>
+<li>部分RISC（x86是CISC）的架构上，内存和外部设备有统一的地址空间，不映射外设的地址，也就阻止了对外设的访问</li>
+<li>应用程序看来连续的内存，在物理内存上不需要是连续的，内存使用的效率很高</li>
+<li>以某些方式访问某些页面时可以触发操作系统的中断，操作系统可以趁这个机会修改页表，这就给操作系统实现高级内存管理功能打下了基础</li>
+</ol>
+<p>最后我们来说一下应用程序怎么访问外部设备的问题。我们说了，用户模式下应用程序无法直接访问硬件设备，但如果完全没法利用硬件设备，那就太不方便了。这两者的权衡是，应用程序通过操作系统使用硬件，也就是说应用程序给操作系统发起请求，操作系统处理请求时将请求转发到硬件，硬件响应后，再将请求转发回应用程序。</p>
+<p>许多硬件使用中断和DMA来传输信号或数据。这种情况下，操作系统开始操作后，到硬件操作完成前会有一段空闲时间，这时候操作系统可以将当前应用程序挂起，先去执行其他的应用程序。当硬件操作完成时，会触发中断，中断向量表在内存中，是操作系统提前设置好的，指向了操作系统自己的代码；同时，这个中断也会立即强迫CPU进入特权模式。这时候操作系统就有机会来处理硬件返回的数据了，同时根据进程优先级，可以将之前挂起的进程重新切换回来重新开始继续执行。</p>
+<p>不同硬件往往有不同的接口，但操作系统会希望提供给应用程序统一的接口，这中间就涉及到驱动适配的问题，厂家的驱动程序可以将通用的请求转化为自己家硬件能识别的请求格式。</p>
+<p>保护模式不意味着应用程序访问硬件的能力变弱了，实际上，应用程序访问硬件的能力完全取决于操作系统是否允许。别说是Windows PE，实际上任意版本的Windows都是可以允许一个最高权限的用户程序直接读写物理硬盘的（通过CreateFileEx的Windows API就可以，就跟打开一个普通文件一样），唯一的问题在于Windows依赖很多磁盘文件，如果在普通Windows执行过程中格式化系统盘，操作系统会崩溃，而Windows PE比较小，可以将重要的东西都整个加载到内存里，就可以在保持操作系统正常工作的情况下格式化硬盘了。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>内核态和用户态</div>
+      <div>https://flepeng.github.io/001-计算机组成原理-内核态和用户态/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年5月19日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/ml-%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%BE%B9%E6%A1%86%E5%9B%9E%E5%BD%92-Bounding-Box-Regression/" title="深度学习之边框回归(Bounding Box Regression)">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">深度学习之边框回归(Bounding Box Regression)</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/001-%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BB%84%E6%88%90%E5%8E%9F%E7%90%86-%E6%B5%AE%E7%82%B9%E6%95%B0%E8%BD%AC%E5%8C%96%E6%88%90%E4%BA%8C%E8%BF%9B%E5%88%B6/" title="浮点数转化成二进制">
+                        <span class="hidden-mobile">浮点数转化成二进制</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

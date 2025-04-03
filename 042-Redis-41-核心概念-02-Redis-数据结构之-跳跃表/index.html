@@ -1,0 +1,874 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="一、跳跃表简介跳跃表（skiplist）是一种随机化的数据结构，由 William Pugh 在论文《Skip lists: a probabilistic alternative to balanced trees》中提出，是一种可以于平衡树媲美的层次化链表结构——查找、删除、添加等操作都可以在对数期望时间下完成，以下是一个典型的跳跃表例子：  Reids 有一个叫 有序列表 zset 的数据结">
+<meta property="og:type" content="article">
+<meta property="og:title" content="02-Redis 数据结构之 跳跃表">
+<meta property="og:url" content="https://flepeng.github.io/042-Redis-41-%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5-02-Redis-%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B9%8B-%E8%B7%B3%E8%B7%83%E8%A1%A8/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="一、跳跃表简介跳跃表（skiplist）是一种随机化的数据结构，由 William Pugh 在论文《Skip lists: a probabilistic alternative to balanced trees》中提出，是一种可以于平衡树媲美的层次化链表结构——查找、删除、添加等操作都可以在对数期望时间下完成，以下是一个典型的跳跃表例子：  Reids 有一个叫 有序列表 zset 的数据结">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/redis/1691740291-8b4c4f5c0c5b245392614c4b027a4709.png">
+<meta property="og:image" content="https://flepeng.github.io/img/redis/1691740291-aa11f83fee63488a3525b1d4b3441895.png">
+<meta property="og:image" content="https://flepeng.github.io/img/redis/1691740291-54bb2ddfdeb1ae05b0d1bda32038736d.png">
+<meta property="og:image" content="https://flepeng.github.io/img/redis/1691740291-b077f5e3852d86402fe5185faea0a8ee.png">
+<meta property="og:image" content="https://flepeng.github.io/img/redis/1691740291-f140c560b4c63b31305baa1e9f2e2d29.png">
+<meta property="og:image" content="https://flepeng.github.io/img/redis/1691740291-61652e0199584d6b3890baf0f8bb755d.png">
+<meta property="og:image" content="https://flepeng.github.io/img/redis/1691740291-6909bf74499125dbaf641cd9b7a1e0eb.png">
+<meta property="og:image" content="https://flepeng.github.io/img/redis/1691740291-942aad9294587e8d6dc8d0849bd4dcc4.png">
+<meta property="article:published_time" content="2020-12-31T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.365Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Redis">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/redis/1691740291-8b4c4f5c0c5b245392614c4b027a4709.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>02-Redis 数据结构之 跳跃表 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="02-Redis 数据结构之 跳跃表"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-01-01 00:00" pubdate>
+          2021年1月1日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.6k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          30 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">02-Redis 数据结构之 跳跃表</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="一、跳跃表简介"><a href="#一、跳跃表简介" class="headerlink" title="一、跳跃表简介"></a>一、跳跃表简介</h1><p>跳跃表（skiplist）是一种随机化的数据结构，由 <strong>William Pugh</strong> 在论文<a href="https://www.cl.cam.ac.uk/teaching/0506/Algorithms/skiplists.pdf" target="_blank" rel="noopener">《Skip lists: a probabilistic alternative to balanced trees》</a>中提出，是一种可以于平衡树媲美的层次化链表结构——查找、删除、添加等操作都可以在对数期望时间下完成，以下是一个典型的跳跃表例子：</p>
+<p><img src="/img/redis/1691740291-8b4c4f5c0c5b245392614c4b027a4709.png" srcset="/img/loading.gif" lazyload></p>
+<p>Reids 有一个叫 <strong>有序列表 zset</strong> 的数据结构，它类似于 Java 中的 <strong>SortedSet</strong> 和 <strong>HashMap</strong> 的结合体，一方面它是一个 set 保证了内部 value 的唯一性，另一方面又可以给每个 value 赋予一个排序的权重值 score，来达到排序的目的，它的内部实现就依赖了跳跃列表。</p>
+<h2 id="为什么使用跳跃表"><a href="#为什么使用跳跃表" class="headerlink" title="为什么使用跳跃表"></a>为什么使用跳跃表</h2><p>首先，因为 zset 要支持随机的插入和删除，所以它 <strong>不宜使用数组来实现</strong>，关于排序问题，我们也很容易就想到 <strong>红黑树&#x2F;平衡树</strong> 这样的树形结构，为什么 Redis 不使用这样一些结构呢？</p>
+<ol>
+<li><strong>性能考虑：</strong> 在高并发的情况下，树形结构需要执行一些类似于 rebalance 这样的可能涉及整棵树的操作，相对来说跳跃表的变化只涉及局部；</li>
+<li><strong>实现考虑：</strong> 在复杂度与红黑树相同的情况下，跳跃表实现起来更简单，看起来也更加直观；</li>
+</ol>
+<p>基于以上的一些考虑，Redis 基于 <strong>William Pugh</strong> 的论文做出一些改进后采用了 <strong>跳跃表</strong> 这样的结构。</p>
+<h3 id="本质是解决查找问题"><a href="#本质是解决查找问题" class="headerlink" title="本质是解决查找问题"></a>本质是解决查找问题</h3><p>我们先来看一个普通的链表结构：</p>
+<p><img src="/img/redis/1691740291-aa11f83fee63488a3525b1d4b3441895.png" srcset="/img/loading.gif" lazyload></p>
+<p>我们需要这个链表按照 score 值进行排序，这也就意味着，当我们需要添加新的元素时，我们需要定位到插入点，这样才可以保证链表是有序的，通常我们会使用二分查找法，但二分查找是有序数组的，链表没办法进行位置定位，我们除了遍历找到第一个比给定数据大的节点之外（时间复杂度 O(n))似乎没有更好的办法。</p>
+<p>但假如我们每相邻两个节点之间就增加一个指针，让指针指向下一个节点，如下图：</p>
+<p><img src="/img/redis/1691740291-54bb2ddfdeb1ae05b0d1bda32038736d.png" srcset="/img/loading.gif" lazyload></p>
+<p>这样所有新增的指针连成了一个新的链表，但它包含的数据却只有原来的一半（图中的为 3，11）。</p>
+<p>现在假设我们想要查找数据时，可以根据这条新的链表查找，如果碰到比待查找数据大的节点时，再回到原来的链表中进行查找，比如，我们想要查找 7，查找的路径则是沿着下图中标注出的红色指针所指向的方向进行的：</p>
+<p><img src="/img/redis/1691740291-b077f5e3852d86402fe5185faea0a8ee.png" srcset="/img/loading.gif" lazyload></p>
+<p>我们仍然可以看到，通过新增加的指针查找，我们不再需要与链表上的每一个节点逐一进行比较，这样改进之后需要比较的节点数大概只有原来的一半。</p>
+<p>利用同样的方式，我们可以在新产生的链表上，继续为每两个相邻的节点增加一个指针，从而产生第三层链表：</p>
+<p><img src="/img/redis/1691740291-f140c560b4c63b31305baa1e9f2e2d29.png" srcset="/img/loading.gif" lazyload></p>
+<p>在这个新的三层链表结构中，如果查找 13，那么沿着最上层链表首先比较的是 11，发现 11 比 13 小，于是我们就知道只需要到 11 后面继续查找，<strong>从而一下子跳过了 11 前面的所有节点。</strong></p>
+<p>可以想象，当链表足够长，这样的多层链表结构可以帮助我们跳过很多下层节点，从而加快查找的效率。</p>
+<h3 id="更进一步的跳跃表"><a href="#更进一步的跳跃表" class="headerlink" title="更进一步的跳跃表"></a>更进一步的跳跃表</h3><p><strong>跳跃表 skiplist</strong> 就是受到这种多层链表结构的启发而设计出来的。按照上面生成链表的方式，上面每一层链表的节点个数，是下面一层的节点个数的一半，这样查找过程就非常类似于一个二分查找，使得查找的时间复杂度可以降低到 <code>O(logn)</code>。</p>
+<p>但是，这种方法在插入数据的时候有很大的问题。新插入一个节点之后，就会打乱上下相邻两层链表上节点个数严格的 2:1 的对应关系。如果要维持这种对应关系，就必须把新插入的节点后面的所有节点（也包括新插入的节点）重新进行调整，这会让时间复杂度重新蜕化成 <code>O(n)</code>。删除数据也有同样的问题。</p>
+<p><strong>skiplist</strong> 为了避免这一问题，它不要求上下相邻两层链表之间的节点个数有严格的对应关系，而是 **为每个节点随机出一个层数(level)**。比如，一个节点随机出的层数是 3，那么就把它链入到 <strong>第 1 层到第 3 层</strong> 这三层链表中。为了表达清楚，下图展示了如何通过一步步的插入操作从而形成一个 skiplist 的过程：</p>
+<p><img src="/img/redis/1691740291-61652e0199584d6b3890baf0f8bb755d.png" srcset="/img/loading.gif" lazyload></p>
+<p>从上面的创建和插入的过程中可以看出，每一个节点的层数（level）是随机出来的，而且新插入一个节点并不会影响到其他节点的层数，因此，<strong>插入操作只需要修改节点前后的指针，而不需要对多个节点都进行调整</strong>，这就降低了插入操作的复杂度。</p>
+<p>现在我们假设从我们刚才创建的这个结构中查找 23 这个不存在的数，那么查找路径会如下图：</p>
+<p><img src="/img/redis/1691740291-6909bf74499125dbaf641cd9b7a1e0eb.png" srcset="/img/loading.gif" lazyload></p>
+<h1 id="二、跳跃表的实现-源码分析"><a href="#二、跳跃表的实现-源码分析" class="headerlink" title="二、跳跃表的实现(源码分析)"></a>二、跳跃表的实现(源码分析)</h1><p>Redis 中的跳跃表由 <code>server.h/zskiplistNode</code> 和 <code>server.h/zskiplist</code> 两个结构定义，前者为跳跃表节点，后者则保存了跳跃节点的相关信息，同之前的 <code>集合 list</code> 结构类似，其实只有 <code>zskiplistNode</code> 就可以实现了，但是引入后者是为了更加方便的操作：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/* ZSETs use a specialized version of Skiplists */</span><br><span class="hljs-keyword">typedef</span> <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">zskiplistNode</span> &#123;</span><br>    <span class="hljs-comment">// value</span><br>    sds ele;<br>    <span class="hljs-comment">// 分值</span><br>    <span class="hljs-keyword">double</span> score;<br>    <span class="hljs-comment">// 后退指针</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">zskiplistNode</span> *<span class="hljs-title">backward</span>;</span><br>    <span class="hljs-comment">// 层</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">zskiplistLevel</span> &#123;</span><br>        <span class="hljs-comment">// 前进指针</span><br>        <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">zskiplistNode</span> *<span class="hljs-title">forward</span>;</span><br>        <span class="hljs-comment">// 跨度</span><br>        <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span> span;<br>    &#125; level[];<br>&#125; zskiplistNode;<br><br><span class="hljs-keyword">typedef</span> <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">zskiplist</span> &#123;</span><br>    <span class="hljs-comment">// 跳跃表头指针</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">zskiplistNode</span> *<span class="hljs-title">header</span>, *<span class="hljs-title">tail</span>;</span><br>    <span class="hljs-comment">// 表中节点的数量</span><br>    <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span> length;<br>    <span class="hljs-comment">// 表中层数最大的节点的层数</span><br>    <span class="hljs-keyword">int</span> level;<br>&#125; zskiplist;<br></code></pre></td></tr></table></figure>
+
+<p>正如文章开头画出来的那张标准的跳跃表那样。</p>
+<h2 id="随机层数"><a href="#随机层数" class="headerlink" title="随机层数"></a>随机层数</h2><p>对于每一个新插入的节点，都需要调用一个随机算法给它分配一个合理的层数，源码在 <code>t_zset.c/zslRandomLevel(void)</code> 中被定义：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">zslRandomLevel</span><span class="hljs-params">(<span class="hljs-keyword">void</span>)</span> </span>&#123;<br>    <span class="hljs-keyword">int</span> level = <span class="hljs-number">1</span>;<br>    <span class="hljs-keyword">while</span> ((<span class="hljs-built_in">random</span>()&amp;<span class="hljs-number">0xFFFF</span>) &lt; (ZSKIPLIST_P * <span class="hljs-number">0xFFFF</span>))<br>        level += <span class="hljs-number">1</span>;<br>    <span class="hljs-keyword">return</span> (level&lt;ZSKIPLIST_MAXLEVEL) ? level : ZSKIPLIST_MAXLEVEL;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>直观上期望的目标是 50% 的概率被分配到 <code>Level 1</code>，25% 的概率被分配到 <code>Level 2</code>，12.5% 的概率被分配到 <code>Level 3</code>，以此类推…有 <code>2^-63</code> 的概率被分配到最顶层，因为这里每一层的晋升率都是 50%。</p>
+<p><strong>Redis 跳跃表默认允许最大的层数是 32</strong>，被源码中 <code>ZSKIPLIST_MAXLEVEL</code> 定义，当 <code>Level[0]</code> 有 <code>2^64</code> 个元素时，才能达到 32 层，所以定义 32 完全够用了。</p>
+<h2 id="创建跳跃表"><a href="#创建跳跃表" class="headerlink" title="创建跳跃表"></a>创建跳跃表</h2><p>这个过程比较简单，在源码中的 <code>t_zset.c/zslCreate</code> 中被定义：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-function">zskiplist *<span class="hljs-title">zslCreate</span><span class="hljs-params">(<span class="hljs-keyword">void</span>)</span> </span>&#123;<br>    <span class="hljs-keyword">int</span> j;<br>    zskiplist *zsl;<br><br>    <span class="hljs-comment">// 申请内存空间</span><br>    zsl = zmalloc(<span class="hljs-keyword">sizeof</span>(*zsl));<br>    <span class="hljs-comment">// 初始化层数为 1</span><br>    zsl-&gt;level = <span class="hljs-number">1</span>;<br>    <span class="hljs-comment">// 初始化长度为 0</span><br>    zsl-&gt;length = <span class="hljs-number">0</span>;<br>    <span class="hljs-comment">// 创建一个层数为 32，分数为 0，没有 value 值的跳跃表头节点</span><br>    zsl-&gt;header = zslCreateNode(ZSKIPLIST_MAXLEVEL,<span class="hljs-number">0</span>,<span class="hljs-literal">NULL</span>);<br>    <br>    <span class="hljs-comment">// 跳跃表头节点初始化</span><br>    <span class="hljs-keyword">for</span> (j = <span class="hljs-number">0</span>; j &lt; ZSKIPLIST_MAXLEVEL; j++) &#123;<br>        <span class="hljs-comment">// 将跳跃表头节点的所有前进指针 forward 设置为 NULL</span><br>        zsl-&gt;header-&gt;level[j].forward = <span class="hljs-literal">NULL</span>;<br>        <span class="hljs-comment">// 将跳跃表头节点的所有跨度 span 设置为 0</span><br>        zsl-&gt;header-&gt;level[j].span = <span class="hljs-number">0</span>;<br>    &#125;<br>    <span class="hljs-comment">// 跳跃表头节点的后退指针 backward 置为 NULL</span><br>    zsl-&gt;header-&gt;backward = <span class="hljs-literal">NULL</span>;<br>    <span class="hljs-comment">// 表头指向跳跃表尾节点的指针置为 NULL</span><br>    zsl-&gt;tail = <span class="hljs-literal">NULL</span>;<br>    <span class="hljs-keyword">return</span> zsl;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>即执行完之后创建了如下结构的初始化跳跃表：</p>
+<p><img src="/img/redis/1691740291-942aad9294587e8d6dc8d0849bd4dcc4.png" srcset="/img/loading.gif" lazyload></p>
+<h2 id="插入节点实现"><a href="#插入节点实现" class="headerlink" title="插入节点实现"></a>插入节点实现</h2><p>这几乎是最重要的一段代码了，但总体思路也比较清晰简单，如果理解了上面所说的跳跃表的原理，那么很容易理清楚插入节点时发生的几个动作（几乎跟链表类似）：</p>
+<ol>
+<li>找到当前我需要插入的位置（其中包括相同 score 时的处理）；</li>
+<li>创建新节点，调整前后的指针指向，完成插入；</li>
+</ol>
+<p>为了方便阅读，我把源码 <code>t_zset.c/zslInsert</code> 定义的插入函数拆成了几个部分</p>
+<h3 id="第一部分：声明需要存储的变量"><a href="#第一部分：声明需要存储的变量" class="headerlink" title="第一部分：声明需要存储的变量"></a>第一部分：声明需要存储的变量</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// 存储搜索路径</span><br>zskiplistNode *update[ZSKIPLIST_MAXLEVEL], *x;<br><span class="hljs-comment">// 存储经过的节点跨度</span><br><span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">int</span> rank[ZSKIPLIST_MAXLEVEL];<br><span class="hljs-keyword">int</span> i, level;<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="第二部分：搜索当前节点插入位置"><a href="#第二部分：搜索当前节点插入位置" class="headerlink" title="第二部分：搜索当前节点插入位置"></a>第二部分：搜索当前节点插入位置</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs c">serverAssert(!isnan(score));<br>x = zsl-&gt;header;<br><span class="hljs-comment">// 逐步降级寻找目标节点，得到 "搜索路径"</span><br><span class="hljs-keyword">for</span> (i = zsl-&gt;level<span class="hljs-number">-1</span>; i &gt;= <span class="hljs-number">0</span>; i--) &#123;<br>    <span class="hljs-comment">/* store rank that is crossed to reach the insert position */</span><br>    rank[i] = i == (zsl-&gt;level<span class="hljs-number">-1</span>) ? <span class="hljs-number">0</span> : rank[i+<span class="hljs-number">1</span>];<br>    <span class="hljs-comment">// 如果 score 相等，还需要比较 value 值</span><br>    <span class="hljs-keyword">while</span> (x-&gt;level[i].forward &amp;&amp;<br>            (x-&gt;level[i].forward-&gt;score &lt; score ||<br>                (x-&gt;level[i].forward-&gt;score == score &amp;&amp;<br>                sdscmp(x-&gt;level[i].forward-&gt;ele,ele) &lt; <span class="hljs-number">0</span>)))<br>    &#123;<br>        rank[i] += x-&gt;level[i].span;<br>        x = x-&gt;level[i].forward;<br>    &#125;<br>    <span class="hljs-comment">// 记录 "搜索路径"</span><br>    update[i] = x;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>讨论：</strong> 有一种极端的情况，就是跳跃表中的所有 score 值都是一样，zset 的查找性能会不会退化为 O(n) 呢？</p>
+<p>从上面的源码中我们可以发现 zset 的排序元素不只是看 score 值，也会比较 value 值（字符串比较）</p>
+<h3 id="第三部分：生成插入节点"><a href="#第三部分：生成插入节点" class="headerlink" title="第三部分：生成插入节点"></a>第三部分：生成插入节点</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/* we assume the element is not already inside, since we allow duplicated</span><br><span class="hljs-comment"> * scores, reinserting the same element should never happen since the</span><br><span class="hljs-comment"> * caller of zslInsert() should test in the hash table if the element is</span><br><span class="hljs-comment"> * already inside or not. */</span><br>level = zslRandomLevel();<br><span class="hljs-comment">// 如果随机生成的 level 超过了当前最大 level 需要更新跳跃表的信息</span><br><span class="hljs-keyword">if</span> (level &gt; zsl-&gt;level) &#123;<br>    <span class="hljs-keyword">for</span> (i = zsl-&gt;level; i &lt; level; i++) &#123;<br>        rank[i] = <span class="hljs-number">0</span>;<br>        update[i] = zsl-&gt;header;<br>        update[i]-&gt;level[i].span = zsl-&gt;length;<br>    &#125;<br>    zsl-&gt;level = level;<br>&#125;<br><span class="hljs-comment">// 创建新节点</span><br>x = zslCreateNode(level,score,ele);<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="第四部分：重排前向指针"><a href="#第四部分：重排前向指针" class="headerlink" title="第四部分：重排前向指针"></a>第四部分：重排前向指针</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; level; i++) &#123;<br>    x-&gt;level[i].forward = update[i]-&gt;level[i].forward;<br>    update[i]-&gt;level[i].forward = x;<br><br>    <span class="hljs-comment">/* update span covered by update[i] as x is inserted here */</span><br>    x-&gt;level[i].span = update[i]-&gt;level[i].span - (rank[<span class="hljs-number">0</span>] - rank[i]);<br>    update[i]-&gt;level[i].span = (rank[<span class="hljs-number">0</span>] - rank[i]) + <span class="hljs-number">1</span>;<br>&#125;<br><br><span class="hljs-comment">/* increment span for untouched levels */</span><br><span class="hljs-keyword">for</span> (i = level; i &lt; zsl-&gt;level; i++) &#123;<br>    update[i]-&gt;level[i].span++;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="第五部分：重排后向指针并返回"><a href="#第五部分：重排后向指针并返回" class="headerlink" title="第五部分：重排后向指针并返回"></a>第五部分：重排后向指针并返回</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c">x-&gt;backward = (update[<span class="hljs-number">0</span>] == zsl-&gt;header) ? <span class="hljs-literal">NULL</span> : update[<span class="hljs-number">0</span>];<br><span class="hljs-keyword">if</span> (x-&gt;level[<span class="hljs-number">0</span>].forward)<br>    x-&gt;level[<span class="hljs-number">0</span>].forward-&gt;backward = x;<br><span class="hljs-keyword">else</span><br>    zsl-&gt;tail = x;<br>zsl-&gt;length++;<br><span class="hljs-keyword">return</span> x;<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="节点删除实现"><a href="#节点删除实现" class="headerlink" title="节点删除实现"></a>节点删除实现</h2><p>删除过程由源码中的 <code>t_zset.c/zslDeleteNode</code> 定义，和插入过程类似，都需要先把这个 <strong>“搜索路径”</strong> 找出来，然后对于每个层的相关节点重排一下前向后向指针，同时还要注意更新一下最高层数 <code>maxLevel</code>，直接放源码 _(如果理解了插入这里还是很容易理解的)_：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/* Internal function used by zslDelete, zslDeleteByScore and zslDeleteByRank */</span><br><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">zslDeleteNode</span><span class="hljs-params">(zskiplist *zsl, zskiplistNode *x, zskiplistNode **update)</span> </span>&#123;<br>    <span class="hljs-keyword">int</span> i;<br>    <span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; zsl-&gt;level; i++) &#123;<br>        <span class="hljs-keyword">if</span> (update[i]-&gt;level[i].forward == x) &#123;<br>            update[i]-&gt;level[i].span += x-&gt;level[i].span - <span class="hljs-number">1</span>;<br>            update[i]-&gt;level[i].forward = x-&gt;level[i].forward;<br>        &#125; <span class="hljs-keyword">else</span> &#123;<br>            update[i]-&gt;level[i].span -= <span class="hljs-number">1</span>;<br>        &#125;<br>    &#125;<br>    <span class="hljs-keyword">if</span> (x-&gt;level[<span class="hljs-number">0</span>].forward) &#123;<br>        x-&gt;level[<span class="hljs-number">0</span>].forward-&gt;backward = x-&gt;backward;<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        zsl-&gt;tail = x-&gt;backward;<br>    &#125;<br>    <span class="hljs-keyword">while</span>(zsl-&gt;level &gt; <span class="hljs-number">1</span> &amp;&amp; zsl-&gt;header-&gt;level[zsl-&gt;level<span class="hljs-number">-1</span>].forward == <span class="hljs-literal">NULL</span>)<br>        zsl-&gt;level--;<br>    zsl-&gt;length--;<br>&#125;<br><br><span class="hljs-comment">/* Delete an element with matching score/element from the skiplist.</span><br><span class="hljs-comment"> * The function returns 1 if the node was found and deleted, otherwise</span><br><span class="hljs-comment"> * 0 is returned.</span><br><span class="hljs-comment"> *</span><br><span class="hljs-comment"> * If 'node' is NULL the deleted node is freed by zslFreeNode(), otherwise</span><br><span class="hljs-comment"> * it is not freed (but just unlinked) and *node is set to the node pointer,</span><br><span class="hljs-comment"> * so that it is possible for the caller to reuse the node (including the</span><br><span class="hljs-comment"> * referenced SDS string at node-&gt;ele). */</span><br><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">zslDelete</span><span class="hljs-params">(zskiplist *zsl, <span class="hljs-keyword">double</span> score, sds ele, zskiplistNode **node)</span> </span>&#123;<br>    zskiplistNode *update[ZSKIPLIST_MAXLEVEL], *x;<br>    <span class="hljs-keyword">int</span> i;<br><br>    x = zsl-&gt;header;<br>    <span class="hljs-keyword">for</span> (i = zsl-&gt;level<span class="hljs-number">-1</span>; i &gt;= <span class="hljs-number">0</span>; i--) &#123;<br>        <span class="hljs-keyword">while</span> (x-&gt;level[i].forward &amp;&amp;<br>                (x-&gt;level[i].forward-&gt;score &lt; score ||<br>                    (x-&gt;level[i].forward-&gt;score == score &amp;&amp;<br>                     sdscmp(x-&gt;level[i].forward-&gt;ele,ele) &lt; <span class="hljs-number">0</span>)))<br>        &#123;<br>            x = x-&gt;level[i].forward;<br>        &#125;<br>        update[i] = x;<br>    &#125;<br>    <span class="hljs-comment">/* We may have multiple elements with the same score, what we need</span><br><span class="hljs-comment">     * is to find the element with both the right score and object. */</span><br>    x = x-&gt;level[<span class="hljs-number">0</span>].forward;<br>    <span class="hljs-keyword">if</span> (x &amp;&amp; score == x-&gt;score &amp;&amp; sdscmp(x-&gt;ele,ele) == <span class="hljs-number">0</span>) &#123;<br>        zslDeleteNode(zsl, x, update);<br>        <span class="hljs-keyword">if</span> (!node)<br>            zslFreeNode(x);<br>        <span class="hljs-keyword">else</span><br>            *node = x;<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">1</span>;<br>    &#125;<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>; <span class="hljs-comment">/* not found */</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="节点更新实现"><a href="#节点更新实现" class="headerlink" title="节点更新实现"></a>节点更新实现</h2><p>当我们调用 <code>ZADD</code> 方法时，如果对应的 value 不存在，那就是插入过程，如果这个 value 已经存在，只是调整一下 score 的值，那就需要走一个更新流程。</p>
+<p>假设这个新的 score 值并不会带来排序上的变化，那么就不需要调整位置，直接修改元素的 score 值就可以了，但是如果排序位置改变了，那就需要调整位置，该如何调整呢？</p>
+<p>从源码 <code>t_zset.c/zsetAdd</code> 函数 <code>1350</code> 行左右可以看到，Redis 采用了一个非常简单的策略：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/* Remove and re-insert when score changed. */</span><br><span class="hljs-keyword">if</span> (score != curscore) &#123;<br>    zobj-&gt;ptr = zzlDelete(zobj-&gt;ptr,eptr);<br>    zobj-&gt;ptr = zzlInsert(zobj-&gt;ptr,ele,score);<br>    *flags |= ZADD_UPDATED;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>把这个元素删除再插入这个</strong>，需要经过两次路径搜索，从这一点上来看，Redis 的 <code>ZADD</code> 代码似乎还有进一步优化的空间。</p>
+<h2 id="元素排名的实现"><a href="#元素排名的实现" class="headerlink" title="元素排名的实现"></a>元素排名的实现</h2><p>跳跃表本身是有序的，Redis 在 skiplist 的 forward 指针上进行了优化，给每一个 forward 指针都增加了 <code>span</code> 属性，用来 <strong>表示从前一个节点沿着当前层的 forward 指针跳到当前这个节点中间会跳过多少个节点</strong>。在上面的源码中我们也可以看到 Redis 在插入、删除操作时都会小心翼翼地更新 <code>span</code> 值的大小。</p>
+<p>所以，沿着 <strong>“搜索路径”</strong>，把所有经过节点的跨度 <code>span</code> 值进行累加就可以算出当前元素的最终 rank 值了：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/* Find the rank for an element by both score and key.</span><br><span class="hljs-comment"> * Returns 0 when the element cannot be found, rank otherwise.</span><br><span class="hljs-comment"> * Note that the rank is 1-based due to the span of zsl-&gt;header to the</span><br><span class="hljs-comment"> * first element. */</span><br><span class="hljs-function"><span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span> <span class="hljs-title">zslGetRank</span><span class="hljs-params">(zskiplist *zsl, <span class="hljs-keyword">double</span> score, sds ele)</span> </span>&#123;<br>    zskiplistNode *x;<br>    <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span> rank = <span class="hljs-number">0</span>;<br>    <span class="hljs-keyword">int</span> i;<br><br>    x = zsl-&gt;header;<br>    <span class="hljs-keyword">for</span> (i = zsl-&gt;level<span class="hljs-number">-1</span>; i &gt;= <span class="hljs-number">0</span>; i--) &#123;<br>        <span class="hljs-keyword">while</span> (x-&gt;level[i].forward &amp;&amp;<br>            (x-&gt;level[i].forward-&gt;score &lt; score ||<br>                (x-&gt;level[i].forward-&gt;score == score &amp;&amp;<br>                sdscmp(x-&gt;level[i].forward-&gt;ele,ele) &lt;= <span class="hljs-number">0</span>))) &#123;<br>            <span class="hljs-comment">// span 累加</span><br>            rank += x-&gt;level[i].span;<br>            x = x-&gt;level[i].forward;<br>        &#125;<br><br>        <span class="hljs-comment">/* x might be equal to zsl-&gt;header, so test if obj is non-NULL */</span><br>        <span class="hljs-keyword">if</span> (x-&gt;ele &amp;&amp; sdscmp(x-&gt;ele,ele) == <span class="hljs-number">0</span>) &#123;<br>            <span class="hljs-keyword">return</span> rank;<br>        &#125;<br>    &#125;<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ol>
+<li>《Redis 设计与实现》 - <a href="http://redisbook.com/" target="_blank" rel="noopener">http://redisbook.com/</a></li>
+<li>【官方文档】Redis 数据类型介绍 - <a href="http://www.redis.cn/topics/data-types-intro.html" target="_blank" rel="noopener">http://www.redis.cn/topics/data-types-intro.html</a></li>
+<li>《Redis 深度历险》 - <a href="https://book.douban.com/subject/30386804/" target="_blank" rel="noopener">https://book.douban.com/subject/30386804/</a></li>
+<li>Redis 源码 - <a href="https://github.com/antirez/redis" target="_blank" rel="noopener">https://github.com/antirez/redis</a></li>
+<li>Redis 快速入门 - 易百教程 - <a href="https://www.yiibai.com/redis/redis_quick_guide.html" target="_blank" rel="noopener">https://www.yiibai.com/redis/redis_quick_guide.html</a></li>
+<li>Redis【入门】就这一篇! - <a href="https://www.wmyskxz.com/2018/05/31/redis-ru-men-jiu-zhe-yi-pian/" target="_blank" rel="noopener">https://www.wmyskxz.com/2018/05/31/redis-ru-men-jiu-zhe-yi-pian/</a></li>
+<li>Redis为什么用跳表而不用平衡树？ - <a href="https://mp.weixin.qq.com/s?__biz=MzA4NTg1MjM0Mg==&mid=2657261425&idx=1&sn=d840079ea35875a8c8e02d9b3e44cf95&scene=21#wechat_redirect" target="_blank" rel="noopener">https://mp.weixin.qq.com/s?__biz&#x3D;MzA4NTg1MjM0Mg&#x3D;&#x3D;&amp;mid&#x3D;2657261425&amp;idx&#x3D;1&amp;sn&#x3D;d840079ea35875a8c8e02d9b3e44cf95&amp;scene&#x3D;21#wechat_redirect</a></li>
+<li>为啥 redis 使用跳表(skiplist)而不是使用 red-black？ - 知乎@于康 - <a href="https://www.zhihu.com/question/20202931" target="_blank" rel="noopener">https://www.zhihu.com/question/20202931</a></li>
+<li><a href="https://blog.csdn.net/qq939419061/article/details/104913312" target="_blank" rel="noopener">https://blog.csdn.net/qq939419061/article/details/104913312</a></li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Redis/" class="category-chain-item">Redis</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Redis/" class="print-no-link">#Redis</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>02-Redis 数据结构之 跳跃表</div>
+      <div>https://flepeng.github.io/042-Redis-41-核心概念-02-Redis-数据结构之-跳跃表/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年1月1日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/042-Redis-41-%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5-05-Redis-%E5%A4%9A%E6%9C%BA%E4%B9%8B2-%E5%93%A8%E5%85%B5/" title="05-Redis 多机之2 - 哨兵">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">05-Redis 多机之2 - 哨兵</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/042-Redis-41-%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5-05-Redis-%E5%A4%9A%E6%9C%BA%E4%B9%8B3-%E9%9B%86%E7%BE%A4/" title="05-Redis 多机之3 - 集群">
+                        <span class="hidden-mobile">05-Redis 多机之3 - 集群</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

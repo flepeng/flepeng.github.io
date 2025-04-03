@@ -1,0 +1,947 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="一般来讲，实现一个gRPC服务端和客户端，主要分为这几步：  安装 protobuf 依赖 编写 proto 文件（IDL） 编译 proto 文件（生成stub文件） 编写 server 端，实现我们的接口 编写 client 端，测试我们的接口  1、第一个 gPRC 的开发项目结构：  xxxx-api 模块  定义 protobuf IDL 语言 并且通过命令创建对应的代码   xxxx-">
+<meta property="og:type" content="article">
+<meta property="og:title" content="04-gRPC java 版">
+<meta property="og:url" content="https://flepeng.github.io/043-gRPC-04-gRPC-java-%E7%89%88/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="一般来讲，实现一个gRPC服务端和客户端，主要分为这几步：  安装 protobuf 依赖 编写 proto 文件（IDL） 编译 proto 文件（生成stub文件） 编写 server 端，实现我们的接口 编写 client 端，测试我们的接口  1、第一个 gPRC 的开发项目结构：  xxxx-api 模块  定义 protobuf IDL 语言 并且通过命令创建对应的代码   xxxx-">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/grpc/java/Snipaste_2024-05-09_09-54-36.png">
+<meta property="og:image" content="https://flepeng.github.io/img/grpc/image-20230308132952661.png">
+<meta property="og:image" content="https://flepeng.github.io/img/grpc/image-20230309153848531.png">
+<meta property="og:image" content="https://flepeng.github.io/img/grpc/image-20230309154817840.png">
+<meta property="og:image" content="https://flepeng.github.io/img/grpc/image-20230310142153479.png">
+<meta property="og:image" content="https://flepeng.github.io/img/grpc/image-20230310151339486.png">
+<meta property="og:image" content="https://flepeng.github.io/img/grpc/image-20230312191718736.png">
+<meta property="article:published_time" content="2024-03-31T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.369Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="gRPC">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/grpc/java/Snipaste_2024-05-09_09-54-36.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>04-gRPC java 版 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="04-gRPC java 版"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-04-01 00:00" pubdate>
+          2024年4月1日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          26 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">04-gRPC java 版</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>一般来讲，实现一个gRPC服务端和客户端，主要分为这几步：</p>
+<ol>
+<li>安装 protobuf 依赖</li>
+<li>编写 proto 文件（IDL）</li>
+<li>编译 proto 文件（生成stub文件）</li>
+<li>编写 server 端，实现我们的接口</li>
+<li>编写 client 端，测试我们的接口</li>
+</ol>
+<h1 id="1、第一个-gPRC-的开发"><a href="#1、第一个-gPRC-的开发" class="headerlink" title="1、第一个 gPRC 的开发"></a>1、第一个 gPRC 的开发</h1><p>项目结构：</p>
+<ol>
+<li><p><code>xxxx-api</code> 模块</p>
+<ol>
+<li>定义 protobuf IDL 语言</li>
+<li>并且通过命令创建对应的代码</li>
+</ol>
+</li>
+<li><p><code>xxxx-server</code> 模块</p>
+<ol>
+<li>实现 api 模块中定义的服务接口</li>
+<li>发布 gRPC 服务 (创建服务端程序)</li>
+</ol>
+</li>
+<li><p><code>xxxx-clien</code> 模块</p>
+<ol>
+<li>创建服务端 stub(代理)</li>
+<li>基于代理（stub) RPC 调用。</li>
+</ol>
+</li>
+</ol>
+<p>目录结构</p>
+<figure class="highlight crmsh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs crmsh">├── grpc-api<br>│   ├── pom.xml<br>│   ├── src<br>├── grpc-client<br>│   ├── pom.xml<br>│   ├── src<br>├── grpc-server<br>│   ├── pom.xml<br>│   ├── src<br>└── pom.xml<br></code></pre></td></tr></table></figure>
+
+<h2 id="api-模块"><a href="#api-模块" class="headerlink" title="api 模块"></a>api 模块</h2><h3 id="编写-proto-文件，书写-protobuf-的-IDL。"><a href="#编写-proto-文件，书写-protobuf-的-IDL。" class="headerlink" title="编写 .proto 文件，书写 protobuf 的 IDL。"></a>编写 <code>.proto</code> 文件，书写 protobuf 的 IDL。</h3><figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs protobuf">syntax = <span class="hljs-string">"proto3"</span>;<br><br><span class="hljs-keyword">option</span> java_multiple_files = <span class="hljs-literal">false</span>;                     <span class="hljs-comment">// 后续 protobuf 生成的java代码 一个源文件还是多个源文件  xx.java</span><br><span class="hljs-keyword">option</span> java_package = <span class="hljs-string">"com.lepeng.grpcserver.grpc"</span>;     <span class="hljs-comment">// 指定 protobuf 生成的类 放置在哪个包中</span><br><span class="hljs-keyword">option</span> java_outer_classname = <span class="hljs-string">"HelloProto"</span>;             <span class="hljs-comment">// 指定 protobuf 生成的外部类的名字（管理内部类【内部类才是真正开发使用】）</span><br><br><span class="hljs-class"><span class="hljs-keyword">service</span> <span class="hljs-title">HelloService</span></span>&#123;<br>    <span class="hljs-function"><span class="hljs-keyword">rpc</span> hello(HelloRequest) <span class="hljs-keyword">returns</span> (HelloResponse)&#123;&#125;</span><br><span class="hljs-function">    <span class="hljs-keyword">rpc</span> hello1(HelloRequest1) <span class="hljs-keyword">returns</span> (HelloResponse1)&#123;&#125;</span><br><span class="hljs-function">&#125;</span><br></code></pre></td></tr></table></figure>
+
+
+<h3 id="把-IDL-转化为编程语言，有两种方式："><a href="#把-IDL-转化为编程语言，有两种方式：" class="headerlink" title="把 IDL 转化为编程语言，有两种方式："></a>把 IDL 转化为编程语言，有两种方式：</h3><ol>
+<li><p>使用 protoc 命令把 proto 文件中的 IDL 转换成编程语言<br><code>protoc --java_out=/xxx/xxx  /xxx/xxx/xx.proto</code></p>
+</li>
+<li><p>使用 maven 插件，进行 protobuf IDL 文件的编译，并把他放置 IDEA 具体位置。</p>
+</li>
+</ol>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><code class="hljs xml"><span class="hljs-tag">&lt;<span class="hljs-name">project</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">dependencies</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>io.grpc<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>grpc-netty-shaded<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>1.52.1<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">scope</span>&gt;</span>runtime<span class="hljs-tag">&lt;/<span class="hljs-name">scope</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>io.grpc<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>grpc-protobuf<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>1.52.1<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>io.grpc<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>grpc-stub<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>1.52.1<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span> <span class="hljs-comment">&lt;!-- necessary for Java 9+ --&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.tomcat<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>annotations-api<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>6.0.53<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">scope</span>&gt;</span>provided<span class="hljs-tag">&lt;/<span class="hljs-name">scope</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br>    <span class="hljs-tag">&lt;/<span class="hljs-name">dependencies</span>&gt;</span><br>    <br>    <span class="hljs-tag">&lt;<span class="hljs-name">build</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">extensions</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">extension</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>kr.motd.maven<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>os-maven-plugin<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>1.7.1<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>            <span class="hljs-tag">&lt;/<span class="hljs-name">extension</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">extensions</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">plugins</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">plugin</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.xolstice.maven.plugins<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>protobuf-maven-plugin<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>0.6.1<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">configuration</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">protocArtifact</span>&gt;</span>com.google.protobuf:protoc:3.21.7:exe:$&#123;os.detected.classifier&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">protocArtifact</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">pluginId</span>&gt;</span>grpc-java<span class="hljs-tag">&lt;/<span class="hljs-name">pluginId</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">pluginArtifact</span>&gt;</span>io.grpc:protoc-gen-grpc-java:1.52.1:exe:$&#123;os.detected.classifier&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">pluginArtifact</span>&gt;</span><br>                <span class="hljs-tag">&lt;/<span class="hljs-name">configuration</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">executions</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">execution</span>&gt;</span><br>                        <span class="hljs-tag">&lt;<span class="hljs-name">goals</span>&gt;</span><br>                            <span class="hljs-tag">&lt;<span class="hljs-name">goal</span>&gt;</span>compile<span class="hljs-tag">&lt;/<span class="hljs-name">goal</span>&gt;</span>  <span class="hljs-comment">&lt;!-- compile 用来编译消息对象 --&gt;</span><br>                            <span class="hljs-tag">&lt;<span class="hljs-name">goal</span>&gt;</span>compile-custom<span class="hljs-tag">&lt;/<span class="hljs-name">goal</span>&gt;</span>  <span class="hljs-comment">&lt;!-- compile-custom 则依赖消息对象,生成接口服务 --&gt;</span><br>                        <span class="hljs-tag">&lt;/<span class="hljs-name">goals</span>&gt;</span><br>                    <span class="hljs-tag">&lt;/<span class="hljs-name">execution</span>&gt;</span><br>                <span class="hljs-tag">&lt;/<span class="hljs-name">executions</span>&gt;</span><br>            <span class="hljs-tag">&lt;/<span class="hljs-name">plugin</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">plugins</span>&gt;</span><br>    <span class="hljs-tag">&lt;/<span class="hljs-name">build</span>&gt;</span><br><span class="hljs-tag">&lt;/<span class="hljs-name">project</span>&gt;</span><br></code></pre></td></tr></table></figure>
+
+<p>在 idea 中分别点击 compile 和 compile-custom。compile 和 compile-custom 两个指令都需要执行。其中 </p>
+<ul>
+<li>compile 用来编译消息对象，生成消息体类文件</li>
+<li>compile-custom 则依赖消息对象，生成接口服务，生成XXXGrpc类文件。</li>
+</ul>
+<p><img src="/img/grpc/java/Snipaste_2024-05-09_09-54-36.png" srcset="/img/loading.gif" lazyload></p>
+<ul>
+<li><code>HelloProto</code> 的默认生成目录为 <code>target/generated-sources/protobuf/grpc</code>，放的是生成的 message 对应的 java 对象</li>
+<li><code>HelloServiceGrpc</code> 的默认生成目录为 <code>target/generated-sources/protobuf/grpc-java</code>，放的是生成的 Service 对应的类</li>
+</ul>
+<p><img src="/img/grpc/image-20230308132952661.png" srcset="/img/loading.gif" lazyload alt="image-20230308132952661"></p>
+<p>将转化的代码放到对应目录，即 <code>com.lepeng.grpcserver</code> 子目录 grpc 下</p>
+<h2 id="xxxx-server-服务端模块的开发"><a href="#xxxx-server-服务端模块的开发" class="headerlink" title="xxxx-server 服务端模块的开发"></a>xxxx-server 服务端模块的开发</h2><p>实现业务接口 添加具体的功能（MyBatis+MySQL)</p>
+<p>开发步骤</p>
+<ol>
+<li>构建监听地址 SocketAddress<ol>
+<li>SPI 加载 NettyServerProvider</li>
+<li>根据指定端口创建监听地址</li>
+</ol>
+</li>
+<li>将 Service 注册到缓存</li>
+<li>Server 构建</li>
+<li>服务端启动</li>
+</ol>
+<p>原理参考</p>
+<ul>
+<li><a href="https://blog.csdn.net/why154285/article/details/107906125" target="_blank" rel="noopener">https://blog.csdn.net/why154285/article/details/107906125</a></li>
+<li><a href="https://blog.csdn.net/gaoliang1719/article/details/106566928" target="_blank" rel="noopener">https://blog.csdn.net/gaoliang1719/article/details/106566928</a></li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">package</span> com.lepeng.grpcserver.grpc.server;<br><br><span class="hljs-keyword">import</span> com.lepeng.grpcserver.grpc.HelloServiceGrpc;<br><span class="hljs-keyword">import</span> com.lepeng.grpcserver.grpc.HelloProto.HelloResponse;<br><span class="hljs-keyword">import</span> com.lepeng.grpcserver.grpc.HelloProto.HelloRequest;<br><span class="hljs-keyword">import</span> io.grpc.Server;<br><span class="hljs-keyword">import</span> io.grpc.ServerBuilder;<br><span class="hljs-keyword">import</span> io.grpc.stub.StreamObserver;<br><br><span class="hljs-keyword">import</span> java.io.IOException;<br><span class="hljs-keyword">import</span> java.util.logging.Logger;<br><br><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">HelloServer</span> </span>&#123;<br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> Logger logger = Logger.getLogger(HelloServer<span class="hljs-class">.<span class="hljs-keyword">class</span>.<span class="hljs-title">getName</span>())</span>;<br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">int</span> port = <span class="hljs-number">50051</span>;<br>    <span class="hljs-keyword">private</span> Server server;<br><br>    <span class="hljs-function"><span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title">start</span><span class="hljs-params">()</span> <span class="hljs-keyword">throws</span> IOException </span>&#123;<br>        <span class="hljs-comment">// 使用 ServerBuilder 来构建和启动服务，通过使用 forPort 方法来指定监听的地址和端口</span><br>        <span class="hljs-comment">// 创建一个实现方法的服务 HelloServiceImpl 的实例，并通过 addService 方法将该实例纳入</span><br>        <span class="hljs-comment">// 调用 build() start() 方法构建和启动 rpcserver</span><br>        server = ServerBuilder.forPort(port)<br>                .addService(<span class="hljs-keyword">new</span> HelloServiceImpl())<br>                .build()<br>                .start();<br>        logger.info(<span class="hljs-string">"Server started, listening on "</span> + port);<br><br>        Runtime.getRuntime().addShutdownHook(<span class="hljs-keyword">new</span> Thread() &#123;<br>            <span class="hljs-meta">@Override</span><br>            <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">run</span><span class="hljs-params">()</span> </span>&#123;<br>                <span class="hljs-comment">// Use stderr here since the logger may have been reset by its JVM shutdown hook.</span><br>                System.err.println(<span class="hljs-string">"*** shutting down gRPC server since JVM is shutting down"</span>);<br>                HelloServer.<span class="hljs-keyword">this</span>.stop();<br>                System.err.println(<span class="hljs-string">"*** server shut down"</span>);<br>            &#125;<br>        &#125;);<br>    &#125;<br><br>    <span class="hljs-function"><span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title">stop</span><span class="hljs-params">()</span> </span>&#123;<br>        <span class="hljs-keyword">if</span> (server != <span class="hljs-keyword">null</span>) &#123;<br>            server.shutdown();<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-comment">/**</span><br><span class="hljs-comment">     * Await termination on the main thread since the grpc library uses daemon threads.</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-function"><span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title">blockUntilShutdown</span><span class="hljs-params">()</span> <span class="hljs-keyword">throws</span> InterruptedException </span>&#123;<br>        <span class="hljs-keyword">if</span> (server != <span class="hljs-keyword">null</span>) &#123;<br>            server.awaitTermination();<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-comment">/**</span><br><span class="hljs-comment">     * Main launches the server from the command line.</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(String[] args)</span> <span class="hljs-keyword">throws</span> IOException, InterruptedException </span>&#123;<br>        <span class="hljs-keyword">final</span> HelloServer server = <span class="hljs-keyword">new</span> HelloServer();<br>        server.start();<br>        server.blockUntilShutdown();<br>    &#125;<br><br><br>    <span class="hljs-comment">// 我们的服务 HelloServiceImpl 继承了生成抽象类 HelloServiceGrpc.HelloServiceImplBase，实现了服务的所有方法</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">HelloServiceImpl</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">HelloServiceGrpc</span>.<span class="hljs-title">HelloServiceImplBase</span> </span>&#123;<br>        <span class="hljs-comment">/*</span><br><span class="hljs-comment">        1. 接受client提交的参数  request.getParameter()</span><br><span class="hljs-comment">        2. 业务处理 service+dao 调用对应的业务功能。</span><br><span class="hljs-comment">        3. 提供返回值</span><br><span class="hljs-comment">        */</span><br>        <span class="hljs-meta">@Override</span><br>        <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">hello</span><span class="hljs-params">(HelloProto.HelloRequest request, StreamObserver&lt;HelloProto.HelloResponse&gt; responseObserver)</span> </span>&#123;<br>            <span class="hljs-comment">// 1.接受client的请求参数</span><br>            String name = request.getName();<br>            <span class="hljs-comment">// 2.业务处理</span><br>            System.out.println(<span class="hljs-string">"name parameter "</span>+name);<br>            <br>            <span class="hljs-comment">// 3.封装响应</span><br>            <span class="hljs-comment">// 3.1 创建相应对象的构造者</span><br>            HelloProto.HelloResponse.Builder builder = HelloProto.HelloResponse.newBuilder();<br>            <span class="hljs-comment">// 3.2 填充数据</span><br>            builder.setResult(<span class="hljs-string">"hello method invoke ok"</span>);<br>            <span class="hljs-comment">// 3.3 封装响应</span><br>            HelloProto.HelloResponse helloResponse = builder.build();<br>            <br>            <span class="hljs-comment">// 4.使用响应监视器的 onNext 方法返回 helloResponse</span><br>            responseObserver.onNext(helloResponse);<br>            <span class="hljs-comment">// 5.使用 onCompleted 方法指定本次调用已经完成</span><br>            responseObserver.onCompleted();<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>Netty 创建服务端</p>
+<figure class="highlight axapta"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs axapta"><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">GprcServer1</span> </span>&#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> main(String[] args) throws IOException, InterruptedException &#123;<br>        <span class="hljs-comment">//1. 绑定端口 </span><br>        ServerBuilder serverBuilder = ServerBuilder.forPort(<span class="hljs-number">9000</span>);<br>        <span class="hljs-comment">//2. 发布服务</span><br>        serverBuilder.addService(<span class="hljs-keyword">new</span> HelloServiceImpl());<br>        <span class="hljs-comment">//serverBuilder.addService(new UserServiceImpl());</span><br>        <span class="hljs-comment">//3. 创建服务对象</span><br>        Server <span class="hljs-keyword">server</span> = serverBuilder.build();<br>        <br>        <span class="hljs-keyword">server</span>.start();<br>        <span class="hljs-keyword">server</span>.awaitTermination();;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="xxx-client-模块"><a href="#xxx-client-模块" class="headerlink" title="xxx-client 模块"></a>xxx-client 模块</h2><p>client 通过代理对象完成远端对象的调用</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">package</span> com.lepeng.grpcclient.grpc.client;<br><br><span class="hljs-keyword">import</span> com.lepeng.grpcclient.grpc.HelloServiceGrpc;<br><span class="hljs-keyword">import</span> com.lepeng.grpcclient.grpc.HelloProto.HelloResponse;<br><span class="hljs-keyword">import</span> com.lepeng.grpcclient.grpc.HelloProto.HelloRequest;<br><span class="hljs-keyword">import</span> io.grpc.ManagedChannel;<br><span class="hljs-keyword">import</span> io.grpc.ManagedChannelBuilder;<br><span class="hljs-keyword">import</span> io.grpc.StatusRuntimeException;<br><br><span class="hljs-keyword">import</span> java.util.concurrent.TimeUnit;<br><span class="hljs-keyword">import</span> java.util.logging.Level;<br><span class="hljs-keyword">import</span> java.util.logging.Logger;<br><br><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">GprcClient1</span> </span>&#123;<br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(String[] args)</span> </span>&#123;<br>        <span class="hljs-comment">// 1 首先，我们需要为 stub 创建一个 grpc 的 channel，指定我们连接服务端的地址和端口</span><br>        <span class="hljs-comment">// 使用 ManagedChannelBuilder 方法来创建 channel</span><br>        ManagedChannel managedChannel = ManagedChannelBuilder.forAddress(<span class="hljs-string">"localhost"</span>, <span class="hljs-number">9000</span>).usePlaintext().build();<br>        <span class="hljs-comment">//2 获得代理对象 stub</span><br>        <span class="hljs-keyword">try</span> &#123;<br>            <span class="hljs-comment">// 使用我们从 proto 文件生成的 HelloServiceGrpc 类提供的 newBlockingStub 方法指定 channel 创建 stubs</span><br>            HelloServiceGrpc.HelloServiceBlockingStub helloService = HelloServiceGrpc.newBlockingStub(managedChannel);<br>            <br>            <span class="hljs-comment">//3. 完成RPC调用</span><br>            <span class="hljs-comment">//3.1 准备参数</span><br>            HelloProto.HelloRequest.Builder builder = HelloProto.HelloRequest.newBuilder();<br>            builder.setName(<span class="hljs-string">"this is name"</span>);<br>            HelloProto.HelloRequest helloRequest = builder.build();<br>            <span class="hljs-comment">//3.1 进行功能rpc调用，获取相应的内容</span><br>            HelloProto.HelloResponse helloResponse = helloService.hello(helloRequest);<br>            String result = helloResponse.getResult();<br>            System.out.println(<span class="hljs-string">"result = "</span> + result);<br>        &#125; <span class="hljs-keyword">catch</span> (Exception e) &#123;<br>            <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> RuntimeException(e);<br>        &#125;<span class="hljs-keyword">finally</span> &#123;<br>            managedChannel.shutdown();<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h2><figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs reasonml">服务端 处理返回值时<br>responseObserver.on<span class="hljs-constructor">Next(<span class="hljs-params">helloResponse1</span>)</span>;  <span class="hljs-comment">// 通过这个方法 把响应的消息 回传 client</span><br>responseObserver.on<span class="hljs-constructor">Completed()</span>;           <span class="hljs-comment">// 通知 client 整个服务结束。底层返回标记 </span><br>                                          <span class="hljs-comment">// client 就会监听标记 【grpc做的】</span><br>                                        <br>requestObserver.on<span class="hljs-constructor">Next(<span class="hljs-params">helloRequest1</span>)</span>;<br>requestObserver.on<span class="hljs-constructor">Completed()</span>;<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="执行"><a href="#执行" class="headerlink" title="执行"></a>执行</h2><p>启动服务端，后台打印输出：<code>Server started, listening on 50051</code></p>
+<p>执行客户端，后台打印输出：</p>
+<figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs vim">Will <span class="hljs-keyword">try</span> <span class="hljs-keyword">to</span> greet hans ...<br>Greetin<span class="hljs-variable">g:</span> Hello hans<br></code></pre></td></tr></table></figure>
+
+
+<h1 id="gRpc-的四种通信方式"><a href="#gRpc-的四种通信方式" class="headerlink" title="gRpc 的四种通信方式"></a>gRpc 的四种通信方式</h1><p>四种通信方式</p>
+<ol>
+<li>简单 RPC，一元 RPC (Unary RPC)</li>
+<li>服务端流式 RPC     (Server Streaming RPC)</li>
+<li>客户端流式 RPC     (Client Streaming RPC)</li>
+<li>双向流 RPC         (Bi-directional Stream RPC)</li>
+</ol>
+<h2 id="简单RPC-一元RPC"><a href="#简单RPC-一元RPC" class="headerlink" title="简单RPC(一元RPC)"></a>简单RPC(一元RPC)</h2><p>上面的 RPC 程序，实际上就是一元 RPC</p>
+<p><strong>特点</strong>：当 client 发起调用后，提交数据，并且等待 服务端响应。开发过程中，主要采用就是 一元 RPC 的这种通信方式</p>
+<p><img src="/img/grpc/image-20230309153848531.png" srcset="/img/loading.gif" lazyload alt="image-20230309153848531"></p>
+<p><strong>protobuf</strong></p>
+<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs protobuf"><span class="hljs-class"><span class="hljs-keyword">service</span> <span class="hljs-title">HelloService</span></span>&#123;<br>    <span class="hljs-function"><span class="hljs-keyword">rpc</span> hello(HelloRequest) <span class="hljs-keyword">returns</span> (HelloResponse)&#123;&#125;</span><br><span class="hljs-function">    <span class="hljs-keyword">rpc</span> hello1(HelloRequest1) <span class="hljs-keyword">returns</span> (HelloResponse1)&#123;&#125;</span><br><span class="hljs-function">&#125;</span><br></code></pre></td></tr></table></figure>
+
+
+<h2 id="服务端流式-RPC"><a href="#服务端流式-RPC" class="headerlink" title="服务端流式 RPC"></a>服务端流式 RPC</h2><p>一个请求对象，服务端可以回传多个结果对象。</p>
+<p><strong>特点</strong></p>
+<p><img src="/img/grpc/image-20230309154817840.png" srcset="/img/loading.gif" lazyload alt="image-20230309154817840"></p>
+<p><strong>使用场景</strong></p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs routeros">client  --------&gt; Server<br>        股票标号<br>        &lt;-------<br>         某一个时刻的 股票的行情<br></code></pre></td></tr></table></figure>
+
+<p><strong>protobuf</strong></p>
+<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs protobuf"><span class="hljs-class"><span class="hljs-keyword">service</span> <span class="hljs-title">HelloService</span></span>&#123;<br>    <span class="hljs-function"><span class="hljs-keyword">rpc</span> hello(HelloRequest) <span class="hljs-keyword">returns</span> (stream HelloResponse)&#123;&#125;</span><br><span class="hljs-function">    <span class="hljs-keyword">rpc</span> hello1(HelloRequest1) <span class="hljs-keyword">returns</span> (HelloResponse1)&#123;&#125;</span><br><span class="hljs-function">&#125;</span><br></code></pre></td></tr></table></figure>
+
+<p><strong>代码</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">// 服务端</span><br><span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">c2ss</span><span class="hljs-params">(HelloProto.HelloRequest request, StreamObserver&lt;HelloProto.HelloResponse&gt; responseObserver)</span> </span>&#123;<br>    <span class="hljs-comment">//1 接受client的请求参数</span><br>    String name = request.getName();<br>    <span class="hljs-comment">//2 做业务处理</span><br>    System.out.println(<span class="hljs-string">"name = "</span> + name);<br>    <span class="hljs-comment">//3 根据业务处理的结果，提供响应</span><br>    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">int</span> i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">9</span>; i++) &#123;<br>        HelloProto.HelloResponse.Builder builder = HelloProto.HelloResponse.newBuilder();<br>        builder.setResult(<span class="hljs-string">"处理的结果 "</span> + i);<br>        HelloProto.HelloResponse helloResponse = builder.build();<br><br>        responseObserver.onNext(helloResponse);<br>        <span class="hljs-keyword">try</span> &#123;<br>            Thread.sleep(<span class="hljs-number">1000</span>);<br>        &#125; <span class="hljs-keyword">catch</span> (InterruptedException e) &#123;<br>            <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> RuntimeException(e);<br>        &#125;<br>    &#125;<br>    responseObserver.onCompleted();<br>&#125;<br><br><br><span class="hljs-comment">// 客户端</span><br><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">GprcClient3</span> </span>&#123;<br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(String[] args)</span> </span>&#123;<br>        ManagedChannel managedChannel = ManagedChannelBuilder.forAddress(<span class="hljs-string">"localhost"</span>, <span class="hljs-number">9000</span>).usePlaintext().build();<br>        <span class="hljs-keyword">try</span> &#123;<br>            HelloServiceGrpc.HelloServiceBlockingStub helloService = HelloServiceGrpc.newBlockingStub(managedChannel);<br><br>            HelloProto.HelloRequest.Builder builder = HelloProto.HelloRequest.newBuilder();<br>            builder.setName(<span class="hljs-string">"sunshuai"</span>);<br>            HelloProto.HelloRequest helloRequest = builder.build();<br>            Iterator&lt;HelloProto.HelloResponse&gt; helloResponseIterator = helloService.c2ss(helloRequest);<br>            <span class="hljs-keyword">while</span> (helloResponseIterator.hasNext()) &#123;<br>                HelloProto.HelloResponse helloResponse = helloResponseIterator.next();<br>                System.out.println(<span class="hljs-string">"helloResponse.getResult() = "</span> + helloResponse.getResult());<br>            &#125;<br>        &#125; <span class="hljs-keyword">catch</span> (Exception e) &#123;<br>            e.printStackTrace();<br>        &#125;<br>        <span class="hljs-keyword">finally</span> &#123;<br>            managedChannel.shutdown();<br>        &#125;<br>    &#125;<br>&#125;<br><br><span class="hljs-comment">//监听 异步方式 处理服务端流式RPC的开发</span><br><span class="hljs-comment">//1. api</span><br><span class="hljs-comment">//2. 服务端 </span><br><span class="hljs-comment">//3. 客户端 </span><br><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">GrpcClient4</span> </span>&#123;<br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(String[] args)</span> </span>&#123;<br>        ManagedChannel managedChannel = ManagedChannelBuilder.forAddress(<span class="hljs-string">"localhost"</span>, <span class="hljs-number">9000</span>).usePlaintext().build();<br><br>        <span class="hljs-keyword">try</span> &#123;<br><br>            HelloServiceGrpc.HelloServiceStub helloService = HelloServiceGrpc.newStub(managedChannel);<br><br>            HelloProto.HelloRequest.Builder builder = HelloProto.HelloRequest.newBuilder();<br>            builder.setName(<span class="hljs-string">"xiaohei"</span>);<br>            HelloProto.HelloRequest helloRequest = builder.build();<br><br>            helloService.c2ss(helloRequest, <span class="hljs-keyword">new</span> StreamObserver&lt;HelloProto.HelloResponse&gt;() &#123;<br>                <span class="hljs-meta">@Override</span><br>                <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">onNext</span><span class="hljs-params">(HelloProto.HelloResponse value)</span> </span>&#123;<br>                    <span class="hljs-comment">//服务端 响应了 一个消息后，需要立即处理的话。把代码写在这个方法中。</span><br>                    System.out.println(<span class="hljs-string">"服务端每一次响应的信息 "</span> + value.getResult());<br>                &#125;<br><br>                <span class="hljs-meta">@Override</span><br>                <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">onError</span><span class="hljs-params">(Throwable t)</span> </span>&#123;<br><br>                &#125;<br><br>                <span class="hljs-meta">@Override</span><br>                <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">onCompleted</span><span class="hljs-params">()</span> </span>&#123;<br>                    <span class="hljs-comment">//需要把服务端 响应的所有数据 拿到后，在进行业务处理。</span><br>                    System.out.println(<span class="hljs-string">"服务端响应结束 后续可以根据需要 在这里统一处理服务端响应的所有内容"</span>);<br>                &#125;<br>            &#125;);<br><br>            managedChannel.awaitTermination(<span class="hljs-number">12</span>, TimeUnit.SECONDS);<br><br>        &#125; <span class="hljs-keyword">catch</span> (Exception e) &#123;<br>            e.printStackTrace();<br>        &#125; <span class="hljs-keyword">finally</span> &#123;<br>            managedChannel.shutdown();<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="客户端流式-RPC"><a href="#客户端流式-RPC" class="headerlink" title="客户端流式 RPC"></a>客户端流式 RPC</h2><p>客户端发送多个请求对象，服务端只返回一个结果</p>
+<p><img src="/img/grpc/image-20230310142153479.png" srcset="/img/loading.gif" lazyload alt="image-20230310142153479"></p>
+<p><strong>应用场景</strong>：IOT(物联网 【传感器】) 向服务端 发送数据</p>
+<p><strong>protobuf</strong></p>
+<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs protobuf"><span class="hljs-function"><span class="hljs-keyword">rpc</span> cs2s(stream HelloRequest) <span class="hljs-keyword">returns</span> (HelloResponse)&#123;&#125;</span><br></code></pre></td></tr></table></figure>
+
+<p><strong>开发</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">// 1. api</span><br><span class="hljs-function">rpc <span class="hljs-title">cs2s</span><span class="hljs-params">(stream HelloRequest)</span> <span class="hljs-title">returns</span> <span class="hljs-params">(HelloResponse)</span></span>&#123;&#125;<br><br><br><span class="hljs-comment">// 2. 服务端开发</span><br><span class="hljs-keyword">public</span> StreamObserver&lt;HelloProto.HelloRequest&gt; cs2s(StreamObserver&lt;HelloProto.HelloResponse&gt; responseObserver) &#123;<br>    <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> StreamObserver&lt;HelloProto.HelloRequest&gt;() &#123;<br>        <span class="hljs-meta">@Override</span><br>        <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">onNext</span><span class="hljs-params">(HelloProto.HelloRequest value)</span> </span>&#123;<br>            System.out.println(<span class="hljs-string">"接受到了client发送一条消息 "</span> + value.getName());<br>        &#125;<br><br>        <span class="hljs-meta">@Override</span><br>        <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">onError</span><span class="hljs-params">(Throwable t)</span> </span>&#123;<br><br>        &#125;<br><br>        <span class="hljs-meta">@Override</span><br>        <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">onCompleted</span><span class="hljs-params">()</span> </span>&#123;<br>            System.out.println(<span class="hljs-string">"client的所有消息 都发送到了 服务端 ...."</span>);<br><br>            <span class="hljs-comment">//提供响应：响应的目的：当接受了全部client提交的信息，并处理后，提供相应</span><br>            HelloProto.HelloResponse.Builder builder = HelloProto.HelloResponse.newBuilder();<br>            builder.setResult(<span class="hljs-string">"this is result"</span>);<br>            HelloProto.HelloResponse helloResponse = builder.build();<br><br>            responseObserver.onNext(helloResponse);<br>            responseObserver.onCompleted();<br>        &#125;<br>    &#125;;<br>&#125;<br><br><br><span class="hljs-comment">// 3. 客户端开发</span><br><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">GrpcClient5</span> </span>&#123;<br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(String[] args)</span> </span>&#123;<br>        ManagedChannel managedChannel = ManagedChannelBuilder.forAddress(<span class="hljs-string">"localhost"</span>, <span class="hljs-number">9000</span>).usePlaintext().build();<br>        <span class="hljs-keyword">try</span> &#123;<br>            HelloServiceGrpc.HelloServiceStub helloService = HelloServiceGrpc.newStub(managedChannel);<br><br>            StreamObserver&lt;HelloProto.HelloRequest&gt; helloRequestStreamObserver = helloService.cs2s(<span class="hljs-keyword">new</span> StreamObserver&lt;HelloProto.HelloResponse&gt;() &#123;<br>                <span class="hljs-meta">@Override</span><br>                <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">onNext</span><span class="hljs-params">(HelloProto.HelloResponse value)</span> </span>&#123;<br>                    <span class="hljs-comment">// 监控响应</span><br>                    System.out.println(<span class="hljs-string">"服务端 响应 数据内容为 "</span> + value.getResult());<br><br>                &#125;<br><br>                <span class="hljs-meta">@Override</span><br>                <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">onError</span><span class="hljs-params">(Throwable t)</span> </span>&#123;<br><br>                &#125;<br><br>                <span class="hljs-meta">@Override</span><br>                <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">onCompleted</span><span class="hljs-params">()</span> </span>&#123;<br>                    System.out.println(<span class="hljs-string">"服务端响应结束 ... "</span>);<br>                &#125;<br>            &#125;);<br><br>            <span class="hljs-comment">//客户端 发送数据 到服务端  多条数据 ，不定时...</span><br>            <span class="hljs-keyword">for</span> (<span class="hljs-keyword">int</span> i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">10</span>; i++) &#123;<br>                HelloProto.HelloRequest.Builder builder = HelloProto.HelloRequest.newBuilder();<br>                builder.setName(<span class="hljs-string">"sunshuai "</span> + i);<br>                HelloProto.HelloRequest helloRequest = builder.build();<br><br>                helloRequestStreamObserver.onNext(helloRequest);<br>                Thread.sleep(<span class="hljs-number">1000</span>);<br>            &#125;<br><br>            helloRequestStreamObserver.onCompleted();<br><br>            managedChannel.awaitTermination(<span class="hljs-number">12</span>, TimeUnit.SECONDS);<br><br>        &#125; <span class="hljs-keyword">catch</span> (Exception e) &#123;<br>            e.printStackTrace();<br>        &#125; <span class="hljs-keyword">finally</span> &#123;<br>            managedChannel.shutdown();<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="双向流式-RPC"><a href="#双向流式-RPC" class="headerlink" title="双向流式 RPC"></a>双向流式 RPC</h2><p>客户端可以发送多个请求消息，服务端响应多个响应消息</p>
+<p><img src="/img/grpc/image-20230310151339486.png" srcset="/img/loading.gif" lazyload alt="image-20230310151339486"></p>
+<p><strong>应用场景</strong>：聊天室</p>
+<p><strong>编码</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">// 1. api</span><br><span class="hljs-function">rpc <span class="hljs-title">cs2ss</span><span class="hljs-params">(stream HelloRequest)</span> <span class="hljs-title">returns</span> <span class="hljs-params">(stream HelloResponse)</span></span>&#123;&#125;<br><br><br><span class="hljs-comment">//2. 服务端</span><br><span class="hljs-keyword">public</span> StreamObserver&lt;HelloProto.HelloRequest&gt; cs2ss(StreamObserver&lt;HelloProto.HelloResponse&gt; responseObserver) &#123;<br>    <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> StreamObserver&lt;HelloProto.HelloRequest&gt;() &#123;<br>         <span class="hljs-meta">@Override</span><br>         <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">onNext</span><span class="hljs-params">(HelloProto.HelloRequest value)</span> </span>&#123;<br>             System.out.println(<span class="hljs-string">"接受到client 提交的消息 "</span>+value.getName());<br>             responseObserver.onNext(HelloProto.HelloResponse.newBuilder().setResult(<span class="hljs-string">"response "</span>+value.getName()+<span class="hljs-string">" result "</span>).build());<br>         &#125;<br><br>         <span class="hljs-meta">@Override</span><br>         <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">onError</span><span class="hljs-params">(Throwable t)</span> </span>&#123;<br><br>         &#125;<br><br>         <span class="hljs-meta">@Override</span><br>         <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">onCompleted</span><span class="hljs-params">()</span> </span>&#123;<br>             System.out.println(<span class="hljs-string">"接受到了所有的请求消息 ... "</span>);<br>             responseObserver.onCompleted();<br>         &#125;<br>    &#125;;<br>&#125;<br><br><br><span class="hljs-comment">//3. 客户端</span><br><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">GrpcClient6</span> </span>&#123;<br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(String[] args)</span> </span>&#123;<br>        ManagedChannel managedChannel = ManagedChannelBuilder.forAddress(<span class="hljs-string">"localhost"</span>, <span class="hljs-number">9000</span>).usePlaintext().build();<br>        <span class="hljs-keyword">try</span> &#123;<br>            HelloServiceGrpc.HelloServiceStub helloService = HelloServiceGrpc.newStub(managedChannel);<br><br>            StreamObserver&lt;HelloProto.HelloRequest&gt; helloRequestStreamObserver = helloService.cs2ss(<span class="hljs-keyword">new</span> StreamObserver&lt;HelloProto.HelloResponse&gt;() &#123;<br>                <span class="hljs-meta">@Override</span><br>                <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">onNext</span><span class="hljs-params">(HelloProto.HelloResponse value)</span> </span>&#123;<br>                    System.out.println(<span class="hljs-string">"响应的结果 "</span>+value.getResult());<br>                &#125;<br><br>                <span class="hljs-meta">@Override</span><br>                <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">onError</span><span class="hljs-params">(Throwable t)</span> </span>&#123;<br><br>                &#125;<br><br>                <span class="hljs-meta">@Override</span><br>                <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">onCompleted</span><span class="hljs-params">()</span> </span>&#123;<br>                    System.out.println(<span class="hljs-string">"响应全部结束..."</span>);<br>                &#125;<br>            &#125;);<br><br><br>            <span class="hljs-keyword">for</span> (<span class="hljs-keyword">int</span> i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">10</span>; i++) &#123;<br>                helloRequestStreamObserver.onNext(HelloProto.HelloRequest.newBuilder().setName(<span class="hljs-string">"sunshuai "</span> + i).build());<br>            &#125;<br>            helloRequestStreamObserver.onCompleted();<br><br>            managedChannel.awaitTermination(<span class="hljs-number">12</span>, TimeUnit.SECONDS);<br><br>        &#125; <span class="hljs-keyword">catch</span> (Exception e) &#123;<br>            e.printStackTrace();<br>        &#125; <span class="hljs-keyword">finally</span> &#123;<br>            managedChannel.shutdown();<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h1 id="gPRC-代理方式"><a href="#gPRC-代理方式" class="headerlink" title="gPRC 代理方式"></a>gPRC 代理方式</h1><ol>
+<li>BlockingStub：阻塞 通信方式 </li>
+<li>Stub：异步 通过监听处理的</li>
+<li>FutureStub：同步 异步 NettyFuture<ol>
+<li>FutureStub 只能应用 一元RPC</li>
+</ol>
+</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">GrpcClient7</span> </span>&#123;<br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(String[] args)</span> </span>&#123;<br>        ManagedChannel managedChannel = ManagedChannelBuilder.forAddress(<span class="hljs-string">"localhost"</span>, <span class="hljs-number">9000</span>).usePlaintext().build();<br>        <span class="hljs-keyword">try</span> &#123;<br>            TestServiceGrpc.TestServiceFutureStub testServiceFutureStub = TestServiceGrpc.newFutureStub(managedChannel);<br>            ListenableFuture&lt;TestProto.TestResponse&gt; responseListenableFuture = testServiceFutureStub.testSuns(TestProto.TestRequest.newBuilder().setName(<span class="hljs-string">"xiaojren"</span>).build());<br><br><br>            <span class="hljs-comment">/* 同步操作</span><br><span class="hljs-comment">            TestProto.TestResponse testResponse = responseListenableFuture.get();</span><br><span class="hljs-comment">            System.out.println(testResponse.getResult());*/</span><br><br>            <span class="hljs-comment">/*  responseListenableFuture.addListener(() -&gt; &#123;</span><br><span class="hljs-comment">                System.out.println("异步的rpc响应 回来了....");</span><br><span class="hljs-comment">            &#125;, Executors.newCachedThreadPool());*/</span><br><br>            Futures.addCallback(responseListenableFuture, <span class="hljs-keyword">new</span> FutureCallback&lt;TestProto.TestResponse&gt;() &#123;<br>                <span class="hljs-meta">@Override</span><br>                <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">onSuccess</span><span class="hljs-params">(TestProto.TestResponse result)</span> </span>&#123;<br>                    System.out.println(<span class="hljs-string">"result.getResult() = "</span> + result.getResult());<br>                &#125;<br><br>                <span class="hljs-meta">@Override</span><br>                <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">onFailure</span><span class="hljs-params">(Throwable t)</span> </span>&#123;<br><br>                &#125;<br>            &#125;, Executors.newCachedThreadPool());<br><br><br>            System.out.println(<span class="hljs-string">"后续的操作...."</span>);<br><br>            managedChannel.awaitTermination(<span class="hljs-number">12</span>, TimeUnit.SECONDS);<br>        &#125; <span class="hljs-keyword">catch</span> (Exception e) &#123;<br>            e.printStackTrace();<br>        &#125; <span class="hljs-keyword">finally</span> &#123;<br>            managedChannel.shutdown();<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h1 id="gPRC-与-SpringBoot-整合"><a href="#gPRC-与-SpringBoot-整合" class="headerlink" title="gPRC 与 SpringBoot 整合"></a>gPRC 与 SpringBoot 整合</h1><h2 id="gRPC-和-SpringBoot-整合的思想"><a href="#gRPC-和-SpringBoot-整合的思想" class="headerlink" title="gRPC 和 SpringBoot 整合的思想"></a>gRPC 和 SpringBoot 整合的思想</h2><ol>
+<li>grpc-server</li>
+<li>grpc-client</li>
+</ol>
+<h3 id="SpringBoot-与-GRPC-整合的过程中-对于服务端做了什么封装"><a href="#SpringBoot-与-GRPC-整合的过程中-对于服务端做了什么封装" class="headerlink" title="SpringBoot 与 GRPC 整合的过程中 对于服务端做了什么封装"></a>SpringBoot 与 GRPC 整合的过程中 对于服务端做了什么封装</h3><p><img src="/img/grpc/image-20230312191718736.png" srcset="/img/loading.gif" lazyload alt="image-20230312191718736"></p>
+<ol>
+<li><p>搭建 SpringBoot 的开发环境</p>
+</li>
+<li><p>引入与 Grpc 相关的内容</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs xml"><span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>com.suns<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>rpc-grpc-api<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>1.0-SNAPSHOT<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br><span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><br><span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>  <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>net.devh<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>  <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>grpc-server-spring-boot-starter<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>  <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>2.14.0.RELEASE<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br><span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p>开发服务</p>
+  <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">// 重复 多次 </span><br><span class="hljs-meta">@GrpcService</span><br><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">HelloServiceImpl</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">HelloServiceGrpc</span>.<span class="hljs-title">HelloServiceImplBase</span> </span>&#123;<br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">hello</span><span class="hljs-params">(HelloProto.HelloRequest request, StreamObserver&lt;HelloProto.HelloResponse&gt; responseObserver)</span> </span>&#123;<br>        String name = request.getName();<br>        System.out.println(<span class="hljs-string">"name is "</span> + name);<br><br>        responseObserver.onNext(HelloProto.HelloResponse.newBuilder().setResult(<span class="hljs-string">"this is result"</span>).build());<br>        responseObserver.onCompleted();<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+  <figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-string">//</span> <span class="hljs-string">application.yml</span><br><span class="hljs-comment"># 核心配置的 就是gRPC服务的端口号</span><br><span class="hljs-attr">spring:</span><br>  <span class="hljs-attr">application:</span><br>    <span class="hljs-attr">name:</span> <span class="hljs-string">boot-server</span><br><br>  <span class="hljs-attr">main:</span><br>    <span class="hljs-attr">web-application-type:</span> <span class="hljs-string">none</span><br><br><span class="hljs-attr">grpc:</span><br>  <span class="hljs-attr">server:</span><br>    <span class="hljs-attr">port:</span> <span class="hljs-number">9000</span><br></code></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="客户端"><a href="#客户端" class="headerlink" title="客户端"></a>客户端</h2><p>环境搭建</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs markdown"><span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span></span><br><span class="hljs-code">    &lt;groupId&gt;net.devh&lt;/groupId&gt;</span><br><span class="hljs-code">    &lt;artifactId&gt;grpc-client-spring-boot-starter&lt;/artifactId&gt;</span><br><span class="hljs-code">    &lt;version&gt;2.14.0.RELEASE&lt;/version&gt;</span><br><span class="xml"><span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span></span><br></code></pre></td></tr></table></figure>
+
+<p>编码</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs markdown"><span class="hljs-bullet">1. </span>yml<br>grpc:<br>client:<br>  grpc-server:<br><span class="hljs-code">    address: 'static://127.0.0.1:9000'</span><br><span class="hljs-code">    negotiation-type: plaintext</span><br><span class="hljs-code">    </span><br><span class="hljs-bullet">2. </span>注入stub<br><br>@GrpcClient("grpc-server")<br>private HelloServiceGrpc.HelloServiceBlockingStub stub;<br></code></pre></td></tr></table></figure>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/gRPC/" class="category-chain-item">gRPC</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/gRPC/" class="print-no-link">#gRPC</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>04-gRPC java 版</div>
+      <div>https://flepeng.github.io/043-gRPC-04-gRPC-java-版/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年4月1日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/043-gRPC-04-gRPC-java-%E6%8F%92%E4%BB%B6/" title="04-gRPC java 插件">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">04-gRPC java 插件</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/044-%E4%BA%91%E5%8E%9F%E7%94%9F-04-kubeflow-30-SDK-API-1-8-13-00-kubeflow-pipeline-dsl/" title="00-kubeflow pipeline dsl">
+                        <span class="hidden-mobile">00-kubeflow pipeline dsl</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

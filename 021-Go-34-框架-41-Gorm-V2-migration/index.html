@@ -1,0 +1,821 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Go">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="AutoMigrateAutoMigrate 用于自动迁移您的 schema，保持您的 schema 是最新的。 注意： AutoMigrate 会创建表、缺失的外键、约束、列和索引。 It will change existing column’s type if its size, precision changed, or if it’s changing from non-nullable">
+<meta property="og:type" content="article">
+<meta property="og:title" content="migration">
+<meta property="og:url" content="https://flepeng.github.io/021-Go-34-%E6%A1%86%E6%9E%B6-41-Gorm-V2-migration/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="AutoMigrateAutoMigrate 用于自动迁移您的 schema，保持您的 schema 是最新的。 注意： AutoMigrate 会创建表、缺失的外键、约束、列和索引。 It will change existing column’s type if its size, precision changed, or if it’s changing from non-nullable">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2024-12-03T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.285Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Go">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>migration - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="migration"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-12-04 00:00" pubdate>
+          2024年12月4日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          954 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          8 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">migration</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="AutoMigrate"><a href="#AutoMigrate" class="headerlink" title="AutoMigrate"></a>AutoMigrate</h2><p>AutoMigrate 用于自动迁移您的 schema，保持您的 schema 是最新的。</p>
+<p><strong>注意：</strong> AutoMigrate 会创建表、缺失的外键、约束、列和索引。 It will change existing column’s type if its size, precision changed, or if it’s changing from non-nullable to nullable. 出于保护您数据的目的，它 <strong>不会</strong> 删除未使用的列</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs go">db.AutoMigrate(&amp;User&#123;&#125;)<br><br>db.AutoMigrate(&amp;User&#123;&#125;, &amp;Product&#123;&#125;, &amp;Order&#123;&#125;)<br><br><span class="hljs-comment">// 创建表时添加后缀</span><br>db.Set(<span class="hljs-string">"gorm:table_options"</span>, <span class="hljs-string">"ENGINE=InnoDB"</span>).AutoMigrate(&amp;User&#123;&#125;)<br></code></pre></td></tr></table></figure>
+
+<p><strong>注意</strong> AutoMigrate 会自动创建数据库外键约束，您可以在初始化时禁用此功能，例如：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs go">db, err := gorm.Open(sqlite.Open(<span class="hljs-string">"gorm.db"</span>), &amp;gorm.Config&#123;<br>  DisableForeignKeyConstraintWhenMigrating: <span class="hljs-literal">true</span>,<br>&#125;)<br></code></pre></td></tr></table></figure>
+
+<h2 id="Migrator-接口"><a href="#Migrator-接口" class="headerlink" title="Migrator 接口"></a>Migrator 接口</h2><p>GORM 提供了 Migrator 接口，该接口为每个数据库提供了统一的 API 接口，可用来为您的数据库构建独立迁移，例如：</p>
+<p>SQLite 不支持 <code>ALTER COLUMN</code>、<code>DROP COLUMN</code>，当你试图修改表结构，GORM 将创建一个新表、复制所有数据、删除旧表、重命名新表。</p>
+<p>一些版本的 MySQL 不支持 rename 列，索引。GORM 将基于您使用 MySQL 的版本执行不同 SQL</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> Migrator <span class="hljs-keyword">interface</span> &#123;<br>  <span class="hljs-comment">// AutoMigrate</span><br>  AutoMigrate(dst ...<span class="hljs-keyword">interface</span>&#123;&#125;) error<br><br>  <span class="hljs-comment">// Database</span><br>  CurrentDatabase() <span class="hljs-keyword">string</span><br>  FullDataTypeOf(*schema.Field) clause.Expr<br><br>  <span class="hljs-comment">// Tables</span><br>  CreateTable(dst ...<span class="hljs-keyword">interface</span>&#123;&#125;) error<br>  DropTable(dst ...<span class="hljs-keyword">interface</span>&#123;&#125;) error<br>  HasTable(dst <span class="hljs-keyword">interface</span>&#123;&#125;) <span class="hljs-keyword">bool</span><br>  RenameTable(oldName, newName <span class="hljs-keyword">interface</span>&#123;&#125;) error<br>  GetTables() (tableList []<span class="hljs-keyword">string</span>, err error)<br><br>  <span class="hljs-comment">// Columns</span><br>  AddColumn(dst <span class="hljs-keyword">interface</span>&#123;&#125;, field <span class="hljs-keyword">string</span>) error<br>  DropColumn(dst <span class="hljs-keyword">interface</span>&#123;&#125;, field <span class="hljs-keyword">string</span>) error<br>  AlterColumn(dst <span class="hljs-keyword">interface</span>&#123;&#125;, field <span class="hljs-keyword">string</span>) error<br>  MigrateColumn(dst <span class="hljs-keyword">interface</span>&#123;&#125;, field *schema.Field, columnType ColumnType) error<br>  HasColumn(dst <span class="hljs-keyword">interface</span>&#123;&#125;, field <span class="hljs-keyword">string</span>) <span class="hljs-keyword">bool</span><br>  RenameColumn(dst <span class="hljs-keyword">interface</span>&#123;&#125;, oldName, field <span class="hljs-keyword">string</span>) error<br>  ColumnTypes(dst <span class="hljs-keyword">interface</span>&#123;&#125;) ([]ColumnType, error)<br><br>  <span class="hljs-comment">// Views</span><br>  CreateView(name <span class="hljs-keyword">string</span>, option ViewOption) error<br>  DropView(name <span class="hljs-keyword">string</span>) error<br><br>  <span class="hljs-comment">// Constraints</span><br>  CreateConstraint(dst <span class="hljs-keyword">interface</span>&#123;&#125;, name <span class="hljs-keyword">string</span>) error<br>  DropConstraint(dst <span class="hljs-keyword">interface</span>&#123;&#125;, name <span class="hljs-keyword">string</span>) error<br>  HasConstraint(dst <span class="hljs-keyword">interface</span>&#123;&#125;, name <span class="hljs-keyword">string</span>) <span class="hljs-keyword">bool</span><br><br>  <span class="hljs-comment">// Indexes</span><br>  CreateIndex(dst <span class="hljs-keyword">interface</span>&#123;&#125;, name <span class="hljs-keyword">string</span>) error<br>  DropIndex(dst <span class="hljs-keyword">interface</span>&#123;&#125;, name <span class="hljs-keyword">string</span>) error<br>  HasIndex(dst <span class="hljs-keyword">interface</span>&#123;&#125;, name <span class="hljs-keyword">string</span>) <span class="hljs-keyword">bool</span><br>  RenameIndex(dst <span class="hljs-keyword">interface</span>&#123;&#125;, oldName, newName <span class="hljs-keyword">string</span>) error<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="当前数据库"><a href="#当前数据库" class="headerlink" title="当前数据库"></a>当前数据库</h3><p>返回当前使用的数据库名</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs go">db.Migrator().CurrentDatabase()<br></code></pre></td></tr></table></figure>
+
+<h3 id="表"><a href="#表" class="headerlink" title="表"></a>表</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// 为 `User` 创建表</span><br>db.Migrator().CreateTable(&amp;User&#123;&#125;)<br><br><span class="hljs-comment">// 将 "ENGINE=InnoDB" 添加到创建 `User` 的 SQL 里去</span><br>db.Set(<span class="hljs-string">"gorm:table_options"</span>, <span class="hljs-string">"ENGINE=InnoDB"</span>).Migrator().CreateTable(&amp;User&#123;&#125;)<br><br><span class="hljs-comment">// 检查 `User` 对应的表是否存在</span><br>db.Migrator().HasTable(&amp;User&#123;&#125;)<br>db.Migrator().HasTable(<span class="hljs-string">"users"</span>)<br><br><span class="hljs-comment">// 如果存在表则删除（删除时会忽略、删除外键约束)</span><br>db.Migrator().DropTable(&amp;User&#123;&#125;)<br>db.Migrator().DropTable(<span class="hljs-string">"users"</span>)<br><br><span class="hljs-comment">// 重命名表</span><br>db.Migrator().RenameTable(&amp;User&#123;&#125;, &amp;UserInfo&#123;&#125;)<br>db.Migrator().RenameTable(<span class="hljs-string">"users"</span>, <span class="hljs-string">"user_infos"</span>)<br></code></pre></td></tr></table></figure>
+
+<h3 id="列"><a href="#列" class="headerlink" title="列"></a>列</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> User <span class="hljs-keyword">struct</span> &#123;<br>  Name <span class="hljs-keyword">string</span><br>&#125;<br><br><span class="hljs-comment">// 添加 name 字段</span><br>db.Migrator().AddColumn(&amp;User&#123;&#125;, <span class="hljs-string">"Name"</span>)<br><span class="hljs-comment">// 删除 name 字段</span><br>db.Migrator().DropColumn(&amp;User&#123;&#125;, <span class="hljs-string">"Name"</span>)<br><span class="hljs-comment">// 修改 name 字段</span><br>db.Migrator().AlterColumn(&amp;User&#123;&#125;, <span class="hljs-string">"Name"</span>)<br><span class="hljs-comment">// 检查 name 字段是否存在</span><br>db.Migrator().HasColumn(&amp;User&#123;&#125;, <span class="hljs-string">"Name"</span>)<br><br><span class="hljs-keyword">type</span> User <span class="hljs-keyword">struct</span> &#123;<br>  Name    <span class="hljs-keyword">string</span><br>  NewName <span class="hljs-keyword">string</span><br>&#125;<br><br><span class="hljs-comment">// 字段重命名</span><br>db.Migrator().RenameColumn(&amp;User&#123;&#125;, <span class="hljs-string">"Name"</span>, <span class="hljs-string">"NewName"</span>)<br>db.Migrator().RenameColumn(&amp;User&#123;&#125;, <span class="hljs-string">"name"</span>, <span class="hljs-string">"new_name"</span>)<br><br><span class="hljs-comment">// 字段类型</span><br>db.Migrator().ColumnTypes(&amp;User&#123;&#125;) ([]gorm.ColumnType, error)<br><br><span class="hljs-keyword">type</span> ColumnType <span class="hljs-keyword">interface</span> &#123;<br>    Name() <span class="hljs-keyword">string</span><br>    DatabaseTypeName() <span class="hljs-keyword">string</span>                 <span class="hljs-comment">// varchar</span><br>    ColumnType() (columnType <span class="hljs-keyword">string</span>, ok <span class="hljs-keyword">bool</span>) <span class="hljs-comment">// varchar(64)</span><br>    PrimaryKey() (isPrimaryKey <span class="hljs-keyword">bool</span>, ok <span class="hljs-keyword">bool</span>)<br>    AutoIncrement() (isAutoIncrement <span class="hljs-keyword">bool</span>, ok <span class="hljs-keyword">bool</span>)<br>    Length() (length <span class="hljs-keyword">int64</span>, ok <span class="hljs-keyword">bool</span>)<br>    DecimalSize() (precision <span class="hljs-keyword">int64</span>, scale <span class="hljs-keyword">int64</span>, ok <span class="hljs-keyword">bool</span>)<br>    Nullable() (nullable <span class="hljs-keyword">bool</span>, ok <span class="hljs-keyword">bool</span>)<br>    Unique() (unique <span class="hljs-keyword">bool</span>, ok <span class="hljs-keyword">bool</span>)<br>    ScanType() reflect.Type<br>    Comment() (value <span class="hljs-keyword">string</span>, ok <span class="hljs-keyword">bool</span>)<br>    DefaultValue() (value <span class="hljs-keyword">string</span>, ok <span class="hljs-keyword">bool</span>)<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="Views"><a href="#Views" class="headerlink" title="Views"></a>Views</h3><p>Create views by <code>ViewOption</code>. About <code>ViewOption</code>:</p>
+<ul>
+<li><code>Query</code> is a <a href="https://gorm.io/docs/advanced_query.html#SubQuery" target="_blank" rel="noopener">subquery</a>, which is required.</li>
+<li>If <code>Replace</code> is true, exec <code>CREATE OR REPLACE</code> otherwise exec <code>CREATE</code>.</li>
+<li>If <code>CheckOption</code> is not empty, append to sql, e.g. <code>WITH LOCAL CHECK OPTION</code>.</li>
+</ul>
+<p><strong>NOTE</strong> SQLite currently does not support <code>Replace</code> in <code>ViewOption</code></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs go">query := db.Model(&amp;User&#123;&#125;).Where(<span class="hljs-string">"age &gt; ?"</span>, <span class="hljs-number">20</span>)<br><br><span class="hljs-comment">// Create View</span><br>db.Migrator().CreateView(<span class="hljs-string">"users_pets"</span>, gorm.ViewOption&#123;Query: query&#125;)<br><span class="hljs-comment">// CREATE VIEW `users_view` AS SELECT * FROM `users` WHERE age &gt; 20</span><br><br><span class="hljs-comment">// Create or Replace View</span><br>db.Migrator().CreateView(<span class="hljs-string">"users_pets"</span>, gorm.ViewOption&#123;Query: query, Replace: <span class="hljs-literal">true</span>&#125;)<br><span class="hljs-comment">// CREATE OR REPLACE VIEW `users_pets` AS SELECT * FROM `users` WHERE age &gt; 20</span><br><br><span class="hljs-comment">// Create View With Check Option</span><br>db.Migrator().CreateView(<span class="hljs-string">"users_pets"</span>, gorm.ViewOption&#123;Query: query, CheckOption: <span class="hljs-string">"WITH CHECK OPTION"</span>&#125;)<br><span class="hljs-comment">// CREATE VIEW `users_pets` AS SELECT * FROM `users` WHERE age &gt; 20 WITH CHECK OPTION</span><br><br><span class="hljs-comment">// Drop View</span><br>db.Migrator().DropView(<span class="hljs-string">"users_pets"</span>)<br><span class="hljs-comment">// DROP VIEW IF EXISTS "users_pets"</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="Constraints"><a href="#Constraints" class="headerlink" title="Constraints"></a>Constraints</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> UserIndex <span class="hljs-keyword">struct</span> &#123;<br>  Name  <span class="hljs-keyword">string</span> <span class="hljs-string">`gorm:"check:name_checker,name &lt;&gt; 'jinzhu'"`</span><br>&#125;<br><br><span class="hljs-comment">// Create constraint</span><br>db.Migrator().CreateConstraint(&amp;User&#123;&#125;, <span class="hljs-string">"name_checker"</span>)<br><br><span class="hljs-comment">// Drop constraint</span><br>db.Migrator().DropConstraint(&amp;User&#123;&#125;, <span class="hljs-string">"name_checker"</span>)<br><br><span class="hljs-comment">// Check constraint exists</span><br>db.Migrator().HasConstraint(&amp;User&#123;&#125;, <span class="hljs-string">"name_checker"</span>)<br></code></pre></td></tr></table></figure>
+
+<p>Create foreign keys for relations</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> User <span class="hljs-keyword">struct</span> &#123;<br>  gorm.Model<br>  CreditCards []CreditCard<br>&#125;<br><br><span class="hljs-keyword">type</span> CreditCard <span class="hljs-keyword">struct</span> &#123;<br>  gorm.Model<br>  Number <span class="hljs-keyword">string</span><br>  UserID <span class="hljs-keyword">uint</span><br>&#125;<br><br><span class="hljs-comment">// create database foreign key for user &amp; credit_cards</span><br>db.Migrator().CreateConstraint(&amp;User&#123;&#125;, <span class="hljs-string">"CreditCards"</span>)<br>db.Migrator().CreateConstraint(&amp;User&#123;&#125;, <span class="hljs-string">"fk_users_credit_cards"</span>)<br><span class="hljs-comment">// ALTER TABLE `credit_cards` ADD CONSTRAINT `fk_users_credit_cards` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`)</span><br><br><span class="hljs-comment">// check database foreign key for user &amp; credit_cards exists or not</span><br>db.Migrator().HasConstraint(&amp;User&#123;&#125;, <span class="hljs-string">"CreditCards"</span>)<br>db.Migrator().HasConstraint(&amp;User&#123;&#125;, <span class="hljs-string">"fk_users_credit_cards"</span>)<br><br><span class="hljs-comment">// drop database foreign key for user &amp; credit_cards</span><br>db.Migrator().DropConstraint(&amp;User&#123;&#125;, <span class="hljs-string">"CreditCards"</span>)<br>db.Migrator().DropConstraint(&amp;User&#123;&#125;, <span class="hljs-string">"fk_users_credit_cards"</span>)<br></code></pre></td></tr></table></figure>
+
+<h3 id="Indexes"><a href="#Indexes" class="headerlink" title="Indexes"></a>Indexes</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> User <span class="hljs-keyword">struct</span> &#123;<br>  gorm.Model<br>  Name <span class="hljs-keyword">string</span> <span class="hljs-string">`gorm:"size:255;index:idx_name,unique"`</span><br>&#125;<br><br><span class="hljs-comment">// Create index for Name field</span><br>db.Migrator().CreateIndex(&amp;User&#123;&#125;, <span class="hljs-string">"Name"</span>)<br>db.Migrator().CreateIndex(&amp;User&#123;&#125;, <span class="hljs-string">"idx_name"</span>)<br><br><span class="hljs-comment">// Drop index for Name field</span><br>db.Migrator().DropIndex(&amp;User&#123;&#125;, <span class="hljs-string">"Name"</span>)<br>db.Migrator().DropIndex(&amp;User&#123;&#125;, <span class="hljs-string">"idx_name"</span>)<br><br><span class="hljs-comment">// Check Index exists</span><br>db.Migrator().HasIndex(&amp;User&#123;&#125;, <span class="hljs-string">"Name"</span>)<br>db.Migrator().HasIndex(&amp;User&#123;&#125;, <span class="hljs-string">"idx_name"</span>)<br><br><span class="hljs-keyword">type</span> User <span class="hljs-keyword">struct</span> &#123;<br>  gorm.Model<br>  Name  <span class="hljs-keyword">string</span> <span class="hljs-string">`gorm:"size:255;index:idx_name,unique"`</span><br>  Name2 <span class="hljs-keyword">string</span> <span class="hljs-string">`gorm:"size:255;index:idx_name_2,unique"`</span><br>&#125;<br><span class="hljs-comment">// Rename index name</span><br>db.Migrator().RenameIndex(&amp;User&#123;&#125;, <span class="hljs-string">"Name"</span>, <span class="hljs-string">"Name2"</span>)<br>db.Migrator().RenameIndex(&amp;User&#123;&#125;, <span class="hljs-string">"idx_name"</span>, <span class="hljs-string">"idx_name_2"</span>)<br></code></pre></td></tr></table></figure>
+
+<h2 id="约束"><a href="#约束" class="headerlink" title="约束"></a>约束</h2><p>GORM creates constraints when auto migrating or creating table, see <a href="constraints.html">Constraints</a> or <a href="indexes.html">Database Indexes</a> for details</p>
+<h2 id="Atlas-Integration"><a href="#Atlas-Integration" class="headerlink" title="Atlas Integration"></a>Atlas Integration</h2><p><a href="https://atlasgo.io/" target="_blank" rel="noopener">Atlas</a> is an open-source database migration tool that has an official integration with GORM.</p>
+<p>While GORM’s <code>AutoMigrate</code> feature works in most cases, at some point you may need to switch to a <a href="https://atlasgo.io/concepts/declarative-vs-versioned#versioned-migrations" target="_blank" rel="noopener">versioned migrations</a> strategy.</p>
+<p>Once this happens, the responsibility for planning migration scripts and making sure they are in line with what GORM expects at runtime is moved to developers.</p>
+<p>Atlas can automatically plan database schema migrations for developers using the official <a href="https://github.com/ariga/atlas-provider-gorm" target="_blank" rel="noopener">GORM Provider</a>.  After configuring the provider you can automatically plan migrations by running:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">atlas migrate diff --env gorm<br></code></pre></td></tr></table></figure>
+
+<p>To learn how to use Atlas with GORM, check out the <a href="https://atlasgo.io/guides/orms/gorm" target="_blank" rel="noopener">official documentation</a>.</p>
+<h2 id="Other-Migration-Tools"><a href="#Other-Migration-Tools" class="headerlink" title="Other Migration Tools"></a>Other Migration Tools</h2><p>To use GORM with other Go-based migration tools, GORM provides a generic DB interface that might be helpful for you.</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// returns `*sql.DB`</span><br>db.DB()<br></code></pre></td></tr></table></figure>
+
+<p>Refer to <a href="generic_interface.html">Generic Interface</a> for more details.</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Go/" class="category-chain-item">Go</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Go/" class="print-no-link">#Go</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>migration</div>
+      <div>https://flepeng.github.io/021-Go-34-框架-41-Gorm-V2-migration/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Go</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年12月4日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/021-Go-34-%E6%A1%86%E6%9E%B6-41-Gorm-V2-method-chaining/" title="method_chaining">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">method_chaining</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/021-Go-34-%E6%A1%86%E6%9E%B6-41-Gorm-V2-performance/" title="performance">
+                        <span class="hidden-mobile">performance</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

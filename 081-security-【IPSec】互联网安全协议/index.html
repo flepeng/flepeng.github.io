@@ -1,0 +1,856 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="背景为何需要IPsec在 TCP&#x2F;IP 协议栈中，也就是 OSI 协议栈当中的第三、四、五层中需要增加一些安全性 在 TCP&#x2F;IP 中，把安全性置于何处假设把安全控制放在应用层上或者说第五层上，就可以有各种各样的安全性质：  比如SSH或SFTP这样的安全协议：是在应用层工作的，能保证某一个应用是绝对安全的，是经过加密的，并且有一定的用户登录认证的过程  如果想要保证整个应用层">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【IPSec】互联网安全协议">
+<meta property="og:url" content="https://flepeng.github.io/081-security-%E3%80%90IPSec%E3%80%91%E4%BA%92%E8%81%94%E7%BD%91%E5%AE%89%E5%85%A8%E5%8D%8F%E8%AE%AE/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="背景为何需要IPsec在 TCP&#x2F;IP 协议栈中，也就是 OSI 协议栈当中的第三、四、五层中需要增加一些安全性 在 TCP&#x2F;IP 中，把安全性置于何处假设把安全控制放在应用层上或者说第五层上，就可以有各种各样的安全性质：  比如SSH或SFTP这样的安全协议：是在应用层工作的，能保证某一个应用是绝对安全的，是经过加密的，并且有一定的用户登录认证的过程  如果想要保证整个应用层">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/security/ipsec/1665978043-723e12a9b610abbb6fb1ce3246a74d3b.png">
+<meta property="og:image" content="https://flepeng.github.io/img/security/ipsec/1665978043-2392e588d5cdb8019dd41c59af1737cc.png">
+<meta property="og:image" content="https://flepeng.github.io/img/security/ipsec/1665978043-99d89f455e00087bf99a2adb1487b94c.png">
+<meta property="og:image" content="https://flepeng.github.io/img/security/ipsec/1665978043-5cc739113edd2024d97df3a5b4ef87dd.png">
+<meta property="og:image" content="https://flepeng.github.io/img/security/ipsec/1665978043-45a94aec39e42bc96137a3dcc317d5e9.png">
+<meta property="og:image" content="https://flepeng.github.io/img/security/ipsec/1665978043-0067664202432e9d4af5a7615a7bb833.png">
+<meta property="og:image" content="https://flepeng.github.io/img/security/ipsec/1665978043-51c3c55f9347367c3b619783a6f7eed9.png">
+<meta property="og:image" content="https://flepeng.github.io/img/security/ipsec/1665978043-416812875c010fbcf8fba3829e563ac9.png">
+<meta property="article:published_time" content="2021-03-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.410Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="security">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/security/ipsec/1665978043-723e12a9b610abbb6fb1ce3246a74d3b.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>【IPSec】互联网安全协议 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="【IPSec】互联网安全协议"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-03-08 00:00" pubdate>
+          2021年3月8日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.8k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          24 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">【IPSec】互联网安全协议</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><h3 id="为何需要IPsec"><a href="#为何需要IPsec" class="headerlink" title="为何需要IPsec"></a>为何需要IPsec</h3><p>在 TCP&#x2F;IP 协议栈中，也就是 OSI 协议栈当中的第三、四、五层中需要增加一些安全性</p>
+<h3 id="在-TCP-x2F-IP-中，把安全性置于何处"><a href="#在-TCP-x2F-IP-中，把安全性置于何处" class="headerlink" title="在 TCP&#x2F;IP 中，把安全性置于何处"></a>在 TCP&#x2F;IP 中，把安全性置于何处</h3><p>假设把安全控制放在应用层上或者说第五层上，就可以有各种各样的安全性质：</p>
+<ul>
+<li><p>比如SSH或SFTP这样的安全协议：是在应用层工作的，能保证某一个应用是绝对安全的，是经过加密的，并且有一定的用户登录认证的过程</p>
+</li>
+<li><p>如果想要保证整个应用层都是安全的，可以在TCP层使用一个SSL协议或TLS协议，这Protocol就可以保证任何TCP的交互都经过这个SSL层的加密</p>
+</li>
+</ul>
+<h3 id="在-IP-上的更多特定安全性问题是什么？"><a href="#在-IP-上的更多特定安全性问题是什么？" class="headerlink" title="在 IP 上的更多特定安全性问题是什么？"></a>在 IP 上的更多特定安全性问题是什么？</h3><p>根本问题：网络不是(并且也可能永远不会)完全安全的。</p>
+<p>在 IP 上的特定安全性问题：</p>
+<p>没有数据完整性或保密性，也没有用户认证来证明发送方是发送方本人接收方是接收方本人</p>
+<p>最主要的是IP层跟我们之间的那些层，不同的地方是所有的互联网的交互它们都是基于IP的，IP本身的认证就很重要，也就是如何对抗源欺骗的问题或者是源IP地址欺骗的问题。源欺骗 – 通过创建包含假 IP 地址的 IP 包来隐藏 IP 地址，以试图冒充其他连接</p>
+<p>像SSH或者SFTP，只是针对一个单独的应用程序去进行加密和解密，完全没有办法覆盖到IP这一层，甚至于像TLS跟SSL，虽然能保证协议的两端的这两个用户，他们声称是它们的用户，但是最大的问题是没法防御一个叫做重放数据包的问题</p>
+<p>重放数据包 – 比如，Alice 授权将一笔资金( 100 万美元)从她的账户转到Bob 的账户。– Eve 复制了这条报文，并在稍后的一段时间里重放了这条报文这是一种攻击的发生，哪怕是在TCP层和UDP层使用了SSL这样的加密协议也没办法防御重放数据包的攻击，如果你是仅在应用程序层增加了安全防护，那连源欺骗也没办法改变，只要对方截获了你的IP，他就有办法冒充你</p>
+<p>我们需要IPSec或者IP安全协议来帮助我们，不光保证我们的数据内容是安全的，也保证数据的发送方和接收方是经过认证的是不会被篡改的</p>
+<h2 id="IPSec简介"><a href="#IPSec简介" class="headerlink" title="IPSec简介"></a>IPSec简介</h2><p>IPSec（Internet Protocol Security-互联网协议安全）是一个安全网络协议套件，用于保护互联网或公共网络传输的数据。IETF在 1990 年代中期开发了 IPSec 协议，它通过 IP 网络数据包的身份验证和加密来提供 IP 层的安全性。</p>
+<p>IPSec 可为通信两端设备提供安全通道，比如用于两个路由器之间以创建点到点 VPN，以及在防火墙和 Windows 主机之间用于远程访问 VPN 等。IPSec可以实现以下4项功能：</p>
+<ul>
+<li>数据机密性：IPSec发送方将包加密后再通过网络发送，可以保证在传输过程中，即使数据包遭截取，信息也无法被读取。</li>
+<li>数据完整性：IPSec可以验证IPSec发送方发送过来的数据包，以确保数据传输时没有被改变。若数据包遭篡改导致检查不相符，将会被丢弃。</li>
+<li>数据认证：IPSec接受方能够鉴别IPSec包的发送起源，此服务依赖数据的完整性。</li>
+<li>防重放：确保每个IP包的唯一性，保证信息万一被截取复制后不能再被重新利用，不能重新传输回目的地址。该特性可以防止攻击者截取破译信息后，再用相同的信息包获取非法访问权。它通过加密的内容中添加一些序列号包括随机数、时间戳来保证原本已经发送过的数据包不会再次被重新发送<ul>
+<li>比如在每个数据包里面增加一个随机数，下一次同一个包使用同一个随机数的概率就非常低，但如果接收方收到了一个相同随机数的包，就可以认为这个包是假的是受了攻击的，或者加入一个时间戳，但时间戳有的问题就是在极短时间内，如果你两个包的时间戳是一样的，有可能就会造成一些问题，所以常用的还是随机数更常用一点</li>
+</ul>
+</li>
+</ul>
+<p>IPSec 不是一个协议，而是一套协议，以下构成了 IPSec 套件：</p>
+<h3 id="AH-协议"><a href="#AH-协议" class="headerlink" title="AH 协议"></a>AH 协议</h3><p>AH(Authentication Header-认证头协议)指一段报文认证代码，确保数据包来自受信任的发送方，且数据没有被篡改，就像日常生活中的外卖封条一样。在发送前，发送方会用一个加密密钥算出AH，接收方用同一或另一密钥对之进行验证。然而，AH并不加密所保护的数据报，无法向攻击者隐藏数据。</p>
+<p><img src="/img/security/ipsec/1665978043-723e12a9b610abbb6fb1ce3246a74d3b.png" srcset="/img/loading.gif" lazyload></p>
+<h3 id="ESP-协议"><a href="#ESP-协议" class="headerlink" title="ESP 协议"></a>ESP 协议</h3><p>ESP（Encapsulating Security Payload-封装安全协议）向需要保密的数据包添加自己的标头和尾部，在加密完成后再封装到一个新的IP包中。ESP还向数据报头添加一个序列号，以便接收主机可以确定它没有收到重复的数据包。</p>
+<h3 id="SA-协议"><a href="#SA-协议" class="headerlink" title="SA 协议"></a>SA 协议</h3><p>SA（security association-安全关联）是指用于协商加密密钥和算法的一些协议，提供AH、ESP操作所需的参数。最常见的 SA 协议之一是互联网密钥交换 (IKE)，协商将在会话过程中使用的加密密钥和算法。</p>
+<p><img src="/img/security/ipsec/1665978043-2392e588d5cdb8019dd41c59af1737cc.png" srcset="/img/loading.gif" lazyload></p>
+<h3 id="IPSec-是如何工作的？"><a href="#IPSec-是如何工作的？" class="headerlink" title="IPSec 是如何工作的？"></a>IPSec 是如何工作的？</h3><p>IPSec 的工作方式涉及五个关键步骤，如下：</p>
+<p><img src="/img/security/ipsec/1665978043-99d89f455e00087bf99a2adb1487b94c.png" srcset="/img/loading.gif" lazyload></p>
+<ul>
+<li><strong>主机识别：</strong> 主机识别数据包是否需要保护，使用 IPSec 进行传输时，这些数据包流量会自己触发安全策略。主机还会检查传入的数据包是否正确加密。</li>
+<li><strong>IKE 阶段 1：</strong> 主机使用 IPSec 协商将用于安全通道的策略集，双方验证完成后，在它们之间建立一个安全通道，用于协商 IPSec 电路加密或验证通过它发送的数据的方式。</li>
+<li><strong>IKE 阶段 2：</strong> 通过安全通道进行，在该通道中，两台主机协商在会话中使用的加密算法类型，主机还同意并交换双方计划用于进出流量的加密和解密密钥。</li>
+<li><strong>IPSec 传输：</strong> 通过新创建的 IPSec 加密隧道交换数据，之前设置的 IPSec SA 用于加密和解密数据包。</li>
+<li><strong>IPSec 终止：</strong> 当主机之间的会话超时或通信完成时，通信双方之间的隧道在空闲时间达到一定值后会自动删除。</li>
+</ul>
+<h2 id="IPSec-模式"><a href="#IPSec-模式" class="headerlink" title="IPSec 模式"></a>IPSec 模式</h2><p>IPSec 有两种不同的运行方式：隧道模式和传输模式。两者之间的区别在于 IPSec 如何处理数据包报头。</p>
+<ul>
+<li><p>在隧道模式下加密和验证整个 IP 数据包（包括 IP 标头和有效负载），并附加一个新的报头，如下图所示。通常，隧道模式应用在两个安全网关之间的通讯。</p>
+<p><img src="/img/security/ipsec/1665978043-5cc739113edd2024d97df3a5b4ef87dd.png" srcset="/img/loading.gif" lazyload></p>
+</li>
+<li><p>在传输模式下，IPSec 仅加密（或验证）数据包的有效负载，但或多或少地保留现有的数据报头数据。通常，传输模式应用在两台主机之间的通讯，或一台主机和一个安全网关之间的通讯。</p>
+</li>
+</ul>
+<p>IPSec传输模式和隧道模式的区别在于：</p>
+<ol>
+<li><p>从安全性来讲，隧道模式优于传输模式。它可以完全对原始IP数据包进行验证和加密。隧道模式下可以隐藏内部IP地址、协议类型和端口。</p>
+</li>
+<li><p>从性能来讲，隧道模式因为有一个额外的IP头，所以它将比传输模式占用更多带宽。</p>
+</li>
+<li><p>从场景来讲，传输模式主要应用于两台主机或一台主机和一台VPN网关之间通信；隧道模式主要应用于两台VPN网关之间或一台主机与一台VPN网关之间的通信。</p>
+</li>
+</ol>
+<h2 id="IPSec-如何在-VPN-中使用？"><a href="#IPSec-如何在-VPN-中使用？" class="headerlink" title="IPSec 如何在 VPN 中使用？"></a>IPSec 如何在 VPN 中使用？</h2><p>VPN本质上是在公共网络上实现的专用网络。VPN 通常用于企业，使员工能够远程访问其公司网络。按照VPN协议分类，常见的VPN种类有：IPSec、SSL、GRE、PPTP和L2TP等。其中IPSec是通用性较强的一种VPN技术，适用于多种网络互访的场景。</p>
+<p>IPSec 通常用于保护 VPN 的安全。VPN 在用户的计算机和 VPN服务器之间创建了一个专用网络，而IPSec协议实现了一个安全的网络，保护VPN数据不受外部访问。</p>
+<p><img src="/img/security/ipsec/1665978043-45a94aec39e42bc96137a3dcc317d5e9.png" srcset="/img/loading.gif" lazyload></p>
+<p>通过IPSec VPN可以在主机和主机之间、主机和网络安全网关之间或网络安全网关（如路由器、防火墙）之间建立安全的隧道连接。其协议主要工作在IP层，在IP层对数据包进行加密和验证。可以使用两种 IPSec 模式设置 VPN：隧道模式和传输模式。</p>
+<h3 id="IPSec-VPN-与-SSL-VPN"><a href="#IPSec-VPN-与-SSL-VPN" class="headerlink" title="IPSec VPN 与 SSL VPN"></a>IPSec VPN 与 SSL VPN</h3><p>SSL VPN 是采用 SSL&#x2F;TLS 协议来实现远程接入的一种轻量级VPN技术，包括服务器认证、客户认证、SSL链路上的数据完整性和SSL链路上的数据保密性。SSL VPN提供安全、可代理连接，只有经认证的用户才能对资源进行访问。SSL VPN能对加密隧道进行细分，从而使得终端用户能够同时接入Internet和访问内部企业网资源，也就是说它具备可控功能。</p>
+<p><img src="/img/security/ipsec/1665978043-0067664202432e9d4af5a7615a7bb833.png" srcset="/img/loading.gif" lazyload></p>
+<p>IPSec VPN 和 SSL VPN 都可以实现企业级安全远程访问，但它们以不同的方式提供。IPSec工作在网络层，即把原始数据包网络层及以上的内容进行封装；SSL VPN 工作在传输层，封装的是应用信息。</p>
+<p><img src="/img/security/ipsec/1665978043-51c3c55f9347367c3b619783a6f7eed9.png" srcset="/img/loading.gif" lazyload></p>
+<p>IPSec和SSL的具体区别：</p>
+<p><img src="/img/security/ipsec/1665978043-416812875c010fbcf8fba3829e563ac9.png" srcset="/img/loading.gif" lazyload></p>
+<p>自1998年正式颁布以来，IPSec经过了二十多年的发展，其设计初衷是在网络层建立一套通用的安全机制，保护所有IP网络通信的安全。相比位于传输层和应用层的安全协议，IPSec可以提供较为广泛和通用的安全保护。由于位于网络层，IPSec对上层协议是透明的，不需要修改上层协议就可以使用。但IPSec也存在着一定的限制，在某些情况下，其不可以进行直接的端到端通信(即传输模式)。另外，IPSec配置复杂性较高，相比其他 VPN 协议要求更高。</p>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><p><em><a href="https://www.cloudflare.com/zh-cn/learning/network-layer/what-is-IPSec/" target="_blank" rel="noopener">https://www.cloudflare.com/zh-cn/learning/network-layer/what-is-IPSec/</a></em></p>
+<p><em><a href="https://www.geeksforgeeks.org/ip-security-IPSec/?ref=lbp" target="_blank" rel="noopener">https://www.geeksforgeeks.org/ip-security-IPSec/?ref=lbp</a></em></p>
+<p><em><a href="https://www.techtarget.com/searchsecurity/definition/IPSec-Internet-Protocol-Security" target="_blank" rel="noopener">https://www.techtarget.com/searchsecurity/definition/IPSec-Internet-Protocol-Security</a></em></p>
+<p><em><a href="https://www.juniper.net/documentation/us/en/software/junos/vpn-IPSec/topics/topic-map/security-IPSec-vpn-overview.html" target="_blank" rel="noopener">https://www.juniper.net/documentation/us/en/software/junos/vpn-IPSec/topics/topic-map/security-IPSec-vpn-overview.html</a></em></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/security/" class="category-chain-item">security</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/security/" class="print-no-link">#security</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>【IPSec】互联网安全协议</div>
+      <div>https://flepeng.github.io/081-security-【IPSec】互联网安全协议/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年3月8日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/081-security-%E5%AE%89%E5%85%A8%E6%9E%B6%E6%9E%844-SDL%E5%AE%89%E5%85%A8%E4%B8%8E%E4%BC%81%E4%B8%9A%E5%8A%9E%E5%85%AC%E5%AE%89%E5%85%A8%E8%90%BD%E5%9C%B0%E5%AE%9E%E8%B7%B5/" title="安全架构4--SDL安全与企业办公安全落地实践">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">安全架构4--SDL安全与企业办公安全落地实践</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/081-security-%E9%87%8D%E6%94%BE%E6%94%BB%E5%87%BB/" title="重放攻击">
+                        <span class="hidden-mobile">重放攻击</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

@@ -1,0 +1,888 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="werkzeug 示例werkzeug 三种启动方式 12345678910111213141516171819202122232425from werkzeug.wrappers import Request, Responsefrom werkzeug.serving import run_simple# 方式一：实例化Response，最后 self.request &#x3D; encode(&#39;He">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Flask 源码解析：启动流程">
+<meta property="og:url" content="https://flepeng.github.io/021-Python-34-%E6%A1%86%E6%9E%B6-Flask-Flask-%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%EF%BC%9A%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="werkzeug 示例werkzeug 三种启动方式 12345678910111213141516171819202122232425from werkzeug.wrappers import Request, Responsefrom werkzeug.serving import run_simple# 方式一：实例化Response，最后 self.request &#x3D; encode(&#39;He">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2024-09-15T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.341Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="Flask">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>Flask 源码解析：启动流程 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Flask 源码解析：启动流程"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-09-16 00:00" pubdate>
+          2024年9月16日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          31 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Flask 源码解析：启动流程</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="werkzeug-示例"><a href="#werkzeug-示例" class="headerlink" title="werkzeug 示例"></a>werkzeug 示例</h2><p>werkzeug 三种启动方式</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> werkzeug.wrappers <span class="hljs-keyword">import</span> Request, Response<br><span class="hljs-keyword">from</span> werkzeug.serving <span class="hljs-keyword">import</span> run_simple<br><br><br><span class="hljs-comment"># 方式一：实例化Response，最后 self.request = encode('Hello World application1!')</span><br>application1 = Response(<span class="hljs-string">'Hello World application1!'</span>)<br><br><br><span class="hljs-comment">#方式二</span><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">application2</span><span class="hljs-params">(environ, start_response)</span>:</span><br>    request = Request(environ)<br>    response = Response(<span class="hljs-string">"Hello %s!"</span> % request.args.get(<span class="hljs-string">'name'</span>, <span class="hljs-string">'World!'</span>))<br>    <span class="hljs-keyword">return</span> response(environ, start_response)<br><br><br><span class="hljs-comment">#方式三</span><br><span class="hljs-meta">@Request.application</span><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">hello</span><span class="hljs-params">(request)</span>:</span><br>    <span class="hljs-keyword">return</span> Response(<span class="hljs-string">'Hello World Request!'</span>)<br><br><br><span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">'__main__'</span>:<br>    <span class="hljs-comment"># run_simple('localhost', 4000, application1)</span><br>    <span class="hljs-comment"># run_simple('localhost', 4000, application2)</span><br>    run_simple(<span class="hljs-string">'localhost'</span>, <span class="hljs-number">4000</span>, hello)<br></code></pre></td></tr></table></figure>
+
+<p>我们在浏览器输入 <a href="http://localhost:4000/" target="_blank" rel="noopener">http://localhost:4000/</a> 就会得到 response 信息 </p>
+<p>接下来我们就简单的分析下，该模块的请求、响应流程</p>
+<h2 id="werkzeug-的-request-流程"><a href="#werkzeug-的-request-流程" class="headerlink" title="werkzeug 的 request 流程"></a>werkzeug 的 request 流程</h2><p>看 demo 示例，在文件起始处我们引入了 <code>from werkzeug.serving import run_simple</code>。我们跟踪代码看下<code>serving.py</code> 模块下的 <code>run_simple</code> 函数</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment">####################### serving.py 文件下的 run_simple 函数 ############################</span><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">run_simple</span><span class="hljs-params">(</span></span><br><span class="hljs-function"><span class="hljs-params">    hostname,               <span class="hljs-comment"># 应用程序的主机</span></span></span><br><span class="hljs-function"><span class="hljs-params">    port,                   <span class="hljs-comment"># 端口</span></span></span><br><span class="hljs-function"><span class="hljs-params">    application,            <span class="hljs-comment"># WSGI 应用程序</span></span></span><br><span class="hljs-function"><span class="hljs-params">    use_reloader=False,     <span class="hljs-comment"># 如果程序代码修改，是否需要自动启动服务</span></span></span><br><span class="hljs-function"><span class="hljs-params">    use_debugger=False,     <span class="hljs-comment"># 程序是否要使用工具和调试系统</span></span></span><br><span class="hljs-function"><span class="hljs-params">    use_evalex=True,        <span class="hljs-comment"># 应用是否开启异常评估</span></span></span><br><span class="hljs-function"><span class="hljs-params">    extra_files=None,       <span class="hljs-comment"># 重载器应该查看的文件列表附加到模块。例如配置文件夹</span></span></span><br><span class="hljs-function"><span class="hljs-params">    reloader_interval=<span class="hljs-number">1</span>,    <span class="hljs-comment"># 秒重载器的间隔</span></span></span><br><span class="hljs-function"><span class="hljs-params">    reloader_type=<span class="hljs-string">"auto"</span>,   <span class="hljs-comment"># 重载器的类型</span></span></span><br><span class="hljs-function"><span class="hljs-params">    threaded=False,         <span class="hljs-comment"># 进程是否处理单线程的每次请求</span></span></span><br><span class="hljs-function"><span class="hljs-params">    processes=<span class="hljs-number">1</span>,            <span class="hljs-comment"># 如果大于1，则在新进程中处理每个请求。达到这个最大并发进程数</span></span></span><br><span class="hljs-function"><span class="hljs-params">    request_handler=None,   <span class="hljs-comment"># 可以自定义替换BaseHTTPRequestHandler</span></span></span><br><span class="hljs-function"><span class="hljs-params">    static_files=None,      <span class="hljs-comment"># 静态文件路径的列表或DICT</span></span></span><br><span class="hljs-function"><span class="hljs-params">    passthrough_errors=False,<span class="hljs-comment"># 将此设置为“真”以禁用错误捕获。这意味着服务器会因错误而死亡</span></span></span><br><span class="hljs-function"><span class="hljs-params">    ssl_context=None,       <span class="hljs-comment"># 如何进行传输数据加密，可以设置的环境</span></span></span><br><span class="hljs-function"><span class="hljs-params">)</span>:</span><br>    <br>    <span class="hljs-string">"省略部分代码"</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">inner</span><span class="hljs-params">()</span>:</span><br>        <span class="hljs-keyword">try</span>:<br>            fd = int(os.environ[<span class="hljs-string">"WERKZEUG_SERVER_FD"</span>])<br>        <span class="hljs-keyword">except</span> (LookupError, ValueError):<br>            fd = <span class="hljs-literal">None</span><br>        srv = make_server(      <span class="hljs-comment"># 通过 make_server 方法，创建不同的 server 实例。</span><br>            hostname,<br>            port,<br>            application,<br>            threaded,<br>            processes,<br>            request_handler,<br>            passthrough_errors,<br>            ssl_context,<br>            fd=fd,<br>        )<br>        <span class="hljs-keyword">if</span> fd <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:<br>            log_startup(srv.socket)<br>            <br>        <span class="hljs-comment"># 把服务运行起来。</span><br>        <span class="hljs-comment"># serve_forever() 是 HTTPserver 的方法。</span><br>        <span class="hljs-comment"># 当有请求过来之后，server_forever 会将 run_simple() 中的第三个参数加括号执行，并传入参数(environ, start_response)</span><br>        srv.serve_forever()<br><br>    <br>    <span class="hljs-keyword">if</span> use_reloader:    <span class="hljs-comment"># # run_simple 函数中，最后会执行到</span><br>        <span class="hljs-string">"省略部分代码"</span><br>    <span class="hljs-keyword">else</span>:<br>        inner()<br></code></pre></td></tr></table></figure>
+
+<p><code>run_simple</code> 调用了 <code>make_server</code>，看下 <code>make_server</code></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment">################ serving.py 文件下的 make_server 方法 #####################</span><br><span class="hljs-comment"># 根据参数不同，实例化不同的 server</span><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">make_server</span><span class="hljs-params">(host=None, port=None, app=None, threaded=False, processes=<span class="hljs-number">1</span>,</span></span><br><span class="hljs-function"><span class="hljs-params">            request_handler=None, passthrough_errors=False,</span></span><br><span class="hljs-function"><span class="hljs-params">            ssl_context=None, fd=None)</span>:</span><br>    <span class="hljs-string">"""Create a new server instance that is either threaded, or forks</span><br><span class="hljs-string">    or just processes one request after another.</span><br><span class="hljs-string">    """</span><br>    <span class="hljs-keyword">if</span> threaded <span class="hljs-keyword">and</span> processes &gt; <span class="hljs-number">1</span>:<br>        <span class="hljs-keyword">raise</span> ValueError(<span class="hljs-string">"cannot have a multithreaded and multi process server."</span>)<br>    <span class="hljs-keyword">elif</span> threaded:<br>        <span class="hljs-keyword">return</span> ThreadedWSGIServer(host, port, app, request_handler, passthrough_errors, ssl_context, fd=fd)<br>    <span class="hljs-keyword">elif</span> processes &gt; <span class="hljs-number">1</span>:<br>        <span class="hljs-keyword">return</span> ForkingWSGIServer(host, port, app, processes, request_handler, passthrough_errors, ssl_context, fd=fd)<br>    <span class="hljs-keyword">else</span>:<br>        <span class="hljs-keyword">return</span> BaseWSGIServer(host, port, app, request_handler, passthrough_errors, ssl_context, fd=fd)<br></code></pre></td></tr></table></figure>
+
+<p><code>run_simple</code> 调用了 <code>serve_forever</code>，看下 <code>serve_forever</code></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment">############### BaseWSGIServer 类下的 serve_forever 方法 #######################</span><br><span class="hljs-keyword">from</span> http.server <span class="hljs-keyword">import</span> HTTPServer<br><br><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">BaseWSGIServer</span><span class="hljs-params">(HTTPServer)</span>:</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">serve_forever</span><span class="hljs-params">(self)</span>:</span><br>        self.shutdown_signal = <span class="hljs-literal">False</span><br>        <span class="hljs-keyword">try</span>:<br>            <span class="hljs-comment"># class HTTPServer(socketserver.TCPServer)未实现 serve_forever ————&gt; </span><br>            <span class="hljs-comment"># class TCPServer(BaseServer) 未实现 serve_forever :</span><br>            <span class="hljs-comment"># BaseServer 实现 serve_forever</span><br>            HTTPServer.serve_forever(self)<br>        <span class="hljs-keyword">except</span> KeyboardInterrupt:<br>            <span class="hljs-keyword">pass</span><br>        <span class="hljs-keyword">finally</span>:<br>            self.server_close()<br></code></pre></td></tr></table></figure>
+
+<p><code>serve_forever</code> 最终是调用的 <code>BaseServer.serve_forever</code></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment">########## BaseServer 下的 serve_forever #######</span><br><span class="hljs-comment"># 具体的监听 socket ，当有请求到来时，执行传入的第三个参数，执行格式为 func(self, environ, start_response)，并接受返回值</span><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">BaseServer</span>:</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">serve_forever</span><span class="hljs-params">(self, poll_interval=<span class="hljs-number">0.5</span>)</span>:</span><br>        <span class="hljs-string">"""Handle one request at a time until shutdown.</span><br><span class="hljs-string">    </span><br><span class="hljs-string">        Polls for shutdown every poll_interval seconds. Ignores</span><br><span class="hljs-string">        self.timeout. If you need to do periodic tasks, do them in</span><br><span class="hljs-string">        another thread.</span><br><span class="hljs-string">        """</span><br>        self.__is_shut_down.clear()<br>        <span class="hljs-keyword">try</span>:<br>            <span class="hljs-comment"># <span class="hljs-doctag">XXX:</span> Consider using another file descriptor or connecting to the</span><br>            <span class="hljs-comment"># socket to wake this up instead of polling. Polling reduces our</span><br>            <span class="hljs-comment"># responsiveness to a shutdown request and wastes cpu at all other</span><br>            <span class="hljs-comment"># times.</span><br>            <span class="hljs-keyword">with</span> _ServerSelector() <span class="hljs-keyword">as</span> selector:   <span class="hljs-comment"># 具体监听过程，就是个无限循环 接收一个请求处理一个请求</span><br>                selector.register(self, selectors.EVENT_READ)<br><br>                <span class="hljs-keyword">while</span> <span class="hljs-keyword">not</span> self.__shutdown_request: <br>                    ready = selector.select(poll_interval)<br>                    <span class="hljs-keyword">if</span> ready:<br>                        <span class="hljs-comment"># 接收到具体请求后 进行处理</span><br>                        self._handle_request_noblock()<br><br>                    self.service_actions()<br>        <span class="hljs-keyword">finally</span>:<br>            self.__shutdown_request = <span class="hljs-literal">False</span><br>            self.__is_shut_down.set()<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">_handle_request_noblock</span><span class="hljs-params">(self)</span>:</span><br>        <span class="hljs-string">"""Handle one request, without blocking.</span><br><span class="hljs-string"></span><br><span class="hljs-string">        I assume that selector.select() has returned that the socket is</span><br><span class="hljs-string">        readable before this function was called, so there should be no risk of</span><br><span class="hljs-string">        blocking in get_request().</span><br><span class="hljs-string">        """</span><br>        <span class="hljs-keyword">try</span>:<br>            request, client_address = self.get_request()<br>        <span class="hljs-keyword">except</span> OSError:<br>            <span class="hljs-keyword">return</span><br>        <span class="hljs-keyword">if</span> self.verify_request(request, client_address):<br>            <span class="hljs-keyword">try</span>:<br>                <span class="hljs-comment"># 接收到具体请求后 进行处理</span><br>                self.process_request(request, client_address)<br>            <span class="hljs-keyword">except</span> Exception:<br>                self.handle_error(request, client_address)<br>                self.shutdown_request(request)<br>            <span class="hljs-keyword">except</span>:<br>                self.shutdown_request(request)<br>                <span class="hljs-keyword">raise</span><br>        <span class="hljs-keyword">else</span>:<br>            self.shutdown_request(request)<br>            <br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">process_request</span><span class="hljs-params">(self, request, client_address)</span>:</span><br>        <span class="hljs-comment"># 接收到具体请求后 进行处理</span><br>        self.finish_request(request, client_address)<br>        self.shutdown_request(request)<br>    <br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">finish_request</span><span class="hljs-params">(self, request, client_address)</span>:</span><br>        <span class="hljs-comment"># 每次都实例化了 WSGIRequestHandler 进行请求处理  </span><br>        <span class="hljs-comment"># 注意第三个参数把当前的 server 实例传入</span><br>        <span class="hljs-string">"""Finish one request by instantiating RequestHandlerClass."""</span><br>        self.RequestHandlerClass(request, client_address, self)<br></code></pre></td></tr></table></figure>
+
+<p>最终请求的处理是在 WSGIRequestHandler 实例化过程中处理的  </p>
+<p>那我们来看看 WSGIRequestHandler 的代码</p>
+<p>WSGIRequestHandler 的初始化其实走父类的父类 <code>BaseRequestHandler.__init__()</code> 方法</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">BaseRequestHandler</span>:</span><br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span><span class="hljs-params">(self, request, client_address, server)</span>:</span><br>        self.request = request<br>        self.client_address = client_address<br>        self.server = server<br>        self.setup()<br>        <span class="hljs-keyword">try</span>:<br>             <span class="hljs-comment"># 具体的处理方法 其实是调用的子类的实现</span><br>            self.handle()<br>        <span class="hljs-keyword">finally</span>:<br>            self.finish()<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">setup</span><span class="hljs-params">(self)</span>:</span><br>        <span class="hljs-keyword">pass</span><br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">handle</span><span class="hljs-params">(self)</span>:</span><br>        <span class="hljs-keyword">pass</span><br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">finish</span><span class="hljs-params">(self)</span>:</span><br>        <span class="hljs-keyword">pass</span><br></code></pre></td></tr></table></figure>
+
+<p>调用了 <code>WSGIRequestHandler</code> 下的 <code>handle()</code></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">WSGIRequestHandler</span><span class="hljs-params">(BaseHTTPRequestHandler)</span>:</span><br>    <br>    <span class="hljs-comment"># 处理请求的核心方法 </span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">run_wsgi</span><span class="hljs-params">(self)</span> -&gt; <span class="hljs-keyword">None</span>:</span><br>        <span class="hljs-keyword">if</span> self.headers.get(<span class="hljs-string">"Expect"</span>, <span class="hljs-string">""</span>).lower().strip() == <span class="hljs-string">"100-continue"</span>:<br>            self.wfile.write(<span class="hljs-string">b"HTTP/1.1 100 Continuer\n\r\n"</span>)<br>            <br>        <span class="hljs-comment"># 此处经典的将 http 内容转化为符合 wsgi 格式的内容 因为后面是个 wsgi 的 app 啊</span><br>        self.environ = environ = self.make_environ()<br>        status_set = <span class="hljs-literal">None</span><br>        headers_set = <span class="hljs-literal">None</span><br>        status_sent = <span class="hljs-literal">None</span><br>        headers_sent = <span class="hljs-literal">None</span><br>        chunk_response: bool = <span class="hljs-literal">False</span><br><br>        <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">write</span><span class="hljs-params">(data: bytes)</span> -&gt; <span class="hljs-keyword">None</span>:</span><br>            <span class="hljs-keyword">nonlocal</span> status_sent, headers_sent, chunk_response<br>            <span class="hljs-keyword">assert</span> status_set <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>, <span class="hljs-string">"write() before start_response"</span><br>            <span class="hljs-keyword">assert</span> headers_set <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>, <span class="hljs-string">"write() before start_response"</span><br>            <span class="hljs-keyword">if</span> status_sent <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:<br>                status_sent = status_set<br>                headers_sent = headers_set<br>                <span class="hljs-keyword">try</span>:<br>                    code_str, msg = status_sent.split(<span class="hljs-literal">None</span>, <span class="hljs-number">1</span>)<br>                <span class="hljs-keyword">except</span> ValueError:<br>                    code_str, msg = status_sent, <span class="hljs-string">""</span><br>                code = int(code_str)<br>                self.send_response(code, msg)<br>                header_keys = set()<br>                <span class="hljs-keyword">for</span> key, value <span class="hljs-keyword">in</span> headers_sent:<br>                    self.send_header(key, value)<br>                    header_keys.add(key.lower())<br><br>                <span class="hljs-comment"># Use chunked transfer encoding if there is no content</span><br>                <span class="hljs-comment"># length. Do not use for 1xx and 204 responses. 304</span><br>                <span class="hljs-comment"># responses and HEAD requests are also excluded, which</span><br>                <span class="hljs-comment"># is the more conservative behavior and matches other</span><br>                <span class="hljs-comment"># parts of the code.</span><br>                <span class="hljs-comment"># https://httpwg.org/specs/rfc7230.html#rfc.section.3.3.1</span><br>                <span class="hljs-keyword">if</span> (<br>                    <span class="hljs-keyword">not</span> (<br>                        <span class="hljs-string">"content-length"</span> <span class="hljs-keyword">in</span> header_keys<br>                        <span class="hljs-keyword">or</span> environ[<span class="hljs-string">"REQUEST_METHOD"</span>] == <span class="hljs-string">"HEAD"</span><br>                        <span class="hljs-keyword">or</span> (<span class="hljs-number">100</span> &lt;= code &lt; <span class="hljs-number">200</span>)<br>                        <span class="hljs-keyword">or</span> code <span class="hljs-keyword">in</span> &#123;<span class="hljs-number">204</span>, <span class="hljs-number">304</span>&#125;<br>                    )<br>                    <span class="hljs-keyword">and</span> self.protocol_version &gt;= <span class="hljs-string">"HTTP/1.1"</span><br>                ):<br>                    chunk_response = <span class="hljs-literal">True</span><br>                    self.send_header(<span class="hljs-string">"Transfer-Encoding"</span>, <span class="hljs-string">"chunked"</span>)<br><br>                <span class="hljs-comment"># Always close the connection. This disables HTTP/1.1</span><br>                <span class="hljs-comment"># keep-alive connections. They aren't handled well by</span><br>                <span class="hljs-comment"># Python's http.server because it doesn't know how to</span><br>                <span class="hljs-comment"># drain the stream before the next request line.</span><br>                self.send_header(<span class="hljs-string">"Connection"</span>, <span class="hljs-string">"close"</span>)<br>                self.end_headers()<br><br>            <span class="hljs-keyword">assert</span> isinstance(data, bytes), <span class="hljs-string">"applications must write bytes"</span><br><br>            <span class="hljs-keyword">if</span> data:<br>                <span class="hljs-keyword">if</span> chunk_response:<br>                    self.wfile.write(hex(len(data))[<span class="hljs-number">2</span>:].encode())<br>                    self.wfile.write(<span class="hljs-string">b"\r\n"</span>)<br><br>                self.wfile.write(data)<br><br>                <span class="hljs-keyword">if</span> chunk_response:<br>                    self.wfile.write(<span class="hljs-string">b"\r\n"</span>)<br><br>            self.wfile.flush()<br>        <br>        <span class="hljs-comment"># 眼熟吧 调用wsgi app的参数之一 </span><br>        <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">start_response</span><span class="hljs-params">(status, headers, exc_info=None)</span>:</span>  <span class="hljs-comment"># type: ignore</span><br>            <span class="hljs-keyword">nonlocal</span> status_set, headers_set<br>            <span class="hljs-keyword">if</span> exc_info:<br>                <span class="hljs-keyword">try</span>:<br>                    <span class="hljs-keyword">if</span> headers_sent:<br>                        <span class="hljs-keyword">raise</span> exc_info[<span class="hljs-number">1</span>].with_traceback(exc_info[<span class="hljs-number">2</span>])<br>                <span class="hljs-keyword">finally</span>:<br>                    exc_info = <span class="hljs-literal">None</span><br>            <span class="hljs-keyword">elif</span> headers_set:<br>                <span class="hljs-keyword">raise</span> AssertionError(<span class="hljs-string">"Headers already set"</span>)<br>            status_set = status<br>            headers_set = headers<br>            <span class="hljs-keyword">return</span> write<br>        <br>        <span class="hljs-comment"># 经典的 wsgi app 调用 返回值可迭代  </span><br>        <span class="hljs-comment"># 此处的 app 是 Flask 实例，实例可调用是因为 Flask 实现了 __call__ 方法</span><br>        <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">execute</span><span class="hljs-params">(app: <span class="hljs-string">"WSGIApplication"</span>)</span> -&gt; <span class="hljs-keyword">None</span>:</span><br>            application_iter = app(environ, start_response) <span class="hljs-comment"># 这里这里</span><br>            <span class="hljs-keyword">try</span>:<br>                <span class="hljs-keyword">for</span> data <span class="hljs-keyword">in</span> application_iter:<br>                    write(data)<br>                <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> headers_sent:<br>                    write(<span class="hljs-string">b""</span>)<br>                <span class="hljs-keyword">if</span> chunk_response:<br>                    self.wfile.write(<span class="hljs-string">b"0\r\n\r\n"</span>)<br>            <span class="hljs-keyword">finally</span>:<br>                <span class="hljs-keyword">if</span> hasattr(application_iter, <span class="hljs-string">"close"</span>):<br>                    application_iter.close()<br><br>        <span class="hljs-keyword">try</span>:<br>            <span class="hljs-comment"># 执行此方法 参数为flask实例  </span><br>            execute(self.server.app)<br>        <span class="hljs-keyword">except</span> (ConnectionError, socket.timeout) <span class="hljs-keyword">as</span> e:<br>            self.connection_dropped(e, environ)<br>        <span class="hljs-keyword">except</span> Exception <span class="hljs-keyword">as</span> e:<br>            <span class="hljs-keyword">if</span> self.server.passthrough_errors:<br>                <span class="hljs-keyword">raise</span><br><br>            <span class="hljs-keyword">if</span> status_sent <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span> <span class="hljs-keyword">and</span> chunk_response:<br>                self.close_connection = <span class="hljs-literal">True</span><br><br>            <span class="hljs-keyword">try</span>:<br>                <span class="hljs-comment"># if we haven't yet sent the headers but they are set</span><br>                <span class="hljs-comment"># we roll back to be able to set them again.</span><br>                <span class="hljs-keyword">if</span> status_sent <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:<br>                    status_set = <span class="hljs-literal">None</span><br>                    headers_set = <span class="hljs-literal">None</span><br>                execute(InternalServerError())<br>            <span class="hljs-keyword">except</span> Exception:<br>                <span class="hljs-keyword">pass</span><br><br>            <span class="hljs-keyword">from</span> .debug.tbtools <span class="hljs-keyword">import</span> DebugTraceback<br><br>            msg = DebugTraceback(e).render_traceback_text()<br>            self.server.log(<span class="hljs-string">"error"</span>, <span class="hljs-string">f"Error on request:\n<span class="hljs-subst">&#123;msg&#125;</span>"</span>)<br><br>    <span class="hljs-comment"># 上一个类调用的handle就是这个 </span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">handle</span><span class="hljs-params">(self)</span> -&gt; <span class="hljs-keyword">None</span>:</span><br>        <span class="hljs-string">"""Handles a request ignoring dropped connections."""</span><br>        <span class="hljs-keyword">try</span>:<br>            <span class="hljs-comment"># 调用父类的handle</span><br>            super().handle()<br>        <span class="hljs-keyword">except</span> (ConnectionError, socket.timeout) <span class="hljs-keyword">as</span> e:<br>            self.connection_dropped(e)<br>        <span class="hljs-keyword">except</span> Exception <span class="hljs-keyword">as</span> e:<br>            <span class="hljs-keyword">if</span> self.server.ssl_context <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span> <span class="hljs-keyword">and</span> is_ssl_error(e):<br>                self.log_error(<span class="hljs-string">"SSL error occurred: %s"</span>, e)<br>            <span class="hljs-keyword">else</span>:<br>                <span class="hljs-keyword">raise</span><br>    <span class="hljs-comment"># 没错 下面的类又调用了这个方法  </span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">handle_one_request</span><span class="hljs-params">(self)</span>:</span>  <br>        <span class="hljs-string">"""Handle a single HTTP request."""</span>  <br>        self.raw_requestline = self.rfile.readline()  <br>        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> self.raw_requestline:  <br>            self.close_connection = <span class="hljs-number">1</span>  <br>        <span class="hljs-keyword">elif</span> self.parse_request():  <br>            <span class="hljs-comment"># 最终最终最终 走了这个方法  </span><br>            <span class="hljs-keyword">return</span> self.run_wsgi()<br></code></pre></td></tr></table></figure>
+
+<p>父类的 <code>handle()</code></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">BaseHTTPRequestHandler</span><span class="hljs-params">(socketserver.StreamRequestHandler)</span>:</span>  <br>    <span class="hljs-comment"># 上一个类调用的就是这个  </span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">handle</span><span class="hljs-params">(self)</span>:</span>  <br>        <span class="hljs-string">"""Handle multiple requests if necessary."""</span>  <br>        self.close_connection = <span class="hljs-literal">True</span>  <br>        <span class="hljs-comment"># 此处又调用回了 WSGIRequestHandler 的 handle_one_request  </span><br>        self.handle_one_request()  <br>        <span class="hljs-keyword">while</span> <span class="hljs-keyword">not</span> self.close_connection:  <br>            self.handle_one_request()<br></code></pre></td></tr></table></figure>
+
+<p>上面的调用路线看起来稍微有点绕，是因为涉及到了继承方法的覆盖，有些调用走的父类的，有些走的子类的方法。</p>
+<p>可以看到：其实就是监听端口，并开启一个无限的循环，每次接收到一个请求之后，就实例化 WSGIRequestHandler 进行处理，而 WSGIRequestHandler 主要做了 HTTP 格式数据到 WSGI 数据的转换，然后用 WSGI 的方式调用了 Flask 实例进行实际的逻辑处理并返回数据。</p>
+<h3 id="简单梳理"><a href="#简单梳理" class="headerlink" title="简单梳理"></a>简单梳理</h3><p>在我们示例代码中，当 <code>run_simple(&#39;localhost&#39;, 4000, application1)</code> 执行后，<code>run_simple()</code> 做了两件事：</p>
+<ul>
+<li>一件 <code>make_server</code>，创建服务器</li>
+<li>一件 <code>server_forver</code>，一直在监听端口，等待 request。</li>
+</ul>
+<p><code>run_simple</code> 共有三个参数</p>
+<ul>
+<li><code>environ</code>：为初步处理的 request 请求</li>
+<li><code>start_response</code>：为回调函数</li>
+<li><code>Response</code>：的实例化对象，也是具体的 request 入口，负责具体的逻辑，不同的框架其实是第三个参数不同。</li>
+</ul>
+<p>当有请求过来之后，<code>server_forever</code> 会调用 <code>_handle_request_noblock()</code> 函数，<code>_handle_request_noblock()</code> 会调用 <code>process_request()</code> 函数，<code>process_request()</code> 最终会将 <code>run_simple()</code> 中的第三个参数加括号执行，并传入参数 <code>(environ, start_response)</code>。</p>
+<p>所以当 <code>http://localhost:4000/</code> 有请求过来时，就会触发并调用 <code>application1()</code>，即 <code>application1 = Response(&#39;Hello World application1!&#39;).__call(self, environ, start_response)__</code></p>
+<h3 id="WSGI"><a href="#WSGI" class="headerlink" title="WSGI"></a>WSGI</h3><p>在所有的 Python web 框架都要遵循 WSGI 协议，WSGI 中有一个非常重要的概念：</p>
+<p>每个 Python web 应用都是一个可调用（callable）的对象（如上述的 Response），要运行 web 应用，必须有 web server，在 werkzeug 中提供了 WSGIServer，Server 和 Application 之间怎么通信，就是 WSGI 的功能。</p>
+<p>WSGI 有两方，服务器方 和 应用程序</p>
+<ol>
+<li>服务器方：调用应用程序，给应用程序传递(环境信息)和(回调函数)，这个回调函数是用来将应用程序设置的 http header 和 status 等信息传递给服务器方。</li>
+<li>应用程序：用来生成返回的 header、body 和 status，以便返回给服务器方。</li>
+</ol>
+<h2 id="werkzeug-的-response-流程"><a href="#werkzeug-的-response-流程" class="headerlink" title="werkzeug 的 response 流程"></a>werkzeug 的 response 流程</h2><p>看完了请求，接下来看下返回。即 <code>werkzeug.wrappers.py</code> 模块下的 <code>Response</code> 类</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment">################### response.py 文件下的 class Response ################</span><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Response</span><span class="hljs-params">(BaseResponse, ETagResponseMixin, ResponseStreamMixin, CommonResponseDescriptorsMixin,WWWAuthenticateMixin)</span>:</span><br>    <span class="hljs-comment"># 就这么多，没了，气不气</span><br>    <span class="hljs-keyword">pass</span><br></code></pre></td></tr></table></figure>
+
+<p>该类是多重继承类，这里主要看下 BaseResponse，先看下初始方法</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment">#################### base_responce.py 文件下的 class BaseResponse(object) #############</span><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">BaseResponse</span><span class="hljs-params">(object)</span>:</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span><span class="hljs-params">(self, response=None, status=None, headers=None,</span></span><br><span class="hljs-function"><span class="hljs-params">                 mimetype=None, content_type=None, direct_passthrough=False)</span>:</span><br>        <span class="hljs-keyword">if</span> isinstance(headers, Headers):<br>            self.headers = headers<br>        <span class="hljs-keyword">elif</span> <span class="hljs-keyword">not</span> headers:<br>            self.headers = Headers()<br>        <span class="hljs-keyword">else</span>:<br>            self.headers = Headers(headers)<br> <br>        <span class="hljs-keyword">if</span> content_type <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:<br>            <span class="hljs-keyword">if</span> mimetype <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span> <span class="hljs-keyword">and</span> <span class="hljs-string">'content-type'</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> self.headers:<br>                mimetype = self.default_mimetype<br>            <span class="hljs-keyword">if</span> mimetype <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>                mimetype = get_content_type(mimetype, self.charset)<br>            content_type = mimetype<br>        <span class="hljs-keyword">if</span> content_type <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>            self.headers[<span class="hljs-string">'Content-Type'</span>] = content_type<br>        <span class="hljs-keyword">if</span> status <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:<br>            status = self.default_status<br>        <span class="hljs-keyword">if</span> isinstance(status, integer_types):<br>            self.status_code = status<br>        <span class="hljs-keyword">else</span>:<br>            self.status = status<br> <br>        self.direct_passthrough = direct_passthrough<br>        self._on_close = []<br> <br>        <span class="hljs-comment"># we set the response after the headers so that if a class changes</span><br>        <span class="hljs-comment"># the charset attribute, the data is set in the correct charset.</span><br>        <span class="hljs-keyword">if</span> response <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:<br>            self.response = []<br>        <span class="hljs-keyword">elif</span> isinstance(response, (text_type, bytes, bytearray)):<br>            self.set_data(response)   <span class="hljs-comment">#################看这里</span><br>        <span class="hljs-keyword">else</span>:<br>            self.response = response<br></code></pre></td></tr></table></figure>
+
+<p>在 <code>BaseResponse.__init__</code> 初始方法中，我们定义了返回的 Headers、content_type、status，最后通过 <code>self.set_data(response)</code>，跟踪代码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment">####### base_responce.py 文件下的 class BaseResponse(object) 下的 def set_data ##########</span><br><span class="hljs-comment">## 主要讲传入的应答 编码</span><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">BaseResponse</span><span class="hljs-params">(object)</span>:</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">set_data</span><span class="hljs-params">(self, value)</span>:</span><br>        <span class="hljs-keyword">if</span> isinstance(value, text_type):<br>            <span class="hljs-comment"># 字符串编码</span><br>            value = value.encode(self.charset)<br>        <span class="hljs-keyword">else</span>:<br>            value = bytes(value)<br>        self.response = [value]  <span class="hljs-comment"># 看这里，看这里</span><br>        <span class="hljs-keyword">if</span> self.automatically_set_content_length:<br>            self.headers[<span class="hljs-string">'Content-Length'</span>] = str(len(value))<br></code></pre></td></tr></table></figure>
+
+<p>将我们示例中的 <code>application1 = Response(&#39;Hello World application1!&#39;)</code> 参数字符串，进行 bytes 类型转换并赋值给<code>self.response</code>，然后执行对象()，即调用 <code>__call__</code> 方法，</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment">####### base_responce.py 文件下的 class BaseResponse(object) 下的 def __call__ ##########</span><br><span class="hljs-comment"># 这个方法的作用就是，执行 具体的请求过程，然后调用回调函数，并提供返回值给调用者 HTTPServer.serve_forever(self)</span><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">BaseResponse</span><span class="hljs-params">(object)</span>:</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__call__</span><span class="hljs-params">(self, environ, start_response)</span>:</span><br>        print(start_response)<br>        <span class="hljs-comment"># get_wsgi_response ,是具体的请求处理过程，后面Flask源码解析会讲到</span><br>        app_iter, status, headers = self.get_wsgi_response(environ)<br>        <span class="hljs-comment"># start_response ，提供的回调函数</span><br>        start_response(status, headers)<br>        <span class="hljs-keyword">return</span> app_iter  <span class="hljs-comment">### 把值返回个调用者</span><br></code></pre></td></tr></table></figure>
+
+<p>这里要先介绍一个 environ 参数，以上方式2中涉及到了environ，其实这个 environ 参数是包含了请求的所有信息，让我们在看下 <code>__call__</code> 方法中， <code>app_iter, status, headers = self.get_wsgi_response(environ)</code> 输出通过请求系列参数，获取最后要返回的 get_wsgi_response，输出如下：</p>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs css">&lt;<span class="hljs-selector-tag">werkzeug</span><span class="hljs-selector-class">.wsgi</span><span class="hljs-selector-class">.ClosingIterator</span> <span class="hljs-selector-tag">object</span> <span class="hljs-selector-tag">at</span> 0<span class="hljs-selector-tag">x0589C0B0</span>&gt; <span class="hljs-selector-tag">---</span> 200 <span class="hljs-selector-tag">OK</span> <span class="hljs-selector-tag">---</span> <span class="hljs-selector-attr">[(<span class="hljs-string">'Content-Type'</span>\\\省略]</span><br></code></pre></td></tr></table></figure>
+
+<p>然后在 <code>start_response(status, headers)</code> 代码中，<code>start_response</code> 是 application 处理完之后需要调用的函数，参数是状态码、响应头部还有错误信息，让我们来看下 <code>start_response</code> 输出，</p>
+<figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs reasonml">&lt;<span class="hljs-keyword">function</span> <span class="hljs-module-access"><span class="hljs-module"><span class="hljs-identifier">WSGIRequestHandler</span>.</span></span>run_wsgi.&lt;locals&gt;.start_response at <span class="hljs-number">0x05A32108</span>&gt;<br></code></pre></td></tr></table></figure>
+
+<p>跟踪代码如下 <code>start_response</code>：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">start_response</span><span class="hljs-params">(status, response_headers, exc_info=None)</span>:</span><br>    <span class="hljs-keyword">if</span> exc_info:<br>        <span class="hljs-keyword">try</span>:<br>            <span class="hljs-keyword">if</span> headers_sent:<br>                reraise(*exc_info)<br>        <span class="hljs-keyword">finally</span>:<br>            exc_info = <span class="hljs-literal">None</span><br>    <span class="hljs-keyword">elif</span> headers_set:<br>        <span class="hljs-keyword">raise</span> AssertionError(<span class="hljs-string">'Headers already set'</span>)<br>   headers_set[:] = [status, response_headers]<br>   <span class="hljs-keyword">return</span> write<br></code></pre></td></tr></table></figure>
+
+<p><code>start_response</code> 返回 write 方法，然后跟踪该方法</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">write</span><span class="hljs-params">(data)</span>:</span><br>    <span class="hljs-keyword">assert</span> headers_set, <span class="hljs-string">'write() before start_response'</span><br>    <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> headers_sent:<br>        status, response_headers = headers_sent[:] = headers_set<br>        <span class="hljs-keyword">try</span>:<br>            code, msg = status.split(<span class="hljs-literal">None</span>, <span class="hljs-number">1</span>)<br>        <span class="hljs-keyword">except</span> ValueError:<br>            code, msg = status, <span class="hljs-string">""</span><br>        code = int(code)<br>        self.send_response(code, msg)<br>        header_keys = set()<br>        <span class="hljs-keyword">for</span> key, value <span class="hljs-keyword">in</span> response_headers:<br>            self.send_header(key, value)<br>            key = key.lower()<br>            header_keys.add(key)<br>        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> (<span class="hljs-string">'content-length'</span> <span class="hljs-keyword">in</span> header_keys <span class="hljs-keyword">or</span> <br>            environ[<span class="hljs-string">'REQUEST_METHOD'</span>] == <span class="hljs-string">'HEAD'</span> <span class="hljs-keyword">or</span> <br>            code &lt; <span class="hljs-number">200</span> <span class="hljs-keyword">or</span> code <span class="hljs-keyword">in</span> (<span class="hljs-number">204</span>, <span class="hljs-number">304</span>)):<br>            self.close_connection = <span class="hljs-literal">True</span><br>            self.send_header(<span class="hljs-string">'Connection'</span>, <span class="hljs-string">'close'</span>)<br>        <span class="hljs-keyword">if</span> <span class="hljs-string">'server'</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> header_keys:<br>            self.send_header(<span class="hljs-string">'Server'</span>, self.version_string())<br>        <span class="hljs-keyword">if</span> <span class="hljs-string">'date'</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> header_keys:<br>            self.send_header(<span class="hljs-string">'Date'</span>, self.date_time_string())<br>        self.end_headers()<br> <br>    <span class="hljs-keyword">assert</span> isinstance(data, bytes), <span class="hljs-string">'applications must write bytes'</span><br>    self.wfile.write(data)<br>    self.wfile.flush()<br></code></pre></td></tr></table></figure>
+
+<p>最后就输出到浏览器，以上就是简单的请求、响应流程</p>
+<h2 id="Flask-集成-werkzeug"><a href="#Flask-集成-werkzeug" class="headerlink" title="Flask 集成 werkzeug"></a>Flask 集成 werkzeug</h2><p>看完了 werkzeug 的源码，来看下 Flaks 是怎么集成 werkzeug 的</p>
+<p>我们在 Flask 中经常会写成</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> flask <span class="hljs-keyword">import</span> Flask<br> <br>app = Flask(__name__)<br> <br><span class="hljs-meta">@app.route('/index')</span><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">index</span><span class="hljs-params">()</span>:</span><br>    <span class="hljs-keyword">return</span> <span class="hljs-string">'Hello World'</span><br> <br><span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">'__main__'</span>:<br>    app.run() <span class="hljs-comment"># run_simple(host,port,app)</span><br></code></pre></td></tr></table></figure>
+
+<p>看一下 run</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">run</span><span class="hljs-params">(self, host=None, port=None, debug=None, **options)</span>:</span><br>    <span class="hljs-keyword">from</span> werkzeug.serving <span class="hljs-keyword">import</span> run_simple<br>    <span class="hljs-keyword">if</span> host <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:<br>        host = <span class="hljs-string">'127.0.0.1'</span><br>    <span class="hljs-keyword">if</span> port <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:<br>        server_name = self.config[<span class="hljs-string">'SERVER_NAME'</span>]<br>        <span class="hljs-keyword">if</span> server_name <span class="hljs-keyword">and</span> <span class="hljs-string">':'</span> <span class="hljs-keyword">in</span> server_name:<br>            port = int(server_name.rsplit(<span class="hljs-string">':'</span>, <span class="hljs-number">1</span>)[<span class="hljs-number">1</span>])<br>        <span class="hljs-keyword">else</span>:<br>            port = <span class="hljs-number">5000</span><br>    <span class="hljs-keyword">if</span> debug <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>        self.debug = bool(debug)<br>    options.setdefault(<span class="hljs-string">'use_reloader'</span>, self.debug)<br>    options.setdefault(<span class="hljs-string">'use_debugger'</span>, self.debug)<br>    <span class="hljs-keyword">try</span>:<br>        run_simple(host, port, self, **options)  <span class="hljs-comment">## 是不是还是用的run_simple</span><br>    <span class="hljs-keyword">finally</span>:<br>        self._got_first_request = <span class="hljs-literal">False</span><br></code></pre></td></tr></table></figure>
+
+<p>最后依然是执行的 <code>run_simple(host, port, self, **options)</code>，也就是 <code>werkzeug.serving.py</code> 下的 <code>run_simple</code> 方法，通过刚开始的分析，我们知道 <code>run_simple</code> 最终调用 Flask 实例的 <code>__call__()</code> 函数</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment">####################### Flask  ########################</span><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Flask</span>:</span><br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__call__</span><span class="hljs-params">(self, environ, start_response)</span>:</span><br>        <span class="hljs-string">"""The WSGI server calls the Flask application object as the</span><br><span class="hljs-string">        WSGI application. This calls :meth:`wsgi_app` which can be</span><br><span class="hljs-string">        wrapped to applying middleware."""</span><br>        <span class="hljs-keyword">return</span> self.wsgi_app(environ, start_response)<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">wsgi_app</span><span class="hljs-params">(self, environ: dict, start_response: t.Callable)</span> -&gt; t.Any:</span><br>        <span class="hljs-comment"># 重要 创建当前请求的上下文对象 flask.ctx.RequestContext 对象  </span><br>        <span class="hljs-comment"># 此处已经对请求信息进行了处理（获得了 endpoint 和 view_func_args）  </span><br>        ctx = self.request_context(environ)<br>        error = <span class="hljs-literal">None</span><br>        <span class="hljs-keyword">try</span>:<br>            <span class="hljs-keyword">try</span>:<br>                <span class="hljs-comment"># 将当前请求的上下文入栈（LocalStack）  </span><br>                <span class="hljs-comment"># 此处是Flask上下文的实现细节 通过共享的方式来传递上下文 给后面的 view_func  </span><br>                ctx.push()<br>                <span class="hljs-comment"># 分发执行</span><br>                response = self.full_dispatch_request()<br>            <span class="hljs-keyword">except</span> Exception <span class="hljs-keyword">as</span> e:<br>                error = e<br>                response = self.handle_exception(e)<br>            <span class="hljs-keyword">except</span>:  <span class="hljs-comment"># noqa: B001</span><br>                error = sys.exc_info()[<span class="hljs-number">1</span>]<br>                <span class="hljs-keyword">raise</span><br>            <span class="hljs-keyword">return</span> response(environ, start_response)<br>        <span class="hljs-keyword">finally</span>:<br>            <span class="hljs-keyword">if</span> <span class="hljs-string">"werkzeug.debug.preserve_context"</span> <span class="hljs-keyword">in</span> environ:<br>                environ[<span class="hljs-string">"werkzeug.debug.preserve_context"</span>](_cv_app.get())<br>                environ[<span class="hljs-string">"werkzeug.debug.preserve_context"</span>](_cv_request.get())<br><br>            <span class="hljs-keyword">if</span> error <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span> <span class="hljs-keyword">and</span> self.should_ignore_error(error):<br>                error = <span class="hljs-literal">None</span><br>            <span class="hljs-comment"># 请求处理完成后 清理上下文 出栈</span><br>            ctx.pop(error)<br>    <br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">full_dispatch_request</span><span class="hljs-params">(self)</span> -&gt; Response:</span><br>        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> self._got_first_request:<br>            <span class="hljs-keyword">with</span> self._before_request_lock:<br>                <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> self._got_first_request:<br>                    <span class="hljs-keyword">for</span> func <span class="hljs-keyword">in</span> self.before_first_request_funcs:<br>                        self.ensure_sync(func)()<br><br>                    self._got_first_request = <span class="hljs-literal">True</span><br><br>        <span class="hljs-keyword">try</span>:<br>            request_started.send(self)<br>            rv = self.preprocess_request()<br>            <span class="hljs-keyword">if</span> rv <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:<br>                <span class="hljs-comment"># 主要执行逻辑的方法</span><br>                rv = self.dispatch_request()<br>        <span class="hljs-keyword">except</span> Exception <span class="hljs-keyword">as</span> e:<br>            rv = self.handle_user_exception(e)<br>        <span class="hljs-keyword">return</span> self.finalize_request(rv)<br>    <br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">dispatch_request</span><span class="hljs-params">(self)</span> -&gt; ft.ResponseReturnValue:</span><br>        <span class="hljs-comment"># # 直接从上下文栈中获取当前的请求上下文</span><br>        req = request_ctx.request<br>        <span class="hljs-keyword">if</span> req.routing_exception <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>            self.raise_routing_exception(req)<br>        rule = req.url_rule  <span class="hljs-comment"># type: ignore[assignment]</span><br>        <span class="hljs-comment"># if we provide automatic options for this URL and the</span><br>        <span class="hljs-comment"># request came with the OPTIONS method, reply automatically</span><br>        <span class="hljs-keyword">if</span> (<br>            getattr(rule, <span class="hljs-string">"provide_automatic_options"</span>, <span class="hljs-literal">False</span>)<br>            <span class="hljs-keyword">and</span> req.method == <span class="hljs-string">"OPTIONS"</span><br>        ):<br>            <span class="hljs-keyword">return</span> self.make_default_options_response()<br>        <br>        view_args = req.view_args  <span class="hljs-comment"># type: ignore[assignment]</span><br>        <br>        <span class="hljs-comment"># 根据endpoint获取对应的view_func 执行并返回</span><br>        <span class="hljs-keyword">return</span> self.view_functions[rule.endpoint](**view_args)<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="Flask-路由相关"><a href="#Flask-路由相关" class="headerlink" title="Flask 路由相关"></a>Flask 路由相关</h3><p><code>@app.route(&quot;/&quot;)</code> 是一个接收参数的装饰器工厂函数，返回一个闭包了特定参数的装饰器</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">route</span><span class="hljs-params">(self, rule: str, **options)</span>:</span><br>    <span class="hljs-comment"># 典型的注册装饰器</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">decorator</span><span class="hljs-params">(f)</span>:</span><br>        endpoint = options.pop(<span class="hljs-string">"endpoint"</span>, <span class="hljs-literal">None</span>)<br>        <span class="hljs-comment"># 此方法将 url 信息和 view_func 注册到 Flask 实例中</span><br>        self.add_url_rule(rule, endpoint, f, **options)<br>        <span class="hljs-keyword">return</span> f<br><br>    <span class="hljs-keyword">return</span> decorator<br></code></pre></td></tr></table></figure>
+
+<p> <code>self.add_url_rule(rule, endpoint, f, **options)</code> 方法，<code>add_url_rule</code> 主要作用就是将 rule 和 <code>view_func</code> 信息维护到 Flask 实例的 <code>url</code>_map<code>和</code>view_functions&#96; 属性中</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">add_url_rule</span><span class="hljs-params">(  </span></span><br><span class="hljs-function"><span class="hljs-params">    self,  </span></span><br><span class="hljs-function"><span class="hljs-params">    rule,  </span></span><br><span class="hljs-function"><span class="hljs-params">    endpoint=None,  </span></span><br><span class="hljs-function"><span class="hljs-params">    view_func=None,  </span></span><br><span class="hljs-function"><span class="hljs-params">    provide_automatic_options=None,  </span></span><br><span class="hljs-function"><span class="hljs-params">    **options  </span></span><br><span class="hljs-function"><span class="hljs-params">)</span>:</span>  <br>    <span class="hljs-comment"># 此处 endpoint 是一个重要的概念 </span><br>    <span class="hljs-comment"># 在 Flask 中是 url_map 和 view_functions 关联的重要纽带  </span><br>    <span class="hljs-comment"># 每次请求来时，去 url_map 中搜索得到 endpoint,args 然后走 view_functions[endpoint](args) 拿到结果  </span><br>    <span class="hljs-comment"># 若不传 默认为 view_func.__name__  </span><br>    <span class="hljs-keyword">if</span> endpoint <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:  <br>        endpoint = _endpoint_from_view_func(view_func)  <br>    options[<span class="hljs-string">"endpoint"</span>] = endpoint  <br>    methods = options.pop(<span class="hljs-string">"methods"</span>, <span class="hljs-literal">None</span>)  <br>    <span class="hljs-comment"># ...  </span><br>  <br>    <span class="hljs-comment"># 此处的 url_rule_class 是一个Flask类属性 值为 werkzeug.routing.Rule  </span><br>    <span class="hljs-comment"># 所以此处即为构建 werkzeug.routing.Rule 对象  </span><br>    rule = self.url_rule_class(rule, methods=methods, **options)  <br>    rule.provide_automatic_options = provide_automatic_options  <br>      <br>    <span class="hljs-comment"># 构建好的 rule对象保存到 url_map实例属性中   </span><br>    <span class="hljs-comment"># url_map是werkzeug.routing.Map 对象  </span><br>    <span class="hljs-comment"># flask路由部分其实借助了werkzeug的能力  </span><br>    self.url_map.add(rule)  <br>    <span class="hljs-keyword">if</span> view_func <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:  <br>        <span class="hljs-comment"># ...  </span><br>        <span class="hljs-comment"># endpoint为key将对应的view_func保存在 view_functions属性中  </span><br>        <span class="hljs-comment"># view_functions 是个 dict  </span><br>        self.view_functions[endpoint] = view_func<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ol>
+<li>创建一个 Flask 实例 app</li>
+<li>将 <code>url</code> 和 <code>view_func</code> 通过 <code>app.add_url_rule()</code> 维护到 app 的 <code>url_map</code> 和 <code>view_functions</code> 属性中。<code>url_map</code> 包含了路由逻辑，<code>view_functions</code> 存储了对应的逻辑函数，二者通过 endpoint 相关联。</li>
+<li>步骤 1 和 2 完成后，其实一个遵循 WSGI 协议的 web application 已经准备好了，接下来将其挂到一个同样支持 WSGI 协议的 web server 下面。web server 接受 HTTP 协议的请求，并将其转化为 WSGI 格式的内容，然后调用 <code>app(environ, start_response)</code> 执行具体逻辑处理，并返回 WSGI 格式的结果。之后再把 WSGI 格式的结果转换为 HTTP 格式返回给客户端就可以啦。</li>
+<li>werkzeug 中的 <code>BaseWSGIServer</code> 继承了内置库的 <code>http.server.HTTPServer</code>，从中获得了 <code>HTTPServer</code> 监听端口并获取请求的能力，并整合了 app 和 <code>WSGIRequestHandler</code>。每当一个请求就绪时，就交给一个 <code>WSGIRequestHandler</code> 实例处理。<code>WSGIRequestHandler</code> 做了 HTTP 格式数据到 WSGI 格式的转换，并执行 <code>app(environ, start_response)</code> ，返回响应。</li>
+<li><code>app(environ, start_response)</code> 这步就又回到 Flask 的请求处理逻辑，根据 environ 的信息配合事先已经绑定好的 <code>url_map</code>，得到具体的路由信息和参数 <code>(endpoint，view_func_args)</code>，然后从 <code>view_functions</code> 字典中取出对应的view_function 运行并返回结果。</li>
+</ol>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://blog.51cto.com/u_15442195/5457696" target="_blank" rel="noopener">https://blog.51cto.com/u_15442195/5457696</a></li>
+<li><a href="https://blog.51cto.com/u_15442195/original" target="_blank" rel="noopener">https://blog.51cto.com/u_15442195/original</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Python/" class="category-chain-item">Python</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/Python/Flask/" class="category-chain-item">Flask</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Python/" class="print-no-link">#Python</a>
+      
+        <a href="/tags/Flask/" class="print-no-link">#Flask</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Flask 源码解析：启动流程</div>
+      <div>https://flepeng.github.io/021-Python-34-框架-Flask-Flask-源码解析：启动流程/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年9月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/021-Python-34-%E6%A1%86%E6%9E%B6-Gunicorn-41-Gunicorn-%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90/" title="41-Gunicorn 源码解析">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">41-Gunicorn 源码解析</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/021-Python-34-%E6%A1%86%E6%9E%B6-Flask-Flask-%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%EF%BC%9A%E5%A4%9A%E8%BF%9B%E7%A8%8B%E5%A4%9A%E7%BA%BF%E7%A8%8B/" title="Flask 源码解析：多进程多线程">
+                        <span class="hidden-mobile">Flask 源码解析：多进程多线程</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

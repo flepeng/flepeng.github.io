@@ -1,0 +1,859 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Flink 官网主页地址：https:&#x2F;&#x2F;flink.apache.org  Flink 官方中文地址：https:&#x2F;&#x2F;nightlies.apache.org&#x2F;flink&#x2F;flink-docs-stable&#x2F;zh&#x2F;  Flink 反压：https:&#x2F;&#x2F;nightlies.apache.org&#x2F;flink&#x2F;flink-docs-release-1.19&#x2F;zh&#x2F;docs&#x2F;ops&#x2F;monitor">
+<meta property="og:type" content="article">
+<meta property="og:title" content="12-Flink 流控和反压之反压解决思路">
+<meta property="og:url" content="https://flepeng.github.io/045-Flink-31-%E5%9F%BA%E7%A1%80-12-Flink-%E6%B5%81%E6%8E%A7%E5%92%8C%E5%8F%8D%E5%8E%8B%E4%B9%8B%E5%8F%8D%E5%8E%8B%E8%A7%A3%E5%86%B3%E6%80%9D%E8%B7%AF/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="Flink 官网主页地址：https:&#x2F;&#x2F;flink.apache.org  Flink 官方中文地址：https:&#x2F;&#x2F;nightlies.apache.org&#x2F;flink&#x2F;flink-docs-stable&#x2F;zh&#x2F;  Flink 反压：https:&#x2F;&#x2F;nightlies.apache.org&#x2F;flink&#x2F;flink-docs-release-1.19&#x2F;zh&#x2F;docs&#x2F;ops&#x2F;monitor">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/1717305658-1a36dadac9db90752e565c55197d80f4.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/1717305658-34edb08afa15169d052aa5e67b3b6d88.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/1717305658-5b92e21f54abb1b21bcf95e3c9766d04.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/1717305658-a726dd8521750a777d4391aba85bcdfa.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/1717305658-8e60073a2f869986ab41984f592e8b69.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/1717305658-f7baad606e6d762d64e4576e8213487d.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/1717305658-873c6b13ca68338c4c0083d2c98fbba3.png">
+<meta property="article:published_time" content="2021-03-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.404Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Flink">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/flink/1717305658-1a36dadac9db90752e565c55197d80f4.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>12-Flink 流控和反压之反压解决思路 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="12-Flink 流控和反压之反压解决思路"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-03-08 00:00" pubdate>
+          2021年3月8日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.6k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          14 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">12-Flink 流控和反压之反压解决思路</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <blockquote>
+<p>  Flink 官网主页地址：<a href="https://flink.apache.org/" target="_blank" rel="noopener">https://flink.apache.org</a><br>  Flink 官方中文地址：<a href="https://nightlies.apache.org/flink/flink-docs-stable/zh/" target="_blank" rel="noopener">https://nightlies.apache.org/flink/flink-docs-stable/zh/</a><br>  Flink 反压：<a href="https://nightlies.apache.org/flink/flink-docs-release-1.19/zh/docs/ops/monitoring/back_pressure/" target="_blank" rel="noopener">https://nightlies.apache.org/flink/flink-docs-release-1.19/zh/docs/ops/monitoring/back_pressure/</a></p>
+</blockquote>
+<h2 id="反压的原因"><a href="#反压的原因" class="headerlink" title="反压的原因"></a>反压的原因</h2><p>反压（BackPressure）通常产生于这样的场景：短时间的负载高峰导致系统接收数据的速率远高于它处理数据的速率。</p>
+<p>反压其实就是 task 处理不过来，算子的 sub-task 需要处理的数据量 &gt; 能够处理的数据量，比如：</p>
+<p>当前某个 sub-task 只能处理 1w qps 的数据，但实际上到来 2w qps 的数据，但是实际只能处理 1w 条，从而反压</p>
+<p>常见原因有：</p>
+<ol>
+<li><p><strong>数据倾斜</strong>：数据分布不均，个别 task 处理数据过多</p>
+</li>
+<li><p><strong>算子性能问题</strong>：可能某个节点逻辑很复杂，比如 sink 节点很慢，lookup join 热查询慢</p>
+</li>
+<li><p><strong>流量陡增</strong>：比如大促时流量激增，或者使用了数据炸开的函数</p>
+</li>
+</ol>
+<h2 id="反压的危害"><a href="#反压的危害" class="headerlink" title="反压的危害"></a>反压的危害</h2><ol>
+<li><p><strong>任务处理性能出现瓶颈</strong>：以消费 Kafka 为例，大概率会出现消费 Kafka Lag。</p>
+</li>
+<li><p><strong>整个任务完全卡住</strong>。比如在 TUMBLE 窗口算子的任务中，反压后可能会导致下游算子的 input pool 和上游算子的 output pool 满了，这时候如果下游窗口的 watermark 一直对不齐，窗口触发不了计算的话，下游算子就永远无法触发窗口计算了，整个任务卡住</p>
+</li>
+<li><p><strong>Checkpoint 时间长或者失败</strong>：因为某些反压会导致 barrier 需要花很长时间才能对齐，任务稳定性差</p>
+</li>
+</ol>
+<p>反压如果不能得到正确的处理，可能会影响到 checkpoint 时长和 state 大小，甚至可能会导致资源耗尽甚至系统崩溃。</p>
+<ol>
+<li><p>影响 checkpoint 时长。barrier 不会越过普通数据，数据处理被阻塞也会导致 checkpoint barrier 流经整个数据管道的时长变长，导致 checkpoint 总体时间（End toEnd Duration）变长。</p>
+</li>
+<li><p>state 变大：为保证 Exactly-Once 准确一次，对于有两个以上输入管道的 Operator，checkpoint barrier 需要对齐，即接受到较快的输入管道的 barrier 后，它后面数据会被缓存起来但不处理，直到较慢的输入管道的 barrier 也到达。这些被缓存的数据会被放到 state 里面，导致 checkpoint 变大。<br>checkpoint 是保证准确一次的关键，checkpoint 时间变长有可能导致 checkpoint 超时失败，而 state 大小可能拖慢 checkpoint 甚至导致 OOM。</p>
+</li>
+</ol>
+<h2 id="怎么定位反压节点"><a href="#怎么定位反压节点" class="headerlink" title="怎么定位反压节点"></a>怎么定位反压节点</h2><p><strong>查看WebUI</strong></p>
+<p>作业图的 UI 展示，会通过不同颜色和数值代表繁忙和反压的程度</p>
+<p><img src="/img/flink/1717305658-1a36dadac9db90752e565c55197d80f4.png" srcset="/img/loading.gif" lazyload></p>
+<p>可以通过 BackPressure 查看 subtask 反压情况</p>
+<p><img src="/img/flink/1717305658-34edb08afa15169d052aa5e67b3b6d88.png" srcset="/img/loading.gif" lazyload></p>
+<p>还可以查看 Flink 任务的 Metrics </p>
+<p><img src="/img/flink/1717305658-5b92e21f54abb1b21bcf95e3c9766d04.png" srcset="/img/loading.gif" lazyload></p>
+<p>我这个是并行度是 4 ，所以会有 0、1、2、3 代表是哪个 subTask（task 下每个并行 task），其中看到的比较多的是这两个，outPutUsage 代表发送端 Buffer 的使用率，inPutusage 代表的接收端 Buffer 的使用率</p>
+<p><img src="/img/flink/1717305658-a726dd8521750a777d4391aba85bcdfa.png" srcset="/img/loading.gif" lazyload></p>
+<p>然后就很好定位了，基本上常出现反压的就那么几个算子</p>
+<p>还不行就设置 <code>pipeline.operator-chaining: false</code>，禁用 operator chains ，这时候一个算子就是一个 task ，在根据定位到具体算子</p>
+<h2 id="排查反压原因"><a href="#排查反压原因" class="headerlink" title="排查反压原因"></a>排查反压原因</h2><p>我们生产环境中，会遇到负载高峰、CheckPoint、作业重启引起的数据积压而导致反压，这种情况反压如果是暂时的，我们可以忽略它</p>
+<p>除了定位反压节点，还需要排查原因</p>
+<ol>
+<li>节点有性能瓶颈，可能是该节点所在的机器有网络，磁盘等等故障，机器的网络延迟和磁盘不足，频繁GC，数据热点等原因</li>
+<li>数据源生产的数据过快，计算框架处理不及时。</li>
+<li>Flink 算子间并行度不同，下游算子相比上游算子过小</li>
+<li>发生数据倾斜</li>
+</ol>
+<h3 id="数据倾斜"><a href="#数据倾斜" class="headerlink" title="数据倾斜"></a>数据倾斜</h3><p>我们可以用 Web UI 查看该节点每个 SubTask 的 Record Send 和 Record Received 来看是否数据倾斜，也可以通过 Checkpoint 每个 Subtask 的 state 的 size 大小</p>
+<p><img src="/img/flink/1717305658-8e60073a2f869986ab41984f592e8b69.png" srcset="/img/loading.gif" lazyload></p>
+<h3 id="火焰图"><a href="#火焰图" class="headerlink" title="火焰图"></a>火焰图</h3><p>在代码提交时设置开启火焰图，然后可以在 Web UI 里面查看</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">rest.flamegraph.enabled:</span> <span class="hljs-literal">true</span> <span class="hljs-comment">#默认 false</span><br></code></pre></td></tr></table></figure>
+
+<p><img src="/img/flink/1717305658-f7baad606e6d762d64e4576e8213487d.png" srcset="/img/loading.gif" lazyload></p>
+<p>纵向是调用链，从下往上，顶部就是正在执行的函数</p>
+<p>不是用颜色代表的，而是横向长度，代表出现次数或者说执行时长，某个函数过宽，出现了平顶，那这个函数可能有性能问题</p>
+<h3 id="分析-GC"><a href="#分析-GC" class="headerlink" title="分析 GC"></a>分析 GC</h3><p>也可能是 TaskManager 的内存引起的 GC 问题，也会导致反压，我们一般使用 G1 回收机制，有可能是 TaskManager JVM 各区内存分配不合理导致频繁的 Full GC</p>
+<p>我们可以提交任务时设置打印 GC 日志然后查看 Web UI GC 情况或者直接看日志</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ini"><span class="hljs-attr">-Denv.java.opts</span>=<span class="hljs-string">"-XX:+PrintGCDetails -XX:+PrintGCDateStamps"</span><br></code></pre></td></tr></table></figure>
+
+<p><img src="/img/flink/1717305658-873c6b13ca68338c4c0083d2c98fbba3.png" srcset="/img/loading.gif" lazyload></p>
+<h3 id="外部组件交互"><a href="#外部组件交互" class="headerlink" title="外部组件交互"></a>外部组件交互</h3><p>如果发现 Source 端数据读取性能比较低或者 Sink 端写入性能较差，需要检查第三方组件是否遇到瓶颈，还有就是做维表 join 时的性能问题。</p>
+<p>例如：Kafka 集群是否需要扩容，Kafka 连接器是否并行度较低，HBase 的 rowkey 是否遇到热点问题，是否请求处理不过来，ClickHouse 并发能力较弱，是否达到瓶颈……</p>
+<p>关于第三方组件的性能问题，需要结合具体的组件来分析，最常用的思路：</p>
+<p>1）异步 io+热缓存来优化读写性能</p>
+<p>2）先攒批再读写</p>
+<h2 id="常见处理方案"><a href="#常见处理方案" class="headerlink" title="常见处理方案"></a>常见处理方案</h2><ol>
+<li>很多时候反压就是资源不足导致的，给任务加资源</li>
+<li>如果是数据倾斜、算子性能问题之类，那就去解决这些问题</li>
+<li>如果确实是流量过大消费不过来，就整任务链中每个算子的并行度，以匹配系统的吞吐能力和处理能力（如果是 Kafka，需要同时调大 Kafka 分区数）</li>
+<li>限制数据源的消费数据速度。比如在事件时间窗口的应用中，可以自己设置在数据源处加一些限流措施，让每个数据源都能够够匀速消费数据，避免出现有的 Source 快，有的 Source 慢，导致窗口 input pool 打满，watermark 对不齐导致任务卡住</li>
+<li>关闭 Checkpoint。关闭 Checkpoint 可以将 barrier 对齐这一步省略掉，促使任务能够快速回溯数据。然后等数据回溯完成之后，再将 Checkpoint 打开</li>
+</ol>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://blog.csdn.net/weixin_43283487/article/details/136073129" target="_blank" rel="noopener">https://blog.csdn.net/weixin_43283487/article/details/136073129</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Flink/" class="category-chain-item">Flink</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Flink/" class="print-no-link">#Flink</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>12-Flink 流控和反压之反压解决思路</div>
+      <div>https://flepeng.github.io/045-Flink-31-基础-12-Flink-流控和反压之反压解决思路/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年3月8日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/045-Flink-31-%E5%9F%BA%E7%A1%80-12-Flink-%E6%B5%81%E6%8E%A7%E5%92%8C%E5%8F%8D%E5%8E%8B/" title="12-Flink 流控和反压">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">12-Flink 流控和反压</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/045-Flink-31-%E5%9F%BA%E7%A1%80-13-Flink-CDC/" title="13-Flink CDC">
+                        <span class="hidden-mobile">13-Flink CDC</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

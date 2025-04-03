@@ -1,0 +1,972 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="1 Redis 集群Redis的高可用技术有：持久化、主从复制和哨兵，但这些方案仍有不足，其中最主要的问题是存储能力受单机限制，以及无法实现写操作的负载均衡。 Redis集群解决了上述问题，实现了较为完善的高可用方案。集群，即Redis Cluster，是Redis 3.0开始引入的分布式存储方案。  上图展示了 Redis Cluster 典型的架构图，集群中的每一个 Redis 节点都 互相两">
+<meta property="og:type" content="article">
+<meta property="og:title" content="05-Redis 多机之3 - 集群">
+<meta property="og:url" content="https://flepeng.github.io/042-Redis-41-%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5-05-Redis-%E5%A4%9A%E6%9C%BA%E4%B9%8B3-%E9%9B%86%E7%BE%A4/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="1 Redis 集群Redis的高可用技术有：持久化、主从复制和哨兵，但这些方案仍有不足，其中最主要的问题是存储能力受单机限制，以及无法实现写操作的负载均衡。 Redis集群解决了上述问题，实现了较为完善的高可用方案。集群，即Redis Cluster，是Redis 3.0开始引入的分布式存储方案。  上图展示了 Redis Cluster 典型的架构图，集群中的每一个 Redis 节点都 互相两">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/redis/1691290697-2067490c59aeebd1c4784f2ae2dde472.png">
+<meta property="og:image" content="https://flepeng.github.io/img/redis/1691290697-c8123c3ac4e8797ad932a6513d025673.png">
+<meta property="og:image" content="https://flepeng.github.io/img/redis/1691290697-08518fa79c65f12282423d8493123c49.png">
+<meta property="og:image" content="https://flepeng.github.io/assets/1691318066-0f086871dd238390d55b53b97af5d70b.png">
+<meta property="article:published_time" content="2020-12-31T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.365Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Redis">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/redis/1691290697-2067490c59aeebd1c4784f2ae2dde472.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>05-Redis 多机之3 - 集群 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="05-Redis 多机之3 - 集群"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-01-01 00:00" pubdate>
+          2021年1月1日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          6k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          50 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">05-Redis 多机之3 - 集群</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="1-Redis-集群"><a href="#1-Redis-集群" class="headerlink" title="1 Redis 集群"></a>1 Redis 集群</h2><p>Redis的高可用技术有：持久化、主从复制和哨兵，但这些方案仍有不足，其中最主要的问题是存储能力受单机限制，以及无法实现写操作的负载均衡。</p>
+<p>Redis集群解决了上述问题，实现了较为完善的高可用方案。集群，即Redis Cluster，是Redis 3.0开始引入的分布式存储方案。</p>
+<p><img src="/img/redis/1691290697-2067490c59aeebd1c4784f2ae2dde472.png" srcset="/img/loading.gif" lazyload></p>
+<p>上图展示了 <strong>Redis Cluster</strong> 典型的架构图，集群中的每一个 Redis 节点都 <strong>互相两两相连</strong>，客户端任意 <strong>直连</strong> 到集群中的 <strong>任意一台</strong>，就可以对其他 Redis 节点进行 <strong>读写</strong> 的操作。</p>
+<h2 id="2-基本原理"><a href="#2-基本原理" class="headerlink" title="2 基本原理"></a>2 基本原理</h2><p><img src="/img/redis/1691290697-c8123c3ac4e8797ad932a6513d025673.png" srcset="/img/loading.gif" lazyload></p>
+<p>Redis 集群中内置了 <code>16384</code> 个哈希槽。当客户端连接到 Redis 集群之后，会同时得到一份关于这个 <strong>集群的配置信息</strong>，当客户端具体对某一个 <code>key</code> 值进行操作时，会计算出它的一个 Hash 值，然后把结果对 <code>16384</code> <strong>求余数</strong>，这样每个 <code>key</code> 都会对应一个编号在 <code>0-16383</code> 之间的哈希槽，Redis 会根据节点数量 <strong>大致均等</strong> 的将哈希槽映射到不同的节点。</p>
+<p>再结合集群的配置信息就能够知道这个 <code>key</code> 值应该存储在哪一个具体的 Redis 节点中，如果不属于自己管，那么就会使用一个特殊的 <code>MOVED</code> 命令来进行一个跳转，告诉客户端去连接这个节点以获取数据：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">GET x-MOVED 3999 127.0.0.1:6381<br></code></pre></td></tr></table></figure>
+
+<p><code>MOVED</code> 指令第一个参数 <code>3999</code> 是 <code>key</code> 对应的槽位编号，后面是目标节点地址，<code>MOVED</code> 命令前面有一个减号，表示这是一个错误的消息。客户端在收到 <code>MOVED</code> 指令后，就立即纠正本地的 <strong>槽位映射表</strong>，那么下一次再访问 <code>key</code> 时就能够到正确的地方去获取了。</p>
+<h2 id="3-集群的主要作用"><a href="#3-集群的主要作用" class="headerlink" title="3 集群的主要作用"></a>3 集群的主要作用</h2><ol>
+<li><p><strong>数据分区：</strong> 数据分区(或称数据分片)是集群最核心的功能。集群将数据分散到多个节点，<strong>一方面</strong> 突破了 Redis 单机内存大小的限制，<strong>存储容量大大增加</strong>；<br><strong>另一方面</strong> 每个主节点都可以对外提供读服务和写服务，<strong>大大提高了集群的响应能力</strong>。<br>Redis 单机内存大小受限问题，例如，如果单机内存太大，<code>bgsave</code> 和 <code>bgrewriteaof</code> 的 <code>fork</code> 操作可能导致主进程阻塞，主从环境下主机切换时可能导致从节点长时间无法提供服务，全量复制阶段主节点的复制缓冲区可能溢出。</p>
+</li>
+<li><p><strong>高可用：</strong> 集群支持主从复制和主节点的 <strong>自动故障转移</strong> （与哨兵类似），当任一节点发生故障时，集群仍然可以对外提供服务。</p>
+</li>
+</ol>
+<h2 id="4-快速体验"><a href="#4-快速体验" class="headerlink" title="4 快速体验"></a>4 快速体验</h2><p>我们将搭建一个简单的集群：共6个节点，3主3从。方便起见：所有节点在同一台服务器上，以端口号进行区分；配置从简。端口号分别为：7000&#x2F;7001&#x2F;7002&#x2F;7003&#x2F;7004&#x2F;7005。</p>
+<h3 id="4-1-第一步：创建集群节点配置文件"><a href="#4-1-第一步：创建集群节点配置文件" class="headerlink" title="4.1 第一步：创建集群节点配置文件"></a>4.1 第一步：创建集群节点配置文件</h3><p>首先我们找一个地方创建一个名为 <code>redis-cluster</code> 的目录：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta">[fenglepeng@centos]#</span><span class="bash"> mkdir -p ~/redis-cluster</span><br></code></pre></td></tr></table></figure>
+
+<p>然后按照上面的方法，创建六个配置文件，分别命名为：<code>redis_7000.conf</code>&#x2F;<code>redis_7001.conf</code>…..<code>redis_7005.conf</code>，然后根据不同的端口号修改对应的端口值就好了：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta">#</span><span class="bash"> 后台执行</span><br>daemonize yes<br><span class="hljs-meta">#</span><span class="bash"> 端口号</span><br>port 7000<br><span class="hljs-meta">#</span><span class="bash"> 为每一个集群节点指定一个 pid_file</span><br>pidfile ~/Desktop/redis-cluster/redis_7000.pid<br><span class="hljs-meta">#</span><span class="bash"> 启动集群模式</span><br>cluster-enabled yes<br><span class="hljs-meta">#</span><span class="bash"> 每一个集群节点都有一个配置文件，这个文件是不能手动编辑的。确保每一个集群节点的配置文件不通</span><br>cluster-config-file nodes-7000.conf<br><span class="hljs-meta">#</span><span class="bash"> 集群节点的超时时间，单位：ms，超时后集群会认为该节点失败</span><br>cluster-node-timeout 5000<br><span class="hljs-meta">#</span><span class="bash"> 最后将 appendonly 改成 yes(AOF 持久化)</span><br>appendonly yes<br></code></pre></td></tr></table></figure>
+
+<p>记得把对应上述配置文件中根端口对应的配置都修改掉 (port&#x2F; pidfile&#x2F; cluster-config-file)。</p>
+<h3 id="4-2-第二步：分别启动-6-个-Redis-实例"><a href="#4-2-第二步：分别启动-6-个-Redis-实例" class="headerlink" title="4.2 第二步：分别启动 6 个 Redis 实例"></a>4.2 第二步：分别启动 6 个 Redis 实例</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs shell">redis-server ~/Desktop/redis-cluster/redis_7000.conf<br>redis-server ~/Desktop/redis-cluster/redis_7001.conf<br>redis-server ~/Desktop/redis-cluster/redis_7002.conf<br>redis-server ~/Desktop/redis-cluster/redis_7003.conf<br>redis-server ~/Desktop/redis-cluster/redis_7004.conf<br>redis-server ~/Desktop/redis-cluster/redis_7005.conf<br></code></pre></td></tr></table></figure>
+
+<p>然后执行 <code>ps -ef | grep redis</code> 查看是否启动成功：</p>
+<p>可以看到 <code>6</code> 个 Redis 节点都以集群的方式成功启动了，<strong>但是现在每个节点还处于独立的状态</strong>，也就是说它们每一个都各自成了一个集群，还没有互相联系起来，我们需要手动地把他们之间建立起联系。</p>
+<h3 id="4-3-第三步：建立集群"><a href="#4-3-第三步：建立集群" class="headerlink" title="4.3 第三步：建立集群"></a>4.3 第三步：建立集群</h3><p>执行下列命令：(redis5以前的版本集群是依靠ruby脚本redis-trib.rb实现)</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta">[fenglepeng@centos]#</span><span class="bash"> redis-cli --cluster create --cluster-replicas 1 127.0.0.1:7000 127.0.0.1:7001 127.0.0.1:7002 127.0.0.1:7003 127.0.0.1:7004 127.0.0.1:7005</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><code>--replicas 1</code> 的意思是：我们希望为集群中的每个主节点创建一个从节点。</li>
+</ul>
+<p>观察控制台输出：</p>
+<p><img src="/img/redis/1691290697-08518fa79c65f12282423d8493123c49.png" srcset="/img/loading.gif" lazyload></p>
+<p>看到 <code>[OK]</code> 的信息之后，就表示集群已经搭建成功了，可以看到，这里我们正确地创建了三主三从的集群。</p>
+<h3 id="4-4-第四步：验证集群"><a href="#4-4-第四步：验证集群" class="headerlink" title="4.4 第四步：验证集群"></a>4.4 第四步：验证集群</h3><p>我们先使用 <code>redic-cli</code> 任意连接一个节点：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta">[fenglepeng@centos]#</span><span class="bash"> redis-cli -c -h 127.0.0.1 -p 7000</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><code>-c</code>表示集群模式；<code>-h</code> 指定 ip 地址；<code>-p</code> 指定端口。</li>
+</ul>
+<p>然后随便 <code>set</code> 一些值观察控制台输入：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs shell">127.0.0.1:7000&gt; SET name wmyskxz<br><span class="hljs-meta">-&gt;</span><span class="bash"> Redirected to slot [5798] located at 127.0.0.1:7001</span><br>OK<br></code></pre></td></tr></table></figure>
+
+<p>可以看到这里 Redis 自动帮我们进行了 <code>Redirected</code> 操作跳转到了 <code>7001</code> 这个实例上。</p>
+<p>我们再使用 <code>cluster info</code> (查看集群信息) 和 <code>cluster nodes</code> (查看节点列表) 来分别看看：_(任意节点输入均可)_</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs shell">127.0.0.1:7001&gt; CLUSTER INFO<br>cluster_state:ok<br>cluster_slots_assigned:16384<br>cluster_slots_ok:16384<br>cluster_slots_pfail:0<br>cluster_slots_fail:0<br>cluster_known_nodes:6<br>cluster_size:3<br>cluster_current_epoch:6<br>cluster_my_epoch:2<br>cluster_stats_messages_ping_sent:1365<br>cluster_stats_messages_pong_sent:1358<br>cluster_stats_messages_meet_sent:4<br>cluster_stats_messages_sent:2727<br>cluster_stats_messages_ping_received:1357<br>cluster_stats_messages_pong_received:1369<br>cluster_stats_messages_meet_received:1<br>cluster_stats_messages_received:2727<br><br>127.0.0.1:7001&gt; CLUSTER NODES<br>56a04742f36c6e84968cae871cd438935081e86f 127.0.0.1:7003@17003 slave 4ec8c022e9d546c9b51deb9d85f6cf867bf73db6 0 1584428884000 4 connected<br>4ec8c022e9d546c9b51deb9d85f6cf867bf73db6 127.0.0.1:7000@17000 master - 0 1584428884000 1 connected 0-5460<br>e2539c4398b8258d3f9ffa714bd778da107cb2cd 127.0.0.1:7005@17005 slave a3406db9ae7144d17eb7df5bffe8b70bb5dd06b8 0 1584428885222 6 connected<br>d31cd1f423ab1e1849cac01ae927e4b6950f55d9 127.0.0.1:7004@17004 slave 236cefaa9cdc295bc60a5bd1aed6a7152d4f384d 0 1584428884209 5 connected<br>236cefaa9cdc295bc60a5bd1aed6a7152d4f384d 127.0.0.1:7001@17001 myself,master - 0 1584428882000 2 connected 5461-10922<br>a3406db9ae7144d17eb7df5bffe8b70bb5dd06b8 127.0.0.1:7002@17002 master - 0 1584428884000 3 connected 10923-16383<br>127.0.0.1:7001&gt;<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="5-集群的基本原理"><a href="#5-集群的基本原理" class="headerlink" title="5 集群的基本原理"></a>5 集群的基本原理</h2><h3 id="5-1-数据分区方案"><a href="#5-1-数据分区方案" class="headerlink" title="5.1 数据分区方案"></a>5.1 数据分区方案</h3><p>参考：<a href="/_posts/030-%E7%AE%97%E6%B3%95/%E5%88%86%E5%B8%83%E5%BC%8F%E7%AE%97%E6%B3%95%E4%B9%8B%20hash%20%E7%AE%97%E6%B3%95.md"></a></p>
+<h3 id="5-2-节点通信机制简析"><a href="#5-2-节点通信机制简析" class="headerlink" title="5.2 节点通信机制简析"></a>5.2 节点通信机制简析</h3><p>集群的建立离不开节点之间的通信，例如我们在刚启动六个集群节点之后通过 <code>redis-cli</code> 命令帮助我们搭建起来了集群，实际上背后每个集群之间的两两连接是通过了 <code>CLUSTER MEET &lt;ip&gt; &lt;port&gt;</code> 命令发送 <code>MEET</code> 消息完成的，下面我们展开详细说说。</p>
+<h4 id="5-2-1-两个端口"><a href="#5-2-1-两个端口" class="headerlink" title="5.2.1 两个端口"></a>5.2.1 两个端口</h4><p>在 <strong>哨兵系统</strong> 中，节点分为 <strong>数据节点</strong> 和 <strong>哨兵节点</strong>：前者存储数据，后者实现额外的控制功能。在 <strong>集群</strong> 中，没有数据节点与非数据节点之分：<strong>所有的节点都存储数据，也都参与集群状态的维护</strong>。为此，集群中的每个节点，都提供了两个 TCP 端口：</p>
+<ul>
+<li><strong>普通端口：</strong> 即我们在前面指定的端口 (7000等)。普通端口主要用于为客户端提供服务 （与单机节点类似）；但在节点间数据迁移时也会使用。</li>
+<li><strong>集群端口：</strong> 端口号是普通端口 + 10000 （10000是固定值，无法改变），如 <code>7000</code> 节点的集群端口为 <code>17000</code>。<br><strong>集群端口只用于节点之间的通信</strong>，如搭建集群、增减节点、故障转移等操作时节点间的通信；不要使用客户端连接集群接口。为了保证集群可以正常工作，在配置防火墙时，要同时开启普通端口和集群端口。</li>
+</ul>
+<h4 id="5-2-2-Gossip-协议"><a href="#5-2-2-Gossip-协议" class="headerlink" title="5.2.2 Gossip 协议"></a>5.2.2 Gossip 协议</h4><p>节点间通信，按照通信协议可以分为几种类型：单对单、广播、Gossip 协议等。重点是广播和 Gossip 的对比。</p>
+<ul>
+<li>广播是指向集群内所有节点发送消息。<ul>
+<li><strong>优点</strong> 是集群的收敛速度快(集群收敛是指集群内所有节点获得的集群信息是一致的)。</li>
+<li><strong>缺点</strong> 是每条消息都要发送给所有节点，CPU、带宽等消耗较大。</li>
+</ul>
+</li>
+<li>Gossip 协议的特点是：在节点数量有限的网络中，<strong>每个节点都 “随机” 的与部分节点通信</strong> （并不是真正的随机，而是根据特定的规则选择通信的节点），经过一番杂乱无章的通信，每个节点的状态很快会达到一致。<ul>
+<li><strong>优点</strong> 是负载(比广播)低、去中心化、容错性高(因为通信有冗余)等；</li>
+<li><strong>缺点</strong> 主要是集群的收敛速度慢。</li>
+</ul>
+</li>
+</ul>
+<h4 id="5-2-3-消息类型"><a href="#5-2-3-消息类型" class="headerlink" title="5.2.3 消息类型"></a>5.2.3 消息类型</h4><p>集群中的节点采用 <strong>固定频率（每秒10次）</strong> 的 <strong>定时任务</strong> 进行通信相关的工作：判断是否需要发送消息及消息类型、确定接收节点、发送消息等。如果集群状态发生了变化，如增减节点、槽状态变更，通过节点间的通信，所有节点会很快得知整个集群的状态，使集群收敛。</p>
+<p>节点间发送的消息主要分为 <code>5</code> 种：<code>meet 消息</code>、<code>ping 消息</code>、<code>pong 消息</code>、<code>fail 消息</code>、<code>publish 消息</code>。不同的消息类型，通信协议、发送的频率和时机、接收节点的选择等是不同的：</p>
+<ul>
+<li><strong>MEET 消息：</strong> 在节点握手阶段，当节点收到客户端的 <code>CLUSTER MEET</code> 命令时，会向新加入的节点发送 <code>MEET</code> 消息，请求新节点加入到当前集群；新节点收到 MEET 消息后会回复一个 <code>PONG</code> 消息。</li>
+<li><strong>PING 消息：</strong> 集群里每个节点每秒钟会选择部分节点发送 <code>PING</code> 消息，接收者收到消息后会回复一个 <code>PONG</code> 消息。<strong>PING 消息的内容是自身节点和部分其他节点的状态信息</strong>，作用是彼此交换信息，以及检测节点是否在线。<code>PING</code> 消息使用 Gossip 协议发送，接收节点的选择兼顾了收敛速度和带宽成本，<strong>具体规则如下</strong>：(1)随机找 5 个节点，在其中选择最久没有通信的 1 个节点；(2)扫描节点列表，选择最近一次收到 <code>PONG</code> 消息时间大于 <code>cluster_node_timeout / 2</code> 的所有节点，防止这些节点长时间未更新。</li>
+<li><strong>PONG消息：</strong> <code>PONG</code> 消息封装了自身状态数据。可以分为两种：<strong>第一种</strong> 是在接到 <code>MEET/PING</code> 消息后回复的 <code>PONG</code> 消息；<strong>第二种</strong> 是指节点向集群广播 <code>PONG</code> 消息，这样其他节点可以获知该节点的最新信息，例如故障恢复后新的主节点会广播 <code>PONG</code> 消息。</li>
+<li><strong>FAIL 消息：</strong> 当一个主节点判断另一个主节点进入 <code>FAIL</code> 状态时，会向集群广播这一 <code>FAIL</code> 消息；接收节点会将这一 <code>FAIL</code> 消息保存起来，便于后续的判断。</li>
+<li><strong>PUBLISH 消息：</strong> 节点收到 <code>PUBLISH</code> 命令后，会先执行该命令，然后向集群广播这一消息，接收节点也会执行该 <code>PUBLISH</code> 命令。</li>
+</ul>
+<h3 id="5-3-数据结构简析"><a href="#5-3-数据结构简析" class="headerlink" title="5.3 数据结构简析"></a>5.3 数据结构简析</h3><p>节点需要专门的数据结构来存储集群的状态。所谓集群的状态，是一个比较大的概念，包括：集群是否处于上线状态、集群中有哪些节点、节点是否可达、节点的主从状态、槽的分布……</p>
+<p>节点为了存储集群状态而提供的数据结构中，最关键的是 <code>clusterNode</code> 和 <code>clusterState</code> 结构：前者记录了一个节点的状态，后者记录了集群作为一个整体的状态。</p>
+<h4 id="5-3-1-clusterNode-结构"><a href="#5-3-1-clusterNode-结构" class="headerlink" title="5.3.1 clusterNode 结构"></a>5.3.1 clusterNode 结构</h4><p><code>clusterNode</code> 结构保存了 <strong>一个节点的当前状态</strong>，包括创建时间、节点 id、ip 和端口号等。每个节点都会用一个 <code>clusterNode</code> 结构记录自己的状态，并为集群内所有其他节点都创建一个 <code>clusterNode</code> 结构来记录节点状态。</p>
+<p>下面列举了 <code>clusterNode</code> 的部分字段，并说明了字段的含义和作用：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs shell">typedef struct clusterNode &#123;<br>    //节点创建时间<br>    mstime_t ctime;<br>    //节点id<br>    char name[REDIS_CLUSTER_NAMELEN];<br>    //节点的ip和端口号<br>    char ip[REDIS_IP_STR_LEN];<br>    int port;<br>    //节点标识：整型，每个bit都代表了不同状态，如节点的主从状态、是否在线、是否在握手等<br>    int flags;<br>    //配置纪元：故障转移时起作用，类似于哨兵的配置纪元<br>    uint64_t configEpoch;<br>    //槽在该节点中的分布：占用16384/8个字节，16384个比特；每个比特对应一个槽：比特值为1，则该比特对应的槽在节点中；比特值为0，则该比特对应的槽不在节点中<br>    unsigned char slots[16384/8];<br>    //节点中槽的数量<br>    int numslots;<br>    …………<br>&#125; clusterNode;<br></code></pre></td></tr></table></figure>
+
+<p>除了上述字段，<code>clusterNode</code> 还包含节点连接、主从复制、故障发现和转移需要的信息等。</p>
+<h3 id="5-3-2-clusterState-结构"><a href="#5-3-2-clusterState-结构" class="headerlink" title="5.3.2 clusterState 结构"></a>5.3.2 clusterState 结构</h3><p><code>clusterState</code> 结构保存了在当前节点视角下，集群所处的状态。主要字段包括：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs shell">typedef struct clusterState &#123;<br>    //自身节点<br>    clusterNode *myself;<br>    //配置纪元<br>    uint64_t currentEpoch;<br>    //集群状态：在线还是下线<br>    int state;<br>    //集群中至少包含一个槽的节点数量<br>    int size;<br>    //哈希表，节点名称-&gt;clusterNode节点指针<br>    dict *nodes;<br>    //槽分布信息：数组的每个元素都是一个指向clusterNode结构的指针；如果槽还没有分配给任何节点，则为NULL<br>    clusterNode *slots[16384];<br>    …………<br>&#125; clusterState;<br></code></pre></td></tr></table></figure>
+
+<p>除此之外，<code>clusterState</code> 还包括故障转移、槽迁移等需要的信息。</p>
+<h3 id="5-4-集群命令的实现"><a href="#5-4-集群命令的实现" class="headerlink" title="5.4 集群命令的实现"></a>5.4 集群命令的实现</h3><p>这一部分将以cluster meet(节点握手)、cluster addslots(槽分配)为例，说明节点是如何利用上述数据结构和通信机制实现集群命令的。</p>
+<h4 id="5-4-1-cluster-meet"><a href="#5-4-1-cluster-meet" class="headerlink" title="5.4.1 cluster meet"></a>5.4.1 cluster meet</h4><p>假设要向A节点发送cluster meet命令，将B节点加入到A所在的集群，则A节点收到命令后，执行的操作如下：</p>
+<ol>
+<li>A为B创建一个clusterNode结构，并将其添加到clusterState的nodes字典中</li>
+<li>A向B发送MEET消息</li>
+<li>B收到MEET消息后，会为A创建一个clusterNode结构，并将其添加到clusterState的nodes字典中</li>
+<li>B回复A一个PONG消息</li>
+<li>A收到B的PONG消息后，便知道B已经成功接收自己的MEET消息</li>
+<li>然后，A向B返回一个PING消息</li>
+<li>B收到A的PING消息后，便知道A已经成功接收自己的PONG消息，握手完成</li>
+<li>之后，A通过Gossip协议将B的信息广播给集群内其他节点，其他节点也会与B握手；一段时间后，集群收敛，B成为集群内的一个普通节点</li>
+</ol>
+<p>通过上述过程可以发现，集群中两个节点的握手过程与TCP类似，都是三次握手：A向B发送MEET；B向A发送PONG；A向B发送PING。</p>
+<h4 id="5-4-2-cluster-addslots"><a href="#5-4-2-cluster-addslots" class="headerlink" title="5.4.2 cluster addslots"></a>5.4.2 cluster addslots</h4><p>集群中槽的分配信息，存储在clusterNode的slots数组和clusterState的slots数组中，两个数组的结构前面已做介绍；二者的区别在于：前者存储的是该节点中分配了哪些槽，后者存储的是集群中所有槽分别分布在哪个节点。</p>
+<p>cluster addslots命令接收一个槽或多个槽作为参数，例如在A节点上执行cluster addslots {0..10}命令，是将编号为0-10的槽分配给A节点，具体执行过程如下：</p>
+<ol>
+<li>遍历输入槽，检查它们是否都没有分配，如果有一个槽已分配，命令执行失败；方法是检查输入槽在clusterState.slots[]中对应的值是否为NULL。</li>
+<li>遍历输入槽，将其分配给节点A；方法是修改clusterNode.slots[]中对应的比特为1，以及clusterState.slots[]中对应的指针指向A节点</li>
+<li>A节点执行完成后，通过节点通信机制通知其他节点，所有节点都会知道0-10的槽分配给了A节点</li>
+</ol>
+<h2 id="6-集群伸缩"><a href="#6-集群伸缩" class="headerlink" title="6 集群伸缩"></a>6 集群伸缩</h2><p>实践中常常需要对集群进行伸缩，如访问量增大时的扩容操作。Redis集群可以在不影响对外服务的情况下实现伸缩；</p>
+<p><strong>伸缩的核心是槽迁移：修改槽与节点的对应关系，实现槽(即数据)在节点之间的移动</strong>。 例如，如果槽均匀分布在集群的3个节点中，此时增加一个节点，则需要从3个节点中分别拿出一部分槽给新节点，从而实现槽在4个节点中的均匀分布。</p>
+<h3 id="6-1-增加节点"><a href="#6-1-增加节点" class="headerlink" title="6.1 增加节点"></a>6.1 增加节点</h3><p>假设要增加7006和7007节点，其中8003是7003的从节点；步骤如下：</p>
+<ol>
+<li><p>启动节点：方法参见集群搭建。</p>
+</li>
+<li><p>节点握手：可以使用cluster meet命令，但在生产环境中建议使用redis-trib.rb的add-node工具，其原理也是cluster meet，但它会先检查新节点是否已加入其它集群或者存在数据，避免加入到集群后带来混乱。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">redis-trib.rb add-node 192.168.72.128:7006 192.168.72.128 7000<br>redis-trib.rb add-node 192.168.72.128:7007 192.168.72.128 7000<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>迁移槽：推荐使用redis-trib.rb的reshard工具实现。reshard自动化程度很高，只需要输入<code>redis-trib.rb reshard ip:port</code> (ip和port可以是集群中的任一节点)，然后按照提示输入以下信息，槽迁移会自动完成：</p>
+<ul>
+<li>待迁移的槽数量：16384个槽均分给4个节点，每个节点4096个槽，因此待迁移槽数量为4096</li>
+<li>目标节点id：7006节点的id</li>
+<li>源节点的id：7000&#x2F;7001&#x2F;7002节点的id</li>
+</ul>
+</li>
+<li><p>指定主从关系：方法参见集群搭建</p>
+</li>
+</ol>
+<h3 id="6-2-减少节点"><a href="#6-2-减少节点" class="headerlink" title="6.2 减少节点"></a>6.2 减少节点</h3><p>假设要下线7006&#x2F;7007 节点，可以分为两步：</p>
+<ol>
+<li><p>迁移槽：使用reshard将7006节点中的槽均匀迁移到7001&#x2F;7002&#x2F;7003节点</p>
+</li>
+<li><p>下线节点：使用<code>redis-trib.rb del-node</code>工具；应先下线从节点再下线主节点，因为若主节点先下线，从节点会被指向其他主节点，造成不必要的全量复制。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">redis-trib.rb del-node 192.168.72.128:7007<br>redis-trib.rb del-node 192.168.72.128:7006<br></code></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="7-故障转移"><a href="#7-故障转移" class="headerlink" title="7 故障转移"></a>7 故障转移</h2><p>在哨兵一文中，介绍了哨兵实现故障发现和故障转移的原理。虽然细节上有很大不同，但集群的实现与哨兵思路类似：通过定时任务发送PING消息检测其他节点状态；节点下线分为主观下线和客观下线；客观下线后选取从节点进行故障转移。</p>
+<p>与哨兵一样，集群只实现了主节点的故障转移；从节点故障时只会被下线，不会进行故障转移。因此，使用集群时，应谨慎使用读写分离技术，因为从节点故障会导致读服务不可用，可用性变差。</p>
+<p>这里不再详细介绍故障转移的细节，只对重要事项进行说明：</p>
+<ul>
+<li><p><strong>节点数量：</strong> 在故障转移阶段，需要由主节点投票选出哪个从节点成为新的主节点；从节点选举胜出需要的票数为N&#x2F;2+1；其中N为主节点数量(包括故障主节点)，但故障主节点实际上不能投票。因此为了能够在故障发生时顺利选出从节点，集群中至少需要3个主节点(且部署在不同的物理机上)。</p>
+</li>
+<li><p><strong>故障转移时间：</strong> 从主节点故障发生到完成转移，所需要的时间主要消耗在主观下线识别、主观下线传播、选举延迟等几个环节；具体时间与参数cluster-node-timeout有关，一般来说：</p>
+</li>
+</ul>
+<p><code>故障转移时间(毫秒) ≤ 1.5 \* cluster-node-timeout + 1000</code> cluster-node-timeout的默认值为15000ms(15s)，因此故障转移时间会在20s量级。</p>
+<h2 id="8-集群的限制及应对方法"><a href="#8-集群的限制及应对方法" class="headerlink" title="8. 集群的限制及应对方法"></a>8. 集群的限制及应对方法</h2><p>由于集群中的数据分布在不同节点中，导致一些功能受限，包括：</p>
+<ol>
+<li><p>key批量操作受限：例如mget、mset操作，只有当操作的key都位于一个槽时，才能进行。<br>针对该问题，一种思路是在客户端记录槽与key的信息，每次针对特定槽执行mget&#x2F;mset；另外一种思路是使用Hash Tag，将在下一小节介绍。</p>
+</li>
+<li><p>keys&#x2F;flushall等操作：keys&#x2F;flushall等操作可以在任一节点执行，但是结果只针对当前节点，例如keys操作只返回当前节点的所有键。<br>针对该问题，可以在客户端使用cluster nodes获取所有节点信息，并对其中的所有主节点执行keys&#x2F;flushall等操作。</p>
+</li>
+<li><p>事务&#x2F;Lua脚本：集群支持事务及Lua脚本，但前提条件是所涉及的key必须在同一个节点。Hash Tag可以解决该问题。</p>
+</li>
+<li><p>数据库：单机Redis节点可以支持16个数据库，集群模式下只支持一个，即db0。</p>
+</li>
+<li><p>复制结构：只支持一层复制结构，不支持嵌套。</p>
+</li>
+</ol>
+<h2 id="9-Hash-Tag"><a href="#9-Hash-Tag" class="headerlink" title="9 Hash Tag"></a>9 Hash Tag</h2><p>Hash Tag原理是：<strong>当一个key包含 {} 的时候，不对整个key做hash，而仅对 {} 包括的字符串做hash。</strong></p>
+<p>Hash Tag可以让不同的key拥有相同的hash值，从而分配在同一个槽里；这样针对不同key的批量操作(mget&#x2F;mset等)，以及事务、Lua脚本等都可以支持。不过Hash Tag可能会带来数据分配不均的问题，这时需要：</p>
+<ol>
+<li>调整不同节点中槽的数量，使数据分布尽量均匀；</li>
+<li>避免对热点数据使用Hash Tag，导致请求分布不均。</li>
+</ol>
+<p>下面是使用Hash Tag的一个例子；通过对product加Hash Tag，可以将所有产品信息放到同一个槽中，便于操作。</p>
+<p><img src="/assets/1691318066-0f086871dd238390d55b53b97af5d70b.png" srcset="/img/loading.gif" lazyload></p>
+<h2 id="10-集群方案设计"><a href="#10-集群方案设计" class="headerlink" title="10 集群方案设计"></a>10 集群方案设计</h2><p>设计集群方案时，至少要考虑以下因素：</p>
+<ol>
+<li><p>高可用要求：根据故障转移的原理，至少需要3个主节点才能完成故障转移，且3个主节点不应在同一台物理机上；每个主节点至少需要1个从节点，且主从节点不应在一台物理机上；因此高可用集群至少包含6个节点。</p>
+</li>
+<li><p>数据量和访问量：估算应用需要的数据量和总访问量(考虑业务发展，留有冗余)，结合每个主节点的容量和能承受的访问量(可以通过benchmark得到较准确估计)，计算需要的主节点数量。</p>
+</li>
+<li><p>节点数量限制：Redis官方给出的节点数量限制为1000，主要是考虑节点间通信带来的消耗。在实际应用中应尽量避免大集群；如果节点数量不足以满足应用对Redis数据量和访问量的要求，可以考虑：(1)业务分割，大集群分为多个小集群；(2)减少不必要的数据；(3)调整数据过期策略等。</p>
+</li>
+<li><p>适度冗余：Redis可以在不影响集群服务的情况下增加节点，因此节点数量适当冗余即可，不用太大。</p>
+</li>
+</ol>
+<h2 id="11-参数优化"><a href="#11-参数优化" class="headerlink" title="11 参数优化"></a>11 参数优化</h2><ul>
+<li><p><code>cluster_node_timeout</code> 它的默认值是15s，影响包括：</p>
+<ul>
+<li>影响PING消息接收节点的选择：值越大对延迟容忍度越高，选择的接收节点越少，可以降低带宽，但会降低收敛速度；应根据带宽情况和应用要求进行调整。</li>
+<li>影响故障转移的判定和时间：值越大，越不容易误判，但完成转移消耗时间越长；应根据网络状况和应用要求进行调整。</li>
+</ul>
+</li>
+<li><p><code>cluster-require-full-coverage</code><br>前面提到，只有当16384个槽全部分配完毕时，集群才能上线。这样做是为了保证集群的完整性，但同时也带来了新的问题：当主节点发生故障而故障转移尚未完成，原主节点中的槽不在任何节点中，此时会集群处于下线状态，无法响应客户端的请求。<br><code>cluster-require-full-coverage</code> 参数可以改变这一设定：如果设置为no，则当槽没有完全分配时，集群仍可以上线。参数默认值为yes，如果应用对可用性要求较高，可以修改为no，但需要自己保证槽全部分配。</p>
+</li>
+</ul>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ol>
+<li><a href="https://www.cnblogs.com/kismetv/p/9853040.html" target="_blank" rel="noopener">https://www.cnblogs.com/kismetv/p/9853040.html</a></li>
+<li><a href="https://www.cnblogs.com/wmyskxz/p/12511834.html" target="_blank" rel="noopener">https://www.cnblogs.com/wmyskxz/p/12511834.html</a></li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Redis/" class="category-chain-item">Redis</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Redis/" class="print-no-link">#Redis</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>05-Redis 多机之3 - 集群</div>
+      <div>https://flepeng.github.io/042-Redis-41-核心概念-05-Redis-多机之3-集群/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年1月1日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/042-Redis-41-%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5-02-Redis-%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B9%8B-%E8%B7%B3%E8%B7%83%E8%A1%A8/" title="02-Redis 数据结构之 跳跃表">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">02-Redis 数据结构之 跳跃表</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/030-%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84-01-%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%9F%BA%E7%A1%80-%E6%95%B0%E7%BB%84%E3%80%81%E9%93%BE%E8%A1%A8%E3%80%81%E6%A0%88%E3%80%81%E9%98%9F%E5%88%97/" title="01-数据结构基础-数组、链表、栈、队列">
+                        <span class="hidden-mobile">01-数据结构基础-数组、链表、栈、队列</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

@@ -1,0 +1,873 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="开发流程Flink 的流处理 API（DataStream API）位于 org.apache.flink.streaming.api.scala 包（Scala语言）或 org.apache.flink.streaming.api 包（Java语言）中。本文以 java 为例。 我们如果要使用Flink进行计算开发，一个完整的开发步骤是怎样的呢？ 什么叫有界数据流，什么叫无界数据流（何为流处理，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Flink 程序开发步骤（Java语言）">
+<meta property="og:url" content="https://flepeng.github.io/045-Flink-31-%E5%BC%80%E5%8F%91-Flink-%E7%A8%8B%E5%BA%8F%E5%BC%80%E5%8F%91%E6%AD%A5%E9%AA%A4%EF%BC%88Java%E8%AF%AD%E8%A8%80%EF%BC%89/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="开发流程Flink 的流处理 API（DataStream API）位于 org.apache.flink.streaming.api.scala 包（Scala语言）或 org.apache.flink.streaming.api 包（Java语言）中。本文以 java 为例。 我们如果要使用Flink进行计算开发，一个完整的开发步骤是怎样的呢？ 什么叫有界数据流，什么叫无界数据流（何为流处理，">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-03-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.404Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Flink">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>Flink 程序开发步骤（Java语言） - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Flink 程序开发步骤（Java语言）"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-03-08 00:00" pubdate>
+          2021年3月8日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          28 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Flink 程序开发步骤（Java语言）</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="开发流程"><a href="#开发流程" class="headerlink" title="开发流程"></a>开发流程</h1><p>Flink 的流处理 API（DataStream API）位于 <code>org.apache.flink.streaming.api.scala</code> 包（Scala语言）或 <code>org.apache.flink.streaming.api</code> 包（Java语言）中。本文以 java 为例。</p>
+<p>我们如果要使用Flink进行计算开发，一个完整的开发步骤是怎样的呢？</p>
+<p>什么叫有界数据流，什么叫无界数据流（何为流处理，何为批处理）？</p>
+<ul>
+<li><p><strong>Batch Analytics 批量计算。统一收集数据-&gt;存储到DB-&gt;对数据进行批量处理，对数据实时性邀请不高，比如生成离线报表、月汇总，支付宝年度账单（一年结束批处理计算）</strong></p>
+</li>
+<li><p><strong>Streaming Analytics 流式计算，顾名思义，就是对数据流进行处理，如使用流式分析引擎如 Storm，Flink 实时处理分析数据，应用较多的场景如 实时报表、车辆实时报警计算等等。</strong></p>
+</li>
+</ul>
+<p>每个Flink程序都由相同的基本部分组成：</p>
+<ul>
+<li>获取一个执行环境；</li>
+<li>加载&#x2F;创建初始数据；</li>
+<li>指定对该数据的转换；</li>
+<li>指定计算结果放在哪里；</li>
+<li>触发程序执行。</li>
+</ul>
+<h2 id="1、开发程序所需依赖"><a href="#1、开发程序所需依赖" class="headerlink" title="1、开发程序所需依赖"></a>1、开发程序所需依赖</h2><figure class="highlight dust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br></pre></td><td class="code"><pre><code class="hljs dust"><span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">properties</span>&gt;</span></span><br><span class="xml">    <span class="hljs-tag">&lt;<span class="hljs-name">encoding</span>&gt;</span>UTF-8<span class="hljs-tag">&lt;/<span class="hljs-name">encoding</span>&gt;</span></span><br><span class="xml">    <span class="hljs-tag">&lt;<span class="hljs-name">project.build.sourceEncoding</span>&gt;</span>UTF-8<span class="hljs-tag">&lt;/<span class="hljs-name">project.build.sourceEncoding</span>&gt;</span></span><br><span class="xml">    <span class="hljs-tag">&lt;<span class="hljs-name">maven.compiler.source</span>&gt;</span>1.8<span class="hljs-tag">&lt;/<span class="hljs-name">maven.compiler.source</span>&gt;</span></span><br><span class="xml">    <span class="hljs-tag">&lt;<span class="hljs-name">maven.compiler.target</span>&gt;</span>1.8<span class="hljs-tag">&lt;/<span class="hljs-name">maven.compiler.target</span>&gt;</span></span><br><span class="xml">    <span class="hljs-tag">&lt;<span class="hljs-name">java.version</span>&gt;</span>1.8<span class="hljs-tag">&lt;/<span class="hljs-name">java.version</span>&gt;</span></span><br><span class="xml">    <span class="hljs-tag">&lt;<span class="hljs-name">scala.version</span>&gt;</span>2.12<span class="hljs-tag">&lt;/<span class="hljs-name">scala.version</span>&gt;</span></span><br><span class="xml">    <span class="hljs-tag">&lt;<span class="hljs-name">flink.version</span>&gt;</span>1.12.2<span class="hljs-tag">&lt;/<span class="hljs-name">flink.version</span>&gt;</span></span><br><span class="xml"><span class="hljs-tag">&lt;/<span class="hljs-name">properties</span>&gt;</span></span><br><span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">dependencies</span>&gt;</span></span><br><span class="xml">    <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span></span><br><span class="xml">        <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span></span><br><span class="xml">        <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-clients_2.12<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span></span><br><span class="xml">        <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$</span><span class="hljs-template-variable">&#123;flink.version&#125;</span><span class="xml"><span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span></span><br><span class="xml">    <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span></span><br><span class="xml">    <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span></span><br><span class="xml">        <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span></span><br><span class="xml">        <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-scala_2.12<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span></span><br><span class="xml">        <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$</span><span class="hljs-template-variable">&#123;flink.version&#125;</span><span class="xml"><span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span></span><br><span class="xml">    <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span></span><br><span class="xml">    <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span></span><br><span class="xml">        <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span></span><br><span class="xml">        <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-java<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span></span><br><span class="xml">        <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$</span><span class="hljs-template-variable">&#123;flink.version&#125;</span><span class="xml"><span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span></span><br><span class="xml">    <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span></span><br><span class="xml">    <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span></span><br><span class="xml">        <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span></span><br><span class="xml">        <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-streaming-scala_2.12<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span></span><br><span class="xml">        <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$</span><span class="hljs-template-variable">&#123;flink.version&#125;</span><span class="xml"><span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span></span><br><span class="xml">    <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span></span><br><span class="xml">    <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span></span><br><span class="xml">        <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span></span><br><span class="xml">        <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-streaming-java_2.12<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span></span><br><span class="xml">        <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$</span><span class="hljs-template-variable">&#123;flink.version&#125;</span><span class="xml"><span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span></span><br><span class="xml">    <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span></span><br><span class="xml">    <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span></span><br><span class="xml">        <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span></span><br><span class="xml">        <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-table-api-scala-bridge_2.12<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span></span><br><span class="xml">        <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$</span><span class="hljs-template-variable">&#123;flink.version&#125;</span><span class="xml"><span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span></span><br><span class="xml">    <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span></span><br><span class="xml">    <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span></span><br><span class="xml">        <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span></span><br><span class="xml">        <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-table-api-java-bridge_2.12<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span></span><br><span class="xml">        <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$</span><span class="hljs-template-variable">&#123;flink.version&#125;</span><span class="xml"><span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span></span><br><span class="xml">    <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span></span><br><span class="xml"><span class="hljs-tag">&lt;/<span class="hljs-name">dependencies</span>&gt;</span></span><br><span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">build</span>&gt;</span></span><br><span class="xml">    <span class="hljs-tag">&lt;<span class="hljs-name">sourceDirectory</span>&gt;</span>src/main/java<span class="hljs-tag">&lt;/<span class="hljs-name">sourceDirectory</span>&gt;</span></span><br><span class="xml">    <span class="hljs-tag">&lt;<span class="hljs-name">plugins</span>&gt;</span></span><br><span class="xml">        <span class="hljs-comment">&lt;!-- 编译插件 --&gt;</span></span><br><span class="xml">        <span class="hljs-tag">&lt;<span class="hljs-name">plugin</span>&gt;</span></span><br><span class="xml">            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.maven.plugins<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span></span><br><span class="xml">            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>maven-compiler-plugin<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span></span><br><span class="xml">            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>3.5.1<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span></span><br><span class="xml">            <span class="hljs-tag">&lt;<span class="hljs-name">configuration</span>&gt;</span></span><br><span class="xml">                <span class="hljs-tag">&lt;<span class="hljs-name">source</span>&gt;</span>1.8<span class="hljs-tag">&lt;/<span class="hljs-name">source</span>&gt;</span></span><br><span class="xml">                <span class="hljs-tag">&lt;<span class="hljs-name">target</span>&gt;</span>1.8<span class="hljs-tag">&lt;/<span class="hljs-name">target</span>&gt;</span></span><br><span class="xml">                <span class="hljs-comment">&lt;!--&lt;encoding&gt;$</span></span><span class="hljs-template-variable">&#123;project.build.sourceEncoding&#125;</span><span class="xml"><span class="hljs-comment">&lt;/encoding&gt;--&gt;</span></span><br><span class="xml">            <span class="hljs-tag">&lt;/<span class="hljs-name">configuration</span>&gt;</span></span><br><span class="xml">        <span class="hljs-tag">&lt;/<span class="hljs-name">plugin</span>&gt;</span></span><br><span class="xml">        <span class="hljs-tag">&lt;<span class="hljs-name">plugin</span>&gt;</span></span><br><span class="xml">            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.maven.plugins<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span></span><br><span class="xml">            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>maven-surefire-plugin<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span></span><br><span class="xml">            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>2.18.1<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span></span><br><span class="xml">            <span class="hljs-tag">&lt;<span class="hljs-name">configuration</span>&gt;</span></span><br><span class="xml">                <span class="hljs-tag">&lt;<span class="hljs-name">useFile</span>&gt;</span>false<span class="hljs-tag">&lt;/<span class="hljs-name">useFile</span>&gt;</span></span><br><span class="xml">                <span class="hljs-tag">&lt;<span class="hljs-name">disableXmlReport</span>&gt;</span>true<span class="hljs-tag">&lt;/<span class="hljs-name">disableXmlReport</span>&gt;</span></span><br><span class="xml">                <span class="hljs-tag">&lt;<span class="hljs-name">includes</span>&gt;</span></span><br><span class="xml">                    <span class="hljs-tag">&lt;<span class="hljs-name">include</span>&gt;</span>**/*Test.*<span class="hljs-tag">&lt;/<span class="hljs-name">include</span>&gt;</span></span><br><span class="xml">                    <span class="hljs-tag">&lt;<span class="hljs-name">include</span>&gt;</span>**/*Suite.*<span class="hljs-tag">&lt;/<span class="hljs-name">include</span>&gt;</span></span><br><span class="xml">                <span class="hljs-tag">&lt;/<span class="hljs-name">includes</span>&gt;</span></span><br><span class="xml">            <span class="hljs-tag">&lt;/<span class="hljs-name">configuration</span>&gt;</span></span><br><span class="xml">        <span class="hljs-tag">&lt;/<span class="hljs-name">plugin</span>&gt;</span></span><br><span class="xml">        <span class="hljs-comment">&lt;!-- 打包插件(会包含所有依赖) --&gt;</span></span><br><span class="xml">        <span class="hljs-tag">&lt;<span class="hljs-name">plugin</span>&gt;</span></span><br><span class="xml">            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.maven.plugins<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span></span><br><span class="xml">            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>maven-shade-plugin<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span></span><br><span class="xml">            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>2.3<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span></span><br><span class="xml">            <span class="hljs-tag">&lt;<span class="hljs-name">executions</span>&gt;</span></span><br><span class="xml">                <span class="hljs-tag">&lt;<span class="hljs-name">execution</span>&gt;</span></span><br><span class="xml">                    <span class="hljs-tag">&lt;<span class="hljs-name">phase</span>&gt;</span>package<span class="hljs-tag">&lt;/<span class="hljs-name">phase</span>&gt;</span></span><br><span class="xml">                    <span class="hljs-tag">&lt;<span class="hljs-name">goals</span>&gt;</span></span><br><span class="xml">                        <span class="hljs-tag">&lt;<span class="hljs-name">goal</span>&gt;</span>shade<span class="hljs-tag">&lt;/<span class="hljs-name">goal</span>&gt;</span></span><br><span class="xml">                    <span class="hljs-tag">&lt;/<span class="hljs-name">goals</span>&gt;</span></span><br><span class="xml">                    <span class="hljs-tag">&lt;<span class="hljs-name">configuration</span>&gt;</span></span><br><span class="xml">                        <span class="hljs-tag">&lt;<span class="hljs-name">filters</span>&gt;</span></span><br><span class="xml">                            <span class="hljs-tag">&lt;<span class="hljs-name">filter</span>&gt;</span></span><br><span class="xml">                                <span class="hljs-tag">&lt;<span class="hljs-name">artifact</span>&gt;</span>*:*<span class="hljs-tag">&lt;/<span class="hljs-name">artifact</span>&gt;</span></span><br><span class="xml">                                <span class="hljs-tag">&lt;<span class="hljs-name">excludes</span>&gt;</span></span><br><span class="xml">                                    <span class="hljs-comment">&lt;!--</span></span><br><span class="xml">                                    zip -d learn_spark.jar META-INF/*.RSA META-INF/*.DSA META-INF/*.SF --&gt;</span><br><span class="xml">                                    <span class="hljs-tag">&lt;<span class="hljs-name">exclude</span>&gt;</span>META-INF/*.SF<span class="hljs-tag">&lt;/<span class="hljs-name">exclude</span>&gt;</span></span><br><span class="xml">                                    <span class="hljs-tag">&lt;<span class="hljs-name">exclude</span>&gt;</span>META-INF/*.DSA<span class="hljs-tag">&lt;/<span class="hljs-name">exclude</span>&gt;</span></span><br><span class="xml">                                    <span class="hljs-tag">&lt;<span class="hljs-name">exclude</span>&gt;</span>META-INF/*.RSA<span class="hljs-tag">&lt;/<span class="hljs-name">exclude</span>&gt;</span></span><br><span class="xml">                                <span class="hljs-tag">&lt;/<span class="hljs-name">excludes</span>&gt;</span></span><br><span class="xml">                            <span class="hljs-tag">&lt;/<span class="hljs-name">filter</span>&gt;</span></span><br><span class="xml">                        <span class="hljs-tag">&lt;/<span class="hljs-name">filters</span>&gt;</span></span><br><span class="xml">                        <span class="hljs-tag">&lt;<span class="hljs-name">transformers</span>&gt;</span></span><br><span class="xml">                            <span class="hljs-tag">&lt;<span class="hljs-name">transformer</span> <span class="hljs-attr">implementation</span>=<span class="hljs-string">"org.apache.maven.plugins.shade.resource.ManifestResourceTransformer"</span>&gt;</span></span><br><span class="xml">                                <span class="hljs-comment">&lt;!-- 设置jar包的入口类(可选) --&gt;</span></span><br><span class="xml">                                <span class="hljs-tag">&lt;<span class="hljs-name">mainClass</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">mainClass</span>&gt;</span></span><br><span class="xml">                            <span class="hljs-tag">&lt;/<span class="hljs-name">transformer</span>&gt;</span></span><br><span class="xml">                        <span class="hljs-tag">&lt;/<span class="hljs-name">transformers</span>&gt;</span></span><br><span class="xml">                    <span class="hljs-tag">&lt;/<span class="hljs-name">configuration</span>&gt;</span></span><br><span class="xml">                <span class="hljs-tag">&lt;/<span class="hljs-name">execution</span>&gt;</span></span><br><span class="xml">            <span class="hljs-tag">&lt;/<span class="hljs-name">executions</span>&gt;</span></span><br><span class="xml">        <span class="hljs-tag">&lt;/<span class="hljs-name">plugin</span>&gt;</span></span><br><span class="xml">    <span class="hljs-tag">&lt;/<span class="hljs-name">plugins</span>&gt;</span></span><br><span class="xml"><span class="hljs-tag">&lt;/<span class="hljs-name">build</span>&gt;</span></span><br></code></pre></td></tr></table></figure>
+
+
+<h2 id="2、获取执行环境"><a href="#2、获取执行环境" class="headerlink" title="2、获取执行环境"></a>2、获取执行环境</h2><p>Flink 程序开发，首要的便是需要获取其执行环境！根据我们的目的不同，Flink支持以下几种方式：</p>
+<ul>
+<li>获得一个已经存在的Flink环境</li>
+<li>创建本地环境</li>
+<li>创建远程环境</li>
+</ul>
+<p>Flink 流程序的入口点是 StreamExecutionEnvironment 类的一个实例，它定义了程序执行的上下文。StreamExecutionEnvironment 是所有 Flink 程序的基础。可以能过使用以下这些静态方法获得一个StreamExecutionEnvironment 的实例：</p>
+<figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs reasonml"><span class="hljs-module-access"><span class="hljs-module"><span class="hljs-identifier">StreamExecutionEnvironment</span>.</span></span>get<span class="hljs-constructor">ExecutionEnvironment()</span><br><span class="hljs-module-access"><span class="hljs-module"><span class="hljs-identifier">StreamExecutionEnvironment</span>.</span></span>create<span class="hljs-constructor">LocalEnvironment()</span><br><span class="hljs-module-access"><span class="hljs-module"><span class="hljs-identifier">StreamExecutionEnvironment</span>.</span></span>create<span class="hljs-constructor">RemoteEnvironment(String <span class="hljs-params">host</span>, <span class="hljs-params">int</span> <span class="hljs-params">port</span>, String<span class="hljs-operator">...</span> <span class="hljs-params">jarFiles</span>)</span><br></code></pre></td></tr></table></figure>
+
+<p>要获得执行环境，通常只需要调用 <code>getExecutionEnvironment()</code> 方法。这将根据我们的上下文选择正确的执行环境。如果正在 IDE 中的本地环境上执行，那么它将启动一个本地执行环境。如果是从程序中创建了一个JAR文件，并通过命令行调用它，那么 Flink 集群管理器将执行 <code>main()</code> 方法， <code>getExecutionEnvironment()</code> 将返回用于在集群上以分布式方式执行程序的执行环境。</p>
+<p>我们使用以下语句来获得流程序的执行环境：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs java">ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();<br><span class="hljs-comment">// 或者:</span><br>StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();<br></code></pre></td></tr></table></figure>
+
+<p>使用<code>StreamExecutionEnvironment</code> 默认是流式处理环境，但是<code>flink1.12</code> 开始，流批一体，我们可以自己指定当前计算程序的环境模式指定为自动模式:<code>AUTOMATIC</code>，此设置后,flink将会自动识别数据源类型</p>
+<p>有界数据流，则会采用批方式进行数据处理</p>
+<p>无界束流，则会采用流方式进行数据处理</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs java">env.setRuntimeMode(RuntimeExecutionMode.AUTOMATIC);<br><br><span class="hljs-comment">// 强制指定为批数据处理模式:`BATCH`</span><br>env.setRuntimeMode(RuntimeExecutionMode.BATCH);<br><br><span class="hljs-comment">// 强制指定为流数据处理模式:`STREAMING`</span><br>env.setRuntimeMode(RuntimeExecutionMode.STREAMING);<br></code></pre></td></tr></table></figure>
+
+<p><strong>注意：在 Flink 中，有界与无界数据流都可以强指定为流式运行环境，但是，如果明知一个数据来源为流式数据，就必须设置环境为<code>AUTOMATIC</code> 或<code>STREAMING</code>,不可以指定为<code>BATCH</code>否则程序会报错！</strong></p>
+<h2 id="3、加载-x2F-创建数据源"><a href="#3、加载-x2F-创建数据源" class="headerlink" title="3、加载&#x2F;创建数据源"></a>3、加载&#x2F;创建数据源</h2><p>Flink 可以从多种场景读取加载数据，例如 各类DB 如 <code>Mysql</code>、<code>SQL SERVER</code>、<code>MongoDB</code>、各类MQ 如 <code>Kafka</code>、<code>RabbitMQ</code>、以及很多常用数据存储场景 如 <code>redis</code>、<code>文件(本地文件/HDFS)</code>、<code>scoket</code>…</p>
+<p>我们在加载数据源的时候，便知道，该数据是有界还是无界了！</p>
+<p>Flink 读取<code>rabbitMQ</code>消息，是有界还是无界呢？当然是无界！因为 Flink 程序启动时，能通过连接知道什么时候 MQ 中有数据，什么时候没有数据吗？不知道，因为本身 MQ 中是否有消息或者消息有多少就是一个不能肯定确定的因素，因此其不得不保持一个类似于长连接的形式，一直等待 MQ 中有数据到来，然后处理。</p>
+<p>从集合中读取数据，是无界数据还是有界数据呢？很明显，有界数据！因为数据就这么多，当前数据源在读取时不会再凭空产生数据了。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java">DataStream&lt;String&gt; elementsSource = env.fromElements(<span class="hljs-string">"java,scala,php,c++"</span>,<span class="hljs-string">"java,scala,php"</span>, <span class="hljs-string">"java,scala"</span>, <span class="hljs-string">"java"</span>);<br></code></pre></td></tr></table></figure>
+
+<p>从<code>scoket</code>中读取数据，是无界数据还是有界数据呢？很明显，无界数据！因为<code>scoket</code>一旦连接,Flink不会知道其数据源什么时候会数据结束，其不得不保持一个类似于长连接的状态，一直等待<code>Scoket</code>中有数据到来，然后处理。</p>
+<figure class="highlight arduino"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs arduino">DataStreamSource&lt;<span class="hljs-keyword">String</span>&gt; elementsSource= env.socketTextStream(<span class="hljs-string">"10.50.40.131"</span>, <span class="hljs-number">9999</span>);<br></code></pre></td></tr></table></figure>
+
+<p>从<code>文件</code> 中读取数据，是有界还是无界呢？当然是有界！因为文件中数据，flink读取会做记录，当文件内容读完了，数据源就相当于没有新的数据来到了嘛！</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java">DataStream&lt;String&gt; text = env.readTextFile(<span class="hljs-string">"file:///path/to/file"</span>);<br></code></pre></td></tr></table></figure>
+
+<p>数据被读取到内存后，Flink会将它们组织到DataStream中，这是Flink中用来表示流数据的特殊类。</p>
+<p>Flink有特殊的类DataSet和DataStream来表示程序中的数据。可以将它们视为不可变的[分布式数据集合]，其中可能包含重复的数据。当数据有限时，使用DataSet；当数据无限时（元素的数量是无界的），使用DataStream。可以在其上应用转换来创建新的派生DataSet或DataStream。</p>
+<h2 id="4、数据转换处理"><a href="#4、数据转换处理" class="headerlink" title="4、数据转换处理"></a>4、数据转换处理</h2><p>每个Flink程序都对分布式数据集合执行转换。Flink的DataStream API提供了多种数据转换功能，包括过滤、映射、连接、分组和聚合。</p>
+<p>数据转换处理，就是Flink使用算子，对从数据源中获取的数据进行数据加工处理（例如：数据转换，计算等等）</p>
+<p>例如：开窗口、低阶处理函数<code>ProcessFuction</code>、各种算子：map（映射，与java8流中Map效果类似），flatmap（元素摊平，与java8流中Map效果类似）等等。</p>
+<p>示例：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs java">DataStreamSource&lt;String&gt; elementsSource = env.fromElements(<span class="hljs-string">"java,scala,php,c++"</span>,<br>                                                           <span class="hljs-string">"java,scala,php"</span>, <span class="hljs-string">"java,scala"</span>, <span class="hljs-string">"java"</span>);<br><span class="hljs-comment">// 数据处理</span><br>DataStream&lt;String&gt; flatMap = elementsSource.flatMap(<span class="hljs-keyword">new</span> FlatMapFunction&lt;String, String&gt;() &#123;<br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">flatMap</span><span class="hljs-params">(String element, Collector&lt;String&gt; out)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>        String[] wordArr = element.split(<span class="hljs-string">","</span>);<br>        <span class="hljs-keyword">for</span> (String word : wordArr) &#123;<br>            out.collect(word);<br>        &#125;<br>    &#125;<br>&#125;);<br><br>flatMap.map(<span class="hljs-keyword">new</span> MapFunction&lt;String, String&gt;() &#123;<br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-function"><span class="hljs-keyword">public</span> String <span class="hljs-title">map</span><span class="hljs-params">(String value)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>        <span class="hljs-keyword">return</span> value.toUpperCase();<br>    &#125;<br>&#125;);<br></code></pre></td></tr></table></figure>
+
+<p>这里不必了解每个转换的具体含义，后面我们会详细介绍每个转换。需要强调的是，Flink中的转换是惰性的，在调用sink操作之前不会真正执行。</p>
+<h2 id="5、处理后数据放置-x2F-输出"><a href="#5、处理后数据放置-x2F-输出" class="headerlink" title="5、处理后数据放置&#x2F;输出"></a>5、处理后数据放置&#x2F;输出</h2><p>将计算后的数据，进行放置（输出&#x2F;存储），有很多地方，例如：输出到文件，输出到控制台，输出到MQ，输出到DB，输出到<code>scoket</code>…</p>
+<p>输出到控制台</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs java">flatMap.print();<br><span class="hljs-comment">//控制台显示为红色</span><br>flatMap.printToErr(<span class="hljs-string">"错误打印:"</span>)<br></code></pre></td></tr></table></figure>
+
+<p>Flink 中的接收器（sink）操作触发流的执行，以生成程序所需的结果，例如将结果保存到文件系统或将其打印到标准输出。上面的示例使用 flatMap.print()将结果打印到任务管理器日志中(在IDE中运行时，任务管理器日志将显示在IDE的控制台中)。这将对流的每个元素调用其toString()。</p>
+<h2 id="6、执行计算程序"><a href="#6、执行计算程序" class="headerlink" title="6、执行计算程序"></a>6、执行计算程序</h2><p>一旦写好了程序处理逻辑，就需要通过调用 StreamExecutionEnvironment 上的 <code>execute()</code> 来触发程序执行。根据 ExecutionEnvironment 的类型，执行将在本地机器上触发，或将程序提交到集群上执行。</p>
+<p>Flink程序需要启动才能执行任务，正如，spring-boot启动程序需要<code>nohup java -jar xxxx.jar &amp;</code> 或者编译器中点击图标按钮启动</p>
+<p>示例:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">// 1.准备环境</span><br>StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();<br><span class="hljs-comment">// 设置模式 （流、批、自动）</span><br><span class="hljs-comment">// 2.加载数据源</span><br><span class="hljs-comment">// 3.数据转换</span><br><span class="hljs-comment">// 4.数据输出</span><br><span class="hljs-comment">// 5.执行程序</span><br>env.execute();<br><span class="hljs-comment">//或者 env.execute("指定当前计算程序名"); // 参数是程序名称，会显示在Web UI界面上</span><br></code></pre></td></tr></table></figure>
+
+<p>在应用程序中进行的 DataStream API 调用将构建一个附加到StreamExecutionEnvironment的作业图。调用env.execute()时，此图被打包并发送到Flink Master，该Master并行化作业并将其片段分发给Task Managers以供执行。作业的每个并行片段将在一个task slot（任务槽）中执行。</p>
+<p>这个分布式运行时要求Flink应用程序是可序列化的。它还要求集群中的每个节点都可以使用所有依赖项。</p>
+<p>注意，如果不调用execute()，应用程序将不会运行。StreamExecutionEnvironment上的execute()方法将等待作业完成，然后返回一个JobExecutionResult，其中包含执行时间和累加器结果。</p>
+<p>如果不想等待作业完成，可以通过调用StreamExecutionEnvironment上的executeAysnc()来触发异步作业执行。它将返回一个JobClient，可以使用它与刚才提交的作业进行通信。例如，下面是如何通过使用executeAsync()实现execute()的语义。</p>
+<figure class="highlight mipsasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs mipsasm">final <span class="hljs-keyword">JobClient </span><span class="hljs-keyword">jobClient </span>= env.executeAsync();<br>final <span class="hljs-keyword">JobExecutionResult </span><span class="hljs-keyword">jobExecutionResult </span>= <span class="hljs-keyword">jobClient.getJobExecutionResult(userClassloader).get();</span><br></code></pre></td></tr></table></figure>
+
+
+<h1 id="完整示例"><a href="#完整示例" class="headerlink" title="完整示例"></a>完整示例</h1><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">FlinkDemo</span> </span>&#123;<br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(String[] args)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>        <span class="hljs-comment">// 1.准备环境</span><br>        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();<br>        <span class="hljs-comment">// 设置运行模式</span><br>        env.setRuntimeMode(RuntimeExecutionMode.AUTOMATIC);<br>        <span class="hljs-comment">// 2.加载数据源</span><br>        DataStreamSource&lt;String&gt; elementsSource = env.fromElements(<span class="hljs-string">"java,scala,php,c++"</span>,<br>                <span class="hljs-string">"java,scala,php"</span>, <span class="hljs-string">"java,scala"</span>, <span class="hljs-string">"java"</span>);<br>        <span class="hljs-comment">// 3.数据转换</span><br>        DataStream&lt;String&gt; flatMap = elementsSource.flatMap(<span class="hljs-keyword">new</span> FlatMapFunction&lt;String, String&gt;() &#123;<br>            <span class="hljs-meta">@Override</span><br>            <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">flatMap</span><span class="hljs-params">(String element, Collector&lt;String&gt; out)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>                String[] wordArr = element.split(<span class="hljs-string">","</span>);<br>                <span class="hljs-keyword">for</span> (String word : wordArr) &#123;<br>                    out.collect(word);<br>                &#125;<br>            &#125;<br>        &#125;);<br>        <span class="hljs-comment">//DataStream 下边为DataStream子类</span><br>        SingleOutputStreamOperator&lt;String&gt; source = flatMap.map(<span class="hljs-keyword">new</span> MapFunction&lt;String, String&gt;() &#123;<br>            <span class="hljs-meta">@Override</span><br>            <span class="hljs-function"><span class="hljs-keyword">public</span> String <span class="hljs-title">map</span><span class="hljs-params">(String value)</span> <span class="hljs-keyword">throws</span> Exception </span>&#123;<br>                <span class="hljs-keyword">return</span> value.toUpperCase();<br>            &#125;<br>        &#125;);<br>        <span class="hljs-comment">// 4.数据输出</span><br>        source.print();<br>        <span class="hljs-comment">// 5.执行程序</span><br>        env.execute(<span class="hljs-string">"flink-hello-world"</span>);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h1 id="web-界面执行-job"><a href="#web-界面执行-job" class="headerlink" title="web 界面执行 job"></a>web 界面执行 job</h1><h2 id="1、将写好的-jar-打包"><a href="#1、将写好的-jar-打包" class="headerlink" title="1、将写好的 jar 打包"></a>1、将写好的 jar 打包</h2><p>使用命令 <code>mvn package</code> 进行打包</p>
+<h2 id="2、上传"><a href="#2、上传" class="headerlink" title="2、上传"></a>2、上传</h2><ul>
+<li>在 submit new job 界面上传 jar 文件，该 jar 文件需包含依赖。</li>
+<li>在 Entry Class 里填入类的路径，如com.alert.*</li>
+</ul>
+<h1 id="报错"><a href="#报错" class="headerlink" title="报错"></a>报错</h1><h2 id="java-lang-NullPointerException"><a href="#java-lang-NullPointerException" class="headerlink" title="java.lang.NullPointerException"></a>java.lang.NullPointerException</h2><p>报错如下：</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs angelscript"><span class="hljs-number">2021</span><span class="hljs-number">-12</span><span class="hljs-number">-02</span> <span class="hljs-number">10</span>:<span class="hljs-number">51</span>:<span class="hljs-number">55</span>,<span class="hljs-number">644</span> WARN org.apache.flink.runtime.taskmanager.Task [] - Source: Custom Source (<span class="hljs-number">1</span>/<span class="hljs-number">3</span>)#<span class="hljs-number">4</span> (<span class="hljs-number">92</span>d97e5b78862c632d32b272b843bf4b) switched <span class="hljs-keyword">from</span> RUNNING to FAILED with failure cause: java.lang.NullPointerException<br></code></pre></td></tr></table></figure>
+
+<p>解决方案</p>
+<p>做一下非空判断</p>
+<figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs reasonml"><span class="hljs-module-access"><span class="hljs-module"><span class="hljs-identifier">StringUtils</span>.</span></span>is<span class="hljs-constructor">NotBlank(<span class="hljs-params">str</span>)</span><br><span class="hljs-module-access"><span class="hljs-module"><span class="hljs-identifier">StringUtils</span>.</span></span>is<span class="hljs-constructor">NotEmpty(<span class="hljs-params">str</span>)</span><br>object != null<br></code></pre></td></tr></table></figure>
+
+<p>在调用对象方法前先判断对象是否为空(不管是实体、变量、常量、map、list还是其他什么)</p>
+<p>在判断对象是否为空时注意不要直接调用判空方法，判空方法特么也是方法</p>
+<p>尽量不要用 <code>str.toString()</code>，改用 <code>String.valueOf()</code>。比如你要判断一个str是否等于”test”，你不要 <code>str.equals(“test”)</code>，可以反过来 <code>&quot;test&quot;.equals(str)</code></p>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ul>
+<li><a href="https://blog.csdn.net/leilei1366615/article/details/115362824" target="_blank" rel="noopener">https://blog.csdn.net/leilei1366615/article/details/115362824</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/134081916" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/134081916</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Flink/" class="category-chain-item">Flink</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Flink/" class="print-no-link">#Flink</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Flink 程序开发步骤（Java语言）</div>
+      <div>https://flepeng.github.io/045-Flink-31-开发-Flink-程序开发步骤（Java语言）/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年3月8日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/045-Flink-31-%E5%9F%BA%E7%A1%80-14-Flink-%E9%87%8D%E5%90%AF%E7%AD%96%E7%95%A5/" title="14-Flink 重启策略">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">14-Flink 重启策略</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/045-Flink-31-%E5%BC%80%E5%8F%91-Flink-%E9%9B%86%E7%BE%A4%E6%90%AD%E5%BB%BA%E5%8F%8A%E4%BD%9C%E4%B8%9A%E6%8F%90%E4%BA%A4%E5%88%9D%E4%BD%93%E9%AA%8C/" title="Flink 集群搭建及作业提交初体验">
+                        <span class="hidden-mobile">Flink 集群搭建及作业提交初体验</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

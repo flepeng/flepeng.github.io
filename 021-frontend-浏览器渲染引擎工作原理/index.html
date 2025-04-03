@@ -1,0 +1,1179 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="先来看看 Chrome 浏览器的架构图：  通常，我们编写的 HTML、CSS、JavaScript 等文件，经过浏览器运行之后就会显示出页面，那他们是如何转化为页面的？这背后的原理是什么？这个过程就是浏览器的渲染进程来操作实现的。浏览器的渲染进程的主要任务就是 将静态资源转化为可视化界面  由于渲染机制比较复杂，所以渲染模块在执行过程中会被划分为很多子阶段，输入的静态资源经过这些子阶段，最后输出">
+<meta property="og:type" content="article">
+<meta property="og:title" content="浏览器渲染引擎工作原理">
+<meta property="og:url" content="https://flepeng.github.io/021-frontend-%E6%B5%8F%E8%A7%88%E5%99%A8%E6%B8%B2%E6%9F%93%E5%BC%95%E6%93%8E%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="先来看看 Chrome 浏览器的架构图：  通常，我们编写的 HTML、CSS、JavaScript 等文件，经过浏览器运行之后就会显示出页面，那他们是如何转化为页面的？这背后的原理是什么？这个过程就是浏览器的渲染进程来操作实现的。浏览器的渲染进程的主要任务就是 将静态资源转化为可视化界面  由于渲染机制比较复杂，所以渲染模块在执行过程中会被划分为很多子阶段，输入的静态资源经过这些子阶段，最后输出">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/frontend/00/1710924436-1868c349e5733b112b4c8e8b23629a44.png">
+<meta property="og:image" content="https://flepeng.github.io/img/frontend/00/1710924436-1e69afe878081252346f17dac0203141.png">
+<meta property="og:image" content="https://flepeng.github.io/img/frontend/00/1710924436-931acbeeec3671e9ab3d482ce98fbede.png">
+<meta property="og:image" content="https://flepeng.github.io/img/frontend/00/1710924436-e7ebbaa8737ff17d23bd824a519d7022.png">
+<meta property="og:image" content="https://flepeng.github.io/img/frontend/00/1710924436-a515ce8754148d4c13538633e4061ccc.png">
+<meta property="og:image" content="https://flepeng.github.io/img/frontend/00/1710924436-78ecb52417db1d585c2534cc42181608.png">
+<meta property="og:image" content="https://flepeng.github.io/img/frontend/00/1710924436-de50fc98032161d1b1b4e25d75a16b3f.png">
+<meta property="og:image" content="https://flepeng.github.io/img/frontend/00/1710924436-047863d914e87d64e8038f4b1543d1a3.png">
+<meta property="og:image" content="https://flepeng.github.io/img/frontend/00/1710924436-80ee9c7d1a66797546d35f40e75203e1.png">
+<meta property="og:image" content="https://flepeng.github.io/img/frontend/00/1710924436-e7890b0bb4a65a3b8d9180934ed0117f.png">
+<meta property="og:image" content="https://flepeng.github.io/img/frontend/00/1710924436-cbd0467f77fc8a1524dfb66832d86cbd.png">
+<meta property="og:image" content="https://flepeng.github.io/img/frontend/00/1710924436-ff1fa93d80aaf3a40dfdf5ecb6929139.png">
+<meta property="og:image" content="https://flepeng.github.io/img/frontend/00/1710924436-c9f378008c180f5a3aee0ac4bc391a28.png">
+<meta property="og:image" content="https://flepeng.github.io/img/frontend/00/1710924436-e519eab2d615ae6bba81b52816d2b20f.png">
+<meta property="og:image" content="https://flepeng.github.io/img/frontend/00/1710924436-ffebb977ba1b76b7bad36db6102200ff.png">
+<meta property="og:image" content="https://flepeng.github.io/img/frontend/00/1710924436-92de27f3b1d8a981c3752378101bec50.png">
+<meta property="og:image" content="https://flepeng.github.io/img/frontend/00/1710924436-f01fd2615ad39beefbdab665cf60b11b.png">
+<meta property="og:image" content="https://flepeng.github.io/img/frontend/00/1710924436-b498d026138472a5969c2c0960cafc26.png">
+<meta property="og:image" content="https://flepeng.github.io/img/frontend/00/1710924436-d9f2b6b49f6ebdfc47707db93dc6600b.png">
+<meta property="og:image" content="https://flepeng.github.io/img/frontend/00/1710924436-d99d192b5189630e01232b7447fd6d0a.png">
+<meta property="og:image" content="https://flepeng.github.io/img/frontend/00/1710924436-4daeeeb44bf59d5449ecb51e4146190f.png">
+<meta property="og:image" content="https://flepeng.github.io/img/frontend/00/1710924436-a61c51498ddfa279a9aa25303206b6ba.png">
+<meta property="og:image" content="https://flepeng.github.io/img/frontend/00/1710924436-43c0e63cce4e5bff00fee5c4fa38328c.png">
+<meta property="article:published_time" content="2024-03-03T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.353Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="HTTP">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/frontend/00/1710924436-1868c349e5733b112b4c8e8b23629a44.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>浏览器渲染引擎工作原理 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="浏览器渲染引擎工作原理"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-03-04 00:00" pubdate>
+          2024年3月4日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          9.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          77 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">浏览器渲染引擎工作原理</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>先来看看 Chrome 浏览器的架构图：</p>
+<p><img src="/img/frontend/00/1710924436-1868c349e5733b112b4c8e8b23629a44.png" srcset="/img/loading.gif" lazyload></p>
+<p>通常，我们编写的 HTML、CSS、JavaScript 等文件，经过浏览器运行之后就会显示出页面，那他们是如何转化为页面的？这背后的原理是什么？这个过程就是浏览器的渲染进程来操作实现的。浏览器的渲染进程的主要任务就是 <strong>将静态资源转化为可视化界面</strong></p>
+<p><img src="/img/frontend/00/1710924436-1e69afe878081252346f17dac0203141.png" srcset="/img/loading.gif" lazyload></p>
+<p>由于渲染机制比较复杂，所以渲染模块在执行过程中会被划分为很多子阶段，输入的静态资源经过这些子阶段，最后输出页面。我们将一个处理流程称为渲染流水线，其大致流程如下图所示：</p>
+<p><img src="/img/frontend/00/1710924436-931acbeeec3671e9ab3d482ce98fbede.png" srcset="/img/loading.gif" lazyload></p>
+<p>这里主要包含五个过程：</p>
+<ul>
+<li><strong>DOM 树构建</strong>：渲染引擎使用 HTML 解析器（调用 XML 解析器）解析 HTML 文档，将各个 HTML 元素逐个转化成 DOM 节点，从而生成 DOM 树；</li>
+<li><strong>CSSOM 树构建</strong>：CSS 解析器解析 CSS，并将其转化为 CSS 对象，将这些 CSS 对象组装起来，构建 CSSOM 树；</li>
+<li><strong>渲染树构建</strong>：DOM 树和 CSSOM 树都构建完成以后，浏览器会根据这两棵树构建出一棵 渲染树；</li>
+<li><strong>页面布局</strong>：渲染树 构建完毕之后，元素的位置关系以及需要应用的样式就确定了，这时浏览器会计算出所有元素的大小和绝对位置；</li>
+<li><strong>页面绘制</strong>：页面布局完成之后，浏览器会将根据处理出来的结果，把每一个页面图层转换为像素，并对所有的媒体文件进行解码。</li>
+</ul>
+<p>对于这五个流程，每一阶段都有对应的产物，分别是：<strong>DOM树、CSSOM树、渲染树、盒模型、界面。</strong></p>
+<p>下图为渲染引擎工作流程中各个步骤所对应的模块：</p>
+<p><img src="/img/frontend/00/1710924436-e7ebbaa8737ff17d23bd824a519d7022.png" srcset="/img/loading.gif" lazyload></p>
+<p>从图中可以看出，渲染引擎主要包含的模块有：</p>
+<ul>
+<li><strong>HTML 解析器（HTMLParser）</strong>：解析 HTML 文档，主要作用是将 HTML 文档转换成 DOM 树；</li>
+<li><strong>CSS  解析器</strong>：将 DOM 中的各个元素对象进行计算，获取样式信息，用于渲染树的构建；</li>
+<li><strong>JavaScript 解释器</strong>：使用 JavaScript 可以修改网页的内容、CSS 规则等。JavaScript 解释器能够解释 JavaScript 代码，并通过 DOM 接口和 CSSOM 接口来修改网页内容、样式规则，从而改变渲染结果；</li>
+<li><strong>页面布局</strong>：DOM 创建之后，渲染引擎将其中的元素对象与样式规则进行结合，可以得到渲染树。布局则是针对渲染树，计算其各个元素的大小、位置等布局信息。</li>
+<li><strong>页面绘制</strong>：使用图形库将布局计算后的渲染树绘制成可视化的图像结果。</li>
+</ul>
+<p>下面就分别来看看这些过程都做了哪些操作。</p>
+<h1 id="1、DOM-树构建"><a href="#1、DOM-树构建" class="headerlink" title="1、DOM 树构建"></a>1、DOM 树构建</h1><p>在说构建 DOM 树之前，我们首先需要知道，<strong>为什么要构建 DOM 树呢？</strong> 这是因为，浏览器是无法直接理解和使用 HTML 的，所以需要将 HTML 转化为浏览器能够理解的内部结构——DOM 树。</p>
+<p>了解过数据结构的小伙伴对于树结构应该不陌生，<strong>树是由结点或顶点和边组成的且不存在着任何环的一种数据结构</strong>。一棵非空的树包括一个根结点，还有多个附加结点，所有结点构成一个多级分层结构。下面通过一张图来看看什么是树结构：</p>
+<p><img src="/img/frontend/00/1710924436-a515ce8754148d4c13538633e4061ccc.png" srcset="/img/loading.gif" lazyload></p>
+<p>对于上面的三个结构，前两个都是树，他们都只有唯一的根节点，而且不存在环结构。而第三个存在环，所以就不是一个树结构。</p>
+<p>说完树结构，来看看什么是 DOM 树。在页面中，每个 HTML 标签都会被浏览器解析成文档对象。HTML 本质上就是一个嵌套结构，在解析时会把每个文档对象用一个树形结构组织起来，所有的文档对象都会挂在 document 上，这种组织方式就是 HTML 最基础的结构——文档对象模型（DOM），这棵树的每个文档对象就叫做 DOM 节点。</p>
+<p>在渲染引擎中，DOM 有三个层面的作用：</p>
+<ul>
+<li>从页面的视角来看，DOM 是生成页面的基础数据结构；</li>
+<li>从 JavaScript 脚本视角来看，DOM 提供给 JavaScript 脚本操作的接口，通过这套接口，JavaScript 可以对 DOM 结构进行访问，从而改变文档的结构、样式和内容；</li>
+<li>从安全视角来看，DOM 是一道安全防护线，一些不安全的内容在 DOM 解析阶段会被拒之门外。</li>
+</ul>
+<p>在渲染引擎内部，HTML 解析器负责将 HTML 字节流转换为 DOM 结构，其转化过程如下：</p>
+<p><img src="/img/frontend/00/1710924436-78ecb52417db1d585c2534cc42181608.png" srcset="/img/loading.gif" lazyload></p>
+<h2 id="1-1、字符流→词（token）"><a href="#1-1、字符流→词（token）" class="headerlink" title="1.1、字符流→词（token）"></a>1.1、字符流→词（token）</h2><p>HTML 结构会首先通过分词器将字节流拆分为词（token）。Token 分为 Tag Token 和文本 Token。下面来看一个 HTML 代码是如何被拆分的：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-name">body</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">p</span>&gt;</span>hello world<span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span><br>    <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span><br><span class="hljs-tag">&lt;/<span class="hljs-name">body</span>&gt;</span><br></code></pre></td></tr></table></figure>
+
+<p>对于这句代码，可以拆成词：</p>
+<p><img src="/img/frontend/00/1710924436-de50fc98032161d1b1b4e25d75a16b3f.png" srcset="/img/loading.gif" lazyload></p>
+<p>可以看到，Tag Token 又分 StartTag 和 EndTag，<code>&lt;body&gt;</code>、<code>&lt;div&gt;</code>、<code>&lt;p&gt;</code> 就是 StartTag ，<code>&lt;/body&gt;</code>、<code>&lt;/div&gt;</code>、<code>&lt;/p&gt;</code>就是 EndTag，分别对应图中的蓝色和红色块，文本 Token 对应绿色块。</p>
+<p>这里会通过状态机将字符拆分成 token，所谓的状态机就是将每个词的特征逐个拆分成独立的状态，然后再将所有词的特征字符合并起来，形成一个连通的图结构。那为什么要使用状态机呢？因为每读取一个字符，都要做一次决策，这些决策都和当前的状态有关。</p>
+<p>实际上，状态机的作用就是用来做词法分析的，将字符流分解为词（token）。</p>
+<h2 id="1-2、词（token）→DOM-树"><a href="#1-2、词（token）→DOM-树" class="headerlink" title="1.2、词（token）→DOM 树"></a>1.2、词（token）→DOM 树</h2><p>接下来就需要将 Token 解析为 DOM 节点，并将 DOM 节点添加到 DOM 树中。这个过程是通过 <strong>栈结构</strong> 来实现的，这个栈主要用来计算节点之间的父子关系，上面步骤中生成的 token 会按顺序压入栈中，该过程的规则如下：</p>
+<ul>
+<li>如果分词器解析出来是 <strong>StartTag Token</strong>，HTML 解析器会为该 Token 创建一个 DOM 节点，然后将该节点加入到 DOM 树中，它的父节点就是栈中相邻的那个元素生成的节点；</li>
+<li>如果分词器解析出来是 <strong>文本 Token</strong>，那么会生成一个文本节点，然后将该节点加入到 DOM 树中，文本 Token 是不需要压入到栈中，它的父节点就是当前栈顶 Token 所对应的 DOM 节点；</li>
+<li>如果分词器解析出来的是 <strong>EndTag Token</strong>，比如是 EndTag div，HTML 解析器会查看 Token 栈顶的元素是否是 StarTag div，如果是，就将 StartTag div 从栈中弹出，表示该 div 元素解析完成。</li>
+</ul>
+<p>通过分词器产生的新 Token 就这样不停地入栈和出栈，整个解析过程就这样一直持续下去，直到分词器将所有字节流分词完成。</p>
+<p>下面来看看这的 Token 栈是如何工作的，有如下HTML结构：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-name">html</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">body</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>hello juejin<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">p</span>&gt;</span>hello world<span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span><br>    <span class="hljs-tag">&lt;/<span class="hljs-name">body</span>&gt;</span><br><span class="hljs-tag">&lt;/<span class="hljs-name">html</span>&gt;</span><br></code></pre></td></tr></table></figure>
+
+<p>开始时，HTML 解析器会创建一个根为 document 的空的 DOM 结构，同时将 StartTag document 的 Token 压入栈中，然后再将解析出来的第一个 StartTag html 压入栈中，并创建一个 html 的 DOM 节点，添加到 document 上，这时 Token 栈和 DOM 树如下：</p>
+<p><img src="/img/frontend/00/1710924436-047863d914e87d64e8038f4b1543d1a3.png" srcset="/img/loading.gif" lazyload></p>
+<p>接下来 body 和 div 标签也会和上面的过程一样，进行入栈操作：</p>
+<p><img src="/img/frontend/00/1710924436-80ee9c7d1a66797546d35f40e75203e1.png" srcset="/img/loading.gif" lazyload></p>
+<p>随后就会解析到 div 标签中的文本 Token，渲染引擎会为该 Token 创建一个文本节点，并将该 Token 添加到 DOM 中，它的父节点就是当前 Token 栈顶元素对应的节点：</p>
+<p><img src="/img/frontend/00/1710924436-e7890b0bb4a65a3b8d9180934ed0117f.png" srcset="/img/loading.gif" lazyload></p>
+<p>接下来就是第一个 EndTag div，这时 HTML 解析器会判断当前栈顶元素是否是 StartTag div，如果是，则从栈顶弹出 StartTag div，如下图所示：</p>
+<p><img src="/img/frontend/00/1710924436-cbd0467f77fc8a1524dfb66832d86cbd.png" srcset="/img/loading.gif" lazyload></p>
+<p>再之后的过程就和上面类似了，最终的结果如下：</p>
+<p><img src="/img/frontend/00/1710924436-ff1fa93d80aaf3a40dfdf5ecb6929139.png" srcset="/img/loading.gif" lazyload></p>
+<p>通过上面的介绍，相信你已经清楚 DOM 是怎么生成的了。不过在实际生产环境中，HTML源文件中既包含 CSS 和 JavaScript，又包含图片、音频、视频等文件，所以处理过程远比上面这个示范 Demo 复杂。不过理解了这个简单的 Demo 生成过程，我们就可以往下分析更加复杂的场景了。</p>
+<h1 id="2、CSSOM-树构建"><a href="#2、CSSOM-树构建" class="headerlink" title="2、CSSOM 树构建"></a>2、CSSOM 树构建</h1><p>上面已经基本了解了 DOM 的构建过程，但是这个 DOM 结构只包含节点，并不包含任何的样式信息。下面就来看看，浏览器是如何把 CSS 样式应用到 DOM 节点上的。</p>
+<p>同样，浏览器也是无法直接理解 CSS 代码的，需要将其浏览器可以理解的 CSSOM 树。实际上，浏览器在构建 DOM 树的同时，如果样式也加载完成了，那么 CSSOM 树也会同步构建。CSSOM 树和 DOM 树类似，它主要有两个作用：</p>
+<ul>
+<li>提供给 JavaScript 操作样式的能力；</li>
+<li>为渲染树的合成提供基础的样式信息。</li>
+</ul>
+<p>不过，CSSOM 树和 DOM 树是独立的两个数据结构，它们并没有一一对应关系。DOM 树描述的是 HTML 标签的层级关系，CSSOM 树描述的是选择器之间的层级关系。可以在浏览器的控制台，通过 <code>document.styleSheets</code> 命令来查看 CSSOM 树：</p>
+<p><img src="/img/frontend/00/1710924436-c9f378008c180f5a3aee0ac4bc391a28.png" srcset="/img/loading.gif" lazyload></p>
+<p>那 CSS 样式的来源有哪些呢？</p>
+<p><img src="/img/frontend/00/1710924436-e519eab2d615ae6bba81b52816d2b20f.png" srcset="/img/loading.gif" lazyload></p>
+<p>可以看到，CSS 样式的来源主要有三种：</p>
+<ul>
+<li>通过 link 引用的外部 CSS 样式文件；</li>
+<li><code>&lt;style&gt;</code> 标签内的 CSS 样式；</li>
+<li>元素的 style 属性内嵌的 CSS。</li>
+</ul>
+<p>在将 CSS 转化为树形对象之前，还需要将样式表中的属性值进行标准化处理，比如，当遇到以下 CSS 样式：</p>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs css"><span class="hljs-selector-tag">body</span> &#123; <span class="hljs-attribute">font-size</span>: <span class="hljs-number">2em</span> &#125;<br><span class="hljs-selector-tag">p</span> &#123;<span class="hljs-attribute">color</span>:blue;&#125;<br><span class="hljs-selector-tag">div</span> &#123;<span class="hljs-attribute">font-weight</span>: bold&#125;<br><span class="hljs-selector-tag">div</span> <span class="hljs-selector-tag">p</span> &#123;<span class="hljs-attribute">color</span>:green;&#125;<br><span class="hljs-selector-tag">div</span> &#123;<span class="hljs-attribute">color</span>:red; &#125;<br></code></pre></td></tr></table></figure>
+
+<p>可以看到上面 CSS 中有很多属性值，比如 2em、blue、red、bold 等，这些数值并不能被浏览器直接理解。所以，需要将所有值转化为浏览器渲染引擎容易理解的、标准化的计算值，这个过程就是属性值标准化。经过标准化的过程，上面的代码会变成这样：</p>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs css"><span class="hljs-selector-tag">body</span> &#123; <span class="hljs-attribute">font-size</span>: <span class="hljs-number">32px</span> &#125;<br><span class="hljs-selector-tag">p</span> &#123;<span class="hljs-attribute">color</span>: <span class="hljs-built_in">rgb</span>(<span class="hljs-number">0</span>, <span class="hljs-number">0</span>, <span class="hljs-number">255</span>);&#125;<br><span class="hljs-selector-tag">div</span> &#123;<span class="hljs-attribute">font-weight</span>: <span class="hljs-number">700</span>&#125;<br><span class="hljs-selector-tag">div</span> <span class="hljs-selector-tag">p</span> &#123;<span class="hljs-attribute">color</span>: <span class="hljs-built_in">rgb</span>(<span class="hljs-number">0</span>, <span class="hljs-number">128</span>, <span class="hljs-number">0</span>);&#125;<br><span class="hljs-selector-tag">div</span> &#123;<span class="hljs-attribute">color</span>: <span class="hljs-built_in">rgb</span>(<span class="hljs-number">255</span>, <span class="hljs-number">0</span>, <span class="hljs-number">0</span>); &#125;<br></code></pre></td></tr></table></figure>
+
+<p>可以看到，2em 被解析成了 32px，blue 被解析成了 <code>rgb(255, 0, 0)</code>，bold 被解析成 700。现在样式的属性已被标准化了，接下来就需要计算 DOM 树中每个节点的样式属性了，这就涉及到 CSS 的继承规则和层叠规则。</p>
+<h3 id="（1）样式继承"><a href="#（1）样式继承" class="headerlink" title="（1）样式继承"></a>（1）样式继承</h3><p>在 CSS 中存在样式的继承机制，CSS 继承就是每个 DOM 节点都包含有父节点的样式。比如在 HTML 上设置 <code>font-size:20px;</code>，那么页面里基本所有的标签都可以继承到这个属性了。</p>
+<p>在 CSS 中，有继承性的属性主要有以下几种：</p>
+<ol>
+<li><p><strong>字体系列属性</strong></p>
+<ul>
+<li>font-family：字体系列</li>
+<li>font-weight：字体的粗细</li>
+<li>font-size：字体的大小</li>
+<li>font-style：字体的风格</li>
+</ul>
+</li>
+<li><p><strong>文本系列属性</strong></p>
+<ul>
+<li>text-indent：文本缩进</li>
+<li>text-align：文本水平对齐</li>
+<li>line-height：行高</li>
+<li>word-spacing：单词之间的间距</li>
+<li>letter-spacing：中文或者字母之间的间距</li>
+<li>text-transform：控制文本大小写（就是uppercase、lowercase、capitalize这三个）</li>
+<li>color：文本颜色</li>
+</ul>
+</li>
+<li><p><strong>元素可见性</strong></p>
+<ul>
+<li>visibility：控制元素显示隐藏</li>
+</ul>
+</li>
+<li><p><strong>列表布局属性</strong></p>
+<ul>
+<li>list-style：列表风格，包括list-style-type、list-style-image等</li>
+</ul>
+</li>
+<li><p><strong>光标属性</strong></p>
+<ul>
+<li>cursor：光标显示为何种形态</li>
+</ul>
+</li>
+</ol>
+<h3 id="（2）样式层叠"><a href="#（2）样式层叠" class="headerlink" title="（2）样式层叠"></a>（2）样式层叠</h3><p>样式计算过程中的第二个规则是样式层叠。层叠是 CSS 的一个基本特征，它是一个定义了 <strong>如何合并来自多个源的属性值</strong> 的算法。它在 CSS 处于核心地位，CSS 的全称“层叠样式表”正是强调了这一点。这里不再多说。</p>
+<p>总之，样式计算阶段的目的是为了计算出 DOM 节点中每个元素的具体样式，在计算过程中需要遵守 CSS 的继承和层叠两个规则。这个阶段最终输出的内容是每个 DOM 节点的样式，并被保存在 ComputedStyle 的结构内。</p>
+<p>对于以下代码：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-name">html</span>&gt;</span><br><span class="hljs-tag">&lt;<span class="hljs-name">head</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">link</span> <span class="hljs-attr">href</span>=<span class="hljs-string">"./style.css"</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">style</span>&gt;</span><br><span class="css">        <span class="hljs-selector-class">.juejin</span> &#123;</span><br>            width: 100px;<br>            height: 50px;<br>            background: red;<br>        &#125;<br><span class="css">        <span class="hljs-selector-class">.content</span> &#123;</span><br>            font-size: 25px;<br>            line-height: 25px;<br>            margin: 10px;<br>        &#125;<br>    <span class="hljs-tag">&lt;/<span class="hljs-name">style</span>&gt;</span><br><span class="hljs-tag">&lt;/<span class="hljs-name">head</span>&gt;</span><br><span class="hljs-tag">&lt;<span class="hljs-name">body</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">class</span>=<span class="hljs-string">"juejin"</span>&gt;</span><br>     <span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>CUGGZ<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span><br>    <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">p</span> <span class="hljs-attr">style</span>=<span class="hljs-string">"color: blue"</span> <span class="hljs-attr">class</span>=<span class="hljs-string">"content"</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">span</span>&gt;</span>hello world<span class="hljs-tag">&lt;/<span class="hljs-name">span</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">p</span> <span class="hljs-attr">style</span>=<span class="hljs-string">"display: none;"</span>&gt;</span>浏览器<span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span><br>    <span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span><br><span class="hljs-tag">&lt;/<span class="hljs-name">body</span>&gt;</span><br><span class="hljs-tag">&lt;/<span class="hljs-name">html</span>&gt;</span><br></code></pre></td></tr></table></figure>
+
+<p>最终生成的 CSSOM 树大致如下：</p>
+<p><img src="/img/frontend/00/1710924436-ffebb977ba1b76b7bad36db6102200ff.png" srcset="/img/loading.gif" lazyload></p>
+<h1 id="3、渲染树构建"><a href="#3、渲染树构建" class="headerlink" title="3、渲染树构建"></a>3、渲染树构建</h1><p>在 DOM 树和 CSSOM 树都渲染完成之后，就会进入渲染树的构建阶段。渲染树就是 DOM 树和 CSSOM 树的结合，会得到一个可以知道每个节点会应用什么样式的数据结构。这个结合的过程就是遍历整个 DOM 树，然后在 CSSOM 树里查询到匹配的样式。</p>
+<p>在不同浏览器里，构建渲染树的过程不太一样：</p>
+<ul>
+<li>在 Chrome 里会在每个节点上使用 <code>attach()</code> 方法，把 CSSOM 树的节点挂在 DOM 树上作为渲染树。</li>
+<li>在 Firefox 里会单独构造一个新的结构，用来连接 DOM 树和 CSSOM 树的映射关系。</li>
+</ul>
+<p>那为什么要构建渲染树呢？在上面的示例中可以看到，DOM 树可能包含一些不可见的元素，比如 head 标签，使用 <code>display:none;</code> 属性的元素等。所以在显示页面之前，还要额外地构建一棵 <strong>只包含可见元素的渲染树</strong>。</p>
+<p>下面来看看构建渲染树的过程：</p>
+<p><img src="/img/frontend/00/1710924436-92de27f3b1d8a981c3752378101bec50.png" srcset="/img/loading.gif" lazyload></p>
+<p>可以看到，DOM 树中不可见的节点都没有包含到渲染树中。为了构建渲染树，浏览器上大致做了如下工作：</p>
+<p><strong>遍历 DOM 树中所有可见节点，并把这些节点加到布局中，而不可见的节点会被布局树忽略掉，如 head 标签下面的全部内容，再比如 <code>p.p</code> 这个元素，因为它的属性包含 <code>dispaly:none</code>，所以这个元素也没有被包含进渲染树中。如果给元素设置了 <code>visibility:hidden;</code> 属性，那这个元素会出现在渲染树中，因为具有这个样式的元素是需要占位的，只不过不需要显示出来。</strong></p>
+<p>这里在查找的过程中，出于效率的考虑，会从 CSSOM 树的叶子节点开始查找，对应在 CSS 选择器上也就是从选择器的最右侧向左查找。所以，不建议使用标签选择器和通配符选择器来定义元素样式。</p>
+<p>除此之外，同一个 DOM 节点可能会匹配到多个 CSSOM 节点，而最终的效果由哪个 CSS 规则来确定，就是样式优先级的问题了。当一个 DOM 元素受到多条样式控制时，样式的优先级顺序如下：<strong>内联样式 &gt; ID选择器 &gt; 类选择器 &gt; 标签选择器 &gt; 通用选择器 &gt; 继承样式 &gt; 浏览器默认样式</strong></p>
+<p>CSS 常见选择器的优先级如下：</p>
+<table>
+<thead>
+<tr>
+<th>选择器</th>
+<th>格式</th>
+<th>优先级权重</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>id 选择器</td>
+<td><code>#id</code></td>
+<td>100</td>
+</tr>
+<tr>
+<td>类选择器</td>
+<td><code>.classname</code></td>
+<td>10</td>
+</tr>
+<tr>
+<td>属性选择器</td>
+<td><code>a[ref=“eee”]</code></td>
+<td>10</td>
+</tr>
+<tr>
+<td>伪类选择器</td>
+<td><code>li:last-child</code></td>
+<td>10</td>
+</tr>
+<tr>
+<td>标签选择器</td>
+<td><code>div</code></td>
+<td>1</td>
+</tr>
+<tr>
+<td>伪元素选择器</td>
+<td><code>li:after</code></td>
+<td>1</td>
+</tr>
+<tr>
+<td>相邻兄弟选择器</td>
+<td><code>h1+p</code></td>
+<td>0</td>
+</tr>
+<tr>
+<td>子选择器</td>
+<td><code>ul&amp;gt;li</code></td>
+<td>0</td>
+</tr>
+<tr>
+<td>后代选择器</td>
+<td><code>li a</code></td>
+<td>0</td>
+</tr>
+<tr>
+<td>通配符选择器</td>
+<td><code>*</code></td>
+<td>0</td>
+</tr>
+</tbody></table>
+<p>对于选择器的优先级：</p>
+<ul>
+<li>标签选择器、伪元素选择器：1；</li>
+<li>类选择器、伪类选择器、属性选择器：10；</li>
+<li>id 选择器：100；</li>
+<li>内联样式：1000；</li>
+</ul>
+<p><strong>注意：</strong></p>
+<ul>
+<li><code>!important</code> 声明的样式的优先级最高；</li>
+<li>如果优先级相同，则最后出现的样式生效；</li>
+<li>继承得到的样式的优先级最低；</li>
+</ul>
+<h1 id="4、页面布局"><a href="#4、页面布局" class="headerlink" title="4、页面布局"></a>4、页面布局</h1><p>经过上面的步骤，就生成了一棵 渲染树，这棵树就是展示页面的关键。到现在为止，已经有了需要渲染的所有节点之间的结构关系及其样式信息。下面就需要进行页面的布局。</p>
+<p>通过计算渲染树上每个节点的样式，就能得出来每个元素所占空间的大小和位置。当有了所有元素的大小和位置后，就可以在浏览器的页面区域里去绘制元素的边框了。这个过程就是布局。这个过程中，浏览器对渲染树进行遍历，将元素间嵌套关系以盒模型的形式写入文档流：</p>
+<p><img src="/img/frontend/00/1710924436-f01fd2615ad39beefbdab665cf60b11b.png" srcset="/img/loading.gif" lazyload></p>
+<p>盒模型在布局过程中会计算出元素确切的大小和定位。计算完毕后，相应的信息被写回渲染树上，就形成了 布局渲染树。同时，每一个元素盒子也都携带着自身的样式信息，作为后续绘制的依据。</p>
+<h1 id="5、页面绘制"><a href="#5、页面绘制" class="headerlink" title="5、页面绘制"></a>5、页面绘制</h1><h2 id="5-1、构建图层"><a href="#5-1、构建图层" class="headerlink" title="5.1、构建图层"></a>5.1、构建图层</h2><p>经过布局，每个元素的位置和大小就有了，那下面是不是就该开始绘制页面了？答案是否定的，因为页面上可能有很多复杂的场景，比如3D变化、页面滚动、使用 <code>z-index</code> 进行 z 轴的排序等。所以，为了实现这些效果，渲染引擎还需要为特定的节点生成专用的 <strong>图层</strong>，并生成一棵对应的图层树。</p>
+<p>那什么是图层呢？相信用过 Photoshop 的小伙伴对图层并不陌生。我们也可以在 Chrome 浏览器的开发者工具中，选择 Layers 标签（如果没有，可以在更多工具中查找），就可以看到页面的分层情况，以掘金首页为例，其分层情况如下：</p>
+<p><img src="/img/frontend/00/1710924436-b498d026138472a5969c2c0960cafc26.png" srcset="/img/loading.gif" lazyload></p>
+<p>可以看到，渲染引擎给页面分了很多图层，这些图层会按照一定顺序叠加在一起，就形成了最终的页面。这里，将页面分解成多个图层的操作就成为 <strong>分层</strong>，最后将这些图层合并到一层的操作就成为 <strong>合成</strong>，分层和合成通常是一起使用的。Chrome 引入了分层和合成的机制就是为了提升每帧的渲染效率。</p>
+<p>通常情况下，并不是渲染树上的每个节点都包含一个图层，如果一个节点没有对应的图层，那这个节点就会属于其父节点的图层。那什么样的节点才能让浏览器引擎为其创建一个新的图层呢？需要满足以下其中一个条件：</p>
+<ol>
+<li><p><strong>拥有层叠上下文属性的元素</strong></p>
+<p>我们看到的页面通常是二维的平面，而层叠上下文能够让页面具有三维的概念。这些 HTML 元素按照自身属性的优先级分布在垂直于这个二维平面的 z 轴上。下面是盒模型的层叠规则：</p>
+<p><img src="/img/frontend/00/1710924436-d9f2b6b49f6ebdfc47707db93dc6600b.png" srcset="/img/loading.gif" lazyload></p>
+<p>对于上图，由上到下分别是：</p>
+<ul>
+<li>背景和边框：建立当前层叠上下文元素的背景和边框。</li>
+<li>负的z-index：当前层叠上下文中，z-index属性值为负的元素。</li>
+<li>块级盒：文档流内非行内级非定位后代元素。</li>
+<li>浮动盒：非定位浮动元素。</li>
+<li>行内盒：文档流内行内级非定位后代元素。</li>
+<li>z-index:0：层叠级数为0的定位元素。</li>
+<li>正z-index：z-index属性值为正的定位元素。</li>
+</ul>
+<p><strong>注意:</strong> 当定位元素 <code>z-index:auto</code>，生成盒在当前层叠上下文中的层级为 0，不会建立新的层叠上下文，除非是根元素。</p>
+</li>
+<li><p><strong>需要裁剪的元素</strong></p>
+<p>什么是裁剪呢？假如有一个固定宽高的div盒子，而里面的文字较多超过了盒子的高度，这时就会产生裁剪，浏览器渲染引擎会把裁剪文字内容的一部分用于显示在 div 区域。当出现裁剪时，浏览器的渲染引擎就会为文字部分单独创建一个图层，如果出现滚动条，那么滚动条也会被提升为单独的图层。</p>
+</li>
+</ol>
+<h2 id="5-2、绘制图层"><a href="#5-2、绘制图层" class="headerlink" title="5.2、绘制图层"></a>5.2、绘制图层</h2><p>在完成图层树的构建之后，渲染引擎会对图层树中的每个图层进行绘制，下面就来看看渲染引擎是怎么实现图层绘制的。</p>
+<p><strong>渲染引擎在绘制图层时，会把一个图层的绘制分成很多绘制指令（比如一个图层要设置的背景为黑色），然后把这些指令按照顺序组成一个待绘制的列表：</strong></p>
+<p><img src="/img/frontend/00/1710924436-d99d192b5189630e01232b7447fd6d0a.png" srcset="/img/loading.gif" lazyload></p>
+<p>可以看到，绘制列表中的指令就是一系列的绘制操作。通常情况下，绘制一个元素需要执行多条绘制指令，因为每个元素的背景、边框等属性都需要单独的指令进行绘制。所以在图层绘制阶段，输出的内容就是绘制列表。</p>
+<p>在 Chrome 浏览器的开发者工具中，通过 Layer 标签可以看到图层的绘制列表和绘制过程：</p>
+<p><img src="/img/frontend/00/1710924436-4daeeeb44bf59d5449ecb51e4146190f.png" srcset="/img/loading.gif" lazyload></p>
+<p>绘制列表只是用来记录绘制顺序和绘制指令的列表，而 <strong>绘制操作是由渲染引擎中的合成线程来完成的</strong>。当图层绘制列表准备好之后，主线程会把该绘制列表提交给合成线程。</p>
+<p>有了绘制列表之后，就需要进入光栅化阶段了，<strong>光栅化就是按照绘制列表中的指令生成图片</strong>。每一个图层都对应一张图片，合成线程有了这些图片之后，会将这些图片合成为“一张”图片，并最终将生成的图片发送到后缓冲区，最后将内存显示在屏幕上。这就是一个大致的分层、合成流程。</p>
+<p>注意：合成操作是在合成线程上完成的，所以，在执行合成操作时并不会影响到主线程的执行。</p>
+<p>很多情况下，图层可能很大，比如一篇长文，需要滚动很久才能到底，但是用户只能看到视口的内容，所以没必要把整个图层都绘制出来。因此，合成线程会将图层划分为图块，这些图块的大小通常是 256x256 或者 512x512。合成线程会优先将视口附近的图块生成位图。这样就可以大大加速页面的显示速度。</p>
+<p><strong>至此，整个渲染流程就完成了，其过程总结如下：</strong></p>
+<ol>
+<li>将 HTML 内容构建成 DOM 树；</li>
+<li>将 CSS 内容构建成 CSSOM 树；</li>
+<li>将 DOM 树和 CSSOM 树合成渲染树；</li>
+<li>根据渲染树进行页面元素的布局；</li>
+<li>对渲染树进行分层操作，并生成分层树；</li>
+<li>为每个图层生成绘制列表，并提交到合成线程；</li>
+<li>合成线程将图层分成不同的图块，并通过栅格化将图块转化为位图；</li>
+<li>合成线程给浏览器进程发送绘制图块指令；</li>
+<li>浏览器进程会生成页面，并显示在屏幕上。</li>
+</ol>
+<h1 id="6、其他"><a href="#6、其他" class="headerlink" title="6、其他"></a>6、其他</h1><h2 id="6-1、重排和重绘"><a href="#6-1、重排和重绘" class="headerlink" title="6.1、重排和重绘"></a>6.1、重排和重绘</h2><p>说完浏览器引擎的渲染流程，再来看两个重要的概念：重排（Reflow）和重绘（Repaint）。</p>
+<p>我们知道，渲染树是动态构建的，所以，DOM 节点和 CSS 节点的改动都可能会造成渲染树的重新构建。渲染树的改动就会造成页面的重排或者重绘。下面就来看看这两个概念，以及它们触发的条件和减少触发的操作。</p>
+<h3 id="6-1-1-重排"><a href="#6-1-1-重排" class="headerlink" title="6.1.1 重排"></a>6.1.1 重排</h3><p>当我们的操作引发了 DOM 树中几何尺寸的变化（改变元素的大小、位置、布局方式等），这时渲染树里有改动的节点和它影响的节点都要重新计算。这个过程就叫做重排，也称为回流。在改动发生时，要重新经历页面渲染的整个流程，所以开销是很大的。</p>
+<p>以下操作都会导致页面重排：</p>
+<ul>
+<li>页面首次渲染；</li>
+<li>浏览器窗口大小发生变化；</li>
+<li>元素的内容发生变化；</li>
+<li>元素的尺寸或者位置发生变化；</li>
+<li>元素的字体大小发生变化；</li>
+<li>激活CSS伪类；</li>
+<li>查询某些属性或者调用某些方法；</li>
+<li>添加或者删除可见的DOM元素。</li>
+</ul>
+<p>在触发重排时，由于浏览器渲染页面是基于流式布局的，所以当触发回流时，会导致周围的DOM元素重新排列，它的影响范围有两种：</p>
+<ul>
+<li>全局范围：从根节点开始，对整个渲染树进行重新布局；</li>
+<li>局部范围：对渲染树的某部分或者一个渲染对象进行重新布局。</li>
+</ul>
+<h3 id="6-1-2、重绘"><a href="#6-1-2、重绘" class="headerlink" title="6.1.2、重绘"></a>6.1.2、重绘</h3><p>当对 DOM 的修改导致了样式的变化、但未影响其几何属性（比如修改颜色、背景色）时，浏览器不需重新计算元素的几何属性、直接为该元素绘制新的样式（会跳过重排环节），这个过程叫做重绘。简单来说，重绘是由对元素绘制属性的修改引发的。</p>
+<p>当我们修改元素绘制属性时，页面布局阶段不会执行，因为并没有引起几何位置的变换，所以就直接进入了绘制阶段，然后执行之后的一系列子阶段。相较于重排操作，重绘省去了布局和分层阶段，所以执行效率会比重排操作要高一些。</p>
+<p>下面这些属性会导致回流：</p>
+<ul>
+<li>color、background 相关属性：background-color、background-image 等；</li>
+<li>outline 相关属性：outline-color、outline-width 、text-decoration；</li>
+<li>border-radius、visibility、box-shadow。</li>
+</ul>
+<p>注意：<strong>当触发重排时，一定会触发重绘，但是重绘不一定会引发重排。</strong></p>
+<p>相对来说，重排操作的消耗会比较大，所以在操作中尽量少的造成页面的重排。为了减少重排，可以通过以下方式进行优化：</p>
+<ul>
+<li>在条件允许的情况下尽量使用 CSS3 动画，它可以调用 GPU 执行渲染。</li>
+<li>操作 DOM 时，尽量在低层级的 DOM 节点进行操作</li>
+<li>不要使用 <code>table</code> 布局， 一个小的改动可能会使整个 <code>table</code> 进行重新布局</li>
+<li>使用 CSS 的表达式</li>
+<li>不要频繁操作元素的样式，对于静态页面，可以修改类名，而不是样式。</li>
+<li>使用 absolute 或者 fixed，使元素脱离文档流，这样他们发生变化就不会影响其他元素</li>
+<li>避免频繁操作 DOM，可以创建一个文档片段 <code>documentFragment</code>，在它上面应用所有 DOM 操作，最后再把它添加到文档中</li>
+<li>将元素先设置 <code>display: none</code>，操作结束后再把它显示出来。因为在 display 属性为 none 的元素上进行的 DOM 操作不会引发回流和重绘。</li>
+<li>将 DOM 的多个读操作（或者写操作）放在一起，而不是读写操作穿插着写。这得益于 <strong>浏览器的渲染队列机制</strong>。</li>
+</ul>
+<p>浏览器针对页面的回流与重绘，进行了自身的优化——<strong>渲染队列，</strong> 浏览器会将所有的回流、重绘的操作放在一个队列中，当队列中的操作到了一定的数量或者到了一定的时间间隔，浏览器就会对队列进行批处理。这样就会让多次的回流、重绘变成一次回流重绘。</p>
+<h2 id="6-2、JavaScript-对-DOM-的影响"><a href="#6-2、JavaScript-对-DOM-的影响" class="headerlink" title="6.2、JavaScript 对 DOM 的影响"></a>6.2、JavaScript 对 DOM 的影响</h2><p>最后我们再看看看 JavaScript 脚本对 DOM 的影响。当解析器解析 HTML 时，如果遇到了 script 标签，判断这是脚本，就会暂停 DOM 的解析，因为接下来的 JavaScript 脚本可能会修改当前已经生成的 DOM 结构。</p>
+<p>来看一段代码：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-name">html</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">body</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>hello juejin<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">script</span>&gt;</span><span class="javascript"><span class="hljs-built_in">document</span>.getElementsByTagName(<span class="hljs-string">'div'</span>)[<span class="hljs-number">0</span>].innerText = <span class="hljs-string">'juejin yyds'</span></span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">p</span>&gt;</span>hello world<span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span><br>    <span class="hljs-tag">&lt;/<span class="hljs-name">body</span>&gt;</span><br><span class="hljs-tag">&lt;/<span class="hljs-name">html</span>&gt;</span><br></code></pre></td></tr></table></figure>
+
+<p>这里，当解析完 div 标签后，就会解析 script 标签，这时的 DOM 结构如下：</p>
+<p><img src="/img/frontend/00/1710924436-a61c51498ddfa279a9aa25303206b6ba.png" srcset="/img/loading.gif" lazyload></p>
+<p>这时，HTML 解析器就会暂停工作，JavaScript 引擎就会开始工作，并执行 script 标签中的脚本内容。由于这段脚本修改了第一个 div 的内容，所以执行完这个脚本之后，div 中的文本就变成了 <code>juejin yyds</code>，当脚本执行完成之后，HTML 解析器就会恢复解析过程，继续解析后面的内容，直至生成最终的 DOM。</p>
+<p>上面我们说的 JavaScript 脚本是通过 script 标签直接嵌入到 HTML 中的。当在页面中引入 JavaScript 脚本时，情况就会变得复杂。比如：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-name">html</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">body</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>hello juejin<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">script</span> <span class="hljs-attr">type</span>=<span class="hljs-string">"text/javascript"</span> <span class="hljs-attr">src</span>=<span class="hljs-string">'./index.js'</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">p</span>&gt;</span>hello world<span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span><br>    <span class="hljs-tag">&lt;/<span class="hljs-name">body</span>&gt;</span><br><span class="hljs-tag">&lt;/<span class="hljs-name">html</span>&gt;</span><br></code></pre></td></tr></table></figure>
+
+<p>其实这里的执行流程和上面时一样的，当遇到 script 标签时，HTML 解析器都会暂停解析并去执行脚本文件。不过这里执行 JavaScript 脚本时，需要先下载脚本。脚本的下载过程会阻塞 DOM 的解析，而通常下载又是非常耗时的，会受到网络环境、JavaScript 脚本文件大小等因素的影响。</p>
+<p>不过 Chrome 浏览器做了很多优化，其中一个主要的优化是预解析操作。当渲染引擎收到字节流之后，会开启一个预解析线程，用来分析 HTML 文件中包含的 JavaScript、CSS 等相关文件，解析到相关文件之后，预解析线程会提前下载这些文件。</p>
+<p>经过上面的分析可知，JavaScript 线程会阻塞 DOM 的解析，我们可以通过 CDN、压缩脚本等方式来加速 JavaScript 脚本的加载。如果脚本文件中没有操作 DOM 的相关代码，就可以将 JavaScript 脚本设置为异步加载，可以给 script 标签添加 async 或 defer 属性来实现脚本的异步加载。两者的使用方式如下：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-name">script</span> <span class="hljs-attr">async</span> <span class="hljs-attr">type</span>=<span class="hljs-string">"text/javascript"</span> <span class="hljs-attr">src</span>=<span class="hljs-string">'./index.js'</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span><br><span class="hljs-tag">&lt;<span class="hljs-name">script</span> <span class="hljs-attr">defer</span> <span class="hljs-attr">type</span>=<span class="hljs-string">"text/javascript"</span> <span class="hljs-attr">src</span>=<span class="hljs-string">'./index.js'</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span><br></code></pre></td></tr></table></figure>
+
+<p>下图可以直观的看出异步加载和直接加载的区别:</p>
+<p><img src="/img/frontend/00/1710924436-43c0e63cce4e5bff00fee5c4fa38328c.png" srcset="/img/loading.gif" lazyload></p>
+<p>其中蓝色代表 JavaScript 脚本加载时间，红色代表 JavaScript 脚本执行时间，绿色代表 HTML 解析。</p>
+<p>JS 的三种异步加载方式</p>
+<ul>
+<li>没有属性的 script 标签。页面解析遇到 script 标签时，会暂停解析，转而去加载和执行 js 脚本。会阻塞页面的解析。</li>
+<li>defer 属性的 script 标签。defer 属性代表异步加载，延迟执行，会在 HTML 解析完成之后再执行脚本。会在 DOMContentLoaded 事件触发之前完成。优先级高于 DOMContentLoaded 事件，脚本执行完成之后再触发 DOMContentLoaded 事件。</li>
+<li>async 属性的 script 标签。加载和执行都是异步，在脚本下载完之后立即执行。页面没解析完时，会等脚本执行完再解析页面。</li>
+</ul>
+<p><strong>defer 和 async 属性都是去异步加载外部的 JS 脚本文件，它们都不会阻塞页面的解析</strong>，其区别如下：</p>
+<ul>
+<li><strong>执行顺序：</strong> <ul>
+<li>多个带 async 属性的标签，不能保证加载的顺序；</li>
+<li>多个带 defer 属性的标签，按照加载顺序执行；</li>
+</ul>
+</li>
+<li><strong>脚本是否并行执行：</strong> <ul>
+<li>async 属性，表示 <strong>后续文档的加载和执行与 js 脚本的加载和执行是并行进行的</strong>，即异步执行；</li>
+<li>defer 属性，加载后续文档的过程和 js 脚本的加载(此时仅加载不执行)是并行进行的(异步)，JavaScript 脚本需要等到文档所有元素解析完成之后才执行，DOMContentLoaded 事件触发执行之前。</li>
+</ul>
+</li>
+</ul>
+<p><strong>DOMContentLoaded和Load事件</strong></p>
+<p>对浏览器来说，页面加载主要有 DOMContentLoaded 和 Load 两个事件</p>
+<ul>
+<li>DOMContentLoaded：当页面解析完成后即 DOM 加载完成之后触发该事件。defer 优先级高于该事件，等脚本执行完再触发该事件。</li>
+<li>load：等页面所有资源加载完才会触发，例如 js、CSS、图片视频等。</li>
+</ul>
+<p>再来看另外一种情况，示例代码如下：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-name">html</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">head</span>&gt;</span><br>   <span class="hljs-tag">&lt;<span class="hljs-name">style</span> <span class="hljs-attr">src</span>=<span class="hljs-string">'./style.css'</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">style</span>&gt;</span><br>    <span class="hljs-tag">&lt;/<span class="hljs-name">head</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">body</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>hello juejin<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">script</span>&gt;</span><br><span class="javascript">            <span class="hljs-keyword">const</span> ele = <span class="hljs-built_in">document</span>.getElementsByTagName(<span class="hljs-string">'div'</span>)[<span class="hljs-number">0</span>];</span><br><span class="actionscript">            ele.innerText = <span class="hljs-string">'juejin yyds'</span>;    <span class="hljs-comment">// 操作DOM</span></span><br><span class="actionscript">            ele.style.color = <span class="hljs-string">'skyblue'</span>;      <span class="hljs-comment">// 操作CSSOM</span></span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">p</span>&gt;</span>hello world<span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span><br>    <span class="hljs-tag">&lt;/<span class="hljs-name">body</span>&gt;</span><br><span class="hljs-tag">&lt;/<span class="hljs-name">html</span>&gt;</span><br></code></pre></td></tr></table></figure>
+
+<p>上面的代码中，第 9 行是操作 DOM 的，而第 10 行是操作 CSSOM 的，所以在执行 JavaScript 脚本之前，还需要先解析 JavaScript 语句之上所有的 CSS 样式。所以如果代码里引用了外部的 CSS 文件，那么在执行 JavaScript 之前，还需要等待外部的 CSS 文件下载完成，并解析生成 CSSOM 对象之后，才能执行 JavaScript 脚本。而 JavaScript 引擎在解析 JavaScript 之前，是不知道 JavaScript 是否操纵了 CSSOM 的，所以渲染引擎在遇到 JavaScript 脚本时，不管该脚本是否操纵了 CSSOM，都会执行 CSS 文件下载，解析操作，再执行 JavaScript 脚本。</p>
+<p>所以，JavaScript 会阻塞 DOM 生成，而样式文件又会阻塞 JavaScript 的执行，我们在开发时需要格外注意这一点。</p>
+<p>最后再来看一种情况，示例代码如下：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-name">html</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">head</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">style</span> <span class="hljs-attr">src</span>=<span class="hljs-string">'./style.css'</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">style</span>&gt;</span><br>    <span class="hljs-tag">&lt;/<span class="hljs-name">head</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">body</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>hello juejin<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">script</span> <span class="hljs-attr">type</span>=<span class="hljs-string">"text/javascript"</span> <span class="hljs-attr">src</span>=<span class="hljs-string">'./index.js'</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">p</span>&gt;</span>hello world<span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span><br>    <span class="hljs-tag">&lt;/<span class="hljs-name">body</span>&gt;</span><br><span class="hljs-tag">&lt;/<span class="hljs-name">html</span>&gt;</span><br></code></pre></td></tr></table></figure>
+
+<p>这段 HTML 代码中包含了 CSS 外部引用和 JavaScript 外部文件，在接收到 HTML 数据之后的预解析过程中，HTML 预解析器识别出来了有 CSS 文件和 JavaScript 文件需要下载，就会同时发起两个文件的下载请求。</p>
+<h2 id="6-3、影响页面展示的因素以及优化策略"><a href="#6-3、影响页面展示的因素以及优化策略" class="headerlink" title="6.3、影响页面展示的因素以及优化策略"></a>6.3、影响页面展示的因素以及优化策略</h2><p>从发起 URL 请求开始，到首次显示页面的内容，在视觉上经历的三个阶段。</p>
+<ul>
+<li>第一个阶段，等请求发出去之后，到提交数据阶段，这时页面展示出来的还是之前页面的内容。</li>
+<li>第二个阶段，提交数据之后渲染进程会创建一个空白页面，我们通常把这段时间称为解析白屏，并等待 CSS 文件和 JavaScript 文件的加载完成，生成 CSSOM 和 DOM，然后合成布局树，最后还要经过一系列的步骤准备首次渲染。</li>
+<li>第三个阶段，等首次渲染完成之后，就开始进入完整页面的生成阶段了，然后页面会一点点被绘制出来。</li>
+</ul>
+<p>影响第一个阶段的因素主要是网络或者是服务器处理这块儿。我们重点关注第二个阶段，这个阶段的主要问题是白屏时间，如果白屏时间过久，就会影响到用户体验。为了缩短白屏时间，我们来挨个分析这个阶段的主要任务，包括了解析 HTML、下载 CSS、下载 JavaScript、生成 CSSOM、执行 JavaScript、生成布局树、绘制页面一系列操作。</p>
+<p>通常情况下的瓶颈主要体现在下载 CSS 文件、下载 JavaScript 文件和执行 JavaScript。所以要想缩短白屏时长，可以有以下策略：</p>
+<ul>
+<li>通过内联 JavaScript、内联 CSS 来移除这两种类型的文件下载，这样获取到 HTML 文件之后就可以直接开始渲染流程了。</li>
+<li>但并不是所有的场合都适合内联，那么还可以尽量减少文件大小，比如通过 webpack 等工具移除一些不必要的注释，并压缩 JavaScript 文件。</li>
+<li>还可以将一些不需要在解析 HTML 阶段使用的 JavaScript 标记上 sync 或者 defer。</li>
+<li>对于大的 CSS 文件，可以通过媒体查询属性，将其拆分为多个不同用途的 CSS 文件，这样只有在特定的场景下才会加载特定的 CSS 文件。</li>
+</ul>
+<p>通过以上策略就能缩短白屏展示的时长了，不过在实际项目中，总是存在各种各样的情况，这些策略并不能随心所欲地去引用，所以还需要结合实际情况来调整最佳方案。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/HTTP/" class="category-chain-item">HTTP</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/HTTP/" class="print-no-link">#HTTP</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>浏览器渲染引擎工作原理</div>
+      <div>https://flepeng.github.io/021-frontend-浏览器渲染引擎工作原理/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年3月4日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/042-%E5%9B%BD%E4%BA%A7-DM-%E8%BE%BE%E6%A2%A6%E6%95%B0%E6%8D%AE%E5%BA%93-21-%E5%91%BD%E4%BB%A4-DM-%E6%A8%A1%E5%BC%8F-SQL/" title="DM 模式 SQL">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">DM 模式 SQL</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/021-Java-POJO%E3%80%81DO%E3%80%81DTO%E3%80%81BO%E3%80%81VO-%E8%A7%A3%E9%87%8A/" title="POJO、DO、DTO、BO、VO 解释">
+                        <span class="hidden-mobile">POJO、DO、DTO、BO、VO 解释</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

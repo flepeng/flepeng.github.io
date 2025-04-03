@@ -1,0 +1,901 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Linux 上的 &#x2F;proc 目录是一种文件系统，即 proc 文件系统。与其它常见的文件系统不同的是，&#x2F;proc 是一种伪文件系统（也即虚拟文件系统），存储的是当前内核运行状态的一系列特殊文件，用户可以通过这些文件查看有关系统硬件及当前正在运行进程的信息，甚至可以通过更改其中某些文件来改变内核的运行状态。 基于 &#x2F;proc 文件系统如上所述的特殊性，其内的文件也常被">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux proc 目录详解">
+<meta property="og:url" content="https://flepeng.github.io/003-Linux-41-%E7%9B%AE%E5%BD%95-Linux-proc-%E7%9B%AE%E5%BD%95%E8%AF%A6%E8%A7%A3/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="Linux 上的 &#x2F;proc 目录是一种文件系统，即 proc 文件系统。与其它常见的文件系统不同的是，&#x2F;proc 是一种伪文件系统（也即虚拟文件系统），存储的是当前内核运行状态的一系列特殊文件，用户可以通过这些文件查看有关系统硬件及当前正在运行进程的信息，甚至可以通过更改其中某些文件来改变内核的运行状态。 基于 &#x2F;proc 文件系统如上所述的特殊性，其内的文件也常被">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-07-04T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.271Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Linux">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>Linux proc 目录详解 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Linux proc 目录详解"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-07-05 00:00" pubdate>
+          2021年7月5日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          5.4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          46 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Linux proc 目录详解</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>Linux 上的 &#x2F;proc 目录是一种文件系统，即 proc 文件系统。与其它常见的文件系统不同的是，&#x2F;proc 是一种伪文件系统（也即虚拟文件系统），存储的是当前内核运行状态的一系列特殊文件，用户可以通过这些文件查看有关系统硬件及当前正在运行进程的信息，甚至可以通过更改其中某些文件来改变内核的运行状态。</p>
+<p>基于 &#x2F;proc 文件系统如上所述的特殊性，其内的文件也常被称作虚拟文件，并具有一些独特的特点。例如：</p>
+<ul>
+<li>有些文件虽然使用查看命令查看时会返回大量信息，但文件本身的大小却会显示为 0 字节。</li>
+<li>这些特殊文件中大多数文件的时间及日期属性通常为当前系统时间和日期，这跟它们随时会被刷新（存储于RAM中）有关。</li>
+</ul>
+<p>为了查看及使用上的方便，这些文件通常会按照相关性进行分类存储于不同的目录甚至子目录中，如 </p>
+<ul>
+<li>&#x2F;proc&#x2F;scsi 目录中存储的就是当前系统上所有 SCSI 设备的相关信息，</li>
+<li>&#x2F;proc&#x2F;N 中存储的则是系统当前正在运行的进程的相关信息，其中N为正在运行的进程（可以想象得到，在某进程结束后其相关目录则会消失）。</li>
+</ul>
+<p>大多数虚拟文件可以使用文件查看命令如 cat、more 或者 less 进行查看，有些文件信息表述的内容可以一目了然，但也有文件的信息却不怎么具有可读性。不过，这些可读性较差的文件在使用一些命令如 apm、free、lspci 或 top 查看时却可以有着不错的表现。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@192 ~]<span class="hljs-comment"># ll /proc</span><br>总用量 0<br>dr-xr-xr-x.  9 root    root                  0 8月  30 16:48 1                   <span class="hljs-comment"># 目录中包含许多以数字命名的子目录，这些数字表示系统当前正在运行进程的进程号，里面包含对应进程相关的多个信息文件</span><br>dr-xr-xr-x.  9 root    root                  0 8月  30 16:48 10<br>dr-xr-xr-x.  9 root    root                  0 8月  30 16:48 1017<br>dr-xr-xr-x.  9 root    root                  0 8月  30 16:48 1019<br>dr-xr-xr-x.  9 root    root                  0 8月  30 16:48 1021<br>dr-xr-xr-x.  9 root    root                  0 8月  30 16:48 11<br>dr-xr-xr-x.  9 root    root                  0 8月  30 19:06 1284<br>dr-xr-xr-x.  9 root    root                  0 8月  30 16:48 13<br>dr-xr-xr-x.  9 root    root                  0 8月  30 16:48 14<br>dr-xr-xr-x.  9 root    root                  0 8月  30 16:48 7<br>dr-xr-xr-x.  9 root    root                  0 8月  30 16:48 8<br>dr-xr-xr-x.  9 root    root                  0 8月  30 16:48 9<br>dr-xr-xr-x.  9 root    root                  0 8月  30 16:48 95<br>                                                             ... 这种类型的还有很多<br>                                                             <br>dr-xr-xr-x.  2 root    root                  0 8月  30 23:20 acpi<br>dr-xr-xr-x.  5 root    root                  0 8月  30 23:20 asound<br>-r--r--r--.  1 root    root                  0 8月  30 23:20 buddyinfo           <span class="hljs-comment"># 用于诊断内存碎片问题的相关信息文件</span><br>dr-xr-xr-x.  4 root    root                  0 8月  30 23:20 bus<br>-r--r--r--.  1 root    root                  0 8月  30 23:20 cgroups<br>-r--r--r--.  1 root    root                  0 8月  30 23:20 cmdline             <span class="hljs-comment"># 在启动时传递至内核的相关参数信息，这些信息通常由lilo或grub等启动管理工具进行传递</span><br>-r--r--r--.  1 root    root                  0 8月  30 23:20 consoles<br>-r--r--r--.  1 root    root                  0 8月  30 23:20 cpuinfo             <span class="hljs-comment"># 包含了有关 CPU 的详细信息，包括厂商、型号、频率、缓存等信息</span><br>-r--r--r--.  1 root    root                  0 8月  30 23:20 crypto              <span class="hljs-comment"># 系统上已安装的内核使用的密码算法及每个算法的详细信息列表</span><br>-r--r--r--.  1 root    root                  0 8月  30 23:20 devices             <span class="hljs-comment"># 系统已经加载的所有块设备和字符设备的信息，包含主设备号和设备组（与主设备号对应的设备类型）名；</span><br>-r--r--r--.  1 root    root                  0 8月  30 23:20 diskstats           <span class="hljs-comment"># 每块磁盘设备的磁盘I/O统计信息列表；（内核2.5.69以后的版本支持此功能）</span><br>-r--r--r--.  1 root    root                  0 8月  30 23:20 dma                 <span class="hljs-comment"># 每个正在使用且注册的ISA DMA通道的信息列表</span><br>dr-xr-xr-x.  2 root    root                  0 8月  30 23:20 driver<br>-r--r--r--.  1 root    root                  0 8月  30 23:20 execdomains         <span class="hljs-comment"># 内核当前支持的执行域（每种操作系统独特“个性”）信息列表</span><br>-r--r--r--.  1 root    root                  0 8月  30 23:20 fb                  <span class="hljs-comment"># 帧缓冲设备列表文件，包含帧缓冲设备的设备号和相关驱动信息 </span><br>-r--r--r--.  1 root    root                  0 8月  30 23:20 filesystems         <span class="hljs-comment"># 当前被内核支持的文件系统类型列表文件，被标示为nodev的文件系统表示不需要块设备的支持；通常mount一个设备时，如果没有指定文件系统类型将通过此文件来决定其所需文件系统的类型</span><br>dr-xr-xr-x.  4 root    root                  0 8月  30 23:20 fs<br>-r--r--r--.  1 root    root                  0 8月  30 23:20 interrupts          <span class="hljs-comment"># X86 或 X86_64 体系架构系统上每个 IRQ 相关的中断号列表；多路处理器平台上每个CPU对于每个I/O设备均有自己的中断号；</span><br>-r--r--r--.  1 root    root                  0 8月  30 23:20 iomem               <span class="hljs-comment"># 每个物理设备上的记忆体（RAM或者ROM）在系统内存中的映射信息</span><br>-r--r--r--.  1 root    root                  0 8月  30 23:20 ioports             <span class="hljs-comment"># 当前正在使用且已经注册过的与物理设备进行通讯的输入-输出端口范围信息列表；</span><br>dr-xr-xr-x. 56 root    root                  0 8月  30 23:20 irq<br>-r--r--r--.  1 root    root                  0 8月  30 23:20 kallsyms            <span class="hljs-comment"># 模块管理工具用来动态链接或绑定可装载模块的符号定义，由内核输出；（内核2.5.71以后的版本支持此功能）；通常这个文件中的信息量相当大</span><br>-r--------.  1 root    root    140737486266368 8月  30 23:20 kcore               <span class="hljs-comment"># 系统使用的物理内存，以ELF核心文件（core file）格式存储，其文件大小为已使用的物理内存（RAM）加上4KB；这个文件用来检查内核数据结构的当前状态，因此，通常由GBD通常调试工具使用，但不能使用文件查看命令打开此文件</span><br>-r--r--r--.  1 root    root                  0 8月  30 23:20 keys<br>-r--r--r--.  1 root    root                  0 8月  30 23:20 key-users<br>-r--------.  1 root    root                  0 8月  30 23:20 kmsg                <span class="hljs-comment"># 此文件用来保存由内核输出的信息，通常由 /sbin/klogd 或 /bin/dmsg 等程序使用，不要试图使用查看命令打开此文件；</span><br>-r--------.  1 root    root                  0 8月  30 23:20 kpagecount<br>-r--------.  1 root    root                  0 8月  30 23:20 kpageflags<br>-r--r--r--.  1 root    root                  0 8月  30 23:20 loadavg             <span class="hljs-comment"># 保存关于CPU和磁盘I/O的负载平均值，其前三列分别表示每1秒钟、每5秒钟及每15秒的负载平均值，类似于uptime命令输出的相关信息；第四列是由斜线隔开的两个数值，前者表示当前正由内核调度的实体（进程和线程）的数目，后者表示系统当前存活的内核调度实体的数目；第五列表示此文件被查看前最近一个由内核创建的进程的PID；</span><br>-r--r--r--.  1 root    root                  0 8月  30 23:20 locks               <span class="hljs-comment"># 保存当前由内核锁定的文件的相关信息，包含内核内部的调试数据；每个锁定占据一行，且具有一个惟一的编号；  </span><br>-r--r--r--.  1 root    root                  0 8月  30 23:20 mdstat              <span class="hljs-comment"># 保存RAID相关的多块磁盘的当前状态信息，在没有使用RAID机器上，其显示为如下状态：</span><br>-r--r--r--.  1 root    root                  0 8月  30 23:20 meminfo             <span class="hljs-comment"># 系统中关于当前内存的利用状况等的信息，包括可用内存、缓存大小、交换分区等信息。常由free命令使用；可以使用文件查看命令直接读取此文件，其内容显示为两列，前者为统计属性，后者为对应的值</span><br>-r--r--r--.  1 root    root                  0 8月  30 23:20 misc<br>-r--r--r--.  1 root    root                  0 8月  30 23:20 modules             <span class="hljs-comment"># 当前装入内核的所有模块名称列表，可以由lsmod命令使用，也可以直接查看</span><br>lrwxrwxrwx.  1 root    root                 11 8月  30 23:20 mounts -&gt; self/mounts   <span class="hljs-comment"># 在内核2.4.29版本以前，此文件的内容为系统当前挂载的所有文件系统，在2.4.19以后的内核中引进了每个进程使用独立挂载名称空间的方式，此文件则随之变成了指向/proc/self/mounts（每个进程自身挂载名称空间中的所有挂载点列表）文件的符号链接；/proc/self是一个独特的目录，后文中会对此目录进行介绍；</span><br>dr-xr-xr-x.  3 root    root                  0 8月  30 23:20 mpt<br>-rw-r--r--.  1 root    root                  0 8月  30 23:20 mtrr<br>lrwxrwxrwx.  1 root    root                  8 8月  30 23:20 net -&gt; self/net<br>-r--------.  1 root    root                  0 8月  30 23:20 pagetypeinfo<br>-r--r--r--.  1 root    root                  0 8月  30 23:20 partitions          <span class="hljs-comment"># 块设备每个分区的主设备号（major）和次设备号（minor）等信息，同时包括每个分区所包含的块（block）数目（如下面输出中第三列所示）；</span><br>-r--r--r--.  1 root    root                  0 8月  30 23:20 sched_debug<br>-r--r--r--.  1 root    root                  0 8月  30 23:20 schedstat<br>dr-xr-xr-x.  4 root    root                  0 8月  30 23:20 scsi<br>lrwxrwxrwx.  1 root    root                  0 8月  30 16:48 self -&gt; 2189<br>-r--------.  1 root    root                  0 8月  30 23:20 slabinfo            <span class="hljs-comment"># 在内核中频繁使用的对象（如inode、dentry等）都有自己的cache，即slab pool，而 /proc/slabinfo 文件列出了这些对象相关 slap 的信息；</span><br>-r--r--r--.  1 root    root                  0 8月  30 23:20 softirqs<br>-r--r--r--.  1 root    root                  0 8月  30 23:20 <span class="hljs-built_in">stat</span>                <span class="hljs-comment"># 实时追踪自系统上次启动以来的多种统计信息；</span><br>-r--r--r--.  1 root    root                  0 8月  30 16:48 swaps               <span class="hljs-comment"># 当前系统上的交换分区及其空间利用信息，如果有多个交换分区的话，则会每个交换分区的信息分别存储于/proc/swap目录中的单独文件中，而其优先级数字越低，被使用到的可能性越大；</span><br>dr-xr-xr-x.  1 root    root                  0 8月  30 16:48 sys<br>--w-------.  1 root    root                  0 8月  30 23:20 sysrq-trigger<br>dr-xr-xr-x.  2 root    root                  0 8月  30 23:20 sysvipc<br>-r--r--r--.  1 root    root                  0 8月  30 23:20 timer_list<br>-rw-r--r--.  1 root    root                  0 8月  30 23:20 timer_stats<br>dr-xr-xr-x.  4 root    root                  0 8月  30 23:20 tty<br>-r--r--r--.  1 root    root                  0 8月  30 23:20 uptime              <span class="hljs-comment"># 系统上次启动以来的运行时间，其第一个数字表示系统运行时间，第二个数字表示系统空闲时间，单位是秒；</span><br>-r--r--r--.  1 root    root                  0 8月  30 23:20 version             <span class="hljs-comment"># 当前系统运行的内核版本号，包括内核版本、GCC 版本等信息。</span><br>-r--------.  1 root    root                  0 8月  30 23:20 vmallocinfo<br>-r--r--r--.  1 root    root                  0 8月  30 23:20 vmstat              <span class="hljs-comment"># 当前系统虚拟内存的多种统计数据，信息量可能会比较大，这因系统而有所不同，可读性较好；</span><br>-r--r--r--.  1 root    root                  0 8月  30 23:20 zoneinfo            <span class="hljs-comment"># 内存区域（zone）的详细信息列表，信息量较大，</span><br></code></pre></td></tr></table></figure>
+
+
+<h2 id="2-部分目录展示"><a href="#2-部分目录展示" class="headerlink" title="2 部分目录展示"></a>2 部分目录展示</h2><h3 id="2-1-proc-cpuinifo-CPU-的信息-型号、家族、缓存大小等"><a href="#2-1-proc-cpuinifo-CPU-的信息-型号、家族、缓存大小等" class="headerlink" title="2.1 /proc/cpuinifo CPU 的信息(型号、家族、缓存大小等)"></a>2.1 <code>/proc/cpuinifo</code> CPU 的信息(型号、家族、缓存大小等)</h3><p>该文件包含了当前系统 CPU 的参数信息，包括 CPU 的核心数量、每个核心的工作频率、缓存大小、字宽地址线长度等</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@192 ~]<span class="hljs-comment"># cat /proc/cpuinfo</span><br>processor	: 0<br>vendor_id	: GenuineIntel<br>cpu family	: 6<br>model		: 142<br>model name	: Intel(R) Core(TM) i5-7200U CPU @ 2.50GHz<br>stepping	: 9<br>microcode	: 0xde<br>cpu MHz		: 2712.002<br>cache size	: 3072 KB<br>physical id	: 0<br>siblings	: 1<br>core id		: 0<br>cpu cores	: 1<br>apicid		: 0<br>initial apicid	: 0<br>fpu		: yes<br>fpu_exception	: yes<br>cpuid level	: 22<br>wp		: yes<br>flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon nopl xtopology tsc_reliable nonstop_tsc eagerfpu pni pclmulqdq ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch invpcid_single ssbd ibrs ibpb stibp fsgsbase tsc_adjust bmi1 avx2 smep bmi2 invpcid rdseed adx smap clflushopt xsaveopt xsavec xgetbv1 arat md_clear spec_ctrl intel_stibp flush_l1d arch_capabilities<br>bogomips	: 5424.00<br>clflush size	: 64<br>cache_alignment	: 64<br>address sizes	: 45 bits physical, 48 bits virtual<br>power management:<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="2-2-proc-meminfo-物理内存、交换空间"><a href="#2-2-proc-meminfo-物理内存、交换空间" class="headerlink" title="2.2 /proc/meminfo 物理内存、交换空间"></a>2.2 <code>/proc/meminfo</code> 物理内存、交换空间</h3><p>这个文件显示的是系统中当前的内存状态信息，如物理内存总容量、已使用内存、空闲内存、共享内存、交换内存大小，等等。</p>
+<p>在日常的开发工作中，开发者通常更偏向于通过 top 命令的输出，查看系统当前的内存使用状况，因为大多数时候，只关心内存的总量和当前的占用量就足够了。</p>
+<p>但是在某些特殊情况下，还是需要参考这个文件中提供的更加详细的内存状态信息，如 slab 内存占用量(记录在一个页框中如何划分和分配小存储区用的内存)、可回收内存量 (SReclaimable)、内核栈空间大小(Kernel Stack)、使用 malloc 分配的堆内存总量，以及使用 mmap 映射的内存总量，等等。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@192 ~]<span class="hljs-comment"># cat /proc/meminfo</span><br>MemTotal:         995676 kB<br>MemFree:          689556 kB<br>MemAvailable:     674300 kB<br>Buffers:            2108 kB<br>Cached:            95772 kB<br>SwapCached:            0 kB<br>Active:            86368 kB<br>Inactive:          73484 kB<br>Active(anon):      62468 kB<br>Inactive(anon):     7300 kB<br>Active(file):      23900 kB<br>Inactive(file):    66184 kB<br>Unevictable:           0 kB<br>Mlocked:               0 kB<br>SwapTotal:       2097148 kB<br>SwapFree:        2097148 kB<br>Dirty:                16 kB<br>Writeback:             0 kB<br>AnonPages:         62004 kB<br>Mapped:            23952 kB<br>Shmem:              7796 kB<br>Slab:              58156 kB<br>SReclaimable:      22172 kB<br>SUnreclaim:        35984 kB<br>KernelStack:        3856 kB<br>PageTables:         3824 kB<br>NFS_Unstable:          0 kB<br>Bounce:                0 kB<br>WritebackTmp:          0 kB<br>CommitLimit:     2594984 kB<br>Committed_AS:     314776 kB<br>VmallocTotal:   34359738367 kB<br>VmallocUsed:      181636 kB<br>VmallocChunk:   34359310332 kB<br>Percpu:            34816 kB<br>HardwareCorrupted:     0 kB<br>AnonHugePages:      4096 kB<br>CmaTotal:              0 kB<br>CmaFree:               0 kB<br>HugePages_Total:       0<br>HugePages_Free:        0<br>HugePages_Rsvd:        0<br>HugePages_Surp:        0<br>Hugepagesize:       2048 kB<br>DirectMap4k:       71552 kB<br>DirectMap2M:      976896 kB<br>DirectMap1G:           0 kB<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="2-3-proc-mounts-已加载的文件系统的列表"><a href="#2-3-proc-mounts-已加载的文件系统的列表" class="headerlink" title="2.3 /proc/mounts 已加载的文件系统的列表"></a>2.3 <code>/proc/mounts</code> 已加载的文件系统的列表</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@192 ~]<span class="hljs-comment"># cat /proc/mounts</span><br>sysfs /sys sysfs rw,seclabel,nosuid,nodev,noexec,relatime 0 0<br>proc /proc proc rw,nosuid,nodev,noexec,relatime 0 0<br>devtmpfs /dev devtmpfs rw,seclabel,nosuid,size=485752k,nr_inodes=121438,mode=755 0 0<br>securityfs /sys/kernel/security securityfs rw,nosuid,nodev,noexec,relatime 0 0<br>tmpfs /dev/shm tmpfs rw,seclabel,nosuid,nodev 0 0<br>devpts /dev/pts devpts rw,seclabel,nosuid,noexec,relatime,gid=5,mode=620,ptmxmode=000 0 0<br>tmpfs /run tmpfs rw,seclabel,nosuid,nodev,mode=755 0 0<br>tmpfs /sys/fs/cgroup tmpfs ro,seclabel,nosuid,nodev,noexec,mode=755 0 0<br>cgroup /sys/fs/cgroup/systemd cgroup rw,seclabel,nosuid,nodev,noexec,relatime,xattr,release_agent=/usr/lib/systemd/systemd-cgroups-agent,name=systemd 0 0<br>pstore /sys/fs/pstore pstore rw,nosuid,nodev,noexec,relatime 0 0<br>cgroup /sys/fs/cgroup/memory cgroup rw,seclabel,nosuid,nodev,noexec,relatime,memory 0 0<br>cgroup /sys/fs/cgroup/hugetlb cgroup rw,seclabel,nosuid,nodev,noexec,relatime,hugetlb 0 0<br>cgroup /sys/fs/cgroup/net_cls,net_prio cgroup rw,seclabel,nosuid,nodev,noexec,relatime,net_prio,net_cls 0 0<br>cgroup /sys/fs/cgroup/blkio cgroup rw,seclabel,nosuid,nodev,noexec,relatime,blkio 0 0<br>cgroup /sys/fs/cgroup/perf_event cgroup rw,seclabel,nosuid,nodev,noexec,relatime,perf_event 0 0<br>cgroup /sys/fs/cgroup/devices cgroup rw,seclabel,nosuid,nodev,noexec,relatime,devices 0 0<br>cgroup /sys/fs/cgroup/pids cgroup rw,seclabel,nosuid,nodev,noexec,relatime,pids 0 0<br>cgroup /sys/fs/cgroup/cpu,cpuacct cgroup rw,seclabel,nosuid,nodev,noexec,relatime,cpuacct,cpu 0 0<br>cgroup /sys/fs/cgroup/freezer cgroup rw,seclabel,nosuid,nodev,noexec,relatime,freezer 0 0<br>cgroup /sys/fs/cgroup/cpuset cgroup rw,seclabel,nosuid,nodev,noexec,relatime,cpuset 0 0<br>configfs /sys/kernel/config configfs rw,relatime 0 0<br>/dev/mapper/centos_192-root / xfs rw,seclabel,relatime,attr2,inode64,noquota 0 0<br>selinuxfs /sys/fs/selinux selinuxfs rw,relatime 0 0<br>systemd-1 /proc/sys/fs/binfmt_misc autofs rw,relatime,fd=31,pgrp=1,timeout=0,minproto=5,maxproto=5,direct,pipe_ino=13681 0 0<br>hugetlbfs /dev/hugepages hugetlbfs rw,seclabel,relatime 0 0<br>debugfs /sys/kernel/debug debugfs rw,relatime 0 0<br>mqueue /dev/mqueue mqueue rw,seclabel,relatime 0 0<br>/dev/sda1 /boot xfs rw,seclabel,relatime,attr2,inode64,noquota 0 0<br>tmpfs /run/user/0 tmpfs rw,seclabel,nosuid,nodev,relatime,size=99568k,mode=700 0 0<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="2-4-proc-devices-可用设备的列表"><a href="#2-4-proc-devices-可用设备的列表" class="headerlink" title="2.4 /proc/devices 可用设备的列表"></a>2.4 <code>/proc/devices</code> 可用设备的列表</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@192 ~]<span class="hljs-comment"># cat /proc/devices</span><br>Character devices:<br>  1 mem<br>  4 /dev/vc/0<br>  4 tty<br>  4 ttyS<br>  5 /dev/tty<br>  5 /dev/console<br>  5 /dev/ptmx<br>  7 vcs<br> 10 misc<br> 13 input<br> 14 sound<br> 21 sg<br> 29 fb<br> 99 ppdev<br>116 alsa<br>128 ptm<br>136 pts<br>162 raw<br>180 usb<br>188 ttyUSB<br>189 usb_device<br>202 cpu/msr<br>203 cpu/cpuid<br>226 drm<br>243 aux<br>244 dimmctl<br>245 ndctl<br>246 hidraw<br>247 usbmon<br>248 bsg<br>249 hmm_device<br>250 watchdog<br>251 iio<br>252 rtc<br>253 dax<br>254 tpm<br><br>Block devices:<br>259 blkext<br>  8 sd<br>  9 md<br> 11 sr<br> 65 sd<br> 66 sd<br> 67 sd<br> 68 sd<br> 69 sd<br> 70 sd<br> 71 sd<br>128 sd<br>129 sd<br>130 sd<br>131 sd<br>132 sd<br>133 sd<br>134 sd<br>135 sd<br>253 device-mapper<br>254 mdp<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="2-5-proc-filesystems-被支持的文件系统"><a href="#2-5-proc-filesystems-被支持的文件系统" class="headerlink" title="2.5 /proc/filesystems 被支持的文件系统"></a>2.5 <code>/proc/filesystems</code> 被支持的文件系统</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@192 ~]<span class="hljs-comment"># cat /proc/filesystems</span><br>nodev	sysfs<br>nodev	rootfs<br>nodev	ramfs<br>nodev	bdev<br>nodev	proc<br>nodev	cgroup<br>nodev	cpuset<br>nodev	tmpfs<br>nodev	devtmpfs<br>nodev	debugfs<br>nodev	securityfs<br>nodev	sockfs<br>nodev	dax<br>nodev	bpf<br>nodev	pipefs<br>nodev	configfs<br>nodev	devpts<br>nodev	hugetlbfs<br>nodev	autofs<br>nodev	pstore<br>nodev	mqueue<br>nodev	selinuxfs<br>	xfs<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="2-6-proc-modules-已加载的模块"><a href="#2-6-proc-modules-已加载的模块" class="headerlink" title="2.6 /proc/modules 已加载的模块"></a>2.6 <code>/proc/modules</code> 已加载的模块</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@192 ~]<span class="hljs-comment"># cat /proc/modules</span><br>ip6t_rpfilter 12595 1 - Live 0xffffffffc073a000<br>ip6t_REJECT 12625 2 - Live 0xffffffffc0735000<br>nf_reject_ipv6 13717 1 ip6t_REJECT, Live 0xffffffffc0730000<br>ipt_REJECT 12541 2 - Live 0xffffffffc072b000<br>...<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="2-7-proc-virsion-内核版本"><a href="#2-7-proc-virsion-内核版本" class="headerlink" title="2.7 /proc/virsion 内核版本"></a>2.7 <code>/proc/virsion</code> 内核版本</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@192 ~]<span class="hljs-comment"># cat /proc/version</span><br>Linux version 3.10.0-1160.el7.x86_64 (mockbuild@kbuilder.bsys.centos.org) (gcc version 4.8.5 20150623 (Red Hat 4.8.5-44) (GCC) ) <span class="hljs-comment">#1 SMP Mon Oct 19 16:18:59 UTC 2020</span><br></code></pre></td></tr></table></figure>
+
+
+<h3 id="2-8-proc-cmdline-系统启动时输入的内核命令行参数"><a href="#2-8-proc-cmdline-系统启动时输入的内核命令行参数" class="headerlink" title="2.8 /proc/cmdline 系统启动时输入的内核命令行参数"></a>2.8 <code>/proc/cmdline</code> 系统启动时输入的内核命令行参数</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@192 ~]<span class="hljs-comment"># cat /proc/cmdline</span><br>BOOT_IMAGE=/vmlinuz-3.10.0-1160.el7.x86_64 root=/dev/mapper/centos_192-root ro crashkernel=auto spectre_v2=retpoline rd.lvm.lv=centos_192/root rd.lvm.lv=centos_192/swap rhgb quiet LANG=zh_CN.UTF-8<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="2-9-proc-uptime-获取系统的正常运行时间"><a href="#2-9-proc-uptime-获取系统的正常运行时间" class="headerlink" title="2.9 /proc/uptime 获取系统的正常运行时间"></a>2.9 <code>/proc/uptime</code> 获取系统的正常运行时间</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@192 ~]<span class="hljs-comment"># cat /proc/uptime</span><br>14985.88 11766.31<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="2-10-proc-kallsyms"><a href="#2-10-proc-kallsyms" class="headerlink" title="2.10 /proc/kallsyms"></a>2.10 <code>/proc/kallsyms</code></h3><p>该文件是一个符号表，包含了内核的所有全局变量和函数在内存中的地址。</p>
+<p>这是一个帮助内核开发者调试内核而加入的文件，在 Linux 系统崩渍时产生的 Opps 信息中，函数调用堆栈中显示出来的函数名，就是在这个文件的帮助下生成的。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@192 ~]<span class="hljs-comment"># cat /proc/kallsyms</span><br>...<br>ffffffffc014a3e0 t dm_get_reserved_bio_based_ios	[dm_mod]<br>ffffffffc01500e0 t dm_table_get_immutable_target	[dm_mod]<br>ffffffffc014f180 T dm_consume_args	[dm_mod]<br>ffffffffc0155660 t dm_copy_name_and_uuid	[dm_mod]<br>ffffffffc015a7a0 t dm_request_based	[dm_mod]<br>...<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="2-11-proc-interrupts"><a href="#2-11-proc-interrupts" class="headerlink" title="2.11 /proc/interrupts"></a>2.11 <code>/proc/interrupts</code></h3><p>该文件包含了系统记录的在每个 CPU 上处理的各类中断的计数信息。</p>
+<p>在Linux 中，如果没有特殊的处理，通常所有的中断都会交给 CPU 的第一个核心(CPUO)来处理。有一个叫做 rqbalance 的实用程序可以帮助系统把中断分发给不同的 CPU，实现负载均衡，对多核处理器的性能提升和控制能耗都有明显的作用。</p>
+<p>当前的大多数 Linux 发行版都会默认在多核处理器上启动这个服务，但是以防万一，读者可以在自己的系统上确认该服务是否开启，同时通过检查 proc&#x2F;interrupts 文件来确定中断是不是均衡地分发到了不同的 CPU上。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@192 ~]<span class="hljs-comment"># cat /proc/interrupts </span><br>            CPU0       <br>   0:        258   IO-APIC-edge      timer<br>   1:         60   IO-APIC-edge      i8042<br>   8:          1   IO-APIC-edge      rtc0<br>   9:          0   IO-APIC-fasteoi   acpi<br>  12:        817   IO-APIC-edge      i8042<br>  14:          0   IO-APIC-edge      ata_piix<br>  15:      32012   IO-APIC-edge      ata_piix<br>  16:       5630   IO-APIC-fasteoi   vmwgfx, snd_ens1371<br>  17:       5759   IO-APIC-fasteoi   ehci_hcd:usb1, ioc0<br>  18:         65   IO-APIC-fasteoi   uhci_hcd:usb2<br>  19:      37053   IO-APIC-fasteoi   ens33<br>  24:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  25:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  26:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  27:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  28:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  29:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  30:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  31:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  32:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  33:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  34:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  35:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  36:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  37:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  38:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  39:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  40:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  41:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  42:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  43:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  44:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  45:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  46:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  47:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  48:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  49:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  50:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  51:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  52:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  53:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  54:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  55:          0   PCI-MSI-edge      PCIe PME, pciehp<br>  56:          1   PCI-MSI-edge      vmw_vmci<br>  57:          0   PCI-MSI-edge      vmw_vmci<br> NMI:          0   Non-maskable interrupts<br> LOC:     449703   Local timer interrupts<br> SPU:          0   Spurious interrupts<br> PMI:          0   Performance monitoring interrupts<br> IWI:      29227   IRQ work interrupts<br> RTR:          0   APIC ICR <span class="hljs-built_in">read</span> retries<br> RES:          0   Rescheduling interrupts<br> CAL:          0   Function call interrupts<br> TLB:          0   TLB shootdowns<br> TRM:          0   Thermal event interrupts<br> THR:          0   Threshold APIC interrupts<br> DFR:          0   Deferred Error APIC interrupts<br> MCE:          0   Machine check exceptions<br> MCP:        111   Machine check polls<br> ERR:          0<br> MIS:          0<br> PIN:          0   Posted-interrupt notification event<br> NPI:          0   Nested posted-interrupt event<br> PIW:          0   Posted-interrupt wakeup event<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="2-12-proc-loadavg"><a href="#2-12-proc-loadavg" class="headerlink" title="2.12 /proc/loadavg"></a>2.12 <code>/proc/loadavg</code></h3><p>这个文件显示系统在过去一段时间的平均负载，一个真实的输出如下所示：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@192 ~]<span class="hljs-comment"># cat /proc/loadavg </span><br>0.00 0.01 0.05 2/112 3065<br></code></pre></td></tr></table></figure>
+
+<p>上面的信息，具体含义如下：</p>
+<ol>
+<li>过去一分钟的系统平均负载</li>
+<li>过去五分钟的系统平均负载</li>
+<li>过去十五分钟的系统平均负载</li>
+<li>采样时刻运行队列的任务数&#x2F;系统中活跃的总任务数</li>
+<li>采样时刻占用最大的线程ID</li>
+</ol>
+<p> 这个文件的输出中的前三个值，经常被用来观察系统负载的发展趋势。如果前面的值比后面的值小，说明系统的负载在减轻；反之，说明系统负载开始呈现出上升的趋势。</p>
+<h3 id="2-13-proc-partitions-硬盘设备分区信息"><a href="#2-13-proc-partitions-硬盘设备分区信息" class="headerlink" title="2.13 /proc/partitions 硬盘设备分区信息"></a>2.13 <code>/proc/partitions</code> 硬盘设备分区信息</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@192 ~]<span class="hljs-comment"># cat /proc/partitions</span><br>major minor  <span class="hljs-comment">#blocks  name</span><br><br>   8        0   20971520 sda<br>   8        1    1048576 sda1<br>   8        2   19921920 sda2<br>  11        0     996352 sr0<br> 253        0   17821696 dm-0<br> 253        1    2097152 dm-1<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="3-进程信息查看"><a href="#3-进程信息查看" class="headerlink" title="3 进程信息查看"></a>3 进程信息查看</h2><h3 id="3-1-proc-N-pid-为-N-的进程信息"><a href="#3-1-proc-N-pid-为-N-的进程信息" class="headerlink" title="3.1 /proc/N pid 为 N 的进程信息"></a>3.1 <code>/proc/N</code> pid 为 N 的进程信息</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@192 ~]<span class="hljs-comment"># ll /proc/1021/</span><br>总用量 0<br>dr-xr-xr-x. 2 root root 0 8月  31 00:03 attr<br>-rw-r--r--. 1 root root 0 8月  31 00:03 autogroup<br>-r--------. 1 root root 0 8月  31 00:03 auxv<br>-r--r--r--. 1 root root 0 8月  30 16:48 cgroup<br>--w-------. 1 root root 0 8月  31 00:03 clear_refs<br>-r--r--r--. 1 root root 0 8月  30 16:48 cmdline          <span class="hljs-comment"># 进程启动命令</span><br>-rw-r--r--. 1 root root 0 8月  30 16:48 comm<br>-rw-r--r--. 1 root root 0 8月  31 00:03 coredump_filter<br>-r--r--r--. 1 root root 0 8月  31 00:03 cpuset<br>lrwxrwxrwx. 1 root root 0 8月  31 00:03 cwd -&gt; /         <span class="hljs-comment"># 链接到进程当前工作目录</span><br>-r--------. 1 root root 0 8月  31 00:03 environ          <span class="hljs-comment">#  进程环境变量列表</span><br>lrwxrwxrwx. 1 root root 0 8月  30 16:48 exe -&gt; /usr/sbin/rsyslogd    <span class="hljs-comment"># 链接到进程的执行命令文件</span><br>dr-x------. 2 root root 0 8月  30 16:48 fd               <span class="hljs-comment"># 包含进程相关的所有的文件描述符</span><br>dr-x------. 2 root root 0 8月  31 00:03 fdinfo<br>-rw-r--r--. 1 root root 0 8月  31 00:03 gid_map<br>-r--------. 1 root root 0 8月  31 00:03 io<br>-r--r--r--. 1 root root 0 8月  31 00:03 limits<br>-rw-r--r--. 1 root root 0 8月  30 16:48 loginuid<br>dr-x------. 2 root root 0 8月  31 00:03 map_files<br>-r--r--r--. 1 root root 0 8月  31 00:03 maps             <span class="hljs-comment"># 与进程相关的内存映射信息</span><br>-rw-------. 1 root root 0 8月  31 00:03 mem              <span class="hljs-comment"># 当前进程所占用的内存空间，由open、read和lseek等系统调用使用，不能被用户读取；</span><br>-r--r--r--. 1 root root 0 8月  31 00:03 mountinfo<br>-r--r--r--. 1 root root 0 8月  31 00:03 mounts<br>-r--------. 1 root root 0 8月  31 00:03 mountstats<br>dr-xr-xr-x. 5 root root 0 8月  31 00:03 net<br>dr-x--x--x. 2 root root 0 8月  31 00:03 ns<br>-r--r--r--. 1 root root 0 8月  31 00:03 numa_maps<br>-rw-r--r--. 1 root root 0 8月  31 00:03 oom_adj<br>-r--r--r--. 1 root root 0 8月  31 00:03 oom_score<br>-rw-r--r--. 1 root root 0 8月  31 00:03 oom_score_adj<br>-r--r--r--. 1 root root 0 8月  31 00:03 pagemap<br>-r--------. 1 root root 0 8月  31 00:03 patch_state<br>-r--r--r--. 1 root root 0 8月  31 00:03 personality<br>-rw-r--r--. 1 root root 0 8月  31 00:03 projid_map<br>lrwxrwxrwx. 1 root root 0 8月  31 00:03 root -&gt; /    <span class="hljs-comment"># 指向当前进程运行根目录的符号链接；在Unix和Linux系统上，通常采用chroot命令使每个进程运行于独立的根目录</span><br>-rw-r--r--. 1 root root 0 8月  31 00:03 <span class="hljs-built_in">sched</span><br>-r--r--r--. 1 root root 0 8月  31 00:03 schedstat<br>-r--r--r--. 1 root root 0 8月  30 16:48 sessionid<br>-rw-r--r--. 1 root root 0 8月  31 00:03 setgroups<br>-r--r--r--. 1 root root 0 8月  31 00:03 smaps<br>-r--r--r--. 1 root root 0 8月  31 00:03 stack<br>-r--r--r--. 1 root root 0 8月  30 16:48 <span class="hljs-built_in">stat</span>         <span class="hljs-comment"># 进程的状态</span><br>-r--r--r--. 1 root root 0 8月  30 19:06 statm        <span class="hljs-comment"># 当前进程占用内存的状态信息，通常以“页面”（page）表示； </span><br>-r--r--r--. 1 root root 0 8月  30 16:48 status<br>-r--r--r--. 1 root root 0 8月  31 00:03 syscall<br>dr-xr-xr-x. 5 root root 0 8月  31 00:03 task         <span class="hljs-comment"># 目录文件，包含由当前进程所运行的每一个线程的相关信息，每个线程的相关信息文件均保存在一个由线程号（tid）命名的目录中，这类似于其内容类似于每个进程目录中的内容；（内核2.6版本以后支持此功能）</span><br>-r--r--r--. 1 root root 0 8月  31 00:03 timers<br>-rw-r--r--. 1 root root 0 8月  31 00:03 uid_map<br>-r--r--r--. 1 root root 0 8月  31 00:03 wchan<br></code></pre></td></tr></table></figure>
+
+<p>下面是作者系统上运行的一个 PID 为 1021 的进程的相关文件，其中有些文件是每个进程都会具有的，后文会对这些常见文件做出说明。 </p>
+<h3 id="3-2-proc-N-cmdline-启动当前进程的完整命令，但僵尸进程目录中的此文件不包含任何信息"><a href="#3-2-proc-N-cmdline-启动当前进程的完整命令，但僵尸进程目录中的此文件不包含任何信息" class="headerlink" title="3.2 /proc/N/cmdline 启动当前进程的完整命令，但僵尸进程目录中的此文件不包含任何信息"></a>3.2 <code>/proc/N/cmdline</code> 启动当前进程的完整命令，但僵尸进程目录中的此文件不包含任何信息</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@192 ~]<span class="hljs-comment"># cat /proc/1021/cmdline </span><br>/usr/sbin/rsyslogd-n<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="3-3-proc-N-exe-链接到进程的执行命令文件"><a href="#3-3-proc-N-exe-链接到进程的执行命令文件" class="headerlink" title="3.3 /proc/N/exe 链接到进程的执行命令文件"></a>3.3 <code>/proc/N/exe</code> 链接到进程的执行命令文件</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@192 ~]<span class="hljs-comment"># ll /proc/1021/exe</span><br>lrwxrwxrwx. 1 root root 0 8月  30 16:48 /proc/1021/exe -&gt; /usr/sbin/rsyslogd<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="3-4-proc-N-cwd-指向当前进程运行目录的一个符号链接"><a href="#3-4-proc-N-cwd-指向当前进程运行目录的一个符号链接" class="headerlink" title="3.4 /proc/N/cwd 指向当前进程运行目录的一个符号链接"></a>3.4 <code>/proc/N/cwd</code> 指向当前进程运行目录的一个符号链接</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@192 ~]<span class="hljs-comment"># ll /proc/1021/cwd/</span><br>总用量 20<br>lrwxrwxrwx.   1 root root    7 8月  24 11:31 bin -&gt; usr/bin<br>dr-xr-xr-x.   5 root root 4096 8月  24 11:39 boot<br>drwxr-xr-x.  20 root root 3200 8月  30 16:48 dev<br>drwxr-xr-x.  74 root root 8192 8月  30 22:09 etc<br>drwxr-xr-x.   3 root root   16 8月  24 11:58 home<br>lrwxrwxrwx.   1 root root    7 8月  24 11:31 lib -&gt; usr/lib<br>lrwxrwxrwx.   1 root root    9 8月  24 11:31 lib64 -&gt; usr/lib64<br>drwxr-xr-x.   2 root root    6 4月  11 2018 media<br>drwxr-xr-x.   2 root root    6 4月  11 2018 mnt<br>drwxr-xr-x.   2 root root    6 4月  11 2018 opt<br>dr-xr-xr-x. 108 root root    0 8月  30 16:48 proc<br>dr-xr-x---.   2 root root  135 8月  24 16:24 root<br>drwxr-xr-x.  24 root root  720 8月  30 22:09 run<br>lrwxrwxrwx.   1 root root    8 8月  24 11:31 sbin -&gt; usr/sbin<br>drwxr-xr-x.   2 root root    6 4月  11 2018 srv<br>dr-xr-xr-x.  13 root root    0 8月  30 16:48 sys<br>drwxrwxrwt.  13 root root 4096 8月  30 22:09 tmp<br>drwxr-xr-x.  13 root root  155 8月  24 11:31 usr<br>drwxr-xr-x.  19 root root  267 8月  24 11:42 var<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="3-5-proc-N-environ-当前进程的环境变量列表，彼此间用空字符（NULL）隔开；变量用大写字母表示，其值用小写字母表示"><a href="#3-5-proc-N-environ-当前进程的环境变量列表，彼此间用空字符（NULL）隔开；变量用大写字母表示，其值用小写字母表示" class="headerlink" title="3.5 /proc/N/environ 当前进程的环境变量列表，彼此间用空字符（NULL）隔开；变量用大写字母表示，其值用小写字母表示"></a>3.5 <code>/proc/N/environ</code> 当前进程的环境变量列表，彼此间用空字符（NULL）隔开；变量用大写字母表示，其值用小写字母表示</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@192 ~]<span class="hljs-comment"># cat /proc/1021/environ </span><br>LANG=zh_CN.UTF-8PATH=/usr/<span class="hljs-built_in">local</span>/sbin:/usr/<span class="hljs-built_in">local</span>/bin:/usr/sbin:/usr/binNOTIFY_SOCKET=/run/systemd/notifySYSLOGD_OPTIONS=<br></code></pre></td></tr></table></figure>
+
+<h3 id="3-6-proc-N-fd-这是个目录，包含当前进程打开的每一个文件的文件描述符（file-descriptor），这些文件描述符是指向实际文件的一个符号链接"><a href="#3-6-proc-N-fd-这是个目录，包含当前进程打开的每一个文件的文件描述符（file-descriptor），这些文件描述符是指向实际文件的一个符号链接" class="headerlink" title="3.6 /proc/N/fd 这是个目录，包含当前进程打开的每一个文件的文件描述符（file descriptor），这些文件描述符是指向实际文件的一个符号链接"></a>3.6 <code>/proc/N/fd</code> 这是个目录，包含当前进程打开的每一个文件的文件描述符（file descriptor），这些文件描述符是指向实际文件的一个符号链接</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@192 ~]<span class="hljs-comment"># ll /proc/1021/fd</span><br>总用量 0<br>lr-x------. 1 root root 64 8月  30 16:48 0 -&gt; /dev/null<br>l-wx------. 1 root root 64 8月  30 16:48 1 -&gt; /dev/null<br>l-wx------. 1 root root 64 8月  30 16:48 2 -&gt; /dev/null<br>lr-x------. 1 root root 64 8月  30 16:48 3 -&gt; anon_inode:inotify<br>lrwx------. 1 root root 64 8月  30 16:48 4 -&gt; socket:[20332]<br>lr-x------. 1 root root 64 8月  30 16:48 5 -&gt; /run/<span class="hljs-built_in">log</span>/journal/92e26ad0ce2d4daf8222e6f2526060e2/system.journal<br>l-wx------. 1 root root 64 8月  30 16:48 6 -&gt; /var/<span class="hljs-built_in">log</span>/messages<br>l-wx------. 1 root root 64 8月  30 16:48 7 -&gt; /var/<span class="hljs-built_in">log</span>/cron<br>l-wx------. 1 root root 64 8月  30 16:48 8 -&gt; /var/<span class="hljs-built_in">log</span>/secure<br>l-wx------. 1 root root 64 8月  30 16:48 9 -&gt; /var/<span class="hljs-built_in">log</span>/maillog<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="3-7-proc-N-limits-当前进程所使用的每一个受限资源的软限制、硬限制和管理单元；此文件仅可由实际启动当前进程的UID用户读取；（2-6-24以后的内核版本支持此功能）"><a href="#3-7-proc-N-limits-当前进程所使用的每一个受限资源的软限制、硬限制和管理单元；此文件仅可由实际启动当前进程的UID用户读取；（2-6-24以后的内核版本支持此功能）" class="headerlink" title="3.7 /proc/N/limits  当前进程所使用的每一个受限资源的软限制、硬限制和管理单元；此文件仅可由实际启动当前进程的UID用户读取；（2.6.24以后的内核版本支持此功能）"></a>3.7 <code>/proc/N/limits</code>  当前进程所使用的每一个受限资源的软限制、硬限制和管理单元；此文件仅可由实际启动当前进程的UID用户读取；（2.6.24以后的内核版本支持此功能）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@192 ~]<span class="hljs-comment"># cat /proc/1021/limits </span><br>Limit                     Soft Limit           Hard Limit           Units     <br>Max cpu time              unlimited            unlimited            seconds   <br>Max file size             unlimited            unlimited            bytes     <br>Max data size             unlimited            unlimited            bytes     <br>Max stack size            8388608              unlimited            bytes     <br>Max core file size        0                    unlimited            bytes     <br>Max resident <span class="hljs-built_in">set</span>          unlimited            unlimited            bytes     <br>Max processes             3794                 3794                 processes <br>Max open files            1024                 4096                 files     <br>Max locked memory         65536                65536                bytes     <br>Max address space         unlimited            unlimited            bytes     <br>Max file locks            unlimited            unlimited            locks     <br>Max pending signals       3794                 3794                 signals   <br>Max msgqueue size         819200               819200               bytes     <br>Max nice priority         0                    0                    <br>Max realtime priority     0                    0                    <br>Max realtime timeout      unlimited            unlimited            us<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="3-8-maps-当前进程关联到的每个可执行文件和库文件在内存中的映射区域及其访问权限所组成的列表"><a href="#3-8-maps-当前进程关联到的每个可执行文件和库文件在内存中的映射区域及其访问权限所组成的列表" class="headerlink" title="3.8 maps 当前进程关联到的每个可执行文件和库文件在内存中的映射区域及其访问权限所组成的列表"></a>3.8 <code>maps</code> 当前进程关联到的每个可执行文件和库文件在内存中的映射区域及其访问权限所组成的列表</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@192 ~]<span class="hljs-comment"># cat /proc/1021/maps</span><br>5630fd473000-5630fd508000 r-xp 00000000 fd:00 50756257                   /usr/sbin/rsyslogd<br>5630fd708000-5630fd70b000 r--p 00095000 fd:00 50756257                   /usr/sbin/rsyslogd<br>...<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="3-9-stat-当前进程的状态信息，包含一系统格式化后的数据列，可读性差，通常由ps命令使用"><a href="#3-9-stat-当前进程的状态信息，包含一系统格式化后的数据列，可读性差，通常由ps命令使用" class="headerlink" title="3.9 stat  当前进程的状态信息，包含一系统格式化后的数据列，可读性差，通常由ps命令使用"></a>3.9 <code>stat</code>  当前进程的状态信息，包含一系统格式化后的数据列，可读性差，通常由ps命令使用</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@192 ~]<span class="hljs-comment"># cat /proc/1021/stat</span><br>1021 (rsyslogd) S 1 1021 1021 0 -1 1077944576 1586 0 9 0 358 568 0 0 20 0 3 0 2971 219578368 1119 18446744073709551615 94768407719936 94768408329474 140732791969248 140732791968656 140160513558947 0 0 16781830 1132545 18446744073709551615 0 0 17 0 0 0 4 0 0 94768410427432 94768410466656 94768416153600 140732791971668 140732791971690 140732791971690 140732791971813 0<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="3-10-status-与stat所提供信息类似，但可读性较好，比-stat-statm-更具可读性"><a href="#3-10-status-与stat所提供信息类似，但可读性较好，比-stat-statm-更具可读性" class="headerlink" title="3.10 status 与stat所提供信息类似，但可读性较好，比 stat/statm 更具可读性"></a>3.10 <code>status</code> 与stat所提供信息类似，但可读性较好，比 <code>stat/statm</code> 更具可读性</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@192 ~]<span class="hljs-comment"># cat /proc/1021/status </span><br>Name:	rsyslogd<br>Umask:	0066<br>State:	S (sleeping)<br>Tgid:	1021<br>Ngid:	0<br>Pid:	1021<br>PPid:	1<br>TracerPid:	0<br>Uid:	0	0	0	0<br>Gid:	0	0	0	0<br>FDSize:	64<br>Groups:	<br>VmPeak:	  271776 kB<br>VmSize:	  214432 kB<br>VmLck:	       0 kB<br>VmPin:	       0 kB<br>VmHWM:	    4476 kB<br>VmRSS:	    4476 kB<br>RssAnon:	     884 kB<br>RssFile:	    1888 kB<br>RssShmem:	    1704 kB<br>VmData:	  148608 kB<br>VmStk:	     132 kB<br>VmExe:	     596 kB<br>VmLib:	    5420 kB<br>VmPTE:	     156 kB<br>VmSwap:	       0 kB<br>Threads:	3<br>SigQ:	0/3794<br>SigPnd:	0000000000000000<br>ShdPnd:	0000000000000000<br>SigBlk:	0000000000000000<br>SigIgn:	0000000001001206<br>SigCgt:	0000000180114801<br>CapInh:	0000000000000000<br>CapPrm:	0000001fffffffff<br>CapEff:	0000001fffffffff<br>CapBnd:	0000001fffffffff<br>CapAmb:	0000000000000000<br>NoNewPrivs:	0<br>Seccomp:	0<br>Speculation_Store_Bypass:	thread vulnerable<br>Cpus_allowed:	ffffffff,ffffffff,ffffffff,ffffffff<br>Cpus_allowed_list:	0-127<br>Mems_allowed:	00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000001<br>Mems_allowed_list:	0<br>voluntary_ctxt_switches:	53<br>nonvoluntary_ctxt_switches:	33<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="系统信息查看"><a href="#系统信息查看" class="headerlink" title="系统信息查看"></a>系统信息查看</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@192 ~]<span class="hljs-comment"># ll /proc/sys</span><br>总用量 0<br>dr-xr-xr-x. 1 root root 0 8月  31 03:03 abi<br>dr-xr-xr-x. 1 root root 0 8月  30 17:47 crypto<br>dr-xr-xr-x. 1 root root 0 8月  31 03:03 debug<br>dr-xr-xr-x. 1 root root 0 8月  31 03:03 dev<br>dr-xr-xr-x. 1 root root 0 8月  30 16:48 fs<br>dr-xr-xr-x. 1 root root 0 8月  30 16:48 kernel<br>dr-xr-xr-x. 1 root root 0 8月  30 16:48 net<br>dr-xr-xr-x. 1 root root 0 8月  31 03:03 user<br>dr-xr-xr-x. 1 root root 0 8月  30 16:48 vm<br></code></pre></td></tr></table></figure>
+
+<h3 id="2-10-proc-sys-kernel-ostype-操作系统类型"><a href="#2-10-proc-sys-kernel-ostype-操作系统类型" class="headerlink" title="2.10 /proc/sys/kernel/ostype 操作系统类型"></a>2.10 <code>/proc/sys/kernel/ostype</code> 操作系统类型</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@192 ~]<span class="hljs-comment"># cat /proc/sys/kernel/ostype</span><br>Linux<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="2-11-proc-sys-kernel-osrelease-内核版本"><a href="#2-11-proc-sys-kernel-osrelease-内核版本" class="headerlink" title="2.11 /proc/sys/kernel/osrelease 内核版本"></a>2.11 <code>/proc/sys/kernel/osrelease</code> 内核版本</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@192 ~]<span class="hljs-comment"># cat /proc/sys/kernel/osrelease</span><br>3.10.0-1160.el7.x86_64<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="2-12-proc-sys-kernel-hostname-主机名"><a href="#2-12-proc-sys-kernel-hostname-主机名" class="headerlink" title="2.12 /proc/sys/kernel/hostname 主机名"></a>2.12 <code>/proc/sys/kernel/hostname</code> 主机名</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@192 ~]<span class="hljs-comment"># cat /proc/sys/kernel/hostname</span><br>lepeng<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="对应命令"><a href="#对应命令" class="headerlink" title="对应命令"></a>对应命令</h2><ul>
+<li><p>获取系统版本信息：<code>uname -a</code> 或者 <code>lsb_release /proc/version</code> 或者 <code>/proc/sys/kernel/hostname[,domainname, osrelease, ostype, version]</code></p>
+</li>
+<li><p>获取系统负载信息：<code>top</code> 或者 <code>w</code> 或者 <code>uptime/proc/loadavg</code></p>
+</li>
+<li><p>获取内存使用情况：<code>free/proc/meminfo</code></p>
+</li>
+<li><p>获取CPU使用情况：<code>top/proc/cpuinfo</code></p>
+</li>
+<li><p>获取进程运行情况：<code>ps aux</code> 或者 <code>top/proc/N[N为对应的PID号]</code></p>
+</li>
+</ul>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://www.cnblogs.com/lidabo/p/5628020.html" target="_blank" rel="noopener">https://www.cnblogs.com/lidabo/p/5628020.html</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Linux/" class="category-chain-item">Linux</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Linux/" class="print-no-link">#Linux</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Linux proc 目录详解</div>
+      <div>https://flepeng.github.io/003-Linux-41-目录-Linux-proc-目录详解/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年7月5日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/003-Linux-41-%E5%86%85%E6%A0%B8%E5%8F%82%E6%95%B0-Linux-%E5%86%85%E6%A0%B8%E5%8F%82%E6%95%B0%E4%B9%8B-net-core-somaxconn/" title="Linux 内核参数之 net.core.somaxconn">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Linux 内核参数之 net.core.somaxconn</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/003-Linux-71-%E6%8A%A5%E9%94%99-ImportError%EF%BC%9AlibSM-so-6%EF%BC%9Acannot-open-shared-object/" title="ImportError：libSM.so.6：cannot open shared object">
+                        <span class="hidden-mobile">ImportError：libSM.so.6：cannot open shared object</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

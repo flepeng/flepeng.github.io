@@ -1,0 +1,889 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="一、使用数据库实现查找附近的人众所周知，地球上的任何一个位置都可以使用二维的 经纬度 来表示，经度范围 [-180, 180]，纬度范围 [-90, 90]，纬度正负以赤道为界，北正南负，经度正负以本初子午线 (英国格林尼治天文台) 为界，东正西负。 比如说，北京人民英雄纪念碑的经纬度坐标就是(39.904610, 116.397724)，都是正数，因为中国位于东北半球。 所以，当我们使用数据库存">
+<meta property="og:type" content="article">
+<meta property="og:title" content="01-Redis 特殊数据类型之 GeoHash">
+<meta property="og:url" content="https://flepeng.github.io/042-Redis-41-%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5-01-Redis-%E7%89%B9%E6%AE%8A%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B%E4%B9%8B-GeoHash/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="一、使用数据库实现查找附近的人众所周知，地球上的任何一个位置都可以使用二维的 经纬度 来表示，经度范围 [-180, 180]，纬度范围 [-90, 90]，纬度正负以赤道为界，北正南负，经度正负以本初子午线 (英国格林尼治天文台) 为界，东正西负。 比如说，北京人民英雄纪念碑的经纬度坐标就是(39.904610, 116.397724)，都是正数，因为中国位于东北半球。 所以，当我们使用数据库存">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/redis/1691592241-422b23f1db86244bf3944e35ae698fe7.png">
+<meta property="og:image" content="https://flepeng.github.io/img/redis/1691592241-2a9a0d93afca215ff80432191bd695f2.png">
+<meta property="og:image" content="https://flepeng.github.io/img/redis/1691592241-3793c47b2630273d17705b3a52c2cf45.png">
+<meta property="article:published_time" content="2020-12-31T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.364Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Redis">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/redis/1691592241-422b23f1db86244bf3944e35ae698fe7.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>01-Redis 特殊数据类型之 GeoHash - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="01-Redis 特殊数据类型之 GeoHash"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-01-01 00:00" pubdate>
+          2021年1月1日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.8k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          24 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">01-Redis 特殊数据类型之 GeoHash</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="一、使用数据库实现查找附近的人"><a href="#一、使用数据库实现查找附近的人" class="headerlink" title="一、使用数据库实现查找附近的人"></a>一、使用数据库实现查找附近的人</h1><p>众所周知，地球上的任何一个位置都可以使用二维的 <strong>经纬度</strong> 来表示，经度范围 <code>[-180, 180]</code>，纬度范围 <code>[-90, 90]</code>，纬度正负以赤道为界，北正南负，经度正负以本初子午线 (英国格林尼治天文台) 为界，东正西负。</p>
+<p>比如说，北京人民英雄纪念碑的经纬度坐标就是(39.904610, 116.397724)，都是正数，因为中国位于东北半球。</p>
+<p>所以，当我们使用数据库存储了所有人的 <strong>经纬度</strong> 信息之后，我们就可以基于当前的坐标节点，来划分出一个矩形的范围，来得知附近的人，如下图：</p>
+<p><img src="/img/redis/1691592241-422b23f1db86244bf3944e35ae698fe7.png" srcset="/img/loading.gif" lazyload></p>
+<p>所以，我们很容易写出下列的伪 SQL 语句：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">SELECT</span> <span class="hljs-keyword">id</span> <span class="hljs-keyword">FROM</span> positions <span class="hljs-keyword">WHERE</span> x0 - r &lt; x &lt; x0 + r <span class="hljs-keyword">AND</span> y0 - r &lt; y &lt; y0 + r<br></code></pre></td></tr></table></figure>
+
+<p>如果想进一步知道与每个坐标元素的距离并排序的话，就需要一定的计算。</p>
+<p>当两个坐标元素的距离不是很远的时候，我们就可以简单利用 <strong>勾股定理</strong> 就能够得出他们之间的 <strong>距离</strong>。不过需要注意的是，地球不是一个标准的球体，<strong>经纬度的密度</strong> 是 <strong>不一样</strong> 的，所以我们使用勾股定理计算平方之后再求和时，需要按照一定的系数 <strong>加权</strong> 再进行求和。当然，如果不准求精确的话，加权也不必了。我们能够差不多能写出如下优化之后的 SQL 语句：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">SELECT</span><br>    * <br><span class="hljs-keyword">FROM</span><br>    users_location <br><span class="hljs-keyword">WHERE</span><br>    latitude &gt; <span class="hljs-string">'.$lat.'</span> - <span class="hljs-number">1</span> <br>    <span class="hljs-keyword">AND</span> latitude &lt; <span class="hljs-string">'.$lat.'</span> + <span class="hljs-number">1</span> <span class="hljs-keyword">AND</span> longitude &gt; <span class="hljs-string">'.$lon.'</span> - <span class="hljs-number">1</span> <br>    <span class="hljs-keyword">AND</span> longitude &lt; <span class="hljs-string">'.$lon.'</span> + <span class="hljs-number">1</span> <br><span class="hljs-keyword">ORDER</span> <span class="hljs-keyword">BY</span><br>    <span class="hljs-keyword">ACOS</span>(<br>        <span class="hljs-keyword">SIN</span>( ( <span class="hljs-string">'.$lat.'</span> * <span class="hljs-number">3.1415</span> ) / <span class="hljs-number">180</span> ) * <span class="hljs-keyword">SIN</span>( ( latitude * <span class="hljs-number">3.1415</span> ) / <span class="hljs-number">180</span> ) + <span class="hljs-keyword">COS</span>( ( <span class="hljs-string">'.$lat.'</span> * <span class="hljs-number">3.1415</span> ) / <span class="hljs-number">180</span> ) * <span class="hljs-keyword">COS</span>( ( latitude * <span class="hljs-number">3.1415</span> ) / <span class="hljs-number">180</span> ) * <span class="hljs-keyword">COS</span>( ( <span class="hljs-string">'.$lon.'</span> * <span class="hljs-number">3.1415</span> ) / <span class="hljs-number">180</span> - ( longitude * <span class="hljs-number">3.1415</span> ) / <span class="hljs-number">180</span> ) <br>    ) * <span class="hljs-number">6380</span> <span class="hljs-keyword">ASC</span> <br>    <span class="hljs-keyword">LIMIT</span> <span class="hljs-number">10</span> <span class="hljs-string">';</span><br></code></pre></td></tr></table></figure>
+
+<p>为了满足高性能的矩形区域算法，数据表也需要把经纬度坐标加上 **双向复合索引(x, y)**，这样可以满足最大优化查询性能。</p>
+<h1 id="二、GeoHash-算法简述"><a href="#二、GeoHash-算法简述" class="headerlink" title="二、GeoHash 算法简述"></a>二、GeoHash 算法简述</h1><p>这是业界比较通用的，用于 <strong>地理位置距离排序</strong> 的一个算法，<strong>Redis</strong> 也采用了这样的算法。</p>
+<p>GeoHash 算法将 <strong>二维的经纬度</strong> 数据映射到 <strong>一维</strong> 的整数，这样所有的元素都将在挂载到一条线上，距离靠近的二维坐标映射到一维后的点之间距离也会很接近。当我们想要计算 <strong>附近的人时</strong>，首先将目标位置映射到这条线上，然后在这个一维的线上获取附近的点就行了。</p>
+<p>它的核心思想就是把整个地球看成是一个 <strong>二维的平面</strong>，然后把这个平面不断地等分成一个一个小的方格，<strong>每一个</strong> 坐标元素都位于其中的 <strong>唯一一个方格</strong> 中，等分之后的 <strong>方格越小</strong>，那么坐标也就 <strong>越精确</strong>，类似下图：</p>
+<p><img src="/img/redis/1691592241-2a9a0d93afca215ff80432191bd695f2.png" srcset="/img/loading.gif" lazyload></p>
+<p>经过划分的地球，我们需要对其进行编码：</p>
+<p><img src="/img/redis/1691592241-3793c47b2630273d17705b3a52c2cf45.png" srcset="/img/loading.gif" lazyload></p>
+<p>经过这样顺序的编码之后，如果你仔细观察一会儿，你就会发现一些规律：</p>
+<ul>
+<li>横着的所有编码中，<strong>第 2 位和第 4 位都是一样的</strong>，例如第一排第一个 <code>0101</code> 和第二个 <code>0111</code>，他们的第 2 位和第 4 位都是 <code>1</code>；</li>
+<li>竖着的所有编码中，<strong>第 1 位和第 3 位都是递增的</strong>，例如第一排第一个 <code>0101</code>，如果单独把第 1 位和第 3 位拎出来的话，那就是 <code>00</code>，同理看第一排第二个 <code>0111</code>，同样的方法第 1 位和第 3 位拎出来是 <code>01</code>，刚好是 <code>00</code> 递增一个；</li>
+</ul>
+<p>通过这样的规律我们就把每一个小方块儿进行了一定顺序的编码，这样做的 <strong>好处</strong> 是：每一个元素坐标既能够被 <strong>唯一标识</strong> 在这张被编码的地图上，也不至于 <strong>暴露特别的具体的位置</strong>，因为区域是共享的，我可以告诉你我就在公园附近，但是在具体的哪个地方你就无从得知了。</p>
+<p>总之，我们通过上面的思想，能够把任意坐标变成一串二进制的编码了，类似于 <code>11010010110001000100</code> 这样 _(注意经度和维度是交替出现的哦…)_，通过这个整数我们就可以还原出元素的坐标，整数越长，还原出来的坐标值的损失程序就越小。对于 <strong>附近的人</strong> 这个功能来说，损失的一点经度可以忽略不计。</p>
+<p>最后就是一个 <code>Base32</code> <em>(0<del>9, a</del>z, 去掉 a&#x2F;i&#x2F;l&#x2F;o 四个字母)</em> 的编码操作，让它变成一个字符串，例如上面那一串儿就变成了 <code>wx4g0ec1</code>。</p>
+<p>在 <strong>Redis</strong> 中，经纬度使用 <code>52</code> 位的整数进行编码，放进了 zset 里面，zset 的 <code>value</code> 是元素的 <code>key</code>，<code>score</code> 是 <strong>GeoHash</strong> 的 <code>52</code> 位整数值。zset 的 <code>score</code> 虽然是浮点数，但是对于 <code>52</code> 位的整数值来说，它可以无损存储。</p>
+<h1 id="三、在-Redis-中的-Geo"><a href="#三、在-Redis-中的-Geo" class="headerlink" title="三、在 Redis 中的 Geo"></a>三、在 Redis 中的 Geo</h1><h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>Redis 的 GEO 特性在 Redis 3.2 版本中推出，这个功能可以将用户给定的地理位置信息储存起来，并对这些信息进行操作。来实现诸如附近位置、摇一摇这类依赖于地理位置信息的功能。geo的数据类型为 zset。</p>
+<p>GEO 的数据结构总共有六个常用命令：geoadd、geopos、geodist、georadius、 georadiusbymember、gethash</p>
+<p>官方文档：<a href="https://www.redis.net.cn/order/3685.html" target="_blank" rel="noopener">https://www.redis.net.cn/order/3685.html</a></p>
+<h2 id="常用指令"><a href="#常用指令" class="headerlink" title="常用指令"></a>常用指令</h2><h3 id="1、geoadd-增加"><a href="#1、geoadd-增加" class="headerlink" title="1、geoadd 增加"></a>1、<code>geoadd</code> 增加</h3><p>语法：<code>geoadd key longitude latitude member ...</code></p>
+<ul>
+<li>将给定的空间元素(经度、纬度、名字)添加到指定的键里面。</li>
+<li>这些数据会以有序集的形式被储存在键里面，从而使得georadius和georadiusbymember这样的命令可以在之后通过位置查询取得这些元素。</li>
+<li>geoadd命令以标准的x,y格式接受参数，所以用户必须先输入经度，然后再输入纬度。</li>
+<li>geoadd能够记录的坐标是有限的：非常接近两极的区域无法被索引。有效的经度介于-180-180度之间，有效的纬度介于-85.05112878 度至 85.05112878 度之间</li>
+<li>当用户尝试输入一个超出范围的经度或者纬度时,geoadd命令将返回一个错误。</li>
+</ul>
+<p>测试：百度搜索经纬度查询，模拟真实数据</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs bash">127.0.0.1:6379&gt; geoadd china:city 116.23 40.22 北京<br>(<span class="hljs-built_in">integer</span>) 1<br>127.0.0.1:6379&gt; geoadd china:city 121.48 31.40 上海 113.88 22.55 深圳 120.21 30.20 杭州<br>(<span class="hljs-built_in">integer</span>) 3<br>127.0.0.1:6379&gt; geoadd china:city 106.54 29.40 重庆 108.93 34.23 西安 114.02 30.58 武汉<br>(<span class="hljs-built_in">integer</span>) 3<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="2、geopos-获取集合中任意元素的经纬度坐标"><a href="#2、geopos-获取集合中任意元素的经纬度坐标" class="headerlink" title="2、geopos 获取集合中任意元素的经纬度坐标"></a>2、<code>geopos</code> 获取集合中任意元素的经纬度坐标</h3><p>语法：<code>geopos key member [member...]</code></p>
+<ul>
+<li>从key里返回所有给定位置元素的位置（经度和纬度）</li>
+<li><code>geopos</code> 获取的经纬度坐标和 <code>geoadd</code> 进去的坐标有轻微的误差，原因是 <strong>Geohash</strong> 对二维坐标进行的一维映射是有损的，通过映射再还原回来的值会出现较小的差别。对于 <strong>「附近的人」</strong> 这种功能来说，这点误差根本不是事。</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs bash">127.0.0.1:6379&gt; geopos china:city 北京<br>1) 1) <span class="hljs-string">"116.23000055551528931"</span><br>2) <span class="hljs-string">"40.2200010338739844"</span><br>127.0.0.1:6379&gt; geopos china:city 上海 重庆<br>1) 1) <span class="hljs-string">"121.48000091314315796"</span><br>2) <span class="hljs-string">"31.40000025319353938"</span><br>2) 1) <span class="hljs-string">"106.54000014066696167"</span><br>2) <span class="hljs-string">"29.39999880018641676"</span><br>127.0.0.1:6379&gt; geopos china:city 新疆<br>1) (nil)<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="3、geodist-计算两个元素之间的距离"><a href="#3、geodist-计算两个元素之间的距离" class="headerlink" title="3、geodist 计算两个元素之间的距离"></a>3、<code>geodist</code> 计算两个元素之间的距离</h3><p>语法：<code>geodist key member1 member2 [unit]</code></p>
+<ul>
+<li><p>返回两个给定位置之间的距离，如果两个位置之间的其中一个不存在，那么命令返回空值</p>
+</li>
+<li><p>指定单位的参数unit必须是以下单位的其中一个：</p>
+<ul>
+<li>m表示单位为米</li>
+<li>km表示单位为千米</li>
+<li>mi表示单位为英里</li>
+<li>ft表示单位为英尺</li>
+</ul>
+</li>
+<li><p>如果用户没有显式地指定单位参数，那么geodist默认使用 米 作为单位。</p>
+</li>
+<li><p>geodist命令在计算距离时会假设地球为完美的球形，在极限情况下，这一假设最大会造成0.5%的误差。</p>
+</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs bash">127.0.0.1:6379&gt; geodist china:city 北京 上海<br><span class="hljs-string">"1088785.4302"</span><br>127.0.0.1:6379&gt; geodist china:city 北京 上海 km<br><span class="hljs-string">"1088.7854"</span><br>127.0.0.1:6379&gt; geodist china:city 重庆 北京 km<br><span class="hljs-string">"1491.6716"</span><br></code></pre></td></tr></table></figure>
+
+
+<h3 id="4、georadius-以给定的经纬度为中心，-找出某一半径内的元素"><a href="#4、georadius-以给定的经纬度为中心，-找出某一半径内的元素" class="headerlink" title="4、georadius  以给定的经纬度为中心， 找出某一半径内的元素"></a>4、<code>georadius</code>  以给定的经纬度为中心， 找出某一半径内的元素</h3><p>语法：<code>georadius key longitude latitude radius m|km|ft|mi [withcoord][withdist] [withhash][asc|desc][count count]</code></p>
+<ul>
+<li>以给定的经纬度为中心， 找出某一半径内的元素</li>
+<li>重新连接 redis-cli，增加参数 –raw ，可以强制输出中文，不然会乱码</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs bash">127.0.0.1:6379&gt; georadius china:city 100 30 1000 km <span class="hljs-comment">#乱码</span><br>1) <span class="hljs-string">"\xe9\x87\x8d\xe5\xba\x86"</span><br>2) <span class="hljs-string">"\xe8\xa5\xbf\xe5\xae\x89"</span><br>127.0.0.1:6379&gt; <span class="hljs-built_in">exit</span><br>[root@localhost bin]<span class="hljs-comment">#  redis-cli --raw -p 6379</span><br><span class="hljs-comment"># 在 china:city 中寻找坐标 100 30 半径为 1000km 的城市</span><br>127.0.0.1:6379&gt; georadius china:city 100 30 1000 km<br>重庆<br>西安<br></code></pre></td></tr></table></figure>
+
+<p><code>withdist</code> 返回位置名称和中心距离</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs bash">127.0.0.1:6379&gt; georadius china:city 100 30 1000 km withdist<br>重庆<br>635.2850<br>西安<br>963.3171<br></code></pre></td></tr></table></figure>
+
+<p><code>withcoord</code> 返回位置名称、经纬度</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs bash">127.0.0.1:6379&gt; georadius china:city 100 30 1000 km withcoord<br>重庆<br>106.54000014066696167<br>29.39999880018641676<br>西安<br>108.92999857664108276<br>34.23000121926852302<br></code></pre></td></tr></table></figure>
+
+<p><code>withdist withcoord</code> 返回位置名称、距离、经纬度，count 限定寻找个数</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs bash">127.0.0.1:6379&gt; georadius china:city 100 30 1000 km withcoord withdist count 1<br>重庆<br>635.2850<br>106.54000014066696167<br>29.39999880018641676<br>127.0.0.1:6379&gt; georadius china:city 100 30 1000 km withcoord withdist count 2<br>重庆<br>635.2850<br>106.54000014066696167<br>29.39999880018641676<br>西安<br>963.3171<br>108.92999857664108276<br>34.23000121926852302<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="5、georadiusbymember-找出位于指定范围内的元素"><a href="#5、georadiusbymember-找出位于指定范围内的元素" class="headerlink" title="5、georadiusbymember 找出位于指定范围内的元素"></a>5、<code>georadiusbymember</code> 找出位于指定范围内的元素</h3><p>语法：<code>georadiusbymember key member radius m|km|ft|mi [withcoord][withdist] [withhash][asc|desc][count count]</code></p>
+<ul>
+<li>找出位于指定范围内的元素，中心点是由给定的位置元素决定</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs bash">127.0.0.1:6379&gt; GEORADIUSBYMEMBER china:city 北京 1000 km<br>北京<br>西安<br>127.0.0.1:6379&gt; GEORADIUSBYMEMBER china:city 上海 400 km<br>杭州<br>上海<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="6、geohash-将二维经纬度转换为一维字符串"><a href="#6、geohash-将二维经纬度转换为一维字符串" class="headerlink" title="6、geohash 将二维经纬度转换为一维字符串"></a>6、<code>geohash</code> 将二维经纬度转换为一维字符串</h3><p>语法：<code>geohash key member [member...]</code></p>
+<ul>
+<li>Redis使用geohash将二维经纬度转换为一维字符串，字符串越长表示位置更精确，两个字符串越相似表示距离越近。</li>
+<li>它是 <code>base32</code> 编码。 你可以使用这个编码值去 <code>http://geohash.org/${hash}</code> 中进行直接定位，它是 <strong>Geohash</strong> 的标准编码值。</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs bash">127.0.0.1:6379&gt; geohash china:city 北京 重庆<br>wx4sucu47r0<br>wm5z22h53v0<br>127.0.0.1:6379&gt; geohash china:city 北京 上海<br>wx4sucu47r0<br>wtw6sk5n300<br></code></pre></td></tr></table></figure>
+
+<p><strong>zrem</strong>:GEO没有提供删除成员的命令，但是因为GEO的底层实现是zset，所以可以借用zrem命令实现对地理位置信息的删除。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs bash">127.0.0.1:6379&gt; geoadd china:city 116.23 40.22 beijing<br>1<br>127.0.0.1:6379&gt; zrange china:city 0 -1 <span class="hljs-comment"># 查看全部的元素</span><br>重庆<br>西安<br>深圳<br>武汉<br>杭州<br>上海<br>beijing<br>北京<br>127.0.0.1:6379&gt; zrem china:city beijing <span class="hljs-comment"># 移除元素</span><br>1<br>127.0.0.1:6379&gt; zrem china:city 北京 <span class="hljs-comment"># 移除元素</span><br>1<br>127.0.0.1:6379&gt; zrange china:city 0 -1<br>重庆<br>西安<br>深圳<br>武汉<br>杭州<br>上海<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h2><p>在一个地图应用中，车的数据、餐馆的数据、人的数据可能会有百万千万条，如果使用 Redis 的 Geo 数据结构，它们将 <strong>全部放在一个</strong> zset 集合中。在 Redis 的集群环境中，集合可能会从一个节点迁移到另一个节点，如果单个 key 的数据过大，会对集群的迁移工作造成较大的影响，在集群环境中单个 key 对应的数据量不宜超过 1M，否则会导致集群迁移出现卡顿现象，影响线上服务的正常运行。</p>
+<p>所以建议 <strong>Geo</strong> 的数据使用 <strong>单独的 Redis 实例部署</strong>，不使用集群环境。</p>
+<p>如果数据量过亿甚至更大，就需要对 <strong>Geo</strong> 数据进行拆分，按国家拆分、按省拆分，按市拆分，在人口特大城市甚至可以按区拆分。这样就可以显著降低单个 zset 集合的大小。</p>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ol>
+<li><a href="https://www.cnblogs.com/wmyskxz/p/12466945.html" target="_blank" rel="noopener">https://www.cnblogs.com/wmyskxz/p/12466945.html</a></li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Redis/" class="category-chain-item">Redis</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Redis/" class="print-no-link">#Redis</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>01-Redis 特殊数据类型之 GeoHash</div>
+      <div>https://flepeng.github.io/042-Redis-41-核心概念-01-Redis-特殊数据类型之-GeoHash/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年1月1日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/042-Redis-41-%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5-01-Redis-%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85-PubSub/" title="01-Redis 发布订阅 - PubSub">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">01-Redis 发布订阅 - PubSub</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/042-Redis-41-%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5-01-Redis-%E7%89%B9%E6%AE%8A%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B%E4%B9%8B-HyperLogLog/" title="01-Redis 特殊数据类型之 HyperLogLog">
+                        <span class="hidden-mobile">01-Redis 特殊数据类型之 HyperLogLog</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

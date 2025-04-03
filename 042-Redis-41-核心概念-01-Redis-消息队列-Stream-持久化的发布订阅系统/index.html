@@ -1,0 +1,841 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Stream 持久化的发布&#x2F;订阅系统Redis Stream 从概念上来说，就像是一个 仅追加内容 的 消息链表，把所有加入的消息都一个一个串起来，每个消息都有一个唯一的 ID 和内容，这很简单，让它复杂的是从 Kafka 借鉴的另一种概念：消费者组(Consumer Group) (思路一致，实现不同)：  上图展示了一个典型的 Stream 结构。每个 Stream 都有唯一的名称，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="01-Redis 消息队列 - Stream 持久化的发布订阅系统">
+<meta property="og:url" content="https://flepeng.github.io/042-Redis-41-%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5-01-Redis-%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97-Stream-%E6%8C%81%E4%B9%85%E5%8C%96%E7%9A%84%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85%E7%B3%BB%E7%BB%9F/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="Stream 持久化的发布&#x2F;订阅系统Redis Stream 从概念上来说，就像是一个 仅追加内容 的 消息链表，把所有加入的消息都一个一个串起来，每个消息都有一个唯一的 ID 和内容，这很简单，让它复杂的是从 Kafka 借鉴的另一种概念：消费者组(Consumer Group) (思路一致，实现不同)：  上图展示了一个典型的 Stream 结构。每个 Stream 都有唯一的名称，">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/redis/7896890-b9d8afde068a165f.webp">
+<meta property="article:published_time" content="2020-12-31T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.364Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Redis">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/redis/7896890-b9d8afde068a165f.webp">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>01-Redis 消息队列 - Stream 持久化的发布订阅系统 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="01-Redis 消息队列 - Stream 持久化的发布订阅系统"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-01-01 00:00" pubdate>
+          2021年1月1日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          27 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">01-Redis 消息队列 - Stream 持久化的发布订阅系统</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="Stream-持久化的发布-x2F-订阅系统"><a href="#Stream-持久化的发布-x2F-订阅系统" class="headerlink" title="Stream 持久化的发布&#x2F;订阅系统"></a>Stream 持久化的发布&#x2F;订阅系统</h2><p><strong>Redis Stream</strong> 从概念上来说，就像是一个 <strong>仅追加内容</strong> 的 <strong>消息链表</strong>，把所有加入的消息都一个一个串起来，每个消息都有一个唯一的 ID 和内容，这很简单，让它复杂的是从 Kafka 借鉴的另一种概念：<strong>消费者组(Consumer Group)</strong> (思路一致，实现不同)：</p>
+<p><img src="/img/redis/7896890-b9d8afde068a165f.webp" srcset="/img/loading.gif" lazyload></p>
+<p>上图展示了一个典型的 Stream 结构。每个 Stream 都有唯一的名称，它就是 Redis 的 <code>key</code>，<strong>在我们首次使用 <code>xadd</code> 指令追加消息时自动创建</strong>。</p>
+<p>我们对图中的一些概念做一下解释：</p>
+<ul>
+<li><p><strong><code>Consumer Group</code><strong>：消费者组，可以简单看成记录流状态的一种数据结构。<br>消费者既可以选择使用 <code>XREAD</code> 命令进行 <strong>独立消费</strong>，也可以多个消费者同时加入一个消费者组进行 <strong>组内消费</strong>。<br>同一个消费者组内的消费者共享所有的 Stream 信息，</strong>同一条消息只会有一个消费者消费到</strong>，这样就可以应用在分布式的应用场景中来保证消息的唯一性。</p>
+</li>
+<li><p>**<code>last_delivered_id</code>**：用来表示消费者组消费在 Stream 上 <strong>消费位置</strong> 的游标信息。<br>每个消费者组都有一个 Stream 内 <strong>唯一的名称</strong>，消费者组不会自动创建，需要使用 <code>XGROUP CREATE</code> 指令来显式创建，并且需要指定从哪一个消息 ID 开始消费，用来初始化 <code>last_delivered_id</code> 这个变量。</p>
+</li>
+<li><p>**<code>pending_ids</code>**：每个消费者内部都有的一个状态变量，用来表示 <strong>已经被客户端获取，但是还没有 ack</strong> 的消息。<br>记录的目的是为了 <strong>保证客户端至少消费了消息一次</strong>，而不会在网络传输的中途丢失而没有对消息进行处理。<br>如果客户端没有 ack，那么这个变量里面的消息 ID 就会越来越多，一旦某个消息被 ack，它就会对应开始减少。这个变量也被 Redis 官方称为 **PEL(Pending Entries List)**。</p>
+</li>
+</ul>
+<h2 id="消息-ID-和消息内容"><a href="#消息-ID-和消息内容" class="headerlink" title="消息 ID 和消息内容"></a>消息 ID 和消息内容</h2><h3 id="消息-ID"><a href="#消息-ID" class="headerlink" title="消息 ID"></a>消息 ID</h3><p>消息 ID 如果是由 <code>XADD</code> 命令返回自动创建的话，那么它的格式是：<code>timestampInMillis-sequence</code> (毫秒时间戳-序列号)。</p>
+<p>例如 <code>1527846880585-5</code>，它表示当前的消息是在毫秒时间戳 <code>1527846880585</code> 时产生的，并且是该毫秒内产生的第 5 条消息。</p>
+<p>这些 ID 的格式看起来有一些奇怪，<strong>为什么要使用时间来当做 ID 的一部分呢？</strong> </p>
+<p>一方面，我们要 <strong>满足 ID 自增</strong> 的属性，另一方面，也是为了 <strong>支持范围查找</strong> 的功能。由于 ID 和生成消息的时间有关，这样就使得在根据时间范围内查找时基本上是没有额外损耗的。</p>
+<p>当然消息 ID 也可以由客户端自定义，但是形式必须是 **<code>整数-整数</code>**，而且后面加入的消息的 ID 必须要大于前面的消息 ID。</p>
+<h3 id="消息内容"><a href="#消息内容" class="headerlink" title="消息内容"></a>消息内容</h3><p>消息内容就是普通的键值对，形如 hash 结构的键值对。</p>
+<h2 id="增删改查简单示例"><a href="#增删改查简单示例" class="headerlink" title="增删改查简单示例"></a>增删改查简单示例</h2><p>增删改查命令很简单，详情如下：</p>
+<ol>
+<li><code>xadd</code>：追加消息</li>
+<li><code>xdel</code>：删除消息，这里的删除仅仅是设置了标志位，不影响消息总长度</li>
+<li><code>xrange</code>：获取消息列表，会自动过滤已经删除的消息</li>
+<li><code>xlen</code>：消息长度</li>
+<li><code>del</code>：删除Stream</li>
+</ol>
+<p>使用示例：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta">#</span><span class="bash"> * 号表示服务器自动生成ID，后面顺序跟着一堆key/value</span><br>127.0.0.1:6379&gt; xadd codehole * name laoqian age 30  #  名字叫laoqian，年龄30岁<br>1527849609889-0  # 生成的消息ID<br>127.0.0.1:6379&gt; xadd codehole * name xiaoyu age 29<br>1527849629172-0<br>127.0.0.1:6379&gt; xadd codehole * name xiaoqian age 1<br>1527849637634-0<br>127.0.0.1:6379&gt; xlen codehole<br>(integer) 3<br>127.0.0.1:6379&gt; xrange codehole - +  # -表示最小值, +表示最大值<br>1) 1) 1527849609889-0<br>   2) 1) "name"<br>      2) "laoqian"<br>      3) "age"<br>      4) "30"<br>2) 1) 1527849629172-0<br>   2) 1) "name"<br>      2) "xiaoyu"<br>      3) "age"<br>      4) "29"<br>3) 1) 1527849637634-0<br>   2) 1) "name"<br>      2) "xiaoqian"<br>      3) "age"<br>      4) "1"<br>127.0.0.1:6379&gt; xrange codehole 1527849629172-0 +  # 指定最小消息ID的列表<br>1) 1) 1527849629172-0<br>   2) 1) "name"<br>      2) "xiaoyu"<br>      3) "age"<br>      4) "29"<br>2) 1) 1527849637634-0<br>   2) 1) "name"<br>      2) "xiaoqian"<br>      3) "age"<br>      4) "1"<br>127.0.0.1:6379&gt; xrange codehole - 1527849629172-0  # 指定最大消息ID的列表<br>1) 1) 1527849609889-0<br>   2) 1) "name"<br>      2) "laoqian"<br>      3) "age"<br>      4) "30"<br>2) 1) 1527849629172-0<br>   2) 1) "name"<br>      2) "xiaoyu"<br>      3) "age"<br>      4) "29"<br>127.0.0.1:6379&gt; xdel codehole 1527849609889-0<br>(integer) 1<br>127.0.0.1:6379&gt; xlen codehole  # 长度不受影响<br>(integer) 3<br>127.0.0.1:6379&gt; xrange codehole - +  # 被删除的消息没了<br>1) 1) 1527849629172-0<br>   2) 1) "name"<br>      2) "xiaoyu"<br>      3) "age"<br>      4) "29"<br>2) 1) 1527849637634-0<br>   2) 1) "name"<br>      2) "xiaoqian"<br>      3) "age"<br>      4) "1"<br>127.0.0.1:6379&gt; del codehole  # 删除整个Stream<br>(integer) 1<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="独立消费示例"><a href="#独立消费示例" class="headerlink" title="独立消费示例"></a>独立消费示例</h2><p>我们可以在不定义消费组的情况下进行 Stream 消息的 <strong>独立消费</strong>，当 Stream 没有新消息时，甚至可以阻塞等待。</p>
+<p>Redis 设计了一个单独的消费指令 <code>xread</code>，可以将 Stream 当成普通的消息队列(list)来使用。使用 <code>xread</code> 时，我们可以完全忽略 <strong>消费组(Consumer Group)</strong> 的存在，就好比 Stream 就是一个普通的列表(list)：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta">#</span><span class="bash"> 从Stream头部读取两条消息</span><br>127.0.0.1:6379&gt; xread count 2 streams codehole 0-0<br>1) 1) "codehole"<br>   2) 1) 1) 1527851486781-0<br>         2) 1) "name"<br>            2) "laoqian"<br>            3) "age"<br>            4) "30"<br>      2) 1) 1527851493405-0<br>         2) 1) "name"<br>            2) "yurui"<br>            3) "age"<br>            4) "29"<br><br><span class="hljs-meta">#</span><span class="bash"> 从Stream尾部读取一条消息，毫无疑问，这里不会返回任何消息</span><br>127.0.0.1:6379&gt; xread count 1 streams codehole $<br>(nil)<br><br><span class="hljs-meta">#</span><span class="bash"> 从尾部阻塞等待新消息到来，下面的指令会堵住，直到新消息到来</span><br>127.0.0.1:6379&gt; xread block 0 count 1 streams codehole $<br><br><span class="hljs-meta">#</span><span class="bash"> 我们从新打开一个窗口，在这个窗口往Stream里塞消息</span><br>127.0.0.1:6379&gt; xadd codehole * name youming age 60<br>1527852774092-0<br><br><span class="hljs-meta">#</span><span class="bash"> 再切换到前面的窗口，我们可以看到阻塞解除了，返回了新的消息内容，而且还显示了一个等待时间，这里我们等待了93s</span><br>127.0.0.1:6379&gt; xread block 0 count 1 streams codehole $<br>1) 1) "codehole"<br>   2) 1) 1) 1527852774092-0<br>         2) 1) "name"<br>            2) "youming"<br>            3) "age"<br>            4) "60"<br>(93.11s)<br></code></pre></td></tr></table></figure>
+
+<p>客户端如果想要使用 <code>xread</code> 进行 <strong>顺序消费</strong>，一定要 <strong>记住当前消费</strong> 到哪里了，也就是返回的消息 ID。下次继续调用 <code>xread</code> 时，将上次返回的最后一个消息 ID 作为参数传递进去，就可以继续消费后续的消息。</p>
+<p><code>block 0</code> 表示永远阻塞，直到消息到来，<code>block 1000</code> 表示阻塞 <code>1s</code>，如果 <code>1s</code> 内没有任何消息到来，就返回 <code>nil</code>：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs shell">127.0.0.1:6379&gt; xread block 1000 count 1 streams codehole $<br>(nil)<br>(1.07s)<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="创建消费者组示例"><a href="#创建消费者组示例" class="headerlink" title="创建消费者组示例"></a>创建消费者组示例</h2><p>Stream 通过 <code>xgroup create</code> 指令创建消费组(Consumer Group)，需要传递起始消息 ID 参数用来初始化 <code>last_delivered_id</code> 变量：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><code class="hljs shell">127.0.0.1:6379&gt; xgroup create codehole cg1 0-0  #  表示从头开始消费<br>OK<br><span class="hljs-meta">#</span><span class="bash"> $表示从尾部开始消费，只接受新消息，当前Stream消息会全部忽略</span><br>127.0.0.1:6379&gt; xgroup create codehole cg2 $<br>OK<br><br><span class="hljs-meta">#</span><span class="bash"> 获取Stream信息</span><br>127.0.0.1:6379&gt; xinfo codehole  <br> 1) length<br> 2) (integer) 3  # 共3个消息<br> 3) radix-tree-keys<br> 4) (integer) 1<br> 5) radix-tree-nodes<br> 6) (integer) 2<br> 7) groups<br> 8) (integer) 2  # 两个消费组<br> 9) first-entry  # 第一个消息<br>10) 1) 1527851486781-0<br>    2) 1) "name"<br>       2) "laoqian"<br>       3) "age"<br>       4) "30"<br>11) last-entry  # 最后一个消息<br>12) 1) 1527851498956-0<br>    2) 1) "name"<br>       2) "xiaoqian"<br>       3) "age"<br>       4) "1"<br><br><span class="hljs-meta">#</span><span class="bash"> 获取Stream的消费组信息</span><br>127.0.0.1:6379&gt; xinfo groups codehole<br>1) 1) name<br>   2) "cg1"<br>   3) consumers<br>   4) (integer) 0  # 该消费组还没有消费者<br>   5) pending<br>   6) (integer) 0  # 该消费组没有正在处理的消息<br>2) 1) name<br>   2) "cg2"<br>   3) consumers  # 该消费组还没有消费者<br>   4) (integer) 0<br>   5) pending<br>   6) (integer) 0  # 该消费组没有正在处理的消息<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="组内消费示例"><a href="#组内消费示例" class="headerlink" title="组内消费示例"></a>组内消费示例</h2><p>Stream 提供了 <code>xreadgroup</code> 指令可以进行消费组的组内消费，需要提供 <strong>消费组名称、消费者名称和起始消息 ID</strong>。它同 <code>xread</code> 一样，也可以阻塞等待新消息。读到新消息后，对应的消息 ID 就会进入消费者的 <strong>PEL(正在处理的消息)</strong> 结构里，客户端处理完毕后使用 <code>xack</code> 指令 <strong>通知服务器</strong>，本条消息已经处理完毕，该消息 ID 就会从 <strong>PEL</strong> 中移除，下面是示例：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta">#</span><span class="bash"> &gt; 号表示从当前消费组的 last_delivered_id 后面开始读</span><br><span class="hljs-meta">#</span><span class="bash"> 每当消费者读取一条消息 last_delivered_id 变量就会前进</span><br><span class="hljs-meta">#</span><span class="bash"> xreadgroup GROUP 组名 消费者名 count num streams streams名</span><br>127.0.0.1:6379&gt; xreadgroup GROUP cg1 c1 count 1 streams codehole &gt;<br>1) 1) "codehole"<br>   2) 1) 1) 1527851486781-0<br>         2) 1) "name"<br>            2) "laoqian"<br>            3) "age"<br>            4) "30"<br>127.0.0.1:6379&gt; xreadgroup GROUP cg1 c1 count 1 streams codehole &gt;<br>1) 1) "codehole"<br>   2) 1) 1) 1527851493405-0<br>         2) 1) "name"<br>            2) "yurui"<br>            3) "age"<br>            4) "29"<br>127.0.0.1:6379&gt; xreadgroup GROUP cg1 c1 count 2 streams codehole &gt;<br>1) 1) "codehole"<br>   2) 1) 1) 1527851498956-0<br>         2) 1) "name"<br>            2) "xiaoqian"<br>            3) "age"<br>            4) "1"<br>      2) 1) 1527852774092-0<br>         2) 1) "name"<br>            2) "youming"<br>            3) "age"<br>            4) "60"<br><br><span class="hljs-meta">#</span><span class="bash"> 再继续读取，就没有新消息了</span><br>127.0.0.1:6379&gt; xreadgroup GROUP cg1 c1 count 1 streams codehole &gt;<br>(nil)<br><br><span class="hljs-meta">#</span><span class="bash"> 阻塞等待</span><br>127.0.0.1:6379&gt; xreadgroup GROUP cg1 c1 block 0 count 1 streams codehole &gt;<br><br><span class="hljs-meta">#</span><span class="bash"> 开启另一个窗口，往里塞消息</span><br>127.0.0.1:6379&gt; xadd codehole * name lanying age 61<br>1527854062442-0<br><br><span class="hljs-meta">#</span><span class="bash"> 回到前一个窗口，发现阻塞解除，收到新消息了</span><br>127.0.0.1:6379&gt; xreadgroup GROUP cg1 c1 block 0 count 1 streams codehole &gt;<br>1) 1) "codehole"<br>   2) 1) 1) 1527854062442-0<br>         2) 1) "name"<br>            2) "lanying"<br>            3) "age"<br>            4) "61"<br>(36.54s)<br><br><span class="hljs-meta">#</span><span class="bash"> 观察消费组信息</span><br>127.0.0.1:6379&gt; xinfo groups codehole  <br>1) 1) name<br>   2) "cg1"<br>   3) consumers<br>   4) (integer) 1  # 一个消费者<br>   5) pending<br>   6) (integer) 5  # 共5条正在处理的信息还有没有ack<br>2) 1) name<br>   2) "cg2"<br>   3) consumers<br>   4) (integer) 0  # 消费组cg2没有任何变化，因为前面我们一直在操纵cg1<br>   5) pending<br>   6) (integer) 0<br><br><span class="hljs-meta">#</span><span class="bash"> 如果同一个消费组有多个消费者，我们可以通过xinfo consumers指令观察每个消费者的状态</span><br>127.0.0.1:6379&gt; xinfo consumers codehole cg1  # 目前还有1个消费者<br>1) 1) name<br>   2) "c1"<br>   3) pending<br>   4) (integer) 5  # 共5条待处理消息<br>   5) idle<br>   6) (integer) 418715  # 空闲了多长时间ms没有读取消息了<br><br><span class="hljs-meta">#</span><span class="bash"> 接下来我们ack一条消息</span><br>127.0.0.1:6379&gt; xack codehole cg1 1527851486781-0<br>(integer) 1<br><br>127.0.0.1:6379&gt; xinfo consumers codehole cg1<br>1) 1) name<br>   2) "c1"<br>   3) pending<br>   4) (integer) 4  # 变成了5条<br>   5) idle<br>   6) (integer) 668504<br><br><span class="hljs-meta">#</span><span class="bash"> 下面ack所有消息</span><br>127.0.0.1:6379&gt; xack codehole cg1 1527851493405-0 1527851498956-0 1527852774092-0 1527854062442-0<br>(integer) 4<br><br>127.0.0.1:6379&gt; xinfo consumers codehole cg1<br>1) 1) name<br>   2) "c1"<br>   3) pending<br>   4) (integer) 0  # pel空了<br>   5) idle<br>   6) (integer) 745505<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="一些问题"><a href="#一些问题" class="headerlink" title="一些问题"></a>一些问题</h2><h3 id="1：Stream-消息太多怎么办？-Stream-的上限"><a href="#1：Stream-消息太多怎么办？-Stream-的上限" class="headerlink" title="1：Stream 消息太多怎么办？ | Stream 的上限"></a>1：Stream 消息太多怎么办？ | Stream 的上限</h3><p>要是消息积累太多，Stream 的链表岂不是很长，内容会不会爆掉？。而且 <code>xdel</code> 指令也不会删除消息，它只是给消息做了个标志位。</p>
+<p>Redis 自然考虑到了这一点，所以它提供了一个定长 Stream 功能。在 <code>xadd</code> 的指令提供一个定长长度 <code>maxlen</code>，就可以将老的消息干掉，确保最多不超过指定长度，使用起来也很简单：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta">&gt;</span><span class="bash"> XADD mystream MAXLEN 2 * value 1</span><br>1526654998691-0<br><span class="hljs-meta">&gt;</span><span class="bash"> XADD mystream MAXLEN 2 * value 2</span><br>1526654999635-0<br><span class="hljs-meta">&gt;</span><span class="bash"> XADD mystream MAXLEN 2 * value 3</span><br>1526655000369-0<br><span class="hljs-meta">&gt;</span><span class="bash"> XLEN mystream</span><br>(integer) 2<br><span class="hljs-meta">&gt;</span><span class="bash"> XRANGE mystream - +</span><br>1) 1) 1526654999635-0<br>   2) 1) "value"<br>      2) "2"<br>2) 1) 1526655000369-0<br>   2) 1) "value"<br>      2) "3"<br></code></pre></td></tr></table></figure>
+
+<p>如果使用 <code>MAXLEN</code> 选项，当 Stream 的达到指定长度后，老的消息会自动被淘汰掉，因此 Stream 的大小是恒定的。目前还没有选项让 Stream 只保留给定数量的条目，因为为了一致地运行，这样的命令必须在很长一段时间内阻塞以淘汰消息。_(例如在添加数据的高峰期间，你不得不长暂停来淘汰旧消息和添加新的消息)_</p>
+<p>另外使用 <code>MAXLEN</code> 选项的花销是很大的，Stream 为了节省内存空间，采用了一种特殊的结构表示，而这种结构的调整是需要额外的花销的。所以我们可以使用一种带有 <code>~</code> 的特殊命令：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs go">XADD mystream MAXLEN ~ <span class="hljs-number">1000</span> * ... entry fields here ...<br></code></pre></td></tr></table></figure>
+
+<p>它会基于当前的结构合理地对节点执行裁剪，来保证至少会有 <code>1000</code> 条数据，可能是 <code>1010</code> 也可能是 <code>1030</code>。</p>
+<h3 id="2：PEL-是如何避免消息丢失的？"><a href="#2：PEL-是如何避免消息丢失的？" class="headerlink" title="2：PEL 是如何避免消息丢失的？"></a>2：PEL 是如何避免消息丢失的？</h3><p>在客户端消费者读取 Stream 消息时，Redis 服务器将消息回复给客户端的过程中，客户端突然断开了连接，消息就丢失了。但是 PEL 里已经保存了发出去的消息 ID，待客户端重新连上之后，可以再次收到 PEL 中的消息 ID 列表。</p>
+<p>不过此时 <code>xreadgroup</code> 的起始消息 ID 不能为参数 <code>&gt;</code> ，而必须是任意有效的消息 ID，一般将参数设为 <code>0-0</code>，表示读取所有的 PEL 消息以及自 <code>last_delivered_id</code> 之后的新消息。</p>
+<h2 id="Redis-Stream-Vs-Kafka"><a href="#Redis-Stream-Vs-Kafka" class="headerlink" title="Redis Stream Vs Kafka"></a>Redis Stream Vs Kafka</h2><p>Redis 基于内存存储，这意味着它会比基于磁盘的 Kafka 快上一些，也意味着使用 Redis 我们 <strong>不能长时间存储大量数据</strong>。</p>
+<p>如果您想以 <strong>最小延迟</strong> 实时处理消息的话，您可以考虑 Redis，但是如果 <strong>消息很大并且应该重用数据</strong> 的话，则应该首先考虑使用 Kafka。</p>
+<p>从某些角度来说，<code>Redis Stream</code> 也更适用于小型、廉价的应用程序，因为 <code>Kafka</code> 相对来说更难配置一些。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ol>
+<li><a href="https://www.cnblogs.com/wmyskxz/p/12499532.html" target="_blank" rel="noopener">https://www.cnblogs.com/wmyskxz/p/12499532.html</a></li>
+<li>Introduction to Redis Streams【官方文档】 - <a href="https://redis.io/topics/streams-intro" target="_blank" rel="noopener">https://redis.io/topics/streams-intro</a></li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Redis/" class="category-chain-item">Redis</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Redis/" class="print-no-link">#Redis</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>01-Redis 消息队列 - Stream 持久化的发布订阅系统</div>
+      <div>https://flepeng.github.io/042-Redis-41-核心概念-01-Redis-消息队列-Stream-持久化的发布订阅系统/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年1月1日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/042-Redis-21-%E5%91%BD%E4%BB%A4-Redis-benchmark-%E5%8E%8B%E5%8A%9B%E6%B5%8B%E8%AF%95/" title="Redis-benchmark 压力测试">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Redis-benchmark 压力测试</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/042-Redis-41-%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5-01-Redis-%E7%89%B9%E6%AE%8A%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B%E4%B9%8B-BitMap/" title="01-Redis 特殊数据类型之 BitMap">
+                        <span class="hidden-mobile">01-Redis 特殊数据类型之 BitMap</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

@@ -1,0 +1,850 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="DNS（Domain Name System）域名管理系统，是当用户使用浏览器访问网址之后，使用的第一个重要协议。DNS 要解决的是域名和 IP 地址的映射问题。  目前 DNS 的设计采用的是分布式、层次数据库结构，DNS 是应用层协议，基于 UDP 和 TCP 协议之上（真是个奇葩），端口为 53 。 DNS 服务器DNS 服务器自底向上可以依次分为以下几个层级(所有 DNS 服务器都属于以下">
+<meta property="og:type" content="article">
+<meta property="og:title" content="74-DNS">
+<meta property="og:url" content="https://flepeng.github.io/010-network-70-%E5%BA%94%E7%94%A8%E5%B1%82-74-DNS/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="DNS（Domain Name System）域名管理系统，是当用户使用浏览器访问网址之后，使用的第一个重要协议。DNS 要解决的是域名和 IP 地址的映射问题。  目前 DNS 的设计采用的是分布式、层次数据库结构，DNS 是应用层协议，基于 UDP 和 TCP 协议之上（真是个奇葩），端口为 53 。 DNS 服务器DNS 服务器自底向上可以依次分为以下几个层级(所有 DNS 服务器都属于以下">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://oss.javaguide.cn/github/javaguide/cs-basics/network/dns-overview.png">
+<meta property="og:image" content="https://oss.javaguide.cn/github/javaguide/cs-basics/network/DNS-process.png">
+<meta property="og:image" content="https://oss.javaguide.cn/github/javaguide/cs-basics/network/DNS-process2.png">
+<meta property="og:image" content="https://oss.javaguide.cn/github/javaguide/cs-basics/network/DNS-packet.png">
+<meta property="og:image" content="https://oss.javaguide.cn/github/javaguide/cs-basics/network/20210506174303797.png">
+<meta property="og:image" content="https://oss.javaguide.cn/github/javaguide/cs-basics/network/20210506170307897.png">
+<meta property="article:published_time" content="2024-03-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.274Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="HTTP">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://oss.javaguide.cn/github/javaguide/cs-basics/network/dns-overview.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>74-DNS - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="74-DNS"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-03-08 00:00" pubdate>
+          2024年3月8日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          17 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">74-DNS</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>DNS（Domain Name System）域名管理系统，是当用户使用浏览器访问网址之后，使用的第一个重要协议。DNS 要解决的是<strong>域名和 IP 地址的映射问题</strong>。</p>
+<p><img src="https://oss.javaguide.cn/github/javaguide/cs-basics/network/dns-overview.png" srcset="/img/loading.gif" lazyload alt="DNS:域名系统"></p>
+<p>目前 DNS 的设计采用的是分布式、层次数据库结构，<strong>DNS 是应用层协议，基于 UDP 和 TCP 协议之上（真是个奇葩），端口为 53</strong> 。</p>
+<h2 id="DNS-服务器"><a href="#DNS-服务器" class="headerlink" title="DNS 服务器"></a>DNS 服务器</h2><p>DNS 服务器自底向上可以依次分为以下几个层级(所有 DNS 服务器都属于以下四个类别之一):</p>
+<ul>
+<li>根 DNS 服务器。根 DNS 服务器提供 TLD 服务器的 IP 地址。目前世界上只有 13 组根服务器，我国境内目前仍没有根服务器。</li>
+<li>顶级域 DNS 服务器（TLD 服务器）。顶级域是指域名的后缀，如<code>com</code>、<code>org</code>、<code>net</code>和<code>edu</code>等。国家也有自己的顶级域，如<code>uk</code>、<code>fr</code>和<code>ca</code>。TLD 服务器提供了权威 DNS 服务器的 IP 地址。</li>
+<li>权威 DNS 服务器。在因特网上具有公共可访问主机的每个组织机构必须提供公共可访问的 DNS 记录，这些记录将这些主机的名字映射为 IP 地址。</li>
+<li>本地 DNS 服务器。每个 ISP（互联网服务提供商）都有一个自己的本地 DNS 服务器。当主机发出 DNS 请求时，该请求被发往本地 DNS 服务器，它起着代理的作用，并将该请求转发到 DNS 层次结构中。严格说来，不属于 DNS 层级结构。</li>
+</ul>
+<p>世界上并不是只有 13 台根服务器，这是很多人普遍的误解，网上很多文章也是这么写的。实际上，现在根服务器数量远远超过这个数量。最初确实是为 DNS 根服务器分配了 13 个 IP 地址，每个 IP 地址对应一个不同的根 DNS 服务器。然而，由于互联网的快速发展和增长，这个原始的架构变得不太适应当前的需求。为了提高 DNS 的可靠性、安全性和性能，目前这 13 个 IP 地址中的每一个都有多个服务器，截止到 2023 年底，所有根服务器之和达到了 600 多台，未来还会继续增加。</p>
+<h2 id="DNS-工作流程"><a href="#DNS-工作流程" class="headerlink" title="DNS 工作流程"></a>DNS 工作流程</h2><p>以下图为例，介绍 DNS 的查询解析过程。DNS 的查询解析过程分为两种模式：</p>
+<ul>
+<li><strong>迭代</strong></li>
+<li><strong>递归</strong></li>
+</ul>
+<p>下图是实践中常采用的方式，从请求主机到本地 DNS 服务器的查询是递归的，其余的查询时迭代的。</p>
+<p><img src="https://oss.javaguide.cn/github/javaguide/cs-basics/network/DNS-process.png" srcset="/img/loading.gif" lazyload></p>
+<p>现在，主机 <code>cis.poly.edu</code> 想知道 <code>gaia.cs.umass.edu</code> 的 IP 地址。假设主机 <code>cis.poly.edu</code> 的本地 DNS 服务器为 <code>dns.poly.edu</code>，并且 <code>gaia.cs.umass.edu</code> 的权威 DNS 服务器为 <code>dns.cs.umass.edu</code>。</p>
+<ol>
+<li>首先，主机 <code>cis.poly.edu</code> 向本地 DNS 服务器 <code>dns.poly.edu</code> 发送一个 DNS 请求，该查询报文包含被转换的域名 <code>gaia.cs.umass.edu</code>。</li>
+<li>本地 DNS 服务器 <code>dns.poly.edu</code> 检查本机缓存，发现并无记录，也不知道 <code>gaia.cs.umass.edu</code> 的 IP 地址该在何处，不得不向根服务器发送请求。</li>
+<li>根服务器注意到请求报文中含有 <code>edu</code> 顶级域，因此告诉本地 DNS，你可以向 <code>edu</code> 的 TLD DNS 发送请求，因为目标域名的 IP 地址很可能在那里。</li>
+<li>本地 DNS 获取到了 <code>edu</code> 的 TLD DNS 服务器地址，向其发送请求，询问 <code>gaia.cs.umass.edu</code> 的 IP 地址。</li>
+<li><code>edu</code> 的 TLD DNS 服务器仍不清楚请求域名的 IP 地址，但是它注意到该域名有 <code>umass.edu</code> 前缀，因此返回告知本地 DNS，<code>umass.edu</code> 的权威服务器可能记录了目标域名的 IP 地址。</li>
+<li>这一次，本地 DNS 将请求发送给权威 DNS 服务器<code>dns.cs.umass.edu</code>。</li>
+<li>终于，由于 <code>gaia.cs.umass.edu</code> 向权威 DNS 服务器备案过，在这里有它的 IP 地址记录，权威 DNS 成功地将 IP 地址返回给本地 DNS。</li>
+<li>最后，本地 DNS 获取到了目标域名的 IP 地址，将其返回给请求主机。</li>
+</ol>
+<p>除了迭代式查询，还有一种递归式查询如下图，具体过程和上述类似，只是顺序有所不同。</p>
+<p><img src="https://oss.javaguide.cn/github/javaguide/cs-basics/network/DNS-process2.png" srcset="/img/loading.gif" lazyload></p>
+<p>另外，DNS 的缓存位于本地 DNS 服务器。由于全世界的根服务器甚少，只有 600 多台，分为 13 组，且顶级域的数量也在一个可数的范围内，因此本地 DNS 通常已经缓存了很多 TLD DNS 服务器，所以在实际查找过程中，无需访问根服务器。根服务器通常是被跳过的，不请求的。这样可以提高 DNS 查询的效率和速度，减少对根服务器和 TLD 服务器的负担。</p>
+<h2 id="DNS-报文格式"><a href="#DNS-报文格式" class="headerlink" title="DNS 报文格式"></a>DNS 报文格式</h2><p>DNS 的报文格式如下图所示：</p>
+<p><img src="https://oss.javaguide.cn/github/javaguide/cs-basics/network/DNS-packet.png" srcset="/img/loading.gif" lazyload></p>
+<p>DNS 报文分为查询和回答报文，两种形式的报文结构相同。</p>
+<ul>
+<li>标识符。16 比特，用于标识该查询。这个标识符会被复制到对查询的回答报文中，以便让客户用它来匹配发送的请求和接收到的回答。</li>
+<li>标志。1 比特的”查询&#x2F;回答“标识位，<code>0</code>表示查询报文，<code>1</code>表示回答报文；1 比特的”权威的“标志位（当某 DNS 服务器是所请求名字的权威 DNS 服务器时，且是回答报文，使用”权威的“标志）；1 比特的”希望递归“标志位，显式地要求执行递归查询；1 比特的”递归可用“标志位，用于回答报文中，表示 DNS 服务器支持递归查询。</li>
+<li>问题数、回答 RR 数、权威 RR 数、附加 RR 数。分别指示了后面 4 类数据区域出现的数量。</li>
+<li>问题区域。包含正在被查询的主机名字，以及正被询问的问题类型。</li>
+<li>回答区域。包含了对最初请求的名字的资源记录。<strong>在回答报文的回答区域中可以包含多条 RR，因此一个主机名能够有多个 IP 地址。</strong></li>
+<li>权威区域。包含了其他权威服务器的记录。</li>
+<li>附加区域。包含了其他有帮助的记录。</li>
+</ul>
+<h2 id="DNS-记录"><a href="#DNS-记录" class="headerlink" title="DNS 记录"></a>DNS 记录</h2><p>DNS 服务器在响应查询时，需要查询自己的数据库，数据库中的条目被称为 <strong>资源记录(Resource Record，RR)</strong> 。RR 提供了主机名到 IP 地址的映射。RR 是一个包含了<code>Name</code>, <code>Value</code>, <code>Type</code>, <code>TTL</code> 四个字段的四元组。</p>
+<p><img src="https://oss.javaguide.cn/github/javaguide/cs-basics/network/20210506174303797.png" srcset="/img/loading.gif" lazyload></p>
+<ul>
+<li><p><code>TTL</code> 是该记录的生存时间，它决定了资源记录应当从缓存中删除的时间。</p>
+</li>
+<li><p><code>Name</code>和<code>Value</code>字段的取值取决于<code>Type</code>：</p>
+<p><img src="https://oss.javaguide.cn/github/javaguide/cs-basics/network/20210506170307897.png" srcset="/img/loading.gif" lazyload></p>
+<ul>
+<li>如果 <code>Type=A</code>，则 <code>Name</code> 是主机名信息，<code>Value</code> 是该主机名对应的 IP 地址。这样的 RR 记录了一条主机名到 IP 地址的映射。</li>
+<li>如果 <code>Type=AAAA</code> （与 <code>A</code> 记录非常相似），唯一的区别是 <code>A</code> 记录使用的是 IPv4，而 <code>AAAA</code> 记录使用的是 IPv6。</li>
+<li>如果 <code>Type=CNAME</code> (Canonical Name Record,真实名称记录) ，则 <code>Value</code> 是别名为 <code>Name</code> 的主机对应的规范主机名。<code>Value</code> 值才是规范主机名。<code>CNAME</code> 记录将一个主机名映射到另一个主机名。<code>CNAME</code> 记录用于为现有的 <code>A</code> 记录创建别名。下文有示例。</li>
+<li>如果<code>Type=NS</code>，则<code>Name</code>是个域，而 <code>Value</code> 是个知道如何获得该域中主机 IP 地址的权威 DNS 服务器的主机名。通常这样的 RR 是由 TLD 服务器发布的。</li>
+<li>如果 <code>Type=MX</code>，则 <code>Value</code> 是个别名为 <code>Name</code>的邮件服务器的规范主机名。既然有了 <code>MX</code> 记录，那么邮件服务器可以和其他服务器使用相同的别名。为了获得邮件服务器的规范主机名，需要请求 <code>MX</code> 记录；为了获得其他服务器的规范主机名，需要请求 <code>CNAME</code> 记录。</li>
+</ul>
+</li>
+</ul>
+<p><code>CNAME</code>记录总是指向另一则域名，而非 IP 地址。假设有下述 DNS zone：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs plain">NAME                    TYPE   VALUE<br>--------------------------------------------------<br>bar.example.com.        CNAME  foo.example.com.<br>foo.example.com.        A      192.0.2.23<br></code></pre></td></tr></table></figure>
+
+<p>当用户查询 <code>bar.example.com</code> 的时候，DNS Server 实际返回的是 <code>foo.example.com</code> 的 IP 地址。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
+<li>DNS 服务器类型：<a href="https://www.cloudflare.com/zh-cn/learning/dns/dns-server-types/" target="_blank" rel="noopener">https://www.cloudflare.com/zh-cn/learning/dns/dns-server-types/</a></li>
+<li>DNS Message Resource Record Field Formats：<a href="http://www.tcpipguide.com/free/t_DNSMessageResourceRecordFieldFormats-2.htm" target="_blank" rel="noopener">http://www.tcpipguide.com/free/t_DNSMessageResourceRecordFieldFormats-2.htm</a></li>
+<li>Understanding Different Types of Record in DNS Server：<a href="https://www.mustbegeek.com/understanding-different-types-of-record-in-dns-server/" target="_blank" rel="noopener">https://www.mustbegeek.com/understanding-different-types-of-record-in-dns-server/</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/HTTP/" class="category-chain-item">HTTP</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/HTTP/" class="print-no-link">#HTTP</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>74-DNS</div>
+      <div>https://flepeng.github.io/010-network-70-应用层-74-DNS/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年3月8日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/010-network-70-%E5%BA%94%E7%94%A8%E5%B1%82-72-HTTP2-%E7%AE%80%E4%BB%8B/" title="72-HTTP2 简介">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">72-HTTP2 简介</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/042-%E5%9B%BD%E4%BA%A7-HGDB-%E7%80%9A%E9%AB%98%E6%95%B0%E6%8D%AE%E5%BA%93-11-%E5%AE%89%E8%A3%85%E5%92%8C%E9%85%8D%E7%BD%AE-0-%E7%80%9A%E9%AB%98%E4%BC%81%E4%B8%9A%E7%89%88-6-0-4-%E5%AE%89%E8%A3%85%EF%BC%88CentOS7%EF%BC%89/" title="0-瀚高企业版 6.0.4  安装（CentOS7）">
+                        <span class="hidden-mobile">0-瀚高企业版 6.0.4  安装（CentOS7）</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

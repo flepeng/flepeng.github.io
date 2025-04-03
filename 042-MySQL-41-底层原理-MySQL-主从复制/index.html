@@ -1,0 +1,959 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="https:&#x2F;&#x2F;dev.mysql.com&#x2F;doc&#x2F;refman&#x2F;8.0&#x2F;en&#x2F;replication.html   主从复制的原理和步骤简单的说： master 将数据库的改变写入二进制日志（binlog），slave 同步这些二进制日志并重新执行一遍，这样 slave 上的数据就和 master 上的数据相同了。 详细的说：  master 启用二进制日志（binlog），记录任何修改数据">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL 主从复制">
+<meta property="og:url" content="https://flepeng.github.io/042-MySQL-41-%E5%BA%95%E5%B1%82%E5%8E%9F%E7%90%86-MySQL-%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="https:&#x2F;&#x2F;dev.mysql.com&#x2F;doc&#x2F;refman&#x2F;8.0&#x2F;en&#x2F;replication.html   主从复制的原理和步骤简单的说： master 将数据库的改变写入二进制日志（binlog），slave 同步这些二进制日志并重新执行一遍，这样 slave 上的数据就和 master 上的数据相同了。 详细的说：  master 启用二进制日志（binlog），记录任何修改数据">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/06/1728905013-91fedad40b0995c660240c9db9c76efb.png">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/06/1728910589-c22e37cd3d35360c562a389fac354d14.png">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/06/1728910589-22f81811c78f9251ca6c40db71d546b1.png">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/06/1728910589-17ce33bdc7ba02abd9bd8a47d1c20e57.png">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/06/1728910589-041c9c2ecdc2bcd92fd4c92ae8d1362a.png">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/06/1728910589-5ee907cf4b689a692f33b6330d887d79.png">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/06/1728910589-765aa9859cfb07f10d4f5be230ccd132.png">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/06/1728910589-2e9716eab7ca465665b71fd6beb48516.png">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/06/1728910589-6b95db511fdaf2acefbd2e2ec0147818.png">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/06/1728905013-1ba0492706a2485a506b4d87fb825cf4.png">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/06/11728905013-f3761e5d00b52750e8140f380811405a.png">
+<meta property="article:published_time" content="2020-08-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.360Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="MySQL">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/mysql/06/1728905013-91fedad40b0995c660240c9db9c76efb.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>MySQL 主从复制 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="MySQL 主从复制"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2020-08-08 00:00" pubdate>
+          2020年8月8日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          30 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">MySQL 主从复制</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <blockquote>
+<ul>
+<li><a href="https://dev.mysql.com/doc/refman/8.0/en/replication.html" target="_blank" rel="noopener">https://dev.mysql.com/doc/refman/8.0/en/replication.html</a></li>
+</ul>
+</blockquote>
+<h2 id="主从复制的原理和步骤"><a href="#主从复制的原理和步骤" class="headerlink" title="主从复制的原理和步骤"></a>主从复制的原理和步骤</h2><p>简单的说：</p>
+<p>master 将数据库的改变写入二进制日志（binlog），slave 同步这些二进制日志并重新执行一遍，这样 slave 上的数据就和 master 上的数据相同了。</p>
+<p>详细的说：</p>
+<ol>
+<li><p>master 启用二进制日志（binlog），记录任何修改数据库数据的事件。</p>
+</li>
+<li><p>当 slave 执行 <code>start slave</code> 命令之后，slave 会开启两个线程（I&#x2F;O 线程和 SQL 线程），I&#x2F;O 线程用来连接 master，并请求从指定日志文件（<code>MASTER_LOG_FILE</code>）的指定位置（<code>MASTER_LOG_POS</code>）（或者从最开始的日志）之后的日志内容。<br>I&#x2F;O 线程 与 master 建立的是长连接。</p>
+</li>
+<li><p>当 slave 连接 master 时，master 会为 slave 启动一个线程（Binlog Dump 线程），检查自己二进制日志中的事件，根据请求信息 读取 指定日志指定位置（file，pos）之后的日志信息，返回给 slave。<br>如果不带请求位置参数，则 master 就会从第一个日志文件中的第一个事件开始发送给 slave。<br>返回信息中除了日志之外，还包括本次返回的信息的 bin-log file 的以及 bin-log position（bin-log 中的下一个指定更新位置）。</p>
+</li>
+<li><p>slave 接收到 master 发送过来的数据把它放置到中继日志（Relay log）文件的最末端。并在 master-info 文件中记录 本次请求到 master 的二进制日志文件名和位置。以便在下一次读取。</p>
+</li>
+<li><p>slave SQL 线程 把中继日志（Relay log）中的事件读取出来，并在本地再执行一次。在执行的过程中，会在 relay-log-info 文件中记录当前应用中继日志的文件名和位置点。</p>
+</li>
+<li><p>后续当二进制日志（binlog）有变动时，Binlog Dump 线程 会通知所有的 salve 节点，并将相应的 binlog 内容推送给 slave 节点。</p>
+</li>
+</ol>
+<p>其原理图如下：</p>
+<p><img src="/img/mysql/06/1728905013-91fedad40b0995c660240c9db9c76efb.png" srcset="/img/loading.gif" lazyload alt="图片"><br><img src="/img/mysql/06/1728910589-c22e37cd3d35360c562a389fac354d14.png" srcset="/img/loading.gif" lazyload alt="图片"></p>
+<h3 id="相关线程"><a href="#相关线程" class="headerlink" title="相关线程"></a>相关线程</h3><p>slave：</p>
+<ul>
+<li>I&#x2F;O 线程<ul>
+<li>当 slave 上执行 start slave 命令之后，slave 会创建一个 I&#x2F;O 线程用来连接 master，请求主库中更新的 Binlog。I&#x2F;O 线程接收到 master的 log dump 线程发来的更新之后，保存到本地中继日志（relay log）</li>
+</ul>
+</li>
+<li>SQL 线程<ul>
+<li>当 slave 上执行 start slave 命令之后，slave 会创建一个SQL 线程从中继日志中读取日志事件，并在本地再执行一次。</li>
+</ul>
+</li>
+</ul>
+<p>master：</p>
+<ul>
+<li>Binlog Dump 线程<ul>
+<li>当 slave 连接 master 时，master 会为其创建一个 Binlog Dump 线程，用于读取和发送 Binlog 的内容。</li>
+<li>当 master 有多个 slave 时，为每个 Slave 的 I&#x2F;O 线程 启动一个 dump 线程。</li>
+<li>在读取 Binlog 中的操作时，dump 线程会对 master 上的 Binlog 加锁；当读取完成发送给slave之前，锁会被释放。</li>
+<li>如果 slave 需要作为其他节点的 master 时，是需要开启二进制日志文件的。这种情况叫做级联复制。如果只是作为 slave，则不需要创建二进制文件。</li>
+</ul>
+</li>
+</ul>
+<p>Mysql 上的 relay log 有存在的价值吗？IO 线程 和 SQL线程 需要分开吗？</p>
+<p>MySQL 分两个线程是有必要的！因为SQL语句的执行时间很难估计，有些操作的执行时间会非常长（例如 UPDATE 全表，或者没有命中索引的修改操作），如果没有 Relay Log 而是直接由缓冲区接收，那么缓冲区很容易积压满，master 就无法继续同步数据过来，从而导致同步延时增加。所以把接收数据和执行操作两个步骤拆分开来进行解耦，尽可能让同步消息先落地到 Relay log 中是非常有必要的。</p>
+<h2 id="主从架构"><a href="#主从架构" class="headerlink" title="主从架构"></a>主从架构</h2><ul>
+<li><p>一主一从<br><img src="/img/mysql/06/1728910589-22f81811c78f9251ca6c40db71d546b1.png" srcset="/img/loading.gif" lazyload></p>
+</li>
+<li><p>一主多从<br><img src="/img/mysql/06/1728910589-17ce33bdc7ba02abd9bd8a47d1c20e57.png" srcset="/img/loading.gif" lazyload><br>一主一从和一主多从是最常见的主从架构，使用起来简单有效，不仅可以实现 HA，而且还能读写分离，进而提升集群的并发能力。</p>
+</li>
+<li><p>多主一从<br><img src="/img/mysql/06/1728910589-041c9c2ecdc2bcd92fd4c92ae8d1362a.png" srcset="/img/loading.gif" lazyload><br>多主一从可以将多个 MySQL 数据库备份到一台存储性能比较好的服务器上。</p>
+</li>
+<li><p>双主复制<br><img src="/img/mysql/06/1728910589-5ee907cf4b689a692f33b6330d887d79.png" srcset="/img/loading.gif" lazyload><br>双主复制，也就是可以互做主从复制，每个 master 既是 master，又是另外一台服务器的 salve。这样任何一方所做的变更，都会通过复制应用到另外一方的数据库中。</p>
+</li>
+<li><p>级联复制<br><img src="/img/mysql/06/1728910589-765aa9859cfb07f10d4f5be230ccd132.png" srcset="/img/loading.gif" lazyload></p>
+<p>级联复制模式下，部分 slave 的数据同步不连接 master，而是连接 slave。</p>
+<p>因为如果 master 有太多的 slave，就会损耗一部分性能用于 replication，我们可以让 3~5 个 slave 连接 master，其它 slave 作为二级或者三级与 slave 连接。这样不仅可以缓解 master 压力，并且对数据一致性没有负面影响。</p>
+<p>级联复制解决了一主多从场景下多个从库复制对主库的压力，带来的弊端就是数据同步延迟比较大。</p>
+</li>
+</ul>
+<h2 id="binlog-三种格式"><a href="#binlog-三种格式" class="headerlink" title="binlog 三种格式"></a>binlog 三种格式</h2><h3 id="STATEMENT"><a href="#STATEMENT" class="headerlink" title="STATEMENT"></a>STATEMENT</h3><p>STATEMENT 格式 Binlog 记录的是 SQL 语句，而不是行数据。</p>
+<p>优点：</p>
+<ul>
+<li>Binlog 文件相对较小。当更新或删除影响许多行时，这将大大减少日志文件所需的存储空间。这也意味着从备份中获取和恢复可以更快地完成。</li>
+<li>日志文件包含所有变更语句，因此它们可用于审计数据库。</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>不够精确，因为某些操作可能无法精确还原。比如使用随机函数或非确定性存储过程。</li>
+<li>某些 SQL 在恢复时会，需要更多的行级锁，影响恢复效率。</li>
+</ul>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">INSERT</span> ... <span class="hljs-keyword">SELECT</span><br><span class="hljs-keyword">UPDATE</span> ... <span class="hljs-keyword">WHERE</span> 没有命中索引导致锁表<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="ROW"><a href="#ROW" class="headerlink" title="ROW"></a>ROW</h3><p>在 ROW 模式下，Binlog 记录的是实际行数据的更改。具体来说，它会记录哪些行被插入、更新或删除，以及这些行的新值。</p>
+<p>优点：</p>
+<ul>
+<li>复制数据非常精确，不会出现非确定函数或存储过程、存储函数、触发器的调用导致数据不一致。</li>
+<li>某些类型的语句，恢复时需要更少的行锁，从而实现更高的并发性。</li>
+</ul>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">INSERT</span> ... <span class="hljs-keyword">SELECT</span><br><span class="hljs-keyword">INSERT</span> statements <span class="hljs-keyword">with</span> AUTO_INCREMENT<br><span class="hljs-keyword">UPDATE</span> <span class="hljs-keyword">or</span> <span class="hljs-keyword">DELETE</span> statements <span class="hljs-keyword">with</span> <span class="hljs-keyword">WHERE</span> clauses that <span class="hljs-keyword">do</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">use</span> <span class="hljs-keyword">keys</span> <span class="hljs-keyword">or</span> <span class="hljs-keyword">do</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">change</span> most <span class="hljs-keyword">of</span> the examined rows.<br></code></pre></td></tr></table></figure>
+
+<p>缺点：</p>
+<ul>
+<li>但生成的 Binlog 文件通常较大，比如 UPDATE 或 DELETE 操作。</li>
+<li>在某些情况下可能会影响主库的性能，尤其是在大量更新操作时。</li>
+</ul>
+<h3 id="MIXED"><a href="#MIXED" class="headerlink" title="MIXED"></a>MIXED</h3><p>STATEMENT 和 ROW 格式各有优缺点，MIXED 格式结合了二者的优点，在保证「数据完整性」的情况下提供最佳的「复制性能」。</p>
+<p>MIXED 格式会根据具体情况来选择使用 ROW 记录或 STATEMENT 记录。这意味着对于某些更改，它将记录每一行数据的变化；而对于其他更改，它将记录执行的 SQL 语句。</p>
+<p>这种模式在保持精确的同时，可以减小 Binlog 文件的大小。</p>
+<p>从 MySQL 5.1 版本开始，MIXED 成为了默认的 binlog 格式，以兼顾 STATEMENT 和 ROW 两种格式的优点。</p>
+<h2 id="主从复制方式"><a href="#主从复制方式" class="headerlink" title="主从复制方式"></a>主从复制方式</h2><h3 id="异步复制"><a href="#异步复制" class="headerlink" title="异步复制"></a>异步复制</h3><p><strong>MySQL 主从复制默认是异步复制。</strong></p>
+<p>master 执行写操作后，并将变更写入 binlog，不等待 slave 应用这些变更，而是立即向客户端返回结果。</p>
+<p>后续 master 通过 log dump 线程将 binlog 并发送给 slave。slave 把 binlog 存储到本地的 relay log 中，然后执行 relay log 的更新内容。</p>
+<p>这个过程是异步的，所以称为异步复制。</p>
+<p><img src="/img/mysql/06/1728910589-2e9716eab7ca465665b71fd6beb48516.png" srcset="/img/loading.gif" lazyload></p>
+<p>这样就会有一个问题，master 崩溃，此时 master 上已经提交的事务可能并没有传到 slave 上。如果此时强行将从提升为主，可能导致新 master 上的数据不完整。</p>
+<h3 id="全同步复制"><a href="#全同步复制" class="headerlink" title="全同步复制"></a>全同步复制</h3><p>当 master 执行完一个事务，然后所有的 slave 都复制了该事务的 binlog 并写到 relay log，master 才返回成功信息给客户端。</p>
+<p>因为需要等待所有 slave 执行完该事务才能返回成功，所以全同步复制的性能必然会受到严重的影响。</p>
+<h3 id="半同步复制"><a href="#半同步复制" class="headerlink" title="半同步复制"></a>半同步复制</h3><p>介于异步复制和全同步复制之间，master 在执行完客户端提交的事务后不是立刻返回客户端，而是等待至少一个 slave 接收到 binlog 并写到 relay log 中才返回成功信息给客户端，保证 master 的 binlog 至少传输到了一个 slave 上。</p>
+<p><img src="/img/mysql/06/1728910589-6b95db511fdaf2acefbd2e2ec0147818.png" srcset="/img/loading.gif" lazyload></p>
+<p>相对于异步与同步复制，半同步复制是对性能与数据一致性的权衡，保证主从最终一致。</p>
+<p>半同步复制提高了数据的安全性，一定程度上保证了数据能成功备份到从库，同时它也造成了一定程度的延迟，但是比全同步模式延迟要低，这个延迟最少是一个 TCP&#x2F;IP 往返的时间。所以，半同步复制最好在低延时的网络中使用。</p>
+<p>半同步模式不是 MySQL 内置的，从 MySQL 5.5 开始集成，需要 master 和 slave 安装插件开启半同步模式。</p>
+<h2 id="配置-主从复制"><a href="#配置-主从复制" class="headerlink" title="配置 主从复制"></a>配置 主从复制</h2><ol>
+<li><p>确保主服务器开启二进制日志</p>
+<p>修改主服务器上的 MySQL 配置文件（通常是<code>my.cnf</code>）：</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs ini"><span class="hljs-attr">log-bin</span>=mysql-bin   <span class="hljs-comment"># 开启二进制日志记录</span><br><span class="hljs-attr">server-id</span>=<span class="hljs-number">1</span>         <span class="hljs-comment"># 指定了主服务器的唯一标识</span><br><span class="hljs-comment"># binlog-do-db=DBAs # 需要同步的数据库</span><br><span class="hljs-comment"># binlog-ignore-db=mysql    # 需要忽略的数据库</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p>设置从服务器</p>
+<p>修改从服务器的 MySQL 配置文件中，配置如下参数：</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs ini"><span class="hljs-attr">server-id</span>=<span class="hljs-number">2</span>                 <span class="hljs-comment"># 用于标识从服务器</span><br><span class="hljs-attr">relay-log</span>=mysql-relay-bin   <span class="hljs-comment"># 用于指定从服务器中继日志的名称</span><br><span class="hljs-attr">log-slave-updates</span>=<span class="hljs-number">1</span>         <span class="hljs-comment"># 用于允许从服务器记录自身的二进制日志</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p>连接主从服务器</p>
+<p>在从服务器上，执行以下命令连接到主服务器：</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs routeros">CHANGE MASTER <span class="hljs-keyword">TO</span><br><span class="hljs-attribute">MASTER_HOST</span>=<span class="hljs-string">'master_host'</span>,<br><span class="hljs-attribute">MASTER_USER</span>=<span class="hljs-string">'replication_user'</span>,<br><span class="hljs-attribute">MASTER_PASSWORD</span>=<span class="hljs-string">'password'</span>,<br><span class="hljs-attribute">MASTER_LOG_FILE</span>=<span class="hljs-string">'mysql-bin.XXXXXX'</span>,<br><span class="hljs-attribute">MASTER_LOG_POS</span>=XXX;<br></code></pre></td></tr></table></figure>
+
+<p>其中，<code>master_host</code>是主服务器的地址，<code>replication_user</code>是用于复制的用户名，<code>password</code>是密码，<code>mysql-bin.XXXXXX</code>和<code>XXX</code>是主服务器当前的二进制日志文件名和位置。这些信息可以通过主服务器的<code>SHOW MASTER STATUS;</code>命令获取。</p>
+<p>此时从服务器的复制线程，I&#x2F;O 线程 和 SQL 线程 都为 NO</p>
+<p><img src="/img/mysql/06/1728905013-1ba0492706a2485a506b4d87fb825cf4.png" srcset="/img/loading.gif" lazyload></p>
+</li>
+<li><p>启动复制</p>
+<p>在从服务器上执行以下命令启动复制</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">START</span> <span class="hljs-keyword">SLAVE</span>;<br></code></pre></td></tr></table></figure>
+
+<p>此时从服务器 的复制线程，I&#x2F;O 线程 和 SQL 线程 都为 YES</p>
+<p><img src="/img/mysql/06/11728905013-f3761e5d00b52750e8140f380811405a.png" srcset="/img/loading.gif" lazyload></p>
+</li>
+</ol>
+<h3 id="如何查看同步延迟状态"><a href="#如何查看同步延迟状态" class="headerlink" title="如何查看同步延迟状态"></a>如何查看同步延迟状态</h3><p>在 从服务器上通过 <code>show slave status</code> 查看具体的参数，有几个参数比较重要：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs nginx"><span class="hljs-attribute">master_log_file</span>         <span class="hljs-comment"># slave中的IO线程正在读取的主服务器二进制日志文件的名称</span><br>read_master_log_pos     <span class="hljs-comment"># 在当前的主服务器二进制日志中，slave中的IO线程已经读取的位置</span><br>relay_log_file          <span class="hljs-comment"># sql线程当前正在读取和执行的中继日志文件的名称</span><br>relay_log_pos           <span class="hljs-comment"># 在当前的中继日志中，sql线程已经读取和执行的位置</span><br>relay_master_log_file   <span class="hljs-comment"># 由sql线程执行的包含多数近期事件的主服务器二进制日志文件的名称</span><br>slave_io_running        <span class="hljs-comment"># IO线程是否被启动并成功的连接到主服务器上</span><br>slave_sql_running       <span class="hljs-comment"># sql线程是否被启动</span><br>seconds_behind_master   <span class="hljs-comment"># 从属服务器sql线程和从属服务器IO线程之间的事件差距，单位以秒计</span><br></code></pre></td></tr></table></figure>
+
+
+<h2 id="主从复制问题"><a href="#主从复制问题" class="headerlink" title="主从复制问题"></a>主从复制问题</h2><h3 id="数据丢失"><a href="#数据丢失" class="headerlink" title="数据丢失"></a>数据丢失</h3><p>当主库宕机后，数据可能丢失。</p>
+<p>解决方法：使用半同步复制方式，可以解决数据丢失的问题。</p>
+<h3 id="同步延迟"><a href="#同步延迟" class="headerlink" title="同步延迟"></a>同步延迟</h3><p>我们通过 <code>show slave status \G;</code> 提供的 Seconds_Behind_Master 值来衡量 MySQL 主从同步的延迟情况。</p>
+<p>主从延迟来自两个方面：从库进行 binlog 复制，从库日志回放。</p>
+<p>从库复制 binlog 这个主要影响是网络带宽和网络稳定性，只能提高带宽来解决，没有什么更好的方式，所以这里更多讨论从库回放日志阶段导致的主从延迟。</p>
+<p>从库一般是单线程重放 relay log，所以如果主库写并发较大，可能导致从库单线程重放 SQL 压力较大，主从复制延迟较高。</p>
+<p>所以优化思路就有2个，降低主库写并发和多线程重放 SQL，提高重放效率。</p>
+<p>（1）水平分库（降低主库写并发）</p>
+<p>水平分库后单个分库的数据量降低，单个分库的写并发降低，从而降低从库重放 SQL 的排队时延，因而降低延迟。</p>
+<p>（2）从库并行复制</p>
+<p>升级至 MySQL 5.7 版本使用并行复制，官方称为 Enhanced Multi-threaded Slaves，即多线程重放 SQL，提高重放效率。</p>
+<h3 id="读写分离问题"><a href="#读写分离问题" class="headerlink" title="读写分离问题"></a>读写分离问题</h3><p>主从同步有延迟，这个延迟期间读从库，会读到不一致的数据。</p>
+<ul>
+<li><p>方法一：忽略。<br>大觉部分业务场景对主从同步延迟不敏感，如果业务可以接受，直接忽略。</p>
+</li>
+<li><p>方法二：放弃读写分离，强制读主。<br>读和写都落到主库上，在业务层面采用缓存来提升系统读性能。</p>
+</li>
+<li><p>方法三：选择性读主。<br>可以利用一个缓存 key 标记那些不容许主从不一致，也就是必须读主的数据，发生了更新，且设置缓存 key 的超时时间，超时时间设置为“主从同步时延”。同步延迟期间读主，同步完成后读从。</p>
+</li>
+</ul>
+<h2 id="主从复制是推还是拉？"><a href="#主从复制是推还是拉？" class="headerlink" title="主从复制是推还是拉？"></a>主从复制是推还是拉？</h2><p>binlog 的同步可以是 slave 向 master 拉取（pull），也可以是 master 向 slave 推送（push），应该选择哪种方式？</p>
+<p>“推”是指 MySQL 主库在有数据更新时推送变更给从库，这种方式只有在数据有变更的时候才会发生，资源消耗少，同步及时。</p>
+<p>“拉”是指 MySQL 从库定期询问主库是否有数据更新，这种方式频繁询问，资源消耗多，效率低且同步延迟大。</p>
+<p>那么 MySQL 具体是怎么同步 binlog 的呢？</p>
+<p>slave 与 master 建立连接之后，会把当前哪个 binlog 文件（<code>MASTER_LOG_FILE</code>）和具体偏移位置（<code>MASTER_LOG_POS</code>) 告诉 master。对应的，主库会启动一个 log dump 线程，根据传过来的（file，pos）在本地的 binlog 中查找，并把剩下的 binlog 发送给 slave。这个过程是 pull 模式。</p>
+<p>当主从数据一致之后，master 收到的修改类操作，都会实时传播（propagate）给 slave，此时属于 push 模式。</p>
+<p><strong>所以 MySQL 主从复制是推拉结合。</strong></p>
+<p>相关问题：</p>
+<ul>
+<li><a href="https://segmentfault.com/q/1010000040772754" target="_blank" rel="noopener">https://segmentfault.com/q/1010000040772754</a></li>
+<li><a href="https://www.zhihu.com/question/490861528" target="_blank" rel="noopener">https://www.zhihu.com/question/490861528</a></li>
+</ul>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://blog.csdn.net/K346K346/article/details/133925439" target="_blank" rel="noopener">https://blog.csdn.net/K346K346/article/details/133925439</a></li>
+<li><a href="https://cloud.tencent.com/developer/article/1020356" target="_blank" rel="noopener">https://cloud.tencent.com/developer/article/1020356</a></li>
+<li><a href="https://blog.csdn.net/qq_44590469/article/details/126340217" target="_blank" rel="noopener">https://blog.csdn.net/qq_44590469/article/details/126340217</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/199217698" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/199217698</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/MySQL/" class="category-chain-item">MySQL</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/MySQL/" class="print-no-link">#MySQL</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>MySQL 主从复制</div>
+      <div>https://flepeng.github.io/042-MySQL-41-底层原理-MySQL-主从复制/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2020年8月8日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/042-MySQL-41-%E5%BA%95%E5%B1%82%E5%8E%9F%E7%90%86-MySQL-MVCC/" title="MySQL MVCC">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">MySQL MVCC</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/042-MySQL-41-%E5%BA%95%E5%B1%82%E5%8E%9F%E7%90%86-MySQL-%E4%BA%8B%E5%8A%A1-%E5%92%8C-%E9%94%81%E3%80%81MVCC-%E7%9A%84%E5%85%B3%E7%B3%BB/" title="MySQL 事务 和 锁、MVCC 的关系">
+                        <span class="hidden-mobile">MySQL 事务 和 锁、MVCC 的关系</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

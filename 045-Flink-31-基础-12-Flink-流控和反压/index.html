@@ -1,0 +1,876 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Flink 官网主页地址：https:&#x2F;&#x2F;flink.apache.org  Flink 官方中文地址：https:&#x2F;&#x2F;nightlies.apache.org&#x2F;flink&#x2F;flink-docs-stable&#x2F;zh&#x2F;  Flink 反压：https:&#x2F;&#x2F;nightlies.apache.org&#x2F;flink&#x2F;flink-docs-release-1.19&#x2F;zh&#x2F;docs&#x2F;ops&#x2F;monitor">
+<meta property="og:type" content="article">
+<meta property="og:title" content="12-Flink 流控和反压">
+<meta property="og:url" content="https://flepeng.github.io/045-Flink-31-%E5%9F%BA%E7%A1%80-12-Flink-%E6%B5%81%E6%8E%A7%E5%92%8C%E5%8F%8D%E5%8E%8B/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="Flink 官网主页地址：https:&#x2F;&#x2F;flink.apache.org  Flink 官方中文地址：https:&#x2F;&#x2F;nightlies.apache.org&#x2F;flink&#x2F;flink-docs-stable&#x2F;zh&#x2F;  Flink 反压：https:&#x2F;&#x2F;nightlies.apache.org&#x2F;flink&#x2F;flink-docs-release-1.19&#x2F;zh&#x2F;docs&#x2F;ops&#x2F;monitor">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/Snipaste_2023-06-15_10-35-46.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/20190624164336967.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/20190624164336967.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/20190624165104826.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/20190624170822245.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/20190624172455147.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/20190624173707523.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/20190624174212294.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/20190624174612977.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/20190624174848756.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/2019062418170070.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/20190624182219300.png">
+<meta property="og:image" content="https://flepeng.github.io/img/flink/00/20190624192309590.png">
+<meta property="article:published_time" content="2021-03-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.404Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Flink">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/flink/00/Snipaste_2023-06-15_10-35-46.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>12-Flink 流控和反压 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="12-Flink 流控和反压"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-03-08 00:00" pubdate>
+          2021年3月8日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          20 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">12-Flink 流控和反压</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <blockquote>
+<p>  Flink 官网主页地址：<a href="https://flink.apache.org/" target="_blank" rel="noopener">https://flink.apache.org</a><br>  Flink 官方中文地址：<a href="https://nightlies.apache.org/flink/flink-docs-stable/zh/" target="_blank" rel="noopener">https://nightlies.apache.org/flink/flink-docs-stable/zh/</a><br>  Flink 反压：<a href="https://nightlies.apache.org/flink/flink-docs-release-1.19/zh/docs/ops/monitoring/back_pressure/" target="_blank" rel="noopener">https://nightlies.apache.org/flink/flink-docs-release-1.19/zh/docs/ops/monitoring/back_pressure/</a></p>
+</blockquote>
+<h2 id="网络流控"><a href="#网络流控" class="headerlink" title="网络流控"></a>网络流控</h2><h3 id="为什么要进行流量控制"><a href="#为什么要进行流量控制" class="headerlink" title="为什么要进行流量控制"></a>为什么要进行流量控制</h3><p>假设 Producer 和 Consumer 的 吞吐率分别为 2MB&#x2F;s、1MB&#x2F;s，生产者速度比消费者快 1MB&#x2F;s。假设两端都有一个 Buffer，网络端的吞吐率是 2MB&#x2F;s。过了 5s 后 Receive Buffer 可能就撑不住了，这时候会面临两种情况：</p>
+<ul>
+<li>如果 Receive Buffer 是有界的，这时候新到达的数据就只能被丢弃掉了。</li>
+<li>如果 Receive Buffer 是无界的，Receive Buffer 会持续的扩张，最终会导致 Consumer 的内存耗尽。</li>
+</ul>
+<h3 id="网络流量控制实现-静态限速"><a href="#网络流量控制实现-静态限速" class="headerlink" title="网络流量控制实现-静态限速"></a>网络流量控制实现-静态限速</h3><p>传统的做法是在发送端实现一个类似 Rate Limiter 这样的静态限流，发送端经过限流层之后以 1MB&#x2F;s 的吞吐率发往接收端，这样就解决了 Producer 和 Consumer 处理速率不一致的情况；</p>
+<p>方案存在的缺点：</p>
+<ul>
+<li>事先无法预估 Consumer 到底能承受多大的速率</li>
+<li>Consumer 的承受能力通常会动态地波动</li>
+</ul>
+<h3 id="网络流量控制实现-动态反馈"><a href="#网络流量控制实现-动态反馈" class="headerlink" title="网络流量控制实现-动态反馈"></a>网络流量控制实现-动态反馈</h3><p>动态反馈需要 Consumer 能够及时的给 Producer 进行反馈，告知 Producer 当前能够承受的速率是多少。动态反馈分为两种：</p>
+<ul>
+<li>负反馈：接收速率 &lt; 发送速率时，告知 Producer 降低发送速率；</li>
+<li>正反馈：发送速率 &gt; 接收速率时，告知 Producer 提高发送速率。</li>
+</ul>
+<h2 id="Flink-反压"><a href="#Flink-反压" class="headerlink" title="Flink 反压"></a>Flink 反压</h2><p>Flink 的反压分为两个阶段，一个是1.5版本之前，一个是1.5版本以后</p>
+<ul>
+<li>Flink 1.5 之前是基于 <code>TCP 流控 + bounded buffer 实现反压</code></li>
+<li>Flink 1.5 之后实现了自己托管的 <code>credit-based</code> 流控机制，在应用层模拟 TCP 的流控机制</li>
+</ul>
+<h3 id="在1-5版本以前"><a href="#在1-5版本以前" class="headerlink" title="在1.5版本以前"></a>在1.5版本以前</h3><p>在1.5版本以前，Flink 的反压是通过 TCP 的反压机制来控制的</p>
+<h4 id="Flink-的网络传输"><a href="#Flink-的网络传输" class="headerlink" title="Flink 的网络传输"></a>Flink 的网络传输</h4><p>我们来看下 Flink 的网络传输</p>
+<p><img src="/img/flink/00/Snipaste_2023-06-15_10-35-46.png" srcset="/img/loading.gif" lazyload>  </p>
+<p>发送端发送数据前会经历自己内部的三层缓冲，<code>（Flink）Network Buffer -&gt; （Netty）ChannelOutbound Buffer -&gt; （Socket）Send Buffer</code>；同样在接收端也会有三层 Buffer。</p>
+<p>最终数据是经过 TCP 发送，TCP 有流量控制机制，实际上 Flink（before V1.5）就是通过 TCP 的流控机制来实现 feedback 的。</p>
+<p>TCP 的反压，是通过 callback 实现的，当 socket 发送数据去 receive buffer 后，receiver 会反馈给 send 端，目前 receiver 端的 buffer 还有多少剩余空间，然后 send 会根据剩余空间，控制发送速率。</p>
+<h4 id="任务执行流程"><a href="#任务执行流程" class="headerlink" title="任务执行流程"></a>任务执行流程</h4><ol>
+<li><p>编写代码</p>
+<p>根据用户编写的代码会生成最初的DAG图，用来表示程序的拓扑结构，即逻辑流图（streamGraph）</p>
+</li>
+<li><p>编译阶段，生成 作业图（JobGraph）</p>
+<p>客户端会将 StreamGraph 生成 JobGraph，主要是做一些算子链合并，JobGraph 就是做为向集群提交的最基本的单元。有了 JobGraph 后就会向集群进行提交，进入运行阶段。</p>
+</li>
+<li><p>运行阶段</p>
+<p>JobGraph 提交到集群后会生成 执行图（ExecutionGraph），ExecutionGraph 是 JobGraph 的并行化版本，是调度层最核心的数据结构。与 JobGraph 最大的区别就是按照并行度对并行子任务进行了拆分，分解为不同的 subTask，并明确了任务间数据传输的方式。</p>
+</li>
+</ol>
+<p><img src="/img/flink/00/20190624164336967.png" srcset="/img/loading.gif" lazyload></p>
+<p>上图 ExecutionGraph 中的 Intermediate Result Partition 就是用于发送数据的模块，最终会将 ExecutionGraph 交给 JobManager 的调度器，将整个 ExecutionGraph 调度起来。</p>
+<p>首先来看下 Flink 的 ExecutionGraph：</p>
+<p><img src="/img/flink/00/20190624164336967.png" srcset="/img/loading.gif" lazyload></p>
+<p>我们可以看到，上游 task 向下游 task 传输数据的时候，有 ResultPartition 和 InputGate 两个组件。</p>
+<p>其中 ResultPartition 用来发送数据，InputGate 用来接收数据。</p>
+<p><img src="/img/flink/00/20190624165104826.png" srcset="/img/loading.gif" lazyload></p>
+<p>这个问题可以被看成两个问题，一个是跨 TaskManager，一个是 TaskManager 内部。譬如说下游的 sink 性能出了点问题，那么 inputChannel 就会告知上个 TaskManager 的 ResultPartition。然后第二个 TaskManager 中的，ResultPartition 也会通知该 TaskManager中 的 InputGate。</p>
+<h4 id="跨-TaskManager-的反压"><a href="#跨-TaskManager-的反压" class="headerlink" title="跨 TaskManager 的反压"></a>跨 TaskManager 的反压</h4><p>先来看第一个问题，跨 TaskManager 的反压。</p>
+<p>发送数据需要 ResultPartition，在每个 ResultPartition 里面会有分区 ResultSubPartition，中间还会有一些关于内存管理的 Buffer。每一个 TaskManager 会有一个统一的网络缓冲池（Network BufferPool），被所有Task共享，在初始化时会从堆外内存（ Off-heap Memory ）中申请内存，申请内存后就可以为每一个 ResultSubPartition 创建 本地缓冲池（Local BufferPool）</p>
+<p><img src="/img/flink/00/20190624170822245.png" srcset="/img/loading.gif" lazyload></p>
+<p>这个是跨 TaskManager 的网络传输的流程。理解过 Flink 内存管理的同学都会知道，Flink 会向 off-heap 内存申请一段固定的内存来使用，作为 NetWork BufferPool。然后 ResultPartition 和 InputGate 都会向 LocalBufferPool 申请内存资源，LocalBufferPool 会向 NetWorkBufferPool 申请资源。至于 Netty 直接走的 JVM。</p>
+<p>当 sink 端数据处理不过来的时候，InputGate 会不断向 LocalBufferPool 申请内存，导致 LocalBufferPool 会不断向 NetWorkBufferPool 申请内存。最终导致 NetworkBufferPool 的可用内存被申请完。</p>
+<p><img src="/img/flink/00/20190624172455147.png" srcset="/img/loading.gif" lazyload></p>
+<p>当 InputGate 无法写入的时候，就不会去读 netty 里的数据。当 netty 的规定缓存被写满了以后，socket 就无法往 netty 里写数据。这个时候，socket 的缓存就很快会被用满，使用 TCP 的 ACK 机制，通知上游 Socket。然后上游的 Socket 由于无法往外写，所以上游的 Socket 也很快会被上游的 netty 写满。</p>
+<p>所以此时，数据就会被不断缓存在上游的 netty，当上游的 netty 的 buffer 写到限制大小后，就会不能被写入。这个时候 netty 的 <code>channel.isWritable()</code> 就会返回 false。</p>
+<p><img src="/img/flink/00/20190624173707523.png" srcset="/img/loading.gif" lazyload></p>
+<p>上游的 ResultPartition 每次往 netty 写入数据的时候，都会通过 netty 的 <code>channel.isWritable()</code>。来判断 netty 是否能被写入。当 <code>channel.isWritable()</code> 返回 false 的时候，就会发生阻塞。所以当 ResultPartition 被写满的时候，就会去向 LocalBufferPool 请求内存，导致 LocalBufferPool 会向 NetworkBufferPool 请求内存，如果下游处理数据的速度一直跟不上产生数据的速度，那么会最终导致，上游的 NetworkBufferPool 的可用内存被申请完，产生堵塞。</p>
+<p><img src="/img/flink/00/20190624174212294.png" srcset="/img/loading.gif" lazyload></p>
+<h4 id="TaskManager-内部的反压"><a href="#TaskManager-内部的反压" class="headerlink" title="TaskManager 内部的反压"></a>TaskManager 内部的反压</h4><p>以上是跨 TaskManager 的反压过程，下面是 TaskManager 内部的反压过程，也就是 ResultPartition 到 InputGate。其实和上面的类似。</p>
+<p><img src="/img/flink/00/20190624174612977.png" srcset="/img/loading.gif" lazyload></p>
+<p>当 ResultPartition 写入被堵塞的时候，由于 RecordWriter 和 RecordReader 是在同一个线程内，这个是 RecordReader 也被堵塞了。这个是就会重复上面的堵塞过程，导致 InputGate 也无法使用了。</p>
+<p><img src="/img/flink/00/20190624174848756.png" srcset="/img/loading.gif" lazyload></p>
+<p>这就是 1.5 版本以前的反压机制。</p>
+<h3 id="1-5-版本以后"><a href="#1-5-版本以后" class="headerlink" title="1.5 版本以后"></a>1.5 版本以后</h3><h4 id="TCP反压的弊端"><a href="#TCP反压的弊端" class="headerlink" title="TCP反压的弊端"></a>TCP反压的弊端</h4><p>先来说下 TCP 这种方式的弊端：</p>
+<ol>
+<li><p>在一个 TaskManager 中可能要执行多个 Task，如果多个 Task 的数据最终都要传输到下游的同一个 TaskManager 就会复用同一个 Socket 进行传输，这个时候如果单个 Task 产生反压，就会导致复用的 Socket 阻塞，其余的 Task 也无法使用传输，checkpoint barrier 也无法发出导致下游执行 checkpoint 的延迟增大。。</p>
+</li>
+<li><p>依赖最底层的 TCP 去做流控，会导致反压传播路径太长，导致生效的延迟比较大。</p>
+</li>
+</ol>
+<h4 id="Credit-based-反压过程"><a href="#Credit-based-反压过程" class="headerlink" title="Credit-based 反压过程"></a>Credit-based 反压过程</h4><p>credit 的反压是类似于 TCP 的反压，但它是在 Flink 层面上的。可以看下图：</p>
+<p><img src="/img/flink/00/2019062418170070.png" srcset="/img/loading.gif" lazyload></p>
+<p>在 Flink 层面实现反压机制，就是每一次 ResultSubPartition 向 InputChannel 发送消息的时候都会发送一个 backlog size 告诉下游准备发送多少消息，下游就会去计算有多少的 Buffer 去接收消息，算完之后如果有充足的 Buffer 就会返还给上游一个 Credit 告知他可以发送消息（图上两个 ResultSubPartition 和 InputChannel 之间是虚线是因为最终还是要通过 Netty 和 Socket 去通信）。如果这个时候发现 <code>backlog &gt; credit</code>，那么 LocalBufferPool 就会向 NetWorkPool 申请内存。</p>
+<p>长此以往，当 credit 返回 0 的时候，表示没有内存缓存了，那么 ResultSubPartition 接收到 credit 的时候，就不会继续往 netty 写数据了。这样 socket 就不会堵塞了，同时生效延迟也降低了。同时 ResultSubPartition 也会不断去探测 InputGate 是否有空余的空间。</p>
+<p><img src="/img/flink/00/20190624182219300.png" srcset="/img/loading.gif" lazyload></p>
+<p>这样在 ResultSubPartition 层就能感知到反压，不用通过 Socket 和 Netty 一层层地向上反馈，降低了反压生效的延迟。同时也不会将 Socket 去阻塞，解决了由于一个 Task 反压导致 TaskManager 和 TaskManager 之间的 Socket 阻塞的问题。</p>
+<h3 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h3><p><strong>有了动态反压，那么静态反压是不是就没有用了？</strong></p>
+<p>答案当然不是，这个很大程度上取决于 sink 端数据存储在哪里。譬如说，数据最终落地在 es 中，那么由于前面数据量过大，es 端直接报错，整个任务就停止了，这个时候动态反压就没有了，那么静态的限制 consumer 的量就很关键了，但是这个设置是在 1.8 版本里才有。</p>
+<p><strong>Flink 页面上监控反压的数据来源</strong></p>
+<p>在源码包中，有个 md 文件，对获取 back pressure 的 ratio 值做了解释。</p>
+<p><img src="/img/flink/00/20190624192309590.png" srcset="/img/loading.gif" lazyload></p>
+<p>默认情况下，每 50ms 发送 100 次探测，通过调用 <code>Thrad.getStackTrace()</code> 方法来探测，从网络堆栈请求缓存区。如果有的任务比较紧张，那么有的请求就会卡主，以此来监控任务是否存在反压。中期，0.01 表示 100 次中有 1 次探测卡主了。</p>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://blog.csdn.net/qq_45287265/article/details/131709372" target="_blank" rel="noopener">https://blog.csdn.net/qq_45287265/article/details/131709372</a></li>
+<li><a href="https://blog.csdn.net/sinat_23225111/article/details/123579774" target="_blank" rel="noopener">https://blog.csdn.net/sinat_23225111/article/details/123579774</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Flink/" class="category-chain-item">Flink</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Flink/" class="print-no-link">#Flink</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>12-Flink 流控和反压</div>
+      <div>https://flepeng.github.io/045-Flink-31-基础-12-Flink-流控和反压/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年3月8日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/045-Flink-31-%E5%9F%BA%E7%A1%80-10-Flink-%E7%8A%B6%E6%80%81%E7%AE%A1%E7%90%86/" title="10-Flink 状态管理">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">10-Flink 状态管理</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/045-Flink-31-%E5%9F%BA%E7%A1%80-12-Flink-%E6%B5%81%E6%8E%A7%E5%92%8C%E5%8F%8D%E5%8E%8B%E4%B9%8B%E5%8F%8D%E5%8E%8B%E8%A7%A3%E5%86%B3%E6%80%9D%E8%B7%AF/" title="12-Flink 流控和反压之反压解决思路">
+                        <span class="hidden-mobile">12-Flink 流控和反压之反压解决思路</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

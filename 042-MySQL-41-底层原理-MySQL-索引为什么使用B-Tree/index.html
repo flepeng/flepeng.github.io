@@ -1,0 +1,968 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="0、先验知识二分查找法二分查找法也叫作折半查找法，它是在有序数组中查找指定数据的搜索算法。它的优点是等值查询、范围查询性能优秀，缺点是更新数据、新增数据、删除数据维护成本高。  首先定位left和right两个指针。  计算(left+right)&#x2F;2。  判断除2后索引位置值与目标值的大小比对。  索引位置值大于目标值就-1，right移动；如果小于目标值就+1，left移动。   1、背景My">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL 索引为什么使用B+Tree">
+<meta property="og:url" content="https://flepeng.github.io/042-MySQL-41-%E5%BA%95%E5%B1%82%E5%8E%9F%E7%90%86-MySQL-%E7%B4%A2%E5%BC%95%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BD%BF%E7%94%A8B-Tree/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="0、先验知识二分查找法二分查找法也叫作折半查找法，它是在有序数组中查找指定数据的搜索算法。它的优点是等值查询、范围查询性能优秀，缺点是更新数据、新增数据、删除数据维护成本高。  首先定位left和right两个指针。  计算(left+right)&#x2F;2。  判断除2后索引位置值与目标值的大小比对。  索引位置值大于目标值就-1，right移动；如果小于目标值就+1，left移动。   1、背景My">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/04/29194945_6385f1d97cc8483481.webp">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/04/29194945_6385f1d9ce00187807.webp">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/04/29194946_6385f1da1a7da28959.webp">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/04/29194946_6385f1da6576549446.webp">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/04/29194946_6385f1daab02e3047.webp">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/04/29194946_6385f1daf1e7e96924.webp">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/04/29194947_6385f1db38ed942169.webp">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/04/29194947_6385f1db7dcfe74099.webp">
+<meta property="article:published_time" content="2020-08-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.360Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="MySQL">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/mysql/04/29194945_6385f1d97cc8483481.webp">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>MySQL 索引为什么使用B+Tree - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="MySQL 索引为什么使用B+Tree"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2020-08-08 00:00" pubdate>
+          2020年8月8日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.9k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          33 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">MySQL 索引为什么使用B+Tree</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="0、先验知识"><a href="#0、先验知识" class="headerlink" title="0、先验知识"></a>0、先验知识</h1><h2 id="二分查找法"><a href="#二分查找法" class="headerlink" title="二分查找法"></a>二分查找法</h2><p>二分查找法也叫作折半查找法，它是在有序数组中查找指定数据的搜索算法。它的优点是等值查询、范围查询性能优秀，缺点是更新数据、新增数据、删除数据维护成本高。</p>
+<ul>
+<li><p>首先定位left和right两个指针。</p>
+</li>
+<li><p>计算<code>(left+right)/2</code>。</p>
+</li>
+<li><p>判断除2后索引位置值与目标值的大小比对。</p>
+</li>
+<li><p>索引位置值大于目标值就-1，right移动；如果小于目标值就+1，left移动。</p>
+</li>
+</ul>
+<h1 id="1、背景"><a href="#1、背景" class="headerlink" title="1、背景"></a>1、背景</h1><p><strong>MySQL底层使用的存储结构是 B+Tree</strong>，那为什么选择 B+Tree，我们对不同的存储结构对比分析一下，请看下文，尽量用通俗的话讲清楚。</p>
+<p>首先假设我们有这么一张 MySQL 表 user：</p>
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th>name</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Richard</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Erlich</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Jared</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Nelson</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Gilfoyle</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Dinesh</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Peter</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Monica</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Laurie</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Gavin</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Russ</td>
+</tr>
+</tbody></table>
+<p>在没有给name这一列创建索引的情况下，当我们要执行 <code>SELECT * FROM user WHERE name=&#39;Gavin&#39;</code>时，MySQL需要从第一条数据开始(Richard)，逐行对比。</p>
+<p>这种情况下查询操作的时间复杂度是 <code>O(n)</code>，当数据量达到上百万时，查询操作就会变得很慢，这时就需要采取一些手段进行优化。</p>
+<h1 id="2、散列表（Hash-table，也叫哈希表）"><a href="#2、散列表（Hash-table，也叫哈希表）" class="headerlink" title="2、散列表（Hash table，也叫哈希表）"></a>2、散列表（Hash table，也叫哈希表）</h1><p>散列表（Hash table，也叫哈希表），是根据键（Key）而直接访问在内存储存位置的数据结构。也就是说，它通过计算一个关于键值的函数，将所需查询的数据映射到表中一个位置来访问记录，这加快了查找速度。这个映射函数称做散列函数，存放记录的数组称做散列表。</p>
+<p>上述 user 表的数据，如果按哈希表来存储，结构如下图所示。哈希表的优点是即使数据量非常大，也只需要进行一次 hash 运算（通过链表解决哈希碰撞问题），就能快速找到某一条数据，时间复杂度 <code>O(1)</code>。</p>
+<p><img src="/img/mysql/04/29194945_6385f1d97cc8483481.webp" srcset="/img/loading.gif" lazyload></p>
+<p>如果我们用哈希建了索引，那么对于如下这种SQL，通过哈希，可以快速检索出数据：</p>
+<p><code>select * from t_user_info where id=1;</code></p>
+<p>如果是一个范围查询，那么使用哈希算法作为索引，这种情况就很难办，我们可能需要 遍历一遍所有的数据，然后做排序，最后得到结果，这显然是不能接受的。因此，这种情况，哈希索引是不适合做为 InnoDB 的索引的。</p>
+<p><code>select * from t_user_info where id&gt;10;</code></p>
+<p>对于范围查询，我们怎么优化了，很容易就想到了“二叉查找树”，二叉查找树的左边节点都是小于根节点的，右边节点都是大于根节点的，这样不仅单点查询不会很慢，此外可以加快范围查询效率。</p>
+<h1 id="3、二叉查找树-Binary-Search-Tree-BST"><a href="#3、二叉查找树-Binary-Search-Tree-BST" class="headerlink" title="3、二叉查找树(Binary Search Tree, BST)"></a>3、二叉查找树(Binary Search Tree, BST)</h1><p>二叉查找树(Binary Search Tree, BST)，也称为二叉搜索树、有序二叉树（ordered binary tree）或排序二叉树（sorted binary tree），是指一棵空树或者具有下列性质的二叉树：</p>
+<ol>
+<li>若任意节点的左子树不空，则左子树上所有节点的值均小于它的根节点的值；</li>
+<li>若任意节点的右子树不空，则右子树上所有节点的值均大于或等于它的根节点的值；</li>
+<li>任意节点的左、右子树也分别为二叉查找树；</li>
+</ol>
+<p>二叉查找树相比于其他数据结构的优势在于查找、插入的时间复杂度较低，为 <code>O(logn)</code></p>
+<p>对 user 的 name 列建立索引后，数据存储结构如图所示：</p>
+<p><img src="/img/mysql/04/29194945_6385f1d9ce00187807.webp" srcset="/img/loading.gif" lazyload></p>
+<p>最大查询次数为二叉树的最大高度 <code>logn</code>。二叉查找树和哈希表相比，虽然单条数据查询不如哈希表快，但是 <code>O(logn)</code> 的时间复杂度也可以接受，并且能支持范围查找。</p>
+<p><strong>可以用二叉查找树作为底层存储结构吗？</strong></p>
+<p>但是 BST 有一个致命缺点：假设我们的id列是一个自增整型，给一列建立索引时，对应的 BST 如下图所示：</p>
+<p><img src="/img/mysql/04/29194946_6385f1da1a7da28959.webp" srcset="/img/loading.gif" lazyload></p>
+<p>可以看到，当我们按顺序进行插入数据时，BST 退化成了一个单向链表，时间复杂度又成了 <code>O(n)</code>。</p>
+<p>如果 BST 能够在增加数据的时候，自动调整树的高度，让树能够尽量平衡就好了。当二叉查找树是平衡的时候，也就是树的每个节点的左右子树深度相差不超过 1 的时候，查询的时间复杂度为 O(log2(N))，具有比较高的效率。</p>
+<p>也就是说，<strong>二叉查找树的性能非常依赖于它的平衡程度，这就导致其不适合作为 MySQL 底层索引的数据结构。</strong></p>
+<p>为了解决这个问题，并提高查询效率，人们发明了多种在二叉查找树基础上的改进型数据结构，如平衡二叉树、B-Tree、B+Tree 等。</p>
+<p>接下来介绍的红黑树和 AVL 树，都是能够进行自动平衡的二叉查找树。</p>
+<h1 id="4、红黑树-Red-black-tree"><a href="#4、红黑树-Red-black-tree" class="headerlink" title="4、红黑树(Red-black tree)"></a>4、红黑树(Red-black tree)</h1><p>红黑树是一种自平衡二叉查找树，是在计算机科学中用到的一种数据结构，典型用途是实现关联数组。它在1972年由鲁道夫·贝尔发明，被称为 “对称二叉B-Tree”。红黑树的结构复杂，但它的操作有着良好的最坏情况运行时间，并且在实践中高效：它可以在 <code>O(logn)</code> 时间内完成查找、插入和删除。</p>
+<blockquote>
+<p><a href="https://zh.wikipedia.org/wiki/%25E7%25BA%25A2%25E9%25BB%2591%25E6%25A0%2591" target="_blank" rel="noopener">了解更多原理</a></p>
+</blockquote>
+<p>红黑树通过在插入和删除节点时进行颜色变换和旋转操作，使得树始终保持平衡状态，它具有以下特点：</p>
+<ol>
+<li>每个节点非红即黑；</li>
+<li>根节点总是黑色的；</li>
+<li>每个叶子节点都是黑色的空节点（NIL 节点）；</li>
+<li>如果节点是红色的，则它的子节点必须是黑色的（反之不一定）；</li>
+<li>从任意节点到它的叶子节点或空子节点的每条路径，必须包含相同数目的黑色节点（即相同的黑色高度）。</li>
+</ol>
+<p>用红黑树存储索引，插入数据时会自动旋转调整树的高度，结构如下：</p>
+<p><img src="/img/mysql/04/29194946_6385f1da6576549446.webp" srcset="/img/loading.gif" lazyload></p>
+<p>和 AVL 树不同的是，红黑树并不追求严格的平衡，而是大致的平衡。正因如此，红黑树的查询效率稍有下降，因为红黑树的平衡性相对较弱，可能会导致树的高度较高，这可能会导致一些数据需要进行多次磁盘 IO 操作才能查询到，这也是 MySQL 没有选择红黑树的主要原因。也正因如此，红黑树的插入和删除操作效率大大提高了，因为红黑树在插入和删除节点时只需进行 O(1) 次数的旋转和变色操作，即可保持基本平衡状态，而不需要像 AVL 树一样进行 O(logn) 次数的旋转操作。</p>
+<p><strong>红黑树的应用还是比较广泛的，TreeMap、TreeSet 以及 JDK1.8 的 HashMap 底层都用到了红黑树。对于数据在内存中的这种情况来说，红黑树的表现是非常优异的。</strong></p>
+<h1 id="5、AVL树"><a href="#5、AVL树" class="headerlink" title="5、AVL树"></a>5、AVL树</h1><p>在计算机科学中，AVL 树是最早被发明的自平衡二叉查找树。在AVL树中，任一节点对应的两棵子树的最大高度差为 1，因此它也被称为高度平衡树。查找、插入和删除在平均和最坏情况下的时间复杂度都是 <code>O(logn)</code>。增加和删除元素的操作则可能需要借由一次或多次树旋转，以实现树的重新平衡。</p>
+<p>AVL 树采用了旋转操作来保持平衡。主要有四种旋转操作：LL 旋转、RR 旋转、LR 旋转和 RL 旋转。其中 LL 旋转和 RR 旋转分别用于处理左左和右右失衡，而 LR 旋转和 RL 旋转则用于处理左右和右左失衡。</p>
+<blockquote>
+<p><a href="https://zh.wikipedia.org/wiki/AVL%25E6%25A0%2591" target="_blank" rel="noopener">了解更多</a></p>
+</blockquote>
+<p>AVL 树比红黑树更加平衡，用AVL树存储索引，查询效率会比红黑树稍高，但插入效率比红黑树差。结构如下：</p>
+<p><img src="/img/mysql/04/29194946_6385f1daab02e3047.webp" srcset="/img/loading.gif" lazyload></p>
+<p><strong>可以用 AVL 树或是红黑树作为底层存储结构吗？</strong></p>
+<p>如果我们要在上述 AVL 树中，查找 11 这个元素，那么就需要经过4次查找：<code>4 -&gt; 8 -&gt; 10 -&gt; 11</code></p>
+<p>在 MySQL 中，每查找一个节点，都需要进行一次 IO 操作，查找 11 这个元素就需要进行 4 次 IO 操作。当数据量达到10k时，查找一个元素可能需要进行 14 次 IO，这显示是不能接受的。</p>
+<p>根据实际情况，在内存中操作数据的耗时与 IO 耗时相比起来，几乎可以忽略不计。<strong>如果每一个树结点，都存储多个元素的话，就可以降低树的高度，减少 IO 次数了。这就是 B-Tree&#x2F;B+Tree 的原理。</strong></p>
+<h1 id="6、B-Tree-B树，B减树"><a href="#6、B-Tree-B树，B减树" class="headerlink" title="6、B-Tree(B树，B减树)"></a>6、B-Tree(B树，B减树)</h1><p>在计算机科学中，B-Tree 是一种自平衡的树，能够保持数据有序。这种数据结构能够让查找数据、顺序访问、插入数据及删除的动作，都在对数时间内完成。</p>
+<p>B-Tree，概括来说是一个一般化的二叉查找树一个节点可以拥有2个以上的子节点。与自平衡二叉查找树不同，B-Tree 适用于读写相对大的数据块的存储系统，例如磁盘。B-Tree 减少定位记录时所经历的中间过程，从而加快存取速度。B-Tree 这种数据结构可以用来描述外部存储。这种数据结构常被应用在数据库和文件系统的实现上。</p>
+<p>B-Tree 就是常说的“B减树（B-树）”，又名平衡多路（即不止两个子树）查找树，它和平衡二叉树的不同有这么几点：</p>
+<ol>
+<li>平衡二叉树节点最多有两个子树，而 B-Tree 每个节点可以有多个子树，M 阶 B-Tree 表示该树每个节点最多有 M 个子树</li>
+<li>平衡二叉树每个节点只有一个数据和两个指向孩子的指针，而 B-Tree 每个中间节点有 k-1 个关键字和 k 个子树（k 介于阶数 M 和 M&#x2F;2 之间，M&#x2F;2 向上取整）</li>
+<li>B-Tree 的所有叶子节点都在同一层，并且叶子节点只有关键字，指向孩子的指针为 null</li>
+<li>B-Tree 的节点数据大小也是按照左小右大</li>
+</ol>
+<p>示例：将 user 表中的11条数据全部存在一个7阶 B-Tree 中（每个节点最多存储6个数据）</p>
+<p><img src="/img/mysql/04/29194946_6385f1daf1e7e96924.webp" srcset="/img/loading.gif" lazyload></p>
+<ul>
+<li>规定 m 阶 B-tree 中，根结点至少有2个子结点。</li>
+<li>根结点中关键字的个数为 <code>1~m-1</code>，比节点数目少一个；</li>
+<li>非根结点至少有<code>[m/2]</code>（向上取整）个子结点，相应的，关键字个数为<code>[m/2]-1~m-1</code></li>
+</ul>
+<p>可以看到查找11这个元素，只需要进行2次IO，比之前的AVL树减少了2次。</p>
+<p><strong>那么用 B-Tree 作为底层存储结构吗？</strong></p>
+<p>B-Tree 中的每个元素，除了存放关键字外，还会存放额外的数据（比如对应数据记录的地址或者数据内容）。而实际情况是，每个节点的存储空间是有上限的，在内部节点中存储这些数据，会导致内部节点能够存储的元素数据变小。阶数变小就会导致树变高，IO次数增加，比如将上述数据存在3阶 B-Tree 中，查找11就需要3次IO：</p>
+<p><img src="/img/mysql/04/29194947_6385f1db38ed942169.webp" srcset="/img/loading.gif" lazyload></p>
+<p>并且针对 B-Tree 进行范围查找，效率并不太高。比如对上图 B-Tree，执行<code>SELECT * FROM user WHERE id&gt;4</code>，需要进行7次IO。</p>
+<p>针对 B-Tree 的一些局限，衍生了一些变种： B+Tree、B*树，而MySQL底层使用的存储结构，就是 B+Tree </p>
+<h1 id="7、B-Tree"><a href="#7、B-Tree" class="headerlink" title="7、B+Tree"></a>7、B+Tree</h1><p>B+Tree 是一种树数据结构，通常用于数据库和操作系统的文件系统中。 B+Tree 的特点是能够保持数据稳定有序，其插入与修改拥有较稳定的对数时间复杂度。 B+Tree 元素自底向上插入，这与二叉树恰好相反。</p>
+<p>B+Tree 和 B-Tree 类似，但是多了一些规则：</p>
+<ol>
+<li>非叶子结点的子树指针个数与关键字（节点中的元素个数）个数相同</li>
+<li>非叶子结点的子树指针 <code>P[i]</code>，指向关键字值属于 <code>[K[i], K[i+1])</code> 的子树（B-Tree 是开区间）</li>
+<li>所有叶子结点都有一个指针，连接成一个链表</li>
+<li>所有关键字都在叶子结点出现</li>
+<li>只有叶子节点存储值，内部节点只存储关键字</li>
+</ol>
+<p>通过 B+Tree 来存储以上数据的结构如下：</p>
+<p><img src="/img/mysql/04/29194947_6385f1db7dcfe74099.webp" srcset="/img/loading.gif" lazyload></p>
+<p>** B+Tree 的优点：**</p>
+<ol>
+<li><strong>内部节点只保存关键字，提高了阶数，加快查找时间。</strong></li>
+<li><strong>叶子节点中包含所有数据，所有叶子节点形成一个有序链表，让范围查找更高效。</strong></li>
+</ol>
+<p>B-Tree 相对于 B+Tree 的优点是，如果经常访问的数据离根节点很近，这种情况下数据检索会要比 B+Tree 快。因为 B-Tree 的非叶子节点本身存有关键字其数据的地址。</p>
+<p>基于 B+Tree 的那么多优点，MySQL最终将其作为了索引的底层存储结构。</p>
+<h2 id="B-Tree-x2F-B-Tree-总结"><a href="#B-Tree-x2F-B-Tree-总结" class="headerlink" title="B-Tree&#x2F;B+Tree 总结"></a>B-Tree&#x2F;B+Tree 总结</h2><h3 id="B-Tree"><a href="#B-Tree" class="headerlink" title="B-Tree"></a>B-Tree</h3><p>m 阶 B-Tree 满足以下条件：</p>
+<ol>
+<li>每个节点至多可以拥有m棵子树。</li>
+<li>根节点，只有至少有2个节点（要么极端情况，就是一棵树就一个根节点，单细胞生物，即是根，也是叶，也是树)。</li>
+<li>非根非叶的节点至少有的 <code>Ceil(m/2)</code> 个子树(Ceil表示向上取整，如5阶B-Tree，每个节点至少有3个子树，也就是至少有3个叉)。</li>
+<li>非叶节点中的信息包括 <code>[n,A0,K1,A1,K2,A2,…,Kn,An]</code>，其中n表示该节点中保存的关键字个数，K为关键字且 <code>Ki&lt;Ki+1</code>，A为指向子树根节点的指针。</li>
+<li>从根到叶子的每一条路径都有相同的长度（叶子节点在相同的层）</li>
+</ol>
+<h3 id="B-Tree-1"><a href="#B-Tree-1" class="headerlink" title="B+Tree"></a>B+Tree</h3><p>B+Tree 与 B-Tree 的差异在于：</p>
+<ol>
+<li>B+Tree 非叶子节点不存储data，只存储key。</li>
+<li>所有的关键字全部存储在叶子节点上。</li>
+<li>每个叶子节点含有一个指向相邻叶子节点的指针，带顺序访问指针的 B+Tree 提高了区间查找能力。</li>
+<li>非叶子节点可以看成索引部分，节点中仅含有其子树（根节点）中的最大（或最小）关键字。</li>
+</ol>
+<h2 id="B-Tree-x2F-B-Tree-索引的性能分析"><a href="#B-Tree-x2F-B-Tree-索引的性能分析" class="headerlink" title="B-Tree&#x2F;B+Tree 索引的性能分析"></a>B-Tree&#x2F;B+Tree 索引的性能分析</h2><p>依据：使用磁盘I&#x2F;O次数评价索引结构的优劣。</p>
+<p>主存和磁盘以页为单位交换数据，将一个节点的大小设为等于一个页，因此每个节点只需一次I&#x2F;O就可以完全载入。</p>
+<p>根据B-Tree的定义，可知检索一次最多需要访问h个节点，渐进复杂度: <code>O(h)=O(logdN)</code></p>
+<p><code>dmax=floor(pagesize/(keysize+datasize+pointsize))</code></p>
+<p>一般实际应用中，出度d是非常大的数字，通常超过100，因此h非常小（通常不超过3，3层可存大约一百万数据）</p>
+<p>B-Tree 中一次检索最多需要 <code>h-1</code> 次I&#x2F;O（根节点常驻内存）</p>
+<p>B+Tree 内节点不含data域，因此出度d更大，则h更小，I&#x2F;O次数少，效率更高，故 B+Tree 更适合外存索引。</p>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ul>
+<li><a href="https://blog.51cto.com/u_6871414/5896900" target="_blank" rel="noopener">https://blog.51cto.com/u_6871414/5896900</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/MySQL/" class="category-chain-item">MySQL</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/MySQL/" class="print-no-link">#MySQL</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>MySQL 索引为什么使用B+Tree</div>
+      <div>https://flepeng.github.io/042-MySQL-41-底层原理-MySQL-索引为什么使用B-Tree/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2020年8月8日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/042-MySQL-41-%E5%BA%95%E5%B1%82%E5%8E%9F%E7%90%86-MySQL-%E7%B4%A2%E5%BC%95%E4%B8%8B%E6%8E%A8/" title="MySQL 索引下推">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">MySQL 索引下推</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/042-MySQL-41-%E5%BA%95%E5%B1%82%E5%8E%9F%E7%90%86-MySQL-%E9%94%81/" title="MySQL 锁">
+                        <span class="hidden-mobile">MySQL 锁</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

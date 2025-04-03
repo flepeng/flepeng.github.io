@@ -1,0 +1,1001 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="简介TEE OS 各家厂商和组织都有各自的实现方式，但是所有方案的外部接口都会遵循GP（GlobalPlatform）标准。 很多企业自用闭源的 Trusted OS，比如苹果的 Secure Enclave、高通的 QTEE、三星的Knox、Teegris、Trustonic 的 Kinibi OS、华为的 TrustedCore 等。 各家厂商和组织的TEE OS到底有何区别：TA的添加和加载">
+<meta property="og:type" content="article">
+<meta property="og:title" content="03-TEE 框架">
+<meta property="og:url" content="https://flepeng.github.io/081-%E6%95%B0%E6%8D%AE%E5%AE%89%E5%85%A8-TEE-03-TEE-%E6%A1%86%E6%9E%B6/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="简介TEE OS 各家厂商和组织都有各自的实现方式，但是所有方案的外部接口都会遵循GP（GlobalPlatform）标准。 很多企业自用闭源的 Trusted OS，比如苹果的 Secure Enclave、高通的 QTEE、三星的Knox、Teegris、Trustonic 的 Kinibi OS、华为的 TrustedCore 等。 各家厂商和组织的TEE OS到底有何区别：TA的添加和加载">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/tee/libos.png">
+<meta property="og:image" content="https://flepeng.github.io/img/tee/00/1741849354-6c639e0a4cd9c9df48aa3389454ea77a.png">
+<meta property="og:image" content="https://flepeng.github.io/img/tee/00/8wm7y3k69i.jpeg">
+<meta property="article:published_time" content="2023-04-13T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.412Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="数据安全">
+<meta property="article:tag" content="隐私计算">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/tee/libos.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>03-TEE 框架 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="03-TEE 框架"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-04-14 00:00" pubdate>
+          2023年4月14日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          40 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">03-TEE 框架</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h1><p>TEE OS 各家厂商和组织都有各自的实现方式，但是所有方案的外部接口都会遵循GP（GlobalPlatform）标准。</p>
+<p>很多企业自用闭源的 Trusted OS，比如苹果的 Secure Enclave、高通的 QTEE、三星的Knox、Teegris、Trustonic 的 Kinibi OS、华为的 TrustedCore 等。</p>
+<p>各家厂商和组织的TEE OS到底有何区别：TA的添加和加载时的校验有所区别</p>
+<h1 id="开源框架"><a href="#开源框架" class="headerlink" title="开源框架"></a>开源框架</h1><table>
+<thead>
+<tr>
+<th align="left">开源项目</th>
+<th align="left">公司</th>
+<th align="left">支持芯片</th>
+<th align="left">特点</th>
+<th align="left">支持的库</th>
+<th align="left">开发语言</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><a href="https://github.com/apache/incubator-teaclave" target="_blank" rel="noopener">Teaclave&#x2F;MesaTEE</a></td>
+<td align="left">百度</td>
+<td align="left">SGX、TrustZone</td>
+<td align="left">Apache孵化项目之一。Teaclave设计思路是构建一个<strong>类FaaS（Function as a Service）的计算平台服务。平台在提供TEE机密计算、远程验证、安全存储等功能基础上，再通过一套任务管理框架实现了多任务的管理和并发操</strong>作。同时按照FaaS的设计逻辑实现计算函数的可插拔</td>
+<td align="left">Marshal、Math、Binascii、Itertools、Micronumpy</td>
+<td align="left">Rust、Python</td>
+</tr>
+<tr>
+<td align="left"><a href="https://gramineproject.io/" target="_blank" rel="noopener">Graphene&#x2F;Gramine OS</a></td>
+<td align="left">OSCAR Lab</td>
+<td align="left">SGX</td>
+<td align="left">SGX LibOS项目。Gramine（以前叫Graphene）是一个轻量级的库式操作系统，旨在以最小的主机要求运行单个应用程序。Gramine可以在一个孤立的环境中运行应用程序，其好处可以与在虚拟机中运行一个完整的操作系统相媲美–包括客体定制，易于移植到不同的操作系统，以及进程迁移。。</td>
+<td align="left">Tensorflow、Pytorch、OpenVINO、Memchached、Redis、Nginx、Apache HTTP Server</td>
+<td align="left">c、python</td>
+</tr>
+<tr>
+<td align="left"><a href="https://occlum.io/" target="_blank" rel="noopener">Occlum</a></td>
+<td align="left">蚂蚁金服</td>
+<td align="left">SGX</td>
+<td align="left"><strong>降低遗留应用迁移到SGX中的编码成本</strong>。对应用代码不做更改或者只做少量调整，就可以迁移到SGX中运行，获得机密性和完整性保护。与其他LibOS项目相比，具有Enclave内多进程管理、全类型的文件系统支持、内存安全、容器化设计功能。</td>
+<td align="left">rust、c&#x2F;c++</td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="left"><a href="https://openenclave.io/sdk/" target="_blank" rel="noopener">OpenEnclave</a></td>
+<td align="left">Microsoft</td>
+<td align="left">SGX、TrustZone（预览阶段）</td>
+<td align="left">Open Enclave是一套C&#x2F;C++的SDK。Open Enclave SDK主要封装了Enclave生命周期管理、Enclave度量、Enclave内外互调用、系统调用、数据封装、远程验证以及一些密码学库。</td>
+<td align="left">MUSL、Openssl、Mbedtls、LLVM LibC++</td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="left"><a href="https://github.com/google/asylo" target="_blank" rel="noopener">Asylo</a></td>
+<td align="left">Google</td>
+<td align="left">SGX</td>
+<td align="left">提供了C&#x2F;C++的SDK，但不同的是Asylo更进一步定义了基于SGX的应用实现规范，也就是所谓的编程框架。基于Asylo实现的应用也是分为非可信区和可信区，但互相的通信被约束为C&#x2F;S模式。非可信部分实现客户端和Enclave管理器，可信部分实现计算服务端。<strong>Asylo是一套把SGX做成服务化的编程框架</strong>。</td>
+<td align="left">-</td>
+<td align="left">C&#x2F;C++</td>
+</tr>
+<tr>
+<td align="left"><a href="https://github.com/SOFAEnclave/KubeTEE" target="_blank" rel="noopener">KubeTEE</a></td>
+<td align="left">阿里巴巴</td>
+<td align="left">SGX</td>
+<td align="left">KubeTEE是一个TEE开发、部署、维护中间件框架和服务的集合。特别是，它是针对云原生工作流程的。顾名思义，KubeTEE是基于docker容器、Kubernetes编排和其他云原生技术。它的目标是帮助开发者实现基于TEE的应用，并更容易和顺利地部署TEE服务。</td>
+<td align="left"></td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="left"><a href="https://www.op-tee.org/" target="_blank" rel="noopener">OP-TEE</a></td>
+<td align="left">Linaro</td>
+<td align="left">TrustZone</td>
+<td align="left">是<strong>Trusted OS的一个开源实现</strong>。 OP-TEE包括安全世界操作系统（OPTEE_OS），普通世界客户端（OPTEE_Client），测试套件（OPTEE_Test &#x2F; XTest）和Linux驱动程序。操作系统和客户端符合Global Platform规范。项目由Linaro维护，已经适配支持28多个平台&#x2F;处理器。开发用户负责开发在Linux上运行的客户端应用程序（CA）和在OP-TEE上运行的可信应用程序（TA）。CA使用TEE客户端API与TA对话并从中获取安全服务。CA和TA使用共享内存在彼此之间传递数据</td>
+<td align="left">-</td>
+<td align="left">-</td>
+</tr>
+<tr>
+<td align="left"><a href="https://open-tee.github.io/" target="_blank" rel="noopener">OPEN-TEE</a></td>
+<td align="left">Secure Systems group</td>
+<td align="left">TustZone (≥Ubuntu14.04)</td>
+<td align="left">Open-TEE开源项目的目标是实现一个符合最近全球平台TEE规范的 “虚拟TEE”。</td>
+<td align="left">-</td>
+<td align="left">c&#x2F;c++</td>
+</tr>
+<tr>
+<td align="left"><a href="https://android-review.googlesource.com/admin/repos/trusty,general" target="_blank" rel="noopener">Trusty OS</a></td>
+<td align="left">Android社区开源项目</td>
+<td align="left">SGX、TrustZone</td>
+<td align="left">Trusty 是一种安全的操作系统 (OS)，可为 Android 提供可信执行环境 (TEE)，主要用于 Android。Trusty OS 与 Android OS 在同一处理器上运行，但 Trusty 通过硬件和软件与系统的其余组件隔离开来。Trusty 与 Android 彼此并行运行。Trusty 可以访问设备主处理器和内存的全部功能，但完全隔离。隔离可以保护 Trusty 免受用户安装的恶意应用以及可能在 Android 中发现的潜在漏洞的侵害。 Trusty 与 ARM 和 Intel 处理器兼容。在 ARM 系统中，Trusty 使用 ARM 的 Trustzone™ 虚拟化主处理器，并创建安全的可信执行环境。使用 Intel 虚拟化技术的 Intel x86 平台也提供类似的支持。</td>
+<td align="left">Little Kernel、Linux 内核驱动程序、Android 用户空间库</td>
+<td align="left">-</td>
+</tr>
+<tr>
+<td align="left"><a href="https://www.sierraware.com/open-source-ARM-TrustZone.html" target="_blank" rel="noopener">SierraTEE OS</a></td>
+<td align="left">Sierraware</td>
+<td align="left">TrustZone、MIPS</td>
+<td align="left">提供了一个最小的安全内核，可以与功能更全面的高级操作系统（如Linux、Android、BSD）在同一内核上并行运行。它还为丰富的操作系统（“正常世界”）提供了驱动程序，以便与安全内核（“安全世界”）通信。</td>
+<td align="left">-</td>
+<td align="left"></td>
+</tr>
+</tbody></table>
+<h2 id="SGX"><a href="#SGX" class="headerlink" title="SGX"></a>SGX</h2><h3 id="LibOS-for-SGX"><a href="#LibOS-for-SGX" class="headerlink" title="LibOS for SGX"></a>LibOS for SGX</h3><blockquote>
+<p>为什么需要 LibOS 见 <a href="https://cczoo.readthedocs.io/en/latest/LibOS/libos.html" target="_blank" rel="noopener">这儿</a></p>
+</blockquote>
+<p>Inter SGX 通过应用隔离技术帮助保护选定的代码和数据不被修改。应用程序可以从 Inter SGX 的保密性和完整性保证中受益，但开发人员需要非常熟练地对Inter SGX 环境进行有效分区和代码修改。同时，SGX SDK 提供了有限的系统调用接口，因此，在 Enclave 中的应用程序会因为没有暴露的接口而无法运行。</p>
+<p>为了很好地支持在 Inter SGX Enclave 中运行的应用程序，开发者可以免于编写任何额外的 enclave 感知代码。LibOS 的主要功能如下：</p>
+<ul>
+<li>提供一个智能点来划分不信任&#x2F;信任的系统</li>
+<li>不扩大不信任的接口</li>
+<li>将整个应用程序移植到Enclave</li>
+</ul>
+<p>LibOS for SGX的通用框架是：</p>
+<p><img src="/img/tee/libos.png" srcset="/img/loading.gif" lazyload title="LibOS"></p>
+<p>目前，支持 Intel SGX 的开源 LibOS 有 Gramine、Occlum、SCONE 和 Fortanix 等。其中常用的是 Gramine 和 Occlum。</p>
+<p>所以 LibOS 也属于 Trusted OS。Trusted OS 是为了开发方便，提供API让应用程序安全访问隔离空间，进行机密计算。</p>
+<h3 id="Teaclave"><a href="#Teaclave" class="headerlink" title="Teaclave"></a>Teaclave</h3><blockquote>
+<p>github:<a href="https://github.com/apache/incubator-teaclave?tab=readme-ov-file" target="_blank" rel="noopener">https://github.com/apache/incubator-teaclave?tab=readme-ov-file</a></p>
+<p>第一个 Python 函数： <a href="https://github.com/apache/incubator-teaclave/blob/master/docs/my-first-function.md" target="_blank" rel="noopener">https://github.com/apache/incubator-teaclave/blob/master/docs/my-first-function.md</a></p>
+<p>需要支持 Intel SGX 的硬件并启用 SGX，另外需要安装驱动程序和平台软件才能运行 SGX 应用程序，然后安装 Teaclave，安装 Python 依赖，就可以开始编程了</p>
+</blockquote>
+<p>Teaclave 是由百度公司开源的基于TEE的安全计算平台，目前是 Apache 孵化项目之一，在贡献给 Apache 之前项目名为 MesaTEE。</p>
+<p>Teaclave 设计思路是构建一个类 FaaS（Function as a Service）的计算平台服务。平台在提供TEE机密计算、远程验证、安全存储等功能基础上，再通过一套任务管理框架实现了多任务的管理和并发操作。同时按照 FaaS 的设计逻辑实现计算函数的可插拔。  </p>
+<p>Teaclave 后端核心模块包括管理服务、调度服务、鉴权服务和机密存储服务，这些服务全部在 Enclave 运行。各模块之间通过统一形式的 RPC 接口通信，并且端到端双向验证。具体的函数执行通过调度服务分派到不同的 TEE 工作节点上完成。</p>
+<p>当前 Teaclave 支持两类计算实现，一类由 Rust 实现，通过实现预定义的 run 方法，并将类注册到执行器类中即可发起对应方法的任务。另一类由 Python 实现，Python 实现的代码会在具体执行时被 TEE 内的解释器翻译执行。底层使用的是 MesaPy for SGX 解释器，目前已经支持 Marshal、Math、Binascii、Itertools、Micronumpy 等工具库。</p>
+<h3 id="Graphene"><a href="#Graphene" class="headerlink" title="Graphene"></a>Graphene</h3><p>Graphene 是一个 SGX LibOS 项目，Graphene 本身直接与 SGX AESM Gateway 服务进行交互，所以在实现上不依赖 SGX SDK。目前已经封装了 47 个 Host ABI 接口，其中 36 个需要 OCall。支持包括 fork、exec 在内大部分 System V IPC。</p>
+<p>Graphene 目前包含接近 5 万行 LibOS 代码和 2 万行 SGX PAL 代码。编译后接近 1MB，可以说非常轻量。</p>
+<p>Graphene 用户态多进程模型是由 LibOS 隔离的，即通过创建新的 Enclave 来启动新的OS进程。LibOS 之间使用RPC模拟进程间通信。</p>
+<p>在 Graphene 上已经进行过充分验证的应用包括 Tensorflow、Pytorch、OpenVINO 等机器学习框架，Memchached、Redis、Nginx、Apache HTTP Server 等企业级服务。</p>
+<h3 id="Occlum"><a href="#Occlum" class="headerlink" title="Occlum"></a>Occlum</h3><blockquote>
+<p><a href="https://occlum.readthedocs.io/en/latest/quickstart.html#hello-world" target="_blank" rel="noopener">https://occlum.readthedocs.io/en/latest/quickstart.html#hello-world</a><br>他人实战：<a href="https://blog.csdn.net/Joaquin233/article/details/140355673" target="_blank" rel="noopener">https://blog.csdn.net/Joaquin233/article/details/140355673</a></p>
+</blockquote>
+<p>Occlum 是蚂蚁金服公司开源的面向内存安全和多任务的 SGX LibOS 项目。和其他 LibOS 一样，Occlum 目标是降低遗留应用迁移到 SGX 中的编码成本。对应用代码不做更改或者只做少量调整，就可以迁移到 SGX 中运行，获得机密性和完整性保护。</p>
+<p>Occlum 相比其他同类 LibOS 项目主要有以下优势：</p>
+<ol>
+<li><p>Enclave内多进程管理：目前其他的 LibOS 都是单进程模型，实现多进程需要启动多个 LibOS 实例。Occlum 提供了一个轻量的 LibO S进程实现，从而可以在一个 Enclave 内运行多个独立进程。Occlum 在实验室环境下有3倍的进程间通信速度提升。</p>
+</li>
+<li><p>全类型的文件系统支持：Occlum 支持多类型的文件系统，可以方便的在 Enclave 不同进程之间或是在 Enclave 与外部操作系统之间共享文件。此外 Occlum 也基于 SGX 封存技术实现了加密文件系统，可保证 Enclave 内部数据的加密落盘。</p>
+</li>
+<li><p>内存安全：这个主要得益于 Occlum 使用内存安全的 Rust 语言实现。</p>
+</li>
+<li><p>容器化设计：实现了命令行工具，可以类似 Docker 那样管理 Enclave 实例容器。</p>
+</li>
+</ol>
+<h3 id="OpenEnclave"><a href="#OpenEnclave" class="headerlink" title="OpenEnclave"></a>OpenEnclave</h3><p>Microsoft Open Enclave 希望兼容不同的 TEE 技术，并且提供统一的编程 API。Open Enclave 是一套 C&#x2F;C++ 的 SDK。Open Enclave 目前主要支持 Intel SGX，对 ARM TrustZone 的 OP TEE OS 支持还停留在预览阶段。</p>
+<p>Open Enclave SDK 主要封装了 Enclave 生命周期管理、Enclave度量、Enclave内外互调用、系统调用、数据封装、远程验证以及一些密码学库。</p>
+<p>Open Enclave 移植了MUSL库（跨平台的C标准库），也适配了一些第三方库，包括 Openssl、Mbedtls、LLVM LibC++ 等。</p>
+<blockquote>
+<p>Windows10下使用Intel SGX功能（二）：helloworld流程分析:<a href="https://blog.csdn.net/shuizhongmose/article/details/129297334" target="_blank" rel="noopener">https://blog.csdn.net/shuizhongmose/article/details/129297334</a></p>
+</blockquote>
+<h3 id="Asylo"><a href="#Asylo" class="headerlink" title="Asylo"></a>Asylo</h3><p>Google Asylo 也提供了 C&#x2F;C++ 的 SDK，但不同的是 Asylo 更进一步定义了基于 SGX 的应用实现规范，也就是所谓的编程框架。基于 Asylo 实现的应用也是分为非可信区和可信区，但互相的通信被约束为 C&#x2F;S 模式。非可信部分实现客户端和 Enclave 管理器，可信部分实现计算服务端。</p>
+<p>在远程验证方面，Asylo 提供了基于 Intel ECDSA Quoting Enclave和Assertion Generator Enclave（简称AGE）两种 TCB 模式，两种模式都是在 SGX ECDSA 远程验证模式基础上开发的，所以都需要CPU支持FLC。两者的区别是前者直接基于Intel QE提供了函数接口。而AGE采用了C&#x2F;S模式，基于Asylo框架，成为了一个常驻GRPC服务，方便外部用户实时调用验证。虽然提升了远程验证的易用性。但显然，AGE的TCB会比单纯使用Intel QE更大。</p>
+<p>另外，Asylo 还集成了秘密封装、密钥协商以及TEE服务代理等功能。总体而言 Asylo 是一套把SGX做成服务化的编程框架。</p>
+<h2 id="TrustZone"><a href="#TrustZone" class="headerlink" title="TrustZone"></a>TrustZone</h2><h3 id="OP-TEE"><a href="#OP-TEE" class="headerlink" title="OP-TEE"></a>OP-TEE</h3><p>在 ARM TrustZone 生态中，Trusted OS 是工程化相对密集的领域。</p>
+<p>OP-TEE 由非营利的开源软件工程公司 Linaro 按照 GP规范 开发，所有源代码均可在 Github 上下载到。支持 QEMU、Hikey（Linaro推广的96Board系列平台之一，使用Hisilicon处理器）以及其他通用的 ARMv7&#x2F;ARMv8 平台，开发环境搭建方便，便于开发者开发自有的 上层可信应用 ，且OP-TEE提供了完整的 SDK ，方便编译 TA和CA 。</p>
+<p>OP-TEE 遵循 GP规范 ，支持各种 加解密和电子签名验签算法 以便实现 DRM、在线支付、指纹和虹膜识别 功能。OP-TEE 也支持在芯片中集成第三方的硬件加解密算法。除此之外，在 IoT和车载芯片 领域也大都使用 OP-TEE 作为TEE解决方案。</p>
+<p>OP-TEE 是 Trusted OS 的一个开源实现。Trusted OS 位于安全世界（Secure World），不是一个位于非安全世界（Normal World）的普通操作系统（Normal OS）。</p>
+<p>Trusted OS 属于整个 TrustZone 应用的可信计算根，必须保证安全，所以相对而言代码量较少，通常而言代码量会比 TA 少一个量级。在 Trusted OS 中没有 POSIX API，也没有动态链接库，所以其上运行的 TA 默认使用了静态编译。Trusted OS 也需要依赖普通操作系统的帮助，比如对文件系统的访问、对外部设备的访问，都需要通过普通操作系统的系统调用完成。</p>
+<p>OP-TEE 包括安全世界操作系统（<code>OPTEE_OS</code>），普通世界客户端（<code>OPTEE_Client</code>），测试套件（<code>OPTEE_Test/XTest</code>）和 Linux 驱动程序。操作系统和客户端符合 Global Platform 规范。项目由 Linaro 维护，已经适配支持 28 多个平台&#x2F;处理器。开发用户负责开发在 Linux 上运行的客户端应用程序（CA）和在 OP-TEE 上运行的可信应用程序（TA）。CA 使用 TEE 客户端 API 与 TA 对话并从中获取安全服务。CA 和 TA 使用共享内存在彼此之间传递数据。</p>
+<p>类似 OP-TEE，开源的 Trusted OS 还包括 OPEN-TEE、Trusty、SierraTEE、SafeG 等，并且还有很多企业自用闭源的 Trusted OS，比如苹果的 Secure Enclave、高通的 QTEE、三星的 Knox、Teegris、Trustonic的Kinibi OS、华为的TrustedCore等。</p>
+<blockquote>
+<p>基于 QEMUv8 搭建 OP-TEE 开发环境：<a href="https://blog.csdn.net/stone8761/article/details/125563745" target="_blank" rel="noopener">https://blog.csdn.net/stone8761/article/details/125563745</a><br><a href="https://blog.csdn.net/Joaquin233/article/details/139630550" target="_blank" rel="noopener">https://blog.csdn.net/Joaquin233/article/details/139630550</a><br>开发案例：<a href="https://blog.csdn.net/Joaquin233/article/details/140355673" target="_blank" rel="noopener">https://blog.csdn.net/Joaquin233/article/details/140355673</a></p>
+</blockquote>
+<h3 id="Trusty"><a href="#Trusty" class="headerlink" title="Trusty"></a>Trusty</h3><blockquote>
+<p><a href="https://source.android.google.cn/security/trusty?hl=zh-cn" target="_blank" rel="noopener">https://source.android.google.cn/security/trusty?hl=zh-cn</a></p>
+<p><a href="https://android-review.googlesource.com/admin/repos/trusty,general" target="_blank" rel="noopener">https://android-review.googlesource.com/admin/repos/trusty,general</a></p>
+</blockquote>
+<p>Trusty，就是 Google 基于 ARM 架构的 Trustzone 技术实现的一套运行环境，通过硬件和系统软件层面的隔离，实现 normal world和secure world，也就是 REE和TEE。</p>
+<p>Trustzone 从 ARM-v6 即开始支持，且在 ARM-v8 上增强了 secure mode，TrustZone 技术能提供芯片级别对硬件资源的保护和隔离，当前在手机芯片领域已被广泛应用。而 Google 也规定从 Android M 版本以后所有的 人脸、指纹、虹膜识别 的隐私数据都需要使用TEE环境进行安全保护，否则无法通过Google的 CTS认证授权</p>
+<p>Trusty 是一种安全的操作系统 (OS)，可为 Android 提供可信执行环境 (TEE)。Trusty 操作系统与 Android 操作系统在同一处理器上运行，但 Trusty 通过硬件和软件与系统的其余组件隔离开来。Trusty 与 Android 彼此并行运行。Trusty 可以访问设备主处理器和内存的全部功能，但完全隔离。隔离可以保护 Trusty 免受用户安装的恶意应用以及可能在 Android 中发现的潜在漏洞的侵害。</p>
+<p>Trusty 与 ARM 和 Intel 处理器兼容。在 ARM 系统中，Trusty 使用 ARM 的 Trustzone™ 虚拟化主处理器，并创建安全的可信执行环境。使用 Intel 虚拟化技术的 Intel x86 平台也提供类似的支持。</p>
+<p>Trusty 与 ARM 和 Intel 处理器兼容。在 ARM 系统中，Trusty 使用 ARM 的 Trustzone™ 虚拟化主处理器，并创建安全的可信执行环境。使用 Intel 虚拟化技术的 Intel x86 平台也提供类似的支持。</p>
+<p><img src="/img/tee/00/1741849354-6c639e0a4cd9c9df48aa3389454ea77a.png" srcset="/img/loading.gif" lazyload></p>
+<p>Trusty 包含以下组件：  </p>
+<ul>
+<li><p>由 Little Kernel 衍生的小型操作系统内核</p>
+</li>
+<li><p>Linux 内核驱动程序，用于在安全环境和 Android 之间传输数据</p>
+</li>
+<li><p>Android 用户空间库，用于通过内核驱动程序与可信应用（即安全任务&#x2F;服务）通信</p>
+</li>
+</ul>
+<p>Android 支持各种 TEE 实现，每一种 TEE 操作系统都会通过一种独特的方式部署可信应用。对试图确保应用能够在所有 Android 设备上正常运行的可信应用开发者来说，这种不统一性可能是一个问题。使用 Trusty 作为标准，可以帮助应用开发者轻松地创建和部署应用，而不用考虑有多个 TEE 系统的不统一性。借助 Trusty TEE，开发者和合作伙伴能够实现透明化、进行协作、检查代码并轻松地进行调试。</p>
+<h1 id="商业框架"><a href="#商业框架" class="headerlink" title="商业框架"></a>商业框架</h1><ol>
+<li><p>Trustonic 公司的 t-base，是一个商业产品，已经得到 GlobalPlatform 的授权认可</p>
+<p><a href="https://www.trustonic.com/products-services/trusted-execution-environment/" target="_blank" rel="noopener">https://www.trustonic.com/products-services/trusted-execution-environment/</a></p>
+</li>
+<li><p>Solacia 公司的 securiTEE，也是一个商业产品，并且得到了 GlobalPlatform 的授权认可</p>
+<p><a href="http://www.sola-cia.com/en/securiTee/product.asp" target="_blank" rel="noopener">http://www.sola-cia.com/en/securiTee/product.asp</a></p>
+</li>
+<li><p>SierraTEE，来自 Sierraware 公司的实现，拥有双重属性，一半开源一半商业性质</p>
+<p><a href="http://www.openvirtualization.org/" target="_blank" rel="noopener">http://www.openvirtualization.org/</a></p>
+</li>
+</ol>
+<h1 id="TEE-手机方案商"><a href="#TEE-手机方案商" class="headerlink" title="TEE 手机方案商"></a>TEE 手机方案商</h1><p><img src="/img/tee/00/8wm7y3k69i.jpeg" srcset="/img/loading.gif" lazyload></p>
+<h2 id="高通-QSEE（Qualcomm-Secure-Execution-Environment）"><a href="#高通-QSEE（Qualcomm-Secure-Execution-Environment）" class="headerlink" title="高通 QSEE（Qualcomm Secure Execution Environment）"></a>高通 QSEE（Qualcomm Secure Execution Environment）</h2><ul>
+<li><strong>概述</strong>：QSEE 是高通公司在其 Snapdragon 处理器中提供的一种 TEE 实现，类似于 ARM TrustZone。它提供一个隔离的执行环境来处理敏感数据和任务。</li>
+<li><strong>工作原理</strong>：基于 TrustZone 架构，高通为其设备定制了一个 TEE，确保敏感应用可以在一个隔离环境中运行，保护用户隐私和数据安全。</li>
+<li><strong>应用场景</strong>：广泛应用于移动设备中的安全支付、生物识别身份认证、DRM 等领域。</li>
+<li><strong>优势</strong>：由于高通 Snapdragon 处理器的广泛使用，QSEE 被广泛应用于 Android 手机和其他智能设备中。</li>
+</ul>
+<p>除了苹果之外，QSEE是应用最广泛的一个TEE OS。目前使用高通芯片的趋势继续在加强，因此有必要介绍下高通是如何基于Trustzone技术实现自己的可信执行环境。目前所有的手机芯片的可信执行环境都是基于ARM的trustzone技术实现的，苹果如此、高通如此、三星如此、MTK如此、华为麒麟芯片依旧如此。</p>
+<h2 id="Huawei-Trusted-Execution-Environment-TEE"><a href="#Huawei-Trusted-Execution-Environment-TEE" class="headerlink" title="Huawei Trusted Execution Environment (TEE)"></a>Huawei Trusted Execution Environment (TEE)</h2><ul>
+<li><strong>概述</strong>：华为 TEE 是华为自家开发的一种可信执行环境，类似于 ARM TrustZone，专门用于其智能手机和物联网设备。它为敏感数据和应用提供了一个隔离的、安全的执行环境。</li>
+<li><strong>工作原理</strong>：基于 ARM TrustZone 架构，华为开发了其定制的 TEE 解决方案，用于处理安全支付、生物识别等安全关键操作。</li>
+<li><strong>应用场景</strong>：广泛应用于华为的智能手机、平板电脑以及其他设备，特别是在支付和身份认证领域。</li>
+<li><strong>优势</strong>：结合华为设备的软硬件生态系统，提供了一体化的安全解决方案。</li>
+</ul>
+<h2 id="华为-鲲鹏-iTrustee"><a href="#华为-鲲鹏-iTrustee" class="headerlink" title="华为-鲲鹏 iTrustee"></a>华为-鲲鹏 iTrustee</h2><blockquote>
+<p>参考：<a href="https://www.hikunpeng.com/zh/developer/techArticles/20230913-10" target="_blank" rel="noopener">https://www.hikunpeng.com/zh/developer/techArticles/20230913-10</a></p>
+</blockquote>
+<p>鲲鹏机密计算套件中的核心组件“可信操作系统”（Trusted OS）采用的是华为自研的 iTrustee，它的主要特点包括：</p>
+<p>（1）稳定可靠：基于华为自研的微内核安全OS，已在手机侧商用近10年，支持过亿级用户。</p>
+<p>（2）权威第三方认证：获得CC EAL4+认证。</p>
+<p>（3）规格灵活：TEE侧安全内存支持按需配置，最大可配128G。</p>
+<h2 id="Google-Titan"><a href="#Google-Titan" class="headerlink" title="Google Titan"></a>Google Titan</h2><h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ul>
+<li><a href="https://cczoo.readthedocs.io/en/latest/LibOS/libos.html" target="_blank" rel="noopener">https://cczoo.readthedocs.io/en/latest/LibOS/libos.html</a></li>
+<li><a href="https://blog.csdn.net/shuizhongmose/article/details/129559025" target="_blank" rel="noopener">https://blog.csdn.net/shuizhongmose/article/details/129559025</a></li>
+<li><a href="https://mp.weixin.qq.com/s?__biz=MzkwNjE4ODkxNg==&mid=2247484257&idx=1&sn=5c65705cba40e98241f5dece78af0e20" target="_blank" rel="noopener">https://mp.weixin.qq.com/s?__biz=MzkwNjE4ODkxNg%3D%3D&amp;mid=2247484257&amp;idx=1&amp;sn=5c65705cba40e98241f5dece78af0e20</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%AE%89%E5%85%A8/" class="category-chain-item">数据安全</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%AE%89%E5%85%A8/%E9%9A%90%E7%A7%81%E8%AE%A1%E7%AE%97/" class="category-chain-item">隐私计算</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E6%95%B0%E6%8D%AE%E5%AE%89%E5%85%A8/" class="print-no-link">#数据安全</a>
+      
+        <a href="/tags/%E9%9A%90%E7%A7%81%E8%AE%A1%E7%AE%97/" class="print-no-link">#隐私计算</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>03-TEE 框架</div>
+      <div>https://flepeng.github.io/081-数据安全-TEE-03-TEE-框架/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年4月14日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/081-%E6%95%B0%E6%8D%AE%E5%AE%89%E5%85%A8-TEE-TEE-%E5%BC%80%E5%8F%91/" title="TEE 开发">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">TEE 开发</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/081-%E6%95%B0%E6%8D%AE%E5%AE%89%E5%85%A8-%E6%95%B0%E6%8D%AE%E8%84%B1%E6%95%8F-%E5%9C%B0%E6%96%B9%E5%B1%82%E9%9D%A2%E6%95%B0%E6%8D%AE%E8%84%B1%E6%95%8F%E6%A0%87%E5%87%86/" title="地方层面数据脱敏标准">
+                        <span class="hidden-mobile">地方层面数据脱敏标准</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

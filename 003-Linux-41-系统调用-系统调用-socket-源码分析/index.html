@@ -1,0 +1,860 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="注：本文分析基于3.10.107内核版本 1、函数原型123456int socket(int domain, int type, int protocol);参数：    domain：指定通信协议族。常用的协议族有AF_INET、AF_UNIX等，对于TCP协议，该字段应为AF_INET（ipv4）或AF_INET6（ipv6）。    type：指定socket类型。常用的socket类型有">
+<meta property="og:type" content="article">
+<meta property="og:title" content="系统调用 socket 源码分析">
+<meta property="og:url" content="https://flepeng.github.io/003-Linux-41-%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8-%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8-socket-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="注：本文分析基于3.10.107内核版本 1、函数原型123456int socket(int domain, int type, int protocol);参数：    domain：指定通信协议族。常用的协议族有AF_INET、AF_UNIX等，对于TCP协议，该字段应为AF_INET（ipv4）或AF_INET6（ipv6）。    type：指定socket类型。常用的socket类型有">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://blog.csdn.net/u010039418/article/details/79350421">
+<meta property="og:image" content="https://flepeng.github.io/img/linux/system_call/20180315135348242.png">
+<meta property="article:published_time" content="2024-09-22T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.272Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Linux">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://blog.csdn.net/u010039418/article/details/79350421">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>系统调用 socket 源码分析 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="系统调用 socket 源码分析"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-09-23 00:00" pubdate>
+          2024年9月23日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          26 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">系统调用 socket 源码分析</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>注：本文分析基于3.10.107内核版本</p>
+<h2 id="1、函数原型"><a href="#1、函数原型" class="headerlink" title="1、函数原型"></a>1、函数原型</h2><figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs pgsql"><span class="hljs-type">int</span> socket(<span class="hljs-type">int</span> <span class="hljs-keyword">domain</span>, <span class="hljs-type">int</span> <span class="hljs-keyword">type</span>, <span class="hljs-type">int</span> protocol);<br><br>参数：<br>    <span class="hljs-keyword">domain</span>：指定通信协议族。常用的协议族有AF_INET、AF_UNIX等，对于TCP协议，该字段应为AF_INET（ipv4）或AF_INET6（ipv6）。<br>    <span class="hljs-keyword">type</span>：指定socket类型。常用的socket类型有SOCK_STREAM、SOCK_DGRAM等。SOCK_STREAM针对于面向连接的TCP服务应用。SOCK_DGRAM对应于无连接的UDP服务应用。<br>    protocol：指定socket所使用的协议，一般我们平常都指定为<span class="hljs-number">0</span>，使用<span class="hljs-keyword">type</span>中的默认协议。严格意义上，IPPROTO_TCP（值为<span class="hljs-number">6</span>）代表TCP协议。<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="2、内核实现源码分析"><a href="#2、内核实现源码分析" class="headerlink" title="2、内核实现源码分析"></a>2、内核实现源码分析</h2><figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs reasonml"><span class="hljs-constructor">SYSCALL_DEFINE3(<span class="hljs-params">socket</span>, <span class="hljs-params">int</span>, <span class="hljs-params">family</span>, <span class="hljs-params">int</span>, <span class="hljs-params">type</span>, <span class="hljs-params">int</span>, <span class="hljs-params">protocol</span>)</span><br>&#123;<br>    <span class="hljs-built_in">int</span> retval;<br>    <span class="hljs-keyword">struct</span> socket *sock;<br>    <span class="hljs-built_in">int</span> flags;<br><br>...<br>    retval = sock<span class="hljs-constructor">_create(<span class="hljs-params">family</span>, <span class="hljs-params">type</span>, <span class="hljs-params">protocol</span>, &amp;<span class="hljs-params">sock</span>)</span>;<br>    <span class="hljs-keyword">if</span> (retval &lt; <span class="hljs-number">0</span>)<br>        goto out;<br><br>    retval = sock<span class="hljs-constructor">_map_fd(<span class="hljs-params">sock</span>, <span class="hljs-params">flags</span> &amp; (O_CLOEXEC | O_NONBLOCK)</span>);<br>    <span class="hljs-keyword">if</span> (retval &lt; <span class="hljs-number">0</span>)<br>        goto out_release;<br><br>out:<br>    <span class="hljs-comment">/* It may be already another descriptor 8) Not kernel problem. */</span><br>    return retval;<br><br>out_release:<br>    sock<span class="hljs-constructor">_release(<span class="hljs-params">sock</span>)</span>;<br>    return retval;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>可以看到，除去一些参数合法性校验，socket函数主要由 <code>sock_create</code> 和 <code>sock_map_fd</code> 这两个函数完成，因此我们主要分析这两个函数，看它们是怎么在内核一步步创建和管理我们使用的 socket。</p>
+<h3 id="2-1-sock-create函数"><a href="#2-1-sock-create函数" class="headerlink" title="2.1 sock_create函数"></a>2.1 sock_create函数</h3><p><code>sock_create()</code> 实际调用的是 <code>__sock_create()</code>。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">int</span> __sock_create(<span class="hljs-keyword">struct</span> net *net, <span class="hljs-keyword">int</span> family, <span class="hljs-keyword">int</span> <span class="hljs-keyword">type</span>, <span class="hljs-keyword">int</span> protocol,<br>                  <span class="hljs-keyword">struct</span> socket **res, <span class="hljs-keyword">int</span> kern)<br>&#123;<br>    <span class="hljs-keyword">int</span> err;<br>    <span class="hljs-keyword">struct</span> socket *sock;<br>    <span class="hljs-keyword">const</span> <span class="hljs-keyword">struct</span> net_proto_family *pf;<br>...<br>    err = security_socket_create(family, <span class="hljs-keyword">type</span>, protocol, kern);<span class="hljs-comment">//SElinux相关，暂不关注</span><br>    <span class="hljs-comment">/*</span><br><span class="hljs-comment">     *  Allocate the socket and allow the family to set things up. if</span><br><span class="hljs-comment">     *  the protocol is 0, the family is instructed to select an appropriate</span><br><span class="hljs-comment">     *  default.</span><br><span class="hljs-comment">     */</span><br>    sock = sock_alloc();<span class="hljs-comment">//创建struct socket结构体</span><br><br>    sock-&gt;<span class="hljs-keyword">type</span> = <span class="hljs-keyword">type</span>;<span class="hljs-comment">//设置套接字的类型</span><br>...<br>    pf = rcu_dereference(net_families[family]);<span class="hljs-comment">//获取对应协议族的协议实例对象</span><br>...<br>    err = pf-&gt;create(net, sock, protocol, kern);<br>    <span class="hljs-keyword">if</span> (err &lt; <span class="hljs-number">0</span>)<br>        <span class="hljs-keyword">goto</span> out_module_put;<br><br>...<br>    err = security_socket_post_create(sock, family, <span class="hljs-keyword">type</span>, protocol, kern);<span class="hljs-comment">//SElinux相关，暂不关注</span><br><br>    *res = sock;<br>...<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>这里比较重要的是 <code>sock_alloc()</code> 和 <code>pf-&gt;create()</code> 这两个函数。其中 <code>sock_alloc()</code> 里体现了 linux 一切皆文件(Everything is a file)理念，即使用文件系统来管理 socket，这也是 VFS 所要达到的效果。</p>
+<h4 id="2-1-1-sock-alloc-函数"><a href="#2-1-1-sock-alloc-函数" class="headerlink" title="2.1.1 sock_alloc() 函数"></a>2.1.1 sock_alloc() 函数</h4><p>总的来说，<code>sock_alloc()</code> 函数分配一个 <code>struct socket_alloc</code> 结构体，将 sockfs 相关属性填充在 socket_alloc 结构体的 vfs_inode 变量中，以限定后续对这个 sock 文件允许的操作。同时 sock_alloc() 最终返回 socket_alloc 结构体的 socket 变量，用于后续操作。</p>
+<h4 id="2-1-2-pf-gt-create-函数"><a href="#2-1-2-pf-gt-create-函数" class="headerlink" title="2.1.2 pf-&gt;create()函数"></a>2.1.2 pf-&gt;create()函数</h4><p>下面我们继续看下 <code>pf-&gt;create()</code> 这个函数。</p>
+<p>pf 由 <code>net_families[]</code> 数组获得，我们先看下 <code>net_families[]</code> 数组的定义：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> AF_MAX      41  <span class="hljs-comment">/* For now.. */</span></span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> NPROTO      AF_MAX</span><br><br><span class="hljs-keyword">static</span> <span class="hljs-keyword">const</span> <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">net_proto_family</span> __<span class="hljs-title">rcu</span> *<span class="hljs-title">net_families</span>[<span class="hljs-title">NPROTO</span>] __<span class="hljs-title">read_mostly</span>;</span><br></code></pre></td></tr></table></figure>
+
+<p><code>net_families[]</code> 数组的初始化在 <code>inet_init()</code> 函数，</p>
+<figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs reasonml">static const <span class="hljs-keyword">struct</span> net_proto_family inet_family_ops = &#123;<br>    .family = PF_INET,<br>    .create = inet_create,<br>    .owner  = THIS_MODULE,<br>&#125;;<br><br>static <span class="hljs-built_in">int</span> __init inet<span class="hljs-constructor">_init(<span class="hljs-params">void</span>)</span><br>&#123;<br>...<br>    (void)sock<span class="hljs-constructor">_register(&amp;<span class="hljs-params">inet_family_ops</span>)</span>;<br>...<br>&#125;<br><br><span class="hljs-built_in">int</span> sock<span class="hljs-constructor">_register(<span class="hljs-params">const</span> <span class="hljs-params">struct</span> <span class="hljs-params">net_proto_family</span> <span class="hljs-operator">*</span><span class="hljs-params">ops</span>)</span><br>&#123;<br>...<br>    rcu<span class="hljs-constructor">_assign_pointer(<span class="hljs-params">net_families</span>[<span class="hljs-params">ops</span>-&gt;<span class="hljs-params">family</span>], <span class="hljs-params">ops</span>)</span>;<br>...<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>因此，<code>net_families[]</code> 数组里存放的是各个协议族的信息，以 <strong>family</strong> 字段作为下标。此处我们针对TCP协议分析，因此我们 family 字段是 <strong>AF_INET</strong>，另外一般会有</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> PF_INET     AF_INET</span><br></code></pre></td></tr></table></figure>
+
+<p>所以 <code>pf-&gt;create</code> 调用的就是 <code>inet_create()</code> 函数。</p>
+<figure class="highlight zephir"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><code class="hljs zephir"><span class="hljs-keyword">static</span> <span class="hljs-keyword">int</span> inet_create(struct net *net, struct socket *sock, <span class="hljs-keyword">int</span> protocol,<br>                       <span class="hljs-keyword">int</span> kern)<br>&#123;<br>    struct sock *sk;<br>    struct inet_protosw *answer;<br>    struct inet_sock *inet;<br>    struct proto *answer_prot;<br>    unsigned <span class="hljs-keyword">char</span> answer_flags;<br>    <span class="hljs-keyword">char</span> answer_no_check;<br>    <span class="hljs-keyword">int</span> try_loading_module = <span class="hljs-number">0</span>;<br>    <span class="hljs-keyword">int</span> err;<br>...<br>    sock-&gt;state = SS_UNCONNECTED;<br><br>    <span class="hljs-comment">/* Look for the requested type/protocol pair. */</span><br>lookup_protocol:<br>    err = -ESOCKTNOSUPPORT;<br>    rcu_read_lock();<br>    <span class="hljs-comment">//根据socket传入的protocal在inetsw[]数组中查找对应的元素</span><br>    list_for_each_entry_rcu(answer, &amp;inetsw[sock-&gt;type], <span class="hljs-keyword">list</span>) &#123;<br><br>        err = <span class="hljs-number">0</span>;<br>        <span class="hljs-comment">/* 如果我们在socket的protocal传入的是6，即TCP协议，那么走这个分支 */</span><br>        <span class="hljs-keyword">if</span> (protocol == answer-&gt;protocol) &#123;<br>            <span class="hljs-keyword">if</span> (protocol != IPPROTO_IP)<br>                <span class="hljs-keyword">break</span>;<br>        &#125; <span class="hljs-keyword">else</span> &#123;<br>            <span class="hljs-comment">/* 如果socket的protocal传入的是0，那么走这个分支 */</span><br>            <span class="hljs-keyword">if</span> (IPPROTO_IP == protocol) &#123;<br>                protocol = answer-&gt;protocol;<span class="hljs-comment">//重新给protocal赋值，因此socket中protocal传入的是0或者6，都是可以的</span><br>                <span class="hljs-keyword">break</span>;<br>            &#125;<br>            <span class="hljs-keyword">if</span> (IPPROTO_IP == answer-&gt;protocol)<br>                <span class="hljs-keyword">break</span>;<br>        &#125;<br>        err = -EPROTONOSUPPORT;<br>    &#125;<br>...<br>    sock-&gt;ops = answer-&gt;ops;<span class="hljs-comment">//将查找到的对应协议族的协议函数操作集赋值给我们之前创建的socket</span><br>    answer_prot = answer-&gt;prot;<br>...<br>    <span class="hljs-comment">//创建sock结构体，注意这里创建的结构体类型是sock，之前我们通过sock_alloc创建的结构体类型是socket</span><br>    sk = sk_alloc(net, PF_INET, GFP_KERNEL, answer_prot);<br>    <span class="hljs-keyword">if</span> (sk == <span class="hljs-keyword">NULL</span>)<br>        <span class="hljs-keyword">goto</span> out;<br>...<br>    sock_init_data(sock, sk);<span class="hljs-comment">//sock初始化</span><br><br>    <span class="hljs-comment">//另一部分初始化，里面有对各个socket连接定时器的初始化</span><br>    <span class="hljs-keyword">if</span> (sk-&gt;sk_prot-&gt;init) &#123;<br>        err = sk-&gt;sk_prot-&gt;init(sk);<br>        <span class="hljs-keyword">if</span> (err)<br>            sk_common_release(sk);<br>    &#125;<br>...<br>&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><code>inet_create()</code> 函数里有几处是比较重要的，一个是通过 <code>inetsw[]</code> 数组获取对应协议类型的接口操作集信息，另一个是创建 struct sock 类型的变量，最后是对创建的 sock 进行初始化。</p>
+<h5 id="2-1-2-1-inetsw-数组"><a href="#2-1-2-1-inetsw-数组" class="headerlink" title="2.1.2.1 inetsw[]数组"></a>2.1.2.1 inetsw[]数组</h5><p><code>inetsw[]</code> 数组存放的是各个 sock_type 的信息，它也是在 <code>inet_init()</code> 函数中初始化。</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs angelscript"><span class="hljs-keyword">enum</span> sock_type &#123;<br>    SOCK_STREAM = <span class="hljs-number">1</span>,<br>    SOCK_DGRAM  = <span class="hljs-number">2</span>,<br>    SOCK_RAW    = <span class="hljs-number">3</span>,<br>    SOCK_RDM    = <span class="hljs-number">4</span>,<br>    SOCK_SEQPACKET  = <span class="hljs-number">5</span>,<br>    SOCK_DCCP   = <span class="hljs-number">6</span>,<br>    SOCK_PACKET = <span class="hljs-number">10</span>,<br>&#125;;<br><br>#define SOCK_MAX (SOCK_PACKET + <span class="hljs-number">1</span>)<br>static <span class="hljs-built_in">int</span> __init inet_init(<span class="hljs-built_in">void</span>)<br>&#123;<br>    ...<br>    <span class="hljs-comment">/* Register the socket-side information for inet_create. */</span><br>    <span class="hljs-keyword">for</span> (r = &amp;inetsw[<span class="hljs-number">0</span>]; r &lt; &amp;inetsw[SOCK_MAX]; ++r)<br>        INIT_LIST_HEAD(r);<br><br>    <span class="hljs-keyword">for</span> (q = inetsw_array; q &lt; &amp;inetsw_array[INETSW_ARRAY_LEN]; ++q)<br>        inet_register_protosw(q);<br>    ...<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>其中 <code>inetsw_array[]</code> 存放的就是具体的每种 sock 的信息，包括操作函数，协议号等，其中 <strong>prot</strong> 和 <strong>ops</strong> 两个成员是比较重要的，后续很多操作依赖于这两个成员。</p>
+<figure class="highlight jboss-cli"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs jboss-cli">static struct inet_protosw inetsw_array[] = &#123;<br>    &#123;<br>        <span class="hljs-string">.type</span> =       SOCK_STREAM,<br>        <span class="hljs-string">.protocol</span> =   IPPROTO_TCP,<br>        <span class="hljs-string">.prot</span> =       &amp;tcp_prot,<br>        <span class="hljs-string">.ops</span> =        &amp;inet_stream_ops,<br>        <span class="hljs-string">.no_check</span> =   0,<br>        <span class="hljs-string">.flags</span> =      INET_PROTOSW_PERMANENT |<br>        INET_PROTOSW_ICSK,<br>    &#125;,<br><br>    &#123;<br>        <span class="hljs-string">.type</span> =       SOCK_DGRAM,<br>        <span class="hljs-string">.protocol</span> =   IPPROTO_UDP,<br>        <span class="hljs-string">.prot</span> =       &amp;udp_prot,<br>        <span class="hljs-string">.ops</span> =        &amp;inet_dgram_ops,<br>        <span class="hljs-string">.no_check</span> =   UDP_CSUM_DEFAULT,<br>        <span class="hljs-string">.flags</span> =      INET_PROTOSW_PERMANENT,<br>    &#125;,<br><br>    &#123;<br>        <span class="hljs-string">.type</span> =       SOCK_DGRAM,<br>        <span class="hljs-string">.protocol</span> =   IPPROTO_ICMP,<br>        <span class="hljs-string">.prot</span> =       &amp;ping_prot,<br>        <span class="hljs-string">.ops</span> =        &amp;inet_dgram_ops,<br>        <span class="hljs-string">.no_check</span> =   UDP_CSUM_DEFAULT,<br>        <span class="hljs-string">.flags</span> =      INET_PROTOSW_REUSE,<br>    &#125;,<br><span class="hljs-string">...</span><br>&#125;;<br></code></pre></td></tr></table></figure>
+
+<p>然后通过 <code>inet_register_protosw()</code> 函数，将上述 <code>inetsw_array[]</code> 里的元素，按照 type 字段挂在 <code>inetsw[]</code> 数组的链表上。因为 type 字段是有重复的，所以每个 <code>inetsw[]</code> 元素的链表上可能会有多个成员。</p>
+<figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs reasonml">void inet<span class="hljs-constructor">_register_protosw(<span class="hljs-params">struct</span> <span class="hljs-params">inet_protosw</span> <span class="hljs-operator">*</span><span class="hljs-params">p</span>)</span><br>&#123;<br>    <span class="hljs-keyword">struct</span> list_head *lh;<br>    <span class="hljs-keyword">struct</span> inet_protosw *answer;<br>    <span class="hljs-built_in">int</span> protocol = p-&gt;protocol;<br>    <span class="hljs-keyword">struct</span> list_head *last_perm;<br>...<br>    answer = NULL;<br>    last_perm = &amp;inetsw<span class="hljs-literal">[<span class="hljs-identifier">p</span>-&gt;<span class="hljs-identifier">type</span>]</span>;<br>    <span class="hljs-built_in">list</span><span class="hljs-constructor">_for_each(<span class="hljs-params">lh</span>, &amp;<span class="hljs-params">inetsw</span>[<span class="hljs-params">p</span>-&gt;<span class="hljs-params">type</span>])</span> &#123;<br>        answer = <span class="hljs-built_in">list</span><span class="hljs-constructor">_entry(<span class="hljs-params">lh</span>, <span class="hljs-params">struct</span> <span class="hljs-params">inet_protosw</span>, <span class="hljs-params">list</span>)</span>;<br><br>        <span class="hljs-comment">/* Check only the non-wild match. */</span><br>        <span class="hljs-keyword">if</span> (INET_PROTOSW_PERMANENT &amp; answer-&gt;flags) &#123;<br>            <span class="hljs-keyword">if</span> (protocol<span class="hljs-operator"> == </span>answer-&gt;protocol)<span class="hljs-comment">//如果是要覆盖已有的协议族，则失败</span><br>                break;<br>            last_perm = lh;<br>        &#125;<br><br>        answer = NULL;<br>    &#125;<br>    <span class="hljs-keyword">if</span> (answer)<br>        goto out_permanent;<br><br>    <span class="hljs-built_in">list</span><span class="hljs-constructor">_add_rcu(&amp;<span class="hljs-params">p</span>-&gt;<span class="hljs-params">list</span>, <span class="hljs-params">last_perm</span>)</span>;<span class="hljs-comment">//按照type的值，添加到inetsw[type]数组中的链表中</span><br>...<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h5 id="2-1-2-2-创建struct-sock类型变量"><a href="#2-1-2-2-创建struct-sock类型变量" class="headerlink" title="2.1.2.2 创建struct sock类型变量"></a>2.1.2.2 创建struct sock类型变量</h5><p>通过 <code>sk_alloc()</code> 函数创建 struct sock 类型变量</p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs rust"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">sock</span></span> *sk_alloc(<span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">net</span></span> *net, int family, gfp_t priority,<br>                      <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">proto</span></span> *prot) &#123;<br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">sock</span></span> *sk;<br><br>    sk = sk_prot_alloc(prot, priority | __GFP_ZERO, family);<br>    <span class="hljs-keyword">if</span> (sk) &#123;<br>        sk-&gt;sk_family = family;<br>        <span class="hljs-comment">//这里留意一下，后续会使用到sk_prot这个变量</span><br>        sk-&gt;sk_prot = sk-&gt;sk_prot_creator = prot;<br>...<br>    &#125;<br><br>    <span class="hljs-keyword">return</span> sk;<br>&#125;<br><br><span class="hljs-keyword">static</span> <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">sock</span></span> *sk_prot_alloc(<span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">proto</span></span> *prot, gfp_t priority,<br>        int family)<br>&#123;<br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">sock</span></span> *sk;<br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">kmem_cache</span></span> *slab;<br><br>    slab = prot-&gt;slab;<br>    <span class="hljs-keyword">if</span> (slab != NULL) &#123;<br>        <span class="hljs-comment">//使用对应协议的slab高速缓存分配，减小内存碎片</span><br>        sk = kmem_cache_alloc(slab, priority &amp; ~__GFP_ZERO);<br>...<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>由此可见，最后是通过 <code>prot-&gt;slab</code>，也就是TCP的slab高速缓存里分配的。</p>
+<p>关于TCP协议的slab高速缓存建立，详见 <img src="https://blog.csdn.net/u010039418/article/details/79350421" srcset="/img/loading.gif" lazyload alt="Linux socket系统调用(三)—-TCP协议的slab高速缓存建立及各结构体关系">。</p>
+<h5 id="2-1-2-3-sock初始化"><a href="#2-1-2-3-sock初始化" class="headerlink" title="2.1.2.3 sock初始化"></a>2.1.2.3 sock初始化</h5><p>创建完 sock 结构体，那么自然要做初始化。初始化又分为两个大块，一个在 <code>sock_init_data()</code> 函数，另一个在 <code>sk-&gt;sk\_prot-&gt;init()</code>。</p>
+<p><strong>a. <code>sock_init_data()</code></strong></p>
+<p><code>sock_init_data()</code> 函数我认为比较重要的一点就是将之前分配的 struct socket 和 struct sock 联系在一起，把逻辑填充完整。</p>
+<figure class="highlight xl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><code class="hljs xl">void sock_init_data(struct socket *sock, struct sock *sk)<br>&#123;<br>    <span class="hljs-function"><span class="hljs-title">skb_queue_head_init</span>(&amp;sk-&gt;</span>sk_receive_queue);<br>    <span class="hljs-function"><span class="hljs-title">skb_queue_head_init</span>(&amp;sk-&gt;</span>sk_write_queue);<br>    <span class="hljs-function"><span class="hljs-title">skb_queue_head_init</span>(&amp;sk-&gt;</span>sk_error_queue);<br>#ifdef CONFIG_NET_DMA<br>    <span class="hljs-function"><span class="hljs-title">skb_queue_head_init</span>(&amp;sk-&gt;</span>sk_async_wait_queue);<br>#endif<br><br>    <span class="hljs-function"><span class="hljs-title">sk</span>-&gt;</span>sk_send_head    =   NULL;<br><br>    <span class="hljs-function"><span class="hljs-title">init_timer</span>(&amp;sk-&gt;</span>sk_timer);<br><br>    <span class="hljs-function"><span class="hljs-title">sk</span>-&gt;</span>sk_allocation   =   GFP_KERNEL;<br>    <span class="hljs-comment">//socket的接收和发送缓存，怎么用的，暂时不太清楚，后续再分析</span><br>    <span class="hljs-comment">//这两个参数可以在proc下设置，两个分别是/proc/sys/net/core/rmem_default和/proc/sys/net/core/wmem_default</span><br>    <span class="hljs-function"><span class="hljs-title">sk</span>-&gt;</span>sk_rcvbuf       =   sysctl_rmem_default;<br>    <span class="hljs-function"><span class="hljs-title">sk</span>-&gt;</span>sk_sndbuf       =   sysctl_wmem_default;<br>    <span class="hljs-function"><span class="hljs-title">sk</span>-&gt;</span>sk_state        =   TCP_CLOSE;<span class="hljs-comment">//socket一开始的状态就是close</span><br>    sk_set_socket(sk, sock);<br><br>    sock_set_flag(sk, SOCK_ZAPPED);<br><br>    <span class="hljs-keyword">if</span> (sock) &#123;<br>        <span class="hljs-function"><span class="hljs-title">sk</span>-&gt;</span><span class="hljs-function"><span class="hljs-title">sk_type</span> =   sock-&gt;</span>type;<br>        <span class="hljs-function"><span class="hljs-title">sk</span>-&gt;</span><span class="hljs-function"><span class="hljs-title">sk_wq</span>   =   sock-&gt;</span>wq;<br>        <span class="hljs-comment">//struct socket里有指针指向对应的struct sock</span><br>        <span class="hljs-comment">//加上上面sk_set_socket()的设置，struct socket和struct sock就能通过各自的成员访问到对方</span><br>        <span class="hljs-function"><span class="hljs-title">sock</span>-&gt;</span>sk    =   sk;<br>    &#125; <span class="hljs-keyword">else</span><br>        <span class="hljs-function"><span class="hljs-title">sk</span>-&gt;</span>sk_wq   =   NULL;<br><br>    <span class="hljs-comment">//指定一些回调函数</span><br>    <span class="hljs-function"><span class="hljs-title">sk</span>-&gt;</span>sk_state_change =   sock_def_wakeup;<br>    <span class="hljs-function"><span class="hljs-title">sk</span>-&gt;</span>sk_data_ready   =   sock_def_readable;<br>    <span class="hljs-function"><span class="hljs-title">sk</span>-&gt;</span>sk_write_space  =   sock_def_write_space;<br>    <span class="hljs-function"><span class="hljs-title">sk</span>-&gt;</span>sk_error_report =   sock_def_error_report;<br>...<br>&#125;<br>static inline void sk_set_socket(struct sock *sk, struct socket *sock)<br>&#123;<br>    sk_tx_queue_clear(sk);<br>    <span class="hljs-comment">//让struct sock的sk_socket成员指向对应的struct socket</span><br>    <span class="hljs-function"><span class="hljs-title">sk</span>-&gt;</span>sk_socket = sock;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>b. <code>sk-&gt;sk_prot-&gt;init()</code></strong>  </p>
+<p>对于 TCP 协议，这个 init 成员指向的是 <code>tcp_v4_init_sock()</code> 函数，具体参看 <code>struct proto tcp_prot</code> 结构体的成员。</p>
+<figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs reasonml">static <span class="hljs-built_in">int</span> tcp<span class="hljs-constructor">_v4_init_sock(<span class="hljs-params">struct</span> <span class="hljs-params">sock</span> <span class="hljs-operator">*</span><span class="hljs-params">sk</span>)</span><br>&#123;<br>    <span class="hljs-keyword">struct</span> inet_connection_sock *icsk = inet<span class="hljs-constructor">_csk(<span class="hljs-params">sk</span>)</span>;<br><br>    tcp<span class="hljs-constructor">_init_sock(<span class="hljs-params">sk</span>)</span>;<span class="hljs-comment">//初始化操作</span><br>    <span class="hljs-comment">//设置操作集，这个赋值比较重要，后续icsk-&gt;icsk_af_ops的调用要知道最终调用的是什么</span><br>    icsk-&gt;icsk_af_ops = &amp;ipv4_specific;<br><br>#ifdef CONFIG_TCP_MD5SIG<br>    tcp<span class="hljs-constructor">_sk(<span class="hljs-params">sk</span>)</span>-&gt;af_specific = &amp;tcp_sock_ipv4_specific;<br>#endif<br><br>    return <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><code>tcp_v4_init_sock()</code> 函数里调用 <code>tcp_init_sock()</code> 函数完成主要的初始化动作。</p>
+<figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs reasonml">void tcp<span class="hljs-constructor">_init_sock(<span class="hljs-params">struct</span> <span class="hljs-params">sock</span> <span class="hljs-operator">*</span><span class="hljs-params">sk</span>)</span><br>&#123;<br>    <span class="hljs-keyword">struct</span> inet_connection_sock *icsk = inet<span class="hljs-constructor">_csk(<span class="hljs-params">sk</span>)</span>;<br>    <span class="hljs-keyword">struct</span> tcp_sock *tp = tcp<span class="hljs-constructor">_sk(<span class="hljs-params">sk</span>)</span>;<br><br>    skb<span class="hljs-constructor">_queue_head_init(&amp;<span class="hljs-params">tp</span>-&gt;<span class="hljs-params">out_of_order_queue</span>)</span>;<br>    <span class="hljs-comment">//初始化定时器，包括超时重传定时器，延迟ack定时器，保活定时器等的初始化</span><br>    tcp<span class="hljs-constructor">_init_xmit_timers(<span class="hljs-params">sk</span>)</span>;<br>    tcp<span class="hljs-constructor">_prequeue_init(<span class="hljs-params">tp</span>)</span>;<br>    <span class="hljs-constructor">INIT_LIST_HEAD(&amp;<span class="hljs-params">tp</span>-&gt;<span class="hljs-params">tsq_node</span>)</span>;<br><br>    icsk-&gt;icsk_rto = TCP_TIMEOUT_INIT;<span class="hljs-comment">//设置初始的超时时间，为1HZ，即1s</span><br>...<br>    tcp<span class="hljs-constructor">_enable_early_retrans(<span class="hljs-params">tp</span>)</span>;<br>    icsk-&gt;icsk_ca_ops = &amp;tcp_init_congestion_ops;<span class="hljs-comment">//设置默认拥塞算法，reno</span><br><br>    tp-&gt;tsoffset = <span class="hljs-number">0</span>;<br><br>    sk-&gt;sk_state = TCP_CLOSE;<span class="hljs-comment">//这里又再次设置了sock状态，重复了sock_init_data()的动作</span><br>...<br>    <span class="hljs-comment">//socket的接收和发送缓存，sock_init_data()也有设置，不过是设置默认的大小</span><br>    <span class="hljs-comment">//这里使用的是/proc/sys/net/ipv4/tcp_wmem和/proc/sys/net/ipv4/tcp_rmem的值</span><br>    sk-&gt;sk_sndbuf = sysctl_tcp_wmem<span class="hljs-literal">[<span class="hljs-number">1</span>]</span>;<br>    sk-&gt;sk_rcvbuf = sysctl_tcp_rmem<span class="hljs-literal">[<span class="hljs-number">1</span>]</span>;<br>...<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>至此，我们已经创建好了socket，也完成了相关的初始化，但是我们知道socket系统调用返回的是一个int型的文件描述符，而目前我们好像还没涉及到。</p>
+<p>下面就进入第二部分，fd的创建。</p>
+<h3 id="2-2-sock-map-fd"><a href="#2-2-sock-map-fd" class="headerlink" title="2.2 sock_map_fd()"></a>2.2 sock_map_fd()</h3><p>这个函数主要有两个部分，一个是创建 file 文件结构，fd 文件描述符，另一部分是将file 文件结构和 fd 文件描述符关联，同时将上一步返回的 socket 也一起绑定，形成一个完整的逻辑。</p>
+<figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs reasonml">static <span class="hljs-built_in">int</span> sock<span class="hljs-constructor">_map_fd(<span class="hljs-params">struct</span> <span class="hljs-params">socket</span> <span class="hljs-operator">*</span><span class="hljs-params">sock</span>, <span class="hljs-params">int</span> <span class="hljs-params">flags</span>)</span><br>&#123;<br>    <span class="hljs-keyword">struct</span> file *newfile;<br>    <span class="hljs-comment">//获取一个未使用的文件描述符，文件描述符的管理这里就暂不分析了</span><br>    <span class="hljs-built_in">int</span> fd = get<span class="hljs-constructor">_unused_fd_flags(<span class="hljs-params">flags</span>)</span>;<br>    <span class="hljs-keyword">if</span> (unlikely(fd &lt; <span class="hljs-number">0</span>))<br>        return fd;<br><br>    <span class="hljs-comment">//分配file结构体</span><br>    newfile = sock<span class="hljs-constructor">_alloc_file(<span class="hljs-params">sock</span>, <span class="hljs-params">flags</span>, NULL)</span>;<br>    <span class="hljs-keyword">if</span> (likely(!<span class="hljs-constructor">IS_ERR(<span class="hljs-params">newfile</span>)</span>)) &#123;<br>        fd<span class="hljs-constructor">_install(<span class="hljs-params">fd</span>, <span class="hljs-params">newfile</span>)</span>;<br>        return fd;<br>    &#125;<br>...<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h4 id="2-2-1-sock-alloc-file-函数"><a href="#2-2-1-sock-alloc-file-函数" class="headerlink" title="2.2.1 sock_alloc_file()函数"></a>2.2.1 sock_alloc_file()函数</h4><p>file 结构体的创建及初始化，以及将 socket 和 file 结构体关联的操作主要在<code>sock_alloc_file()</code> 函数中完成，</p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs rust"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">file</span></span> *sock_alloc_file(<span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">socket</span></span> *sock, int flags, <span class="hljs-keyword">const</span> <span class="hljs-built_in">char</span> *dname)<br>&#123;<br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">qstr</span></span> name = &#123; .name = <span class="hljs-string">""</span> &#125;;<br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">path</span></span> path;<br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">file</span></span> *file;<br>...<br>    <span class="hljs-comment">//在sock文件系统上分配一个dentry结构</span><br>    path.dentry = d_alloc_pseudo(sock_mnt-&gt;mnt_sb, &amp;name);<br>    <span class="hljs-keyword">if</span> (unlikely(!path.dentry))<br>        <span class="hljs-keyword">return</span> ERR_PTR(-ENOMEM);<br>    path.mnt = mntget(sock_mnt);<br><br>    <span class="hljs-comment">//使用之前我们分配socket结构体来初始化dentry</span><br>    d_instantiate(path.dentry, SOCK_INODE(sock));<br>    SOCK_INODE(sock)-&gt;i_fop = &amp;socket_file_ops;<span class="hljs-comment">//设置该inode的函数操作集</span><br><br>    file = alloc_file(&amp;path, FMODE_READ | FMODE_WRITE,<br>          &amp;socket_file_ops);<span class="hljs-comment">//从cache里分配一个file结构体</span><br>...<br>    <span class="hljs-comment">//socket结构体里有file指针，指向我们刚分配的file结构体</span><br>    sock-&gt;file = file;<br>    file-&gt;f_flags = O_RDWR | (flags &amp; O_NONBLOCK);<br>    <span class="hljs-comment">//同样file结构体了也有指针指向socket结构体</span><br>    <span class="hljs-comment">//至此file和socket已经做好关联，就差fd和file关联了</span><br>    file-&gt;private_data = sock;<br>    <span class="hljs-keyword">return</span> file;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>在 <code>d_instantiate()</code> 函数里我们可以看到 dentry 和之前创建 socket 结构体时分配的 <code>struct socket_alloc</code> 的联系。</p>
+<figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs reasonml">void d<span class="hljs-constructor">_instantiate(<span class="hljs-params">struct</span> <span class="hljs-params">dentry</span> <span class="hljs-operator">*</span><span class="hljs-params">entry</span>, <span class="hljs-params">struct</span> <span class="hljs-params">inode</span> <span class="hljs-operator">*</span> <span class="hljs-params">inode</span>)</span><br>&#123;<br>...<br>    <span class="hljs-constructor">__d_instantiate(<span class="hljs-params">entry</span>, <span class="hljs-params">inode</span>)</span>;<br>...<br>&#125;<br><br>static void <span class="hljs-constructor">__d_instantiate(<span class="hljs-params">struct</span> <span class="hljs-params">dentry</span> <span class="hljs-operator">*</span><span class="hljs-params">dentry</span>, <span class="hljs-params">struct</span> <span class="hljs-params">inode</span> <span class="hljs-operator">*</span><span class="hljs-params">inode</span>)</span><br>&#123;<br>...<br>    <span class="hljs-comment">//还记得之前我们分配socket结构体时，其实分配的是struct socket_alloc，</span><br>    <span class="hljs-comment">//该结构体里包含了struct socket和struct inode，这里就是将这个struct inode和上面分配的dentry关联</span><br>    dentry-&gt;d_inode = inode;<br>...<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>而 <code>alloc_file()</code> 函数则是将 file dentry inode socket 四者柔和到一起，形成sockfs的整套逻辑。</p>
+<figure class="highlight xl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs xl">struct file *alloc_file(struct <span class="hljs-built_in">path</span> *<span class="hljs-built_in">path</span>, fmode_t mode,<br>        const struct file_operations *fop)<br>&#123;<br>    struct file *file;<br><br>    file = get_empty_filp();<span class="hljs-comment">//在filp_cachep缓存中分配file结构体</span><br>    <span class="hljs-keyword">if</span> (IS_ERR(file))<br>        return file;<br><br>    <span class="hljs-comment">//path结构体里包含了刚才struct socket_alloc的inode成员信息</span><br>    <span class="hljs-function"><span class="hljs-title">file</span>-&gt;</span>f_path = *<span class="hljs-built_in">path</span>;<br>    <span class="hljs-comment">//file结构体里也有变量指向刚才struct socket_alloc的inode</span><br>    <span class="hljs-comment">//至此，file dentry inode socket四者总算是走到一起，实现了完整的sock文件系统逻辑</span><br>    <span class="hljs-function"><span class="hljs-title">file</span>-&gt;</span><span class="hljs-function"><span class="hljs-title">f_inode</span> = <span class="hljs-built_in">path</span>-&gt;</span><span class="hljs-function"><span class="hljs-title">dentry</span>-&gt;</span>d_inode;<br>    <span class="hljs-function"><span class="hljs-title">file</span>-&gt;</span><span class="hljs-function"><span class="hljs-title">f_mapping</span> = <span class="hljs-built_in">path</span>-&gt;</span><span class="hljs-function"><span class="hljs-title">dentry</span>-&gt;</span><span class="hljs-function"><span class="hljs-title">d_inode</span>-&gt;</span>i_mapping;<br>    <span class="hljs-function"><span class="hljs-title">file</span>-&gt;</span>f_mode = mode;<br>    <span class="hljs-comment">//fop其实就是socket_file_ops，这样就能表明这个file结构体对应的是socket</span><br>    <span class="hljs-function"><span class="hljs-title">file</span>-&gt;</span>f_op = fop;<br>...<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>最后就是返回用户使用的文件描述符fd和file的关联了。</p>
+<h4 id="2-2-2-fd-install-函数"><a href="#2-2-2-fd-install-函数" class="headerlink" title="2.2.2 fd_install()函数"></a>2.2.2 fd_install()函数</h4><figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs rust">void fd_install(unsigned int fd, <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">file</span></span> *file)<br>&#123;<br>    <span class="hljs-comment">//获得当前进程的打开文件列表files</span><br>    __fd_install(current-&gt;files, fd, file);<br>&#125;<br><br>void __fd_install(<span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">files_struct</span></span> *files, unsigned int fd,<br>        <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">file</span></span> *file)<br>&#123;<br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">fdtable</span></span> *fdt;<br>    spin_lock(&amp;files-&gt;file_lock);<br>    fdt = files_fdtable(files);<span class="hljs-comment">//获得文件描述符位图表</span><br>    BUG_ON(fdt-&gt;fd[fd] != NULL);<br>    <span class="hljs-comment">//将file指针放入文件描述符位图表中，这样我们之后就能通过fd找回file结构</span><br>    rcu_assign_pointer(fdt-&gt;fd[fd], file);<br>    spin_unlock(&amp;files-&gt;file_lock);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>至此，socket系统调用就结束了，将fd返回用户使用。</p>
+<p>我们大概概述一下，socket系统调用的操作：</p>
+<ul>
+<li><p>首先在内核生成一个 <code>socket_alloc</code> 和 <code>tcp_sock</code> 类型的对象，其中 <code>sock_alloc</code> 对象中的 <code>socket</code> 和 <code>tcp_sock</code> 对象的 sock 绑定，<code>sock_alloc</code> 对象中的 inode 和 file 类型对象绑定。</p>
+</li>
+<li><p>然后将分配的文件描述符 fd 和 file 对象关联，最后将这个文件描述符 fd 返回给用户使用。</p>
+</li>
+</ul>
+<p>经过这一连串操作，用户只要使用fd，内核就能根据这个fd进行网络连接管理的各种操作。</p>
+<p>最后上张图，描述从fd到内核sock各个结构体的关系。  </p>
+<p><img src="/img/linux/system_call/20180315135348242.png" srcset="/img/loading.gif" lazyload alt="这里写图片描述"></p>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://blog.csdn.net/u010039418/article/details/79345840" target="_blank" rel="noopener">https://blog.csdn.net/u010039418/article/details/79345840</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Linux/" class="category-chain-item">Linux</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Linux/" class="print-no-link">#Linux</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>系统调用 socket 源码分析</div>
+      <div>https://flepeng.github.io/003-Linux-41-系统调用-系统调用-socket-源码分析/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年9月23日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/003-Linux-41-%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8-%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8-socket-sock-alloc-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" title="系统调用 socket sock_alloc() 源码分析">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">系统调用 socket sock_alloc() 源码分析</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/010-network-40-%E4%BC%A0%E8%BE%93%E5%B1%82-40-TCP-%E5%A4%9A%E8%BF%9B%E7%A8%8B%E5%85%B1%E4%BA%AB-socket/" title="40-TCP 多进程共享 socket">
+                        <span class="hidden-mobile">40-TCP 多进程共享 socket</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

@@ -1,0 +1,993 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="1. TrustZone 介绍1.1 安全背景在介绍 TrustZone 前有必要简单回顾下目前的一些安全手段。 CPU 通过内存映射手段给每个进程营造一个单独的地址空间来隔离多个进程的代码和数据，通过内核空间和用户空间不同的特权级来隔离操作系统和用户进程的代码和数据。 但由于内存中的代码和数据都是明文，容易被同处于内存中的其它应用偷窥，因此出现了扩展的安全模块，应用将加密数据送往安全模块，由安全">
+<meta property="og:type" content="article">
+<meta property="og:title" content="02-TEE TrustZone">
+<meta property="og:url" content="https://flepeng.github.io/081-%E6%95%B0%E6%8D%AE%E5%AE%89%E5%85%A8-TEE-02-TEE-TrustZone/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="1. TrustZone 介绍1.1 安全背景在介绍 TrustZone 前有必要简单回顾下目前的一些安全手段。 CPU 通过内存映射手段给每个进程营造一个单独的地址空间来隔离多个进程的代码和数据，通过内核空间和用户空间不同的特权级来隔离操作系统和用户进程的代码和数据。 但由于内存中的代码和数据都是明文，容易被同处于内存中的其它应用偷窥，因此出现了扩展的安全模块，应用将加密数据送往安全模块，由安全">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/tee/00/1741774911-fa70ca1519dc0728ab361208b636dfc2.png">
+<meta property="og:image" content="https://flepeng.github.io/img/tee/00/1741774911-29a3fd9a57790c2a9d04c1e92ba7bc5a.png">
+<meta property="og:image" content="https://flepeng.github.io/img/tee/00/1741774911-868f9bfbc68e940ddd34fc11670e0706.png">
+<meta property="og:image" content="https://flepeng.github.io/img/tee/00/1741774911-27d121a643b70312af1d762e9826e9c0.png">
+<meta property="og:image" content="https://flepeng.github.io/img/tee/00/1741774911-e7e58d90a2c26906579eef38aa58588b.png">
+<meta property="og:image" content="https://flepeng.github.io/img/tee/00/514194-20190114165152886-987683322.jpg">
+<meta property="og:image" content="https://flepeng.github.io/img/tee/00/1741774911-817b4f4cdb0f039f717e04913663519d.png">
+<meta property="og:image" content="https://flepeng.github.io/img/tee/00/1741774911-0980809764e52eeb446b727dc097cdfe.png">
+<meta property="og:image" content="https://flepeng.github.io/img/tee/00/233822d063874f4ad770811cab7e65eb.jpeg">
+<meta property="og:image" content="https://flepeng.github.io/img/tee/00/044c1ebda4a70178ac9f5450c3578bd7.jpeg">
+<meta property="og:image" content="https://flepeng.github.io/img/tee/00/1741774911-5fac3d302270df99227fae96066e4177.png">
+<meta property="og:image" content="https://flepeng.github.io/img/tee/00/5a23591cc5c52b3b25af00185dba5e36.jpeg">
+<meta property="article:published_time" content="2023-04-13T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.412Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="数据安全">
+<meta property="article:tag" content="隐私计算">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/tee/00/1741774911-fa70ca1519dc0728ab361208b636dfc2.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>02-TEE TrustZone - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="02-TEE TrustZone"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-04-14 00:00" pubdate>
+          2023年4月14日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          6k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          51 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">02-TEE TrustZone</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="1-TrustZone-介绍"><a href="#1-TrustZone-介绍" class="headerlink" title="1. TrustZone 介绍"></a>1. TrustZone 介绍</h1><h2 id="1-1-安全背景"><a href="#1-1-安全背景" class="headerlink" title="1.1 安全背景"></a>1.1 安全背景</h2><p>在介绍 TrustZone 前有必要简单回顾下目前的一些安全手段。</p>
+<p>CPU 通过内存映射手段给每个进程营造一个单独的地址空间来隔离多个进程的代码和数据，通过内核空间和用户空间不同的特权级来隔离操作系统和用户进程的代码和数据。</p>
+<p>但由于内存中的代码和数据都是明文，容易被同处于内存中的其它应用偷窥，因此出现了扩展的安全模块，应用将加密数据送往安全模块，由安全模块处理完后再返回结果给相应的应用。</p>
+<p>很多消费电子设备都使用扩展的安全模块来确保数据安全，目前常见的方式有：</p>
+<ol>
+<li><p>外部挂接硬件安全模块</p>
+<p>数据的处理交由外部的安全模块实现，这些模块能够保护自己的资源和密钥等数据的安全，如SIM卡、各种智能卡或连接到外部的硬件加解密模块等，但其同主芯片的通信线路暴露在外部，容易被监听破解。另外，通信的速率比较低。</p>
+</li>
+<li><p>内部集成硬件安全模块</p>
+<p>将外部安全模块的功能集成到芯片内，因此一个芯片上至少有两个核：一个普通核和一个安全核。优点是核与核之间的通信在芯片内部实现，不再暴露在外面。缺点是核之间的通信速度仍然较低，而且单独的安全核性能有限，还会会占用 SoC（System on Chip, 系统级芯片） 面积，成本较高。</p>
+</li>
+</ol>
+<h2 id="1-2-TrustZone-是什么"><a href="#1-2-TrustZone-是什么" class="headerlink" title="1.2 TrustZone 是什么"></a>1.2 TrustZone 是什么</h2><p>TrustZone 是 ARM 针对消费电子设备设计的一种硬件架构，其目的是为消费电子产品构建一个安全框架来抵御各种可能的攻击。</p>
+<p>TrustZone 在概念上将 SoC 的硬件和软件资源划分为安全(Secure World)和非安全(Normal World)两个世界，所有需要保密的操作在安全世界执行（如指纹识别、密码处理、数据加解密、安全认证等），其余操作在非安全世界执行（如用户操作系统、各种应用程序等），安全世界和非安全世界通过一个名为 Monitor Mode 的模式进行转换，如图1：</p>
+<p><img src="/img/tee/00/1741774911-fa70ca1519dc0728ab361208b636dfc2.png" srcset="/img/loading.gif" lazyload alt="ARM的安全世界和非安全世界"></p>
+<p>处理器架构上，TrustZone 将每个物理核 <strong>虚拟</strong> 为两个核，一个非安全核（Non-secure Core, NS Core），运行非安全世界的代码；和另一个安全核（Secure Core），运行安全世界的代码。</p>
+<p>两个虚拟的核以基于时间片的方式运行，根据需要实时占用物理核，并通过 Monitor Mode 在安全世界和非安全世界之间切换，类似同一 CPU 下的多应用程序环境，不同的是多应用程序环境下操作系统实现的是进程间切换，而 Trustzone 下的 Monitor Mode 实现了同一 CPU 上两个操作系统间的切换。</p>
+<p>AMBA3 AXI(AMBA3 Advanced eXtensible Interface)系统总线作为 TrustZone 的基础架构设施，提供了安全世界和非安全世界的隔离机制，确保非安全核只能访问非安全世界的系统资源，而安全核能访问所有资源，因此安全世界的资源不会被非安全世界（或普通世界）所访问。</p>
+<p>设计上，TrustZone 并不是采用一刀切的方式让每个芯片厂家都使用同样的实现。总体上以 AMBA3 AXI 总线为基础，针对不同的应用场景设计了各种安全组件，芯片厂商根据具体的安全需求，选择不同的安全组件来构建他们的 TrustZone 实现。</p>
+<p>其中主要的组件有：</p>
+<ul>
+<li><p>必选组件</p>
+<ul>
+<li>AMBA3 AXI总线，安全机制的基础设施</li>
+<li>虚拟化的ARM Core，虚拟安全和非安全核</li>
+<li>TZPC (TrustZone Protection Controller)，根据需要控制外设的安全特性</li>
+<li>TZASC (TrustZone Address Space Controller)，对内存进行安全和非安全区域划分和保护</li>
+</ul>
+</li>
+<li><p>可选组件</p>
+<ul>
+<li>TZMA (TrustZone Memory Adapter)，片上ROM或RAM安全区域和非安全区域的划分和保护</li>
+<li>AXI-to-APB bridge，桥接APB总线，配合TZPC使APB总线外设支持TrustZone安全特性</li>
+</ul>
+</li>
+</ul>
+<p>除了以上列出的组件外，还有诸如 Level 2 Cache Controller, DMA Controller, Generic Interrupt Controller 等。</p>
+<p>逻辑上，安全世界中，安全系统的 OS 提供统一的服务，针对不同的安全需求加载不同的安全应用 TA(Trusted Application)。 例如：针对某具体 DRM 的 TA，针对 DTCP-IP 的 TA，针对 HDCP 2.0 验证的 TA 等。</p>
+<p>一个 ARM 官网对 TrustZone 介绍的应用示意图：</p>
+<p><img src="/img/tee/00/1741774911-29a3fd9a57790c2a9d04c1e92ba7bc5a.png" srcset="/img/loading.gif" lazyload alt="基于TrustZone的应用"></p>
+<p>图中左边蓝色部分 Rich OS Application Environment(REE)表示用户操作环境，可以运行各种应用，例如电视或手机的用户操作系统，图中右边绿色部分 Trusted Execution Envrionment(TEE)表示系统的安全环境，运行 Trusted OS，在此基础上执行可信任应用，包括身份验证、授权管理、DRM 认证等，这部分隐藏在用户界面背后，独立于用户操作环境，为用户操作环境提供安全服务。</p>
+<blockquote>
+<p>可信执行环境（TEE, Trusted Execution Environment）是Global Platform（GP）提出的概念。对应于 TEE 还有一个 REE(Rich Execution Environment)概念，分别对应于安全世界(Secure World)和非安全世界(Non-secure World, Normal World)。</p>
+</blockquote>
+<h1 id="2-TrustZone原理和设计"><a href="#2-TrustZone原理和设计" class="headerlink" title="2. TrustZone原理和设计"></a>2. TrustZone原理和设计</h1><p>以下主要从 TrustZone 的总线设计，CPU 设计(包括处理器模型、内存模型和中断模型)和安全隔离机制来介绍 TrustZone 的设计和工作原理。</p>
+<h2 id="2-1-总线设计"><a href="#2-1-总线设计" class="headerlink" title="2.1 总线设计"></a>2.1 总线设计</h2><ul>
+<li>总线</li>
+</ul>
+<p>设计上，TrustZone 在系统总线上针对每一个信道的读写增加了一个额外的控制信号位，这个控制位叫做 Non-Secure 或者 NS 位，是 AMBA3 AXI 总线针对 TrustZone 作出的最重要、最核心的扩展设计。</p>
+<p>这个控制信号针对读和写分别叫做 <code>ARPORT[1]</code> 和 <code>AWPORT[1]</code>：</p>
+<ul>
+<li><strong><code>ARPROT[1]</code></strong>: 用于读操作(Read  transaction), 低表示 Secure, 高表示Non-Secure</li>
+<li><strong><code>AWPROT[1]</code></strong>: 用于写操作(Write transaction), 低表示 Secure, 高表示Non-Secure</li>
+</ul>
+<p>总线上的所有主设备(master)在发起新的操作(transaction)时会设置这些信号，总线或从设备(slave)上解析模块会对主设备发起的信号进行辨识，来确保主设备发起的操作在安全上没有违规。</p>
+<p>例如：硬件设计上，所有非安全世界的主设备（Non-Secure masters）在操作时必须将信号的NS位置高，而NS位置高又使得其无法访问总线上安全世界的从设备（Secure Slaves），简单来说就是对非安全世界主设备发出的地址信号进行解码时在安全世界中找不到对应的从设备，从而导致操作失败。</p>
+<blockquote>
+<p>NS 控制信号在 AMBA3 AXI 总线规范中定义。可以将其看作为原有地址的扩展位，如果原有 32 为寻址，增加 NS 可以看成是 33 位寻址，其中一半的 32 位物理寻址位于安全世界，另一半 32 位物理寻址位于非安全世界。</p>
+</blockquote>
+<p>当然，非安全世界的主设备尝试访问安全世界的从设备会引发访问错误，可能是SLVERR(slave error)或者DECERR(decode error)，具体的错误依赖于其访问外设的设计或系统总线的配置。</p>
+<ul>
+<li>外设</li>
+</ul>
+<p>在 TrustZone 出现前，ARM 的外设基于 AMBA2 APB (Advanced Peripheral Bus)总线协议，但是APB总线上不存在类似AXI总线上的NS控制位。为了兼容已经存在的APB总线设计，AMBA3规范中包含了AXI-to-APB bridge组件，这样就确保基于AMBA2 APB的外设同AMBA3 AXI的系统兼容。AXI-to-APB bridge负责管理APB总线设备的安全事宜，其会拒绝不合理的安全请求，保证这些请求不会被转发到相应的外设。</p>
+<p>例如：新一代的芯片可以通过增加AXI-to-APB bridge组件来沿用上一代芯片的设计来使其外围设备可以支持TrustZone。</p>
+<h2 id="2-2-处理器设计"><a href="#2-2-处理器设计" class="headerlink" title="2.2 处理器设计"></a>2.2 处理器设计</h2><h3 id="2-2-1-处理器模型"><a href="#2-2-1-处理器模型" class="headerlink" title="2.2.1 处理器模型"></a>2.2.1 处理器模型</h3><p>TrustZone 中，每个物理处理器核被虚拟为一个安全核(Secure)和一个非安全核(Non-Secure)，安全核运行安全世界的代码，非安全核运行除安全世界外的其它代码。由于安全世界和非安全世界的代码采用时间片机制轮流运行在同一个物理核上，相应的节省了一个物理处理器核。</p>
+<blockquote>
+<p>多核处理器上，也有建议说让将某一个或几个核指定为安全专用核，只运行安全系统代码来构建安全世界，其余核运行非安全代码，暂不清楚目前有哪些平台采用这个实现。</p>
+</blockquote>
+<p>如图：系统有4个物理核，每个又分为两个虚拟核（安全核和非安全核）的情况：</p>
+<p><img src="/img/tee/00/1741774911-868f9bfbc68e940ddd34fc11670e0706.png" srcset="/img/loading.gif" lazyload alt="多核处理器上的安全核和非安全核"></p>
+<h3 id="2-2-2-L1内存模型"><a href="#2-2-2-L1内存模型" class="headerlink" title="2.2.2 L1内存模型"></a>2.2.2 L1内存模型</h3><ul>
+<li>MMU</li>
+</ul>
+<blockquote>
+<p>MMU是一种硬件电路，它包含两类部件，一类是分段部件，一类是分页部件，对应于内存管理的分段机制和分页机制。分段机制把一个逻辑地址转换为线性地址；接着，分页机制把一个线性地址转换为物理地址。</p>
+<p>当CPU访问一个虚拟地址时，这个虚地址被送到 MMU 翻译，硬件首先把它和 TLB 中的所有条目同时(并行地)进行比较，如果它的虚页号在 TLB 中，并且访问没有违反保护位，它的页面会直接从 TLB 中取出而不去访问页表，从而提高地址转换的效率。</p>
+</blockquote>
+<p>安全世界和非安全世界都有自己的虚拟 MMU，各自管理物理地址的映射。实际上只是两个世界都有一份 TTBR0、TTBR1、TTBCR 寄存器，因此就会对应两个 MMU 表。</p>
+<p>尽管 MMU 有两套，但 TBL 缓存硬件上只有一套，因此 TBL 对于两个世界来说是共享的，其通过 NS 位来标志其每一项具体属于哪一个世界。这样在两个世界间进行切换时不再需要重新刷新 TLB，提高执行效率。</p>
+<blockquote>
+<p>对于TLB共享并不是硬性规定的，部分芯片在两个世界间切换时可能通过硬件部分或全部刷新TLB。</p>
+</blockquote>
+<ul>
+<li>Cache</li>
+</ul>
+<p>同 TLB 类似，硬件上两个世界共享一套 Cache，具体的 Cache 数据属于哪一个世界也由其 NS 位指定，在世界间切换也不需要刷新 Cache。</p>
+<h3 id="2-2-3-中断模型"><a href="#2-2-3-中断模型" class="headerlink" title="2.2.3 中断模型"></a>2.2.3 中断模型</h3><p>基于 TrustZone 的处理器有三套异常向量表：</p>
+<ul>
+<li>一套用于非安全世界</li>
+<li>一套用于安全世界</li>
+<li>一套用于 Monitor 模式</li>
+</ul>
+<p>与之前非 TrustZone 的处理器不同的是，这三套中断向量表的基地址在运行时可以通过 CP15 的寄存器 VBAR(Vector Base Address Register)进行修改。</p>
+<p>复位时，安全世界的中断向量表由处理器的输入信号 VINITHI 决定，没有设置时为 <code>0x00000000</code>，有设置时为 <code>0xFFFF0000</code>；非安全世界和 Monitor 模式的中断向量表默认没有设置，需要通过软件设置后才能使用。</p>
+<p>默认情况下，IRQ 和 FIQ 异常发生后系统直接进入 Monitor 模式，由于 IRQ 是绝大多数环境下最常见的中断源，因此 ARM 建议配置 IRQ 作为非安全世界的中断源，FIQ 作为安全世界的中断源。这样配置有两个优点：</p>
+<ul>
+<li>当处理器运行在非安全世界时，IRQ直接进入非安全世界的处理函数；如果处理器运行在安全世界，当IRQ发生时，会先进入到Monitor模式，然后跳到非安全世界的IRQ处理函数执行</li>
+<li>仅将FIQ配置为安全世界的中断源，而IRQ保持不变，现有代码仅需做少量修改就可以满足</li>
+</ul>
+<p>将IRQ设置为非安全世界的中断源时系统IRQ的切换见下图：</p>
+<p><img src="/img/tee/00/1741774911-27d121a643b70312af1d762e9826e9c0.png" srcset="/img/loading.gif" lazyload alt="IRQ作为非安全世界的中断源">  </p>
+<h3 id="2-2-4-系统模式切换"><a href="#2-2-4-系统模式切换" class="headerlink" title="2.2.4 系统模式切换"></a>2.2.4 系统模式切换</h3><p>基于 TrustZone 的系统有三种状态，安全世界、非安全世界和用于二者切换的 Monitor Mode。</p>
+<p>协处理器 CP15 的寄存器SCR(Secure Configuration Register)有一个NS位用于指示当前处理器位于哪一个世界，该寄存器在非安全世界是不能访问的。当CPU处于Monitor Mode时，无论NS位是0还是1，处理器都是在安全世界运行代码。因此Monitor Mode下总是安全世界，但如果此时NS为1，访问CP15的其它寄存器获取到的是其在非安全世界的值。</p>
+<h4 id="非安全世界到-Monitor-模式的切换"><a href="#非安全世界到-Monitor-模式的切换" class="headerlink" title="非安全世界到 Monitor 模式的切换"></a>非安全世界到 Monitor 模式的切换</h4><p>处理器从非安全世界进入Monitor Mode的操作由系统严格控制，而且所有这些操作在Monitor Mode看来都属于异常。  </p>
+<p>从非安全世界到Monitor Mode的操作可通过以下方式触发：</p>
+<ul>
+<li>软件执行SMC (Secure Monitor Call)指令</li>
+<li>硬件异常机制的一个子集（换而言之，并非所有硬件异常都可以触发进入Monitor Mode），包括：<ul>
+<li>IRQ</li>
+<li>FIQ</li>
+<li>external Data Abort</li>
+<li>external Prefetch Abort</li>
+</ul>
+</li>
+</ul>
+<h4 id="Monitor-Mode"><a href="#Monitor-Mode" class="headerlink" title="Monitor Mode"></a>Monitor Mode</h4><p>Monitor Mode内执行的代码依赖于具体的实现，其功能类似于进程切换，不同的是这里是不同模式间CPU状态切换。</p>
+<p>软件在Monitor Mode下先保存当前世界的状态，然后恢复下一个世界的状态。操作完成后以从异常返回的方式开始运行下一个世界的代码。</p>
+<h4 id="为什么安全模式和非安全模式不能直接切换？"><a href="#为什么安全模式和非安全模式不能直接切换？" class="headerlink" title="为什么安全模式和非安全模式不能直接切换？"></a>为什么安全模式和非安全模式不能直接切换？</h4><p>非安全世界无权访问 CP15 的 SCR 寄存器，所以无法通过设置 NS 来直接切换到安全世界，只能先转换到 Monitor Mode，再到安全世界。</p>
+<p>如果软件运行在安全世界(非 Monitor Mode)下，通过将 CP15 的 NS 位置 1，安全世界可以直接跳转到非安全世界，由于此时 CPU 的流水线和寄存器还遗留了安全世界的数据和设置，非安全模式下的应用可以获取到这些数据，会有极大的安全风险。因此，只建议在 Monitor Mode 下通过设置 NS 位来切换到非安全模式。</p>
+<p>综上，安全世界和非安全世界不存在直接的切换，所有切换操作都通过 Monitor Mode 来执行。</p>
+<p>下图展现了安全世界和非安全世界之间的切换方式：</p>
+<p><img src="/img/tee/00/1741774911-e7e58d90a2c26906579eef38aa58588b.png" srcset="/img/loading.gif" lazyload alt="安全世界和非安全世界之间的切换"><br><img src="/img/tee/00/514194-20190114165152886-987683322.jpg" srcset="/img/loading.gif" lazyload alt="TEE硬件视图">  </p>
+<h2 id="2-3-隔离机制"><a href="#2-3-隔离机制" class="headerlink" title="2.3 隔离机制"></a>2.3 隔离机制</h2><p>除了 CPU 执行时实行安全世界和非安全世界的隔离外，AMBA3 AXI 总线提供了外设隔离的基础。</p>
+<h3 id="2-3-1-内存隔离机制"><a href="#2-3-1-内存隔离机制" class="headerlink" title="2.3.1 内存隔离机制"></a>2.3.1 内存隔离机制</h3><p>这里的内存指外部的DDR和片上的ROM以及SRAM，其隔离和保护通过总线组件 TZASC 和 TZMA 的设置来实现。</p>
+<ul>
+<li>TZASC (TrustZone Address Space Controller)<ul>
+<li>TZASC 可以把外部 DDR 分成多个区域，每个区域可以单独配置为安全或非安全区域，非安全世界的代码和应用只能访问非安全区域。TZASC 只能用于内存设备，不适合用于配置块设备，如 Nand Flash。</li>
+</ul>
+</li>
+<li>TZMA (TrustZone Memory Adapter)<ul>
+<li>TZMA 可以把片上 ROM 和 SRAM 隔离出安全和非安全区域。TZMA 最大可以将片上存储的低 2MB 配置为安全区域，其余部分配置为非安全区域。大小划分上，片上安全区域可以在芯片出厂前设置为固定大小，或运行时通过 TZPC 动态配置。TZMA 使用上有些限制，其不适用于外部内存划分，而且也只能配置一个安全区域。</li>
+</ul>
+</li>
+</ul>
+<h3 id="2-3-2-外设隔离机制"><a href="#2-3-2-外设隔离机制" class="headerlink" title="2.3.2 外设隔离机制"></a>2.3.2 外设隔离机制</h3><p>外设上，基于APB总线的设备不支持AXI总线的NS控制信号，所以AXI到APB总线需要AXI-to-APB bridge设备连接，除此之外，还需要TZPC (TrustZone Protection Controller) 来向APB总线上的设备提供类似AXI上的NS控制信号。</p>
+<p>由于TZPC可以在运行时动态设置，这就决定了外设的安全特性是动态变化的，例如键盘平时可以作为非安全的输入设备，在输入密码时可以配置为安全设备，只允许安全世界访问。</p>
+<h3 id="2-3-3-隔离机制示意图"><a href="#2-3-3-隔离机制示意图" class="headerlink" title="2.3.3 隔离机制示意图"></a>2.3.3 隔离机制示意图</h3><p>整个系统内存和外设隔离机制示意图见下图</p>
+<p><img src="/img/tee/00/1741774911-817b4f4cdb0f039f717e04913663519d.png" srcset="/img/loading.gif" lazyload alt="系统内存和外设隔离机制"></p>
+<blockquote>
+<p>此图来源于网上，实际上TZPC还连接到片内的ROM&#x2F;RAM设备上，用于配置片上存储的安全区域。</p>
+</blockquote>
+<h2 id="2-4-安全启动"><a href="#2-4-安全启动" class="headerlink" title="2.4 安全启动"></a>2.4 安全启动</h2><p>AMBA3 AXI 总线机制隔离出安全世界和非安全世界，但这是系统启动之后的事情。如何确保系统本身是安全的呢？这就涉及到系统启动的过程。</p>
+<p>系统上电复位后，先从安全世界开始执行。安全世界会对非安全世界的 bootloader 进行验证，确保非安全世界执行的代码经过授权而没有被篡改过。然后非安全世界的 bootloader 会加载非安全世界的 OS，完成整个系统的启动。</p>
+<p>在非安全系统的 bootloader 加载 OS 时，仍然需要安全世界对 OS 的代码进行验证，确保没有被篡改。</p>
+<p>下图是典型的 TrustZone 芯片的启动流程：</p>
+<p><img src="/img/tee/00/1741774911-0980809764e52eeb446b727dc097cdfe.png" srcset="/img/loading.gif" lazyload alt="典型的TruestZone芯片启动流程">  </p>
+<p>整个启动流程跟目前博通平台的安全启动原理基本一致，上电后安全芯片先启动，然后校验主芯片的 bootloader，接下来 bootloader 提交系统的 OS 和文件系统给 BSP 进行校验，通过后加载主系统，确保主系统是安全的。</p>
+<p>从上电复位开始的整个启动过程中，下一级的安全基于上一级的验证，最终依赖于芯片内置的OTP和安全硬件，逐级的验证构成了整个系统的信任链。信任链中的某一个环节被破坏，都会导致整个系统不安全。</p>
+<h1 id="3-TrustZone-的软件架构"><a href="#3-TrustZone-的软件架构" class="headerlink" title="3. TrustZone 的软件架构"></a>3. TrustZone 的软件架构</h1><p>安全域内的应用主要负责为系统提供具体的安全服务，如敏感数据的加解密、安全储存等。可信内核主要用于支持上层应用的正常运行，负责处理安全域中的安全中断、与普通域间的通信以及为上层应用提供统一的安全接口等。</p>
+<p><img src="/img/tee/00/233822d063874f4ad770811cab7e65eb.jpeg" srcset="/img/loading.gif" lazyload>  </p>
+<p>普通域内用户空间的应用通常不会感知到TrustZone的存在，系统会通过用户空间为这些应用提供相应的接口。在执行区域间相互通信时，通常使用消息队列等方式进行，这些数据结构所处的内存被称为共享内存。</p>
+<p>由于安全域和普通域内的软件都需要对共享内存中的数据进行操作，且系统处于普通态时无法获取安全域内的任何资源，故共享内存必须为非安全内存。</p>
+<p>安全域内的安全服务在接收到经由可信内核处理的信息后，将处理相应请求并把结果发送到对应的共享内存，最终返回普通域。</p>
+<p>基于 TrustZone 的技术特性，可信执行环境可作为一个独立的执行环境运行在 ARM 处理器的安全域中，并为整个系统提供灵活的安全服务。TEE标准的系统架构如下图所示。</p>
+<p><img src="/img/tee/00/044c1ebda4a70178ac9f5450c3578bd7.jpeg" srcset="/img/loading.gif" lazyload>  </p>
+<p>其中可信执行环境由可信操作系统（Trusted OS，TOS）、可信应用（Trusted Application，TA）组成。TOS负责管理TEE内的软硬件资源以及为TA提供其运行需要的资源和接口。TA则负责为REE内的程序提供具体的安全服务。在TEE内部，TA之间也是相互独立的，除非通过特殊的API接口，否则它们无法直接访问其它TA内的资源。</p>
+<h1 id="4-其它"><a href="#4-其它" class="headerlink" title="4. 其它"></a>4. 其它</h1><ul>
+<li><p>ARMv8-A架构定义了四个异常等级，分别为EL0到EL3，其中数字越大代表特权(privilege)越大:</p>
+<ul>
+<li>EL0: 无特权模式(unprivileged)</li>
+<li>EL1: 操作系统内核模式(OS kernel mode)</li>
+<li>EL2: 虚拟机监视器模式(Hypervisor mode)</li>
+<li>EL3: TrustZone monitor mode<br><img src="/img/tee/00/1741774911-5fac3d302270df99227fae96066e4177.png" srcset="/img/loading.gif" lazyload alt="ARMv8-A Security Level"><br><img src="/img/tee/00/5a23591cc5c52b3b25af00185dba5e36.jpeg" srcset="/img/loading.gif" lazyload alt="ARMv8-A Security Level"></li>
+</ul>
+<p>以 ARMv8 为例，系统处于普通态时，EL0中一般执行普通的用户程序；EL1中一般运行通用操作系统内核等特权软件；EL2用于实现虚拟化技术，一般运行支持虚拟化技术的相关代码。出于系统安全考虑，普通域内不存在EL3模式。<br>当系统处于安全态时，EL0中通常运行如加密、解密等安全相关的安全服务；EL1中的软件负责为其上层应用提供支持；EL3模式具有整个系统的最高权限，一般运行系统的底层固件如用于切换执行区域的安全监控器。在安全域中，通常不存在EL2模式，但ARMv8.4发布后，开发者可以根据实际需要使用。</p>
+</li>
+<li><p>TrustZone 设计的相关方</p>
+<ul>
+<li>ARM 公司，定义 TrustZone 并实现硬件设计，TEE，TZAPI 等</li>
+<li>芯片厂家，在具体芯片上实现 TrustZone 设计，包括三星、高通、MTK、TI、ST、华为等</li>
+<li>应用提供方，如 DRM 厂家和安全应用开发商，实现DRM、Playready、DTCP-IP和一些其它安全应用开发和认证</li>
+</ul>
+</li>
+<li><p>Trust OS</p>
+<p>TEE 环境下也要有一个操作系统，各家都有自己的 Trustzone 的操作系统，如 Trustonic、高通的 QSEE、国内的豆荚，还有开源的 OPTEE 等。</p>
+<p>在操作系统之上自然要有应用程序，在 Trustzone 里面我们一般叫 TrustApp，当然 TEE 里面每个 TrustApp 都在一个沙盒里，互相之间是隔离的。比如说支付，就可以做成一个App（需要注意的是，和Normal World里面的App是两个概念），这个 App 简单来说就负责用私钥把网上发来的 Challenge 签个名，而这个签名的动作是需要在 Secure World 里面做的，避免恶意程序窃取到私钥来伪造签名。</p>
+<p>例如支付宝，其实支付宝也是只支持几个 Trust OS 的。同时，支付宝还定义了一系列标准，用来完成他的行为。</p>
+<p>现在的 Trust OS 大都会遵循 GlobalPlatform 的规范，这个组织致力于制定统一的 Trust OS 的API的接口规范，这样一个 TrustApp 只要用 GP API，就可以方便移植到各个不同的 TEE 操作系统上了。</p>
+</li>
+<li><p>Intel 平台的 SGX</p>
+<p>针对可信计算，类似 ARM 的 TrustZone，Intel 也针对 x86 平台提出了自己的安全架构SGX：</p>
+<p>Intel® Software Guard Extensions (Intel® SGX)</p>
+<p>SGX 全称 Intel Software Guard Extensions，顾名思义，其是对因特尔体系（IA）的一个扩展，用于增强软件的安全性。这种方式并不是识别和隔离平台上的所有恶意软件，而是将合法软件的安全操作封装在一个 enclave 中，保护其不受恶意软件的攻击，特权或者非特权的软件都无法访问 enclave，也就是说，一旦软件和数据位于 enclave 中，即便操作系统或者和VMM（Hypervisor）也无法影响 enclave 里面的代码和数据。E</p>
+<p>nclave 的安全边界只包含CPU和它自身。SGX 创建的 enclave 也可以理解为一个可信执行环境TEE（Trusted Execution Environment）。不过其与 ARM TrustZone（TZ）还是有一点小区别的，TZ 中通过 CPU 划分为两个隔离环境（安全世界和正常世界），两者之间通过 SMC 指令通信；而 SGX 中一个 CPU 可以运行多个安全 enclaves，并发执行亦可。</p>
+<p>简单来讲, Intel SGX 最关键的优势在于将程序以外的 software stack 如 OS 和 BIOS 都排除在了 TCB（Trusted Computing Base）以外。换句话说，就是在容器 enclave 里的 code 只信任自己和 intel 的CPU。</p>
+<blockquote>
+<p>网上有人是这样对比 TrustZone 和 SGX 的：</p>
+<p>Trustzone 默认相信 SecureOS，安全世界。SGX 仅相信 CPU core，通过 SGX 指令构建 enclave 容器。简单比喻，TEE 是个公用大保险柜，什么东西都装进去，有漏洞的 app 可能也进去了，而且保险柜钥匙在管理员手上，必须相信管理员。SGX 每个 app 有自己的保险柜，钥匙在自己手上</p>
+<p>SGX 要进入工业界应用尚需时间，一个重要的问题是现在在 intel 发行的服务器芯片上还没有 SGX，而 SGX 的重要应用就是在数据中心和云端的应用。</p>
+</blockquote>
+</li>
+</ul>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ul>
+<li><a href="https://blog.csdn.net/guyongqiangx/article/details/78020257" target="_blank" rel="noopener">https://blog.csdn.net/guyongqiangx/article/details/78020257</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%AE%89%E5%85%A8/" class="category-chain-item">数据安全</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%AE%89%E5%85%A8/%E9%9A%90%E7%A7%81%E8%AE%A1%E7%AE%97/" class="category-chain-item">隐私计算</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E6%95%B0%E6%8D%AE%E5%AE%89%E5%85%A8/" class="print-no-link">#数据安全</a>
+      
+        <a href="/tags/%E9%9A%90%E7%A7%81%E8%AE%A1%E7%AE%97/" class="print-no-link">#隐私计算</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>02-TEE TrustZone</div>
+      <div>https://flepeng.github.io/081-数据安全-TEE-02-TEE-TrustZone/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年4月14日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/081-%E6%95%B0%E6%8D%AE%E5%AE%89%E5%85%A8-TEE-02-TEE-SGX/" title="02-TEE SGX">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">02-TEE SGX</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/081-%E6%95%B0%E6%8D%AE%E5%AE%89%E5%85%A8-TEE-02-TEE-%E7%A1%AC%E4%BB%B6/" title="02-TEE 硬件">
+                        <span class="hidden-mobile">02-TEE 硬件</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

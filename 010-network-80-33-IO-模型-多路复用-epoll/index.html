@@ -1,0 +1,901 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="背景epoll 是在 2.6 内核中提出的，是之前的 select 和 poll 的增强版本。相对于 select 和 poll 来说，epoll 更加灵活，没有描述符限制。epoll 使用一个文件描述符管理多个描述符，将用户关系的文件描述符的事件存放到内核的一个事件表中，这样在用户空间和内核空间的 copy 只需一次。 epoll 接口epoll 操作过程需要三个接口，分别如下： 1234567">
+<meta property="og:type" content="article">
+<meta property="og:title" content="80-33 IO 模型-多路复用 epoll">
+<meta property="og:url" content="https://flepeng.github.io/010-network-80-33-IO-%E6%A8%A1%E5%9E%8B-%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8-epoll/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="背景epoll 是在 2.6 内核中提出的，是之前的 select 和 poll 的增强版本。相对于 select 和 poll 来说，epoll 更加灵活，没有描述符限制。epoll 使用一个文件描述符管理多个描述符，将用户关系的文件描述符的事件存放到内核的一个事件表中，这样在用户空间和内核空间的 copy 只需一次。 epoll 接口epoll 操作过程需要三个接口，分别如下： 1234567">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/interview/network/epoll01.jpg">
+<meta property="og:image" content="https://flepeng.github.io/img/interview/network/epoll02.jpg">
+<meta property="og:image" content="https://flepeng.github.io/img/interview/network/20140911103834_133.jpg">
+<meta property="og:image" content="https://flepeng.github.io/img/interview/network/epoll03.jpg">
+<meta property="article:published_time" content="2021-03-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.275Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="network">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/interview/network/epoll01.jpg">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>80-33 IO 模型-多路复用 epoll - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="80-33 IO 模型-多路复用 epoll"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-03-08 00:00" pubdate>
+          2021年3月8日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          37 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">80-33 IO 模型-多路复用 epoll</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>epoll 是在 2.6 内核中提出的，是之前的 select 和 poll 的增强版本。相对于 select 和 poll 来说，epoll 更加灵活，没有描述符限制。epoll 使用一个文件描述符管理多个描述符，将用户关系的文件描述符的事件存放到内核的一个事件表中，这样在用户空间和内核空间的 copy 只需一次。</p>
+<h2 id="epoll-接口"><a href="#epoll-接口" class="headerlink" title="epoll 接口"></a>epoll 接口</h2><p>epoll 操作过程需要三个接口，分别如下：</p>
+<figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs reasonml"># <span class="hljs-keyword">include</span> &lt;sys/epoll.h&gt;<br><br>typedef union epoll_data &#123;<br>    void        *ptr;<br>    <span class="hljs-built_in">int</span>          fd;<br>    uint32_t     u32;<br>    uint64_t     u64;<br>&#125; epoll_data_t;<br><br><span class="hljs-keyword">struct</span> epoll_event &#123;<br>    uint32_t     events;      <span class="hljs-comment">/* Epoll events */</span><br>    epoll_data_t data;        <span class="hljs-comment">/* User data variable */</span><br>&#125;;<br><br><span class="hljs-built_in">int</span> epoll<span class="hljs-constructor">_create(<span class="hljs-params">int</span> <span class="hljs-params">size</span>)</span>;<br><span class="hljs-built_in">int</span> epoll<span class="hljs-constructor">_create1(<span class="hljs-params">int</span> <span class="hljs-params">flags</span>)</span>;<br><br><span class="hljs-built_in">int</span> epoll<span class="hljs-constructor">_ctl(<span class="hljs-params">int</span> <span class="hljs-params">epfd</span>, <span class="hljs-params">int</span> <span class="hljs-params">op</span>, <span class="hljs-params">int</span> <span class="hljs-params">fd</span>, <span class="hljs-params">struct</span> <span class="hljs-params">epoll_event</span> <span class="hljs-operator">*</span><span class="hljs-params">event</span>)</span>;<br><br><span class="hljs-built_in">int</span> epoll<span class="hljs-constructor">_wait(<span class="hljs-params">int</span> <span class="hljs-params">epfd</span>, <span class="hljs-params">struct</span> <span class="hljs-params">epoll_event</span> <span class="hljs-operator">*</span><span class="hljs-params">events</span>, <span class="hljs-params">int</span> <span class="hljs-params">maxevents</span>, <span class="hljs-params">int</span> <span class="hljs-params">timeout</span>)</span>;<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="epoll-create：创建一个-struct-eventpoll-的内核对象"><a href="#epoll-create：创建一个-struct-eventpoll-的内核对象" class="headerlink" title="epoll_create：创建一个 struct eventpoll 的内核对象"></a>epoll_create：创建一个 struct eventpoll 的内核对象</h3><figure class="highlight tcl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs tcl">int epoll_create(int size);<br><br>作用：<br>    创建一个 struct eventpoll 的内核对象，类似 <span class="hljs-keyword">socket</span>，把它关联到当前进程的已打开文件列表中。<br>    每一个 epoll 对象都有一个独立的 eventpoll 结构体，这个结构体会在内核空间中创造独立的内存，用于存放通过 epoll_ctl() 方法向 epoll 对象中添加进来的事件。<br>    这些事件都会挂载在 eventpoll 的 rbr 红黑树中，如此，重复添加的事件就可以通过红黑树而高效的识别出来(红黑树的插入时间效率是lgn，其中n为树的高度)。<br>    而所有添加到 epoll 中的事件都会与设备(网卡)驱动程序建立回调关系，也就是说，当相应的事件发生时会调用这个回调方法。这个回调方法在内核中叫 ep_poll_callback，它会将发生的事件添加到 eventpoll 的 rdlist 双链表中。<br>    需要注意的是，当创建好 epoll 句柄后，它就是会占用一个 fd 值，在 linux 下如果查看 /<span class="hljs-keyword">proc</span>/进程id/fd/，是能够看到这个<span class="hljs-title"> fd</span> 的，所以在使用完epoll后，必须调用<span class="hljs-title"> close()</span> 关闭，否则可能导致fd被耗尽。<br><br>返回值：返回一个新的文件描述符。失败时，返回-1<br><br>参数：<br><span class="hljs-title">    size</span> 自 2.6.8 开始无意义，但必须大于 0。<br><br><br><br>epoll_create1()<br><br>作用：参数<span class="hljs-title"> flags</span> 为 0 则等效于<span class="hljs-title"> epoll_create()，flags</span> 可以为<span class="hljs-title"> EPOLL_CLOEXEC,</span> 在exec新程序时关闭文件描述符。<br></code></pre></td></tr></table></figure>
+
+
+<h4 id="struce-eventpoll"><a href="#struce-eventpoll" class="headerlink" title="struce eventpoll"></a>struce eventpoll</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">eventpoll</span> &#123;</span><br>    <span class="hljs-keyword">wait_queue_head_t</span> wq;       <span class="hljs-comment">/*等待队列链表，存放阻塞的进程*/</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">rb_root</span> <span class="hljs-title">rbr</span>;</span>         <span class="hljs-comment">/*红黑树的根节点，这颗树中存储着所有添加到epoll中的需要监控的事件*/</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">list_head</span> <span class="hljs-title">rdlist</span>;</span>    <span class="hljs-comment">/*双链表中则存放着将要通过epoll_wait返回给用户的满足条件的事件*/</span><br> &#125;;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>wq：等待队列，如果当前进程没有数据需要处理，会把当前进程描述符和回调函数 default_wake_functon 构造一个等待队列项，放入当前 wq 对待队列，软中断数据就绪的时候会通过 wq 来找到阻塞在 epoll 对象上的用户进程。</li>
+<li>rbr：一棵红黑树，管理用户进程下添加进来的所有 socket 连接。</li>
+<li>rdllist：就绪的描述符的链表。当有的连接数据就绪的时候，内核会把就绪的连接放到 rdllist 链表里。这样应用进程调用 epoll_wait 时，只需要判断链表就能找出就绪进程，而不用去遍历整棵树。</li>
+</ul>
+<p><img src="/img/interview/network/epoll01.jpg" srcset="/img/loading.gif" lazyload></p>
+<h3 id="epoll-ctl：向-eventpoll-对象中添加或删除一些套接字，将-epitem-添加到-eventpoll-的红黑树中。"><a href="#epoll-ctl：向-eventpoll-对象中添加或删除一些套接字，将-epitem-添加到-eventpoll-的红黑树中。" class="headerlink" title="epoll_ctl：向 eventpoll 对象中添加或删除一些套接字，将 epitem 添加到 eventpoll 的红黑树中。"></a>epoll_ctl：向 eventpoll 对象中添加或删除一些套接字，将 epitem 添加到 eventpoll 的红黑树中。</h3><figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs reasonml"><span class="hljs-built_in">int</span> epoll<span class="hljs-constructor">_ctl(<span class="hljs-params">int</span> <span class="hljs-params">epfd</span>, <span class="hljs-params">int</span> <span class="hljs-params">op</span>, <span class="hljs-params">int</span> <span class="hljs-params">fd</span>, <span class="hljs-params">struct</span> <span class="hljs-params">epoll_event</span> <span class="hljs-operator">*</span><span class="hljs-params">event</span>)</span>;<br><br>作用：管理维护 epoll 所监控的 socket。如果你的 epoll 要新加一个 socket 来管理，那就调用 epoll_ctl，要删除一个 socket 也调用 epoll_ctl，通过不同的入参来控制增删改。<br><br>参数: <br>    epfd：为 epoll<span class="hljs-constructor">_create()</span> 返回的新文件描述符<br>    op：为 epoll<span class="hljs-constructor">_ctl()</span> 提供的控制操作: <br>        EPOLL_CTL_ADD, 向 epoll 中注册一个新的文件描述符；<br>        EPOLL_CTL_MOD, 修改关联文件描述符中的事件；<br>        EPOLL_CTL_DEL, 移除 epoll 中的描述符，且无视 @event 参数；<br>    fd：为需要控制的文件描述符<br>    event：为相关联的 <span class="hljs-keyword">struct</span> epoll_event 结构。<br></code></pre></td></tr></table></figure>
+
+<p>epoll_ctl 函数主要负责把服务端和客户端建立的 socket 连接注册到 eventpoll 对象里，会做三件事：</p>
+<ol>
+<li><p>创建一个 epitem 对象，主要包含两个字段，分别存放 socket fd 即连接的文件描述符，和所属的 eventpoll 对象的指针；</p>
+</li>
+<li><p>将一个数据到达时用到的回调函数添加到 socket 的进程等待队列中，注意，跟阻塞 IO 模式不同的是，这里添加的 socket 的进程等待队列结构中，只有回调函数，没有设置进程描述符，因为在 epoll 中，进程是放在 eventpoll 的等待队列中，等待被 epoll_wait 函数唤醒，而不是放在 socket 的进程等待队列中；</p>
+</li>
+<li><p>将第 1 步创建的 epitem 对象插入红黑树；</p>
+</li>
+</ol>
+<p><img src="/img/interview/network/epoll02.jpg" srcset="/img/loading.gif" lazyload></p>
+<p>简单说：<code>epoll_ctl()</code>：向 epoll 对象中添加或删除一些套接字，将 epitem 添加到 epoll 的红黑树中。所有添加到 epoll 中的事件都会与设备(网卡)驱动程序建立回调关系，当相对应的事件发生时会调用这个回调方法，这个回调方法在内核中叫<code>ep_poll_callback</code>，它将发生的事件的 epitem 结构体添加到 rdlist 双链表中</p>
+<h4 id="struct-epitem"><a href="#struct-epitem" class="headerlink" title="struct epitem"></a>struct epitem</h4><p>在 epoll 中，对于每一个事件，都会建立一个 epitem 结构体，如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">epitem</span>&#123;</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">rb_node</span> <span class="hljs-title">rbn</span>;</span>         <span class="hljs-comment">// 红黑树节点</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">list_head</span> <span class="hljs-title">rdllink</span>;</span>   <span class="hljs-comment">// 双向链表节点</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">epoll_filefd</span> <span class="hljs-title">ffd</span>;</span>    <span class="hljs-comment">// 事件句柄信息</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">eventpoll</span> *<span class="hljs-title">ep</span>;</span>       <span class="hljs-comment">// 指向其所属的eventpoll对象</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">epoll_event</span> <span class="hljs-title">event</span>;</span>   <span class="hljs-comment">// 期待发生的事件类型</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>当调用 <code>epoll_wait()</code> 检查是否有事件发生时，只需要检查 <code>eventpoll</code> 对象中的 <code>rdlist</code> 双向链表中是否有 <code>epitem</code> 元素即可。如果 <code>rdllist</code> 链表不为空，则把发生的事件复制到用户态，同时把事件的数量返回给用户。</p>
+<p><img src="/img/interview/network/20140911103834_133.jpg" srcset="/img/loading.gif" lazyload></p>
+<h4 id="struct-epoll-event"><a href="#struct-epoll-event" class="headerlink" title="struct epoll_event"></a>struct epoll_event</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">epoll_event</span> &#123;</span><br>    <span class="hljs-keyword">uint32_t</span>     events;      <span class="hljs-comment">/* Epoll events */</span><br>    <span class="hljs-keyword">epoll_data_t</span> data;        <span class="hljs-comment">/* User data variable */</span><br>&#125;;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>events：是一组标记，系统所感兴趣的事件和可能发生的返回事件，如EPOLLIN（可读）、EPOLLOUT（可写）、EPOLLET（设置为边缘触发模式）、EPOLLONESHOT（一次性的）、EPOLLRDHUP（对端断开连接或者关闭写操作的一种表示）等。</li>
+<li>data：用于存储用户数据，可以是一个指针，也可以是一个整型的标识符。</li>
+</ul>
+<h3 id="epoll-wait：等待-epoll-中监听文件描述符就绪的-I-x2F-O-事件"><a href="#epoll-wait：等待-epoll-中监听文件描述符就绪的-I-x2F-O-事件" class="headerlink" title="epoll_wait：等待 epoll 中监听文件描述符就绪的 I&#x2F;O 事件"></a>epoll_wait：等待 epoll 中监听文件描述符就绪的 I&#x2F;O 事件</h3><figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs reasonml"><span class="hljs-built_in">int</span> epoll<span class="hljs-constructor">_wait(<span class="hljs-params">int</span> <span class="hljs-params">epfd</span>, <span class="hljs-params">struct</span> <span class="hljs-params">epoll_event</span> <span class="hljs-operator">*</span> <span class="hljs-params">events</span>, <span class="hljs-params">int</span> <span class="hljs-params">maxevents</span>, <span class="hljs-params">int</span> <span class="hljs-params">timeout</span>)</span>;<br><br>作用：等待 epoll 中监听文件描述符就绪的 I/O 事件，类似于 select<span class="hljs-literal">()</span> 调用<br><br>返回值：返回需要处理的事件数目，如返回 <span class="hljs-number">0</span> 表示已超时。失败时，返回-<span class="hljs-number">1</span>。<br><br>参数：<br>    epfd：为 epoll 实例对应的文件描述符，由 epoll<span class="hljs-constructor">_create()</span> 创建<br>    events：为就绪的事件集合的地址，<br>    maxevents：为需要就绪事件集合的大小，必须大于 <span class="hljs-number">0</span>，不能大于创建 epoll<span class="hljs-constructor">_create()</span> 时的 size<br>    timeout：为超时时间，单位为 微秒。<br>        <span class="hljs-number">0</span> 会立即返回，<br>        -<span class="hljs-number">1</span> 将不确定，也有说法说是永久阻塞<br></code></pre></td></tr></table></figure>
+
+<p>epoll_wait 函数的动作比较简单，检查 eventpoll 对象的就绪的连接 rdllist 上是否有数据到达，如果没有就把当前的进程描述符添加到 eventpoll 的进程等待队列里，然后阻塞当前进程，等待数据到达时通过回调函数被唤醒。</p>
+<p>当 eventpoll 监控的连接上有数据到达时，通过下面几个步骤唤醒对应的进程处理数据：</p>
+<ol>
+<li><p>socket 的数据接收队列有数据到达，会通过进程等待队列的回调函数 ep_poll_callback 唤醒红黑树中的节点 epitem；</p>
+</li>
+<li><p>ep_poll_callback 函数将有数据到达的 epitem 添加到 eventpoll 对象的就绪队列 rdllist 中；</p>
+</li>
+<li><p>ep_poll_callback 函数检查 eventpoll 对象的进程等待队列上是否有等待项，通过回调函数 default_wake_func 唤醒这个进程，进行数据的处理；</p>
+</li>
+<li><p>当进程醒来后，继续从 epoll_wait 时暂停的代码继续执行，把 rdlist 中就绪的事件返回给用户进程，让用户进程调用 recv 把已经到达内核 socket 等待队列的数据拷贝到用户空间使用。</p>
+</li>
+</ol>
+<p><img src="/img/interview/network/epoll03.jpg" srcset="/img/loading.gif" lazyload></p>
+<p>从阻塞 IO 到 epoll 的实现中，我们可以看到 wake up 回调函数机制被频繁的使用，至少有三处地方：</p>
+<ul>
+<li>一是阻塞 IO 中数据到达 socket 的等待队列时，通过回调函数唤醒进程，</li>
+<li>二是 epoll 中数据到达 socket 的等待队列时，通过回调函数 ep_poll_callback 找到 eventpoll 中红黑树的 epitem 节点，并将其加入就绪列队 rdllist，</li>
+<li>三是通过回调函数 default_wake_func 唤醒用户进程 ，并将 rdllist 传递给用户进程，让用户进程准确读取数据。</li>
+</ul>
+<p>从中可知，这种回调机制能够定向准确的通知程序要处理的事件，而不需要每次都循环遍历检查数据是否到达以及数据该由哪个进程处理，提高了程序效率，在日常的业务开发中，我们也可以借鉴下这一机制。</p>
+<h2 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h2><p>讲解完了 epoll 的机理，我们便能很容易掌握 epoll 的用法了。一句话描述就是：三步曲。</p>
+<ol>
+<li><p>第一步：<code>epoll_create()</code> 系统调用。此调用返回一个 epoll 实例，该实例是 eventpoll 结构体，结构体中含有关键成员(存放 epoll 中的事件的红黑树根节点 rbr、保存 epoll_wait 返回的事件的双向链表 rdllist)，同时返回一个引用该实例的 fd。所以在使用完 epoll 后，必须调用 close() 关闭对应的文件描述符。</p>
+</li>
+<li><p>第二步：<code>epoll_ctl()</code> 系统调用。通过此调用绑定 fd 到 epoll 实例，将 fd 添加到 epoll 实例的监听列表（红黑树），同时为 fd 设置一个回调函数监听事件 event。</p>
+<ul>
+<li>当 fd 上发生相应事件时，会调用回调函数，将 fd 添加到 epoll 实例的就绪队列（rdlist 双链表）上。</li>
+</ul>
+</li>
+<li><p>第三步：<code>epoll_wait()</code> 系统调用。通过此调用收集收集在 epoll 监控中已经发生的事件。只需要判断就绪列表（rdlist 双链表）是否为空即可。这样，在没有描述符就绪时，epoll 能更早地让出系统资源。</p>
+</li>
+</ol>
+<h2 id="工作模式"><a href="#工作模式" class="headerlink" title="工作模式"></a>工作模式</h2><p>epoll 对文件描述符的操作有两种模式：LT（level trigger）和 ET（edge trigger）:</p>
+<ul>
+<li><p>LT 模式(默认模式)：<strong>只要该 fd 还有数据可读，每次 epoll_wait 都会返回它的事件，提醒用户程序去操作。</strong></p>
+</li>
+<li><p>ET 模式：<strong>只会提示一次，直到下次再有数据流入之前都不会再提示，无论 fd 中是否还有数据可读。</strong> 所以在 ET 模式下，read 一个 fd 的时候一定要把它的 buffer 读完，即读到 read 返回值小于请求值或遇到 EAGAIN 错误。</p>
+</li>
+</ul>
+<p><strong>ET 模式在很大程度上减少了 epoll 事件被重复触发的次数，因此效率要比 LT 模式高。epoll工作在 ET 模式的时候，必须使用非阻塞套接口，以避免由于一个文件句柄的阻塞读&#x2F;阻塞写操作把处理多个文件描述符的任务饿死。</strong></p>
+<p>看到这有人会问，这两种模式的使用会造成哪种不一样的结果？</p>
+<p>如果此时一个客户端同时发来了 5 个数据包，按正常的逻辑，只需要唤醒一次 epoll ，把当前 socket 加一次到 ready_list 就行了，不需要加 5 次。然后用户程序可以把 socket 接收队列的所有数据包都读完。</p>
+<p>但假设用户程序就读了一个包，然后处理报错了，后面不读了，那后面的 4 个包咋办？</p>
+<p>如果是 ET 模式，就读不了了，因为没有把 socket 加入到 ready_list 的触发条件了。除非这个客户端发了新的数据包过来，这样才会再把当前 socket 加入到 ready_list，在新包过来之前，这 4 个数据包都不会被读到。</p>
+<p>而 LT 模式不一样，因为每次读完有感兴趣的事件发生之后，会把当前 socket 再加入到 ready_list，所以下次肯定能读到这个 socket，所以后面的 4 个数据包会被访问到，不论客户端是否发送新包。</p>
+<h2 id="优缺点"><a href="#优缺点" class="headerlink" title="优缺点"></a>优缺点</h2><p>优点：</p>
+<ol>
+<li><p>在 <code>epoll_ctl()</code> 函数中，为每个文件描述符都指定了回调函数，基于回调函数把就绪事件放到就绪队列中，因此，把时间复杂度从0(n)降到了0(1)</p>
+</li>
+<li><p>只需要在 <code>epoll_ct1()</code> 时传递一次文件描述符，<code>epoll_wait()</code> 不需要再次传递文件描述符。</p>
+</li>
+<li><p>epoll 基于 红黑树 + 双链表 存储 没有最大连接数的限制，不存在 C1OK 问题。</p>
+</li>
+</ol>
+<p>注意：epoll 没有使用 MMAP 零拷贝技术。</p>
+<p>epoll 所支持的 FD 上限是最大可以打开文件的数目，这个数字一般远大于 1024，举个例子，在 1GB 内存的机器上大约是 10 万左右，具体数目可以下面语句查看，一般来说这个数目和系统内存关系很大。</p>
+<figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs properties"><span class="hljs-comment"># 系统最大打开文件描述符数</span><br><span class="hljs-attr">cat</span> <span class="hljs-string">/proc/sys/fs/file-max</span><br><br><br><span class="hljs-comment"># 进程最大打开文件描述符数</span><br><span class="hljs-attr">ulimit</span> <span class="hljs-string">-n</span><br><span class="hljs-attr">修改这个配置：</span><br><br><br><span class="hljs-comment"># 写入以下配置,soft软限制，hard硬限制</span><br><span class="hljs-attr">sudo</span> <span class="hljs-string">vi /etc/security/limits.conf</span><br><span class="hljs-attr">soft</span>    <span class="hljs-string">nofile          65536</span><br><span class="hljs-attr">hard</span>    <span class="hljs-string">nofile          100000</span><br></code></pre></td></tr></table></figure>
+
+
+<h2 id="伪代码"><a href="#伪代码" class="headerlink" title="伪代码"></a>伪代码</h2><figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs reasonml"><span class="hljs-built_in">int</span> main(void)<br><span class="hljs-keyword">struct</span> epoll_event events<span class="hljs-literal">[<span class="hljs-number">5</span>]</span>;<br><span class="hljs-built_in">int</span> epfd = epoll<span class="hljs-constructor">_create(10)</span>;    <span class="hljs-comment">// 创建一个 epoll 对象</span><br>for(i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">5</span>; i++) &#123;<br>    static <span class="hljs-keyword">struct</span> epoll_event ev;<br>    ev.data.fd = accept(sock_fd, (<span class="hljs-keyword">struct</span> sockaddr *)&amp;client_addr, &amp;sin_size);<br>    ev.events = EPOLLIN;<br>    epoll<span class="hljs-constructor">_ctl(<span class="hljs-params">epfd</span>, EPOLL_CTL_ADD, <span class="hljs-params">ev</span>.<span class="hljs-params">data</span>.<span class="hljs-params">fd</span>, &amp;<span class="hljs-params">ev</span>)</span>; <span class="hljs-comment">// 向 epoll 对象中添加要管理的连接</span><br>&#125;<br><br><br><span class="hljs-keyword">while</span>(<span class="hljs-number">1</span>)&#123;<br>    nfds = epoll<span class="hljs-constructor">_wait(<span class="hljs-params">epfd</span>, <span class="hljs-params">events</span>, 5, 10000)</span>;      <span class="hljs-comment">// 等待其管理的连接上的 IO 事件</span><br><br>    for(i=<span class="hljs-number">0</span>; i &#123;<br>        ......<br>        read(events<span class="hljs-literal">[<span class="hljs-identifier">i</span>]</span>.data.fd, buff, MAXBUF)<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h2><h3 id="c"><a href="#c" class="headerlink" title="c"></a>c</h3><p>服务器代码如下所示：</p>
+<figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br></pre></td><td class="code"><pre><code class="hljs reasonml">#<span class="hljs-keyword">include</span> &lt;stdio.h&gt;<br>#<span class="hljs-keyword">include</span> &lt;stdlib.h&gt;<br>#<span class="hljs-keyword">include</span> &lt;<span class="hljs-built_in">string</span>.h&gt;<br>#<span class="hljs-keyword">include</span> &lt;errno.h&gt;<br><br>#<span class="hljs-keyword">include</span> &lt;netinet/<span class="hljs-keyword">in</span>.h&gt;<br>#<span class="hljs-keyword">include</span> &lt;sys/socket.h&gt;<br>#<span class="hljs-keyword">include</span> &lt;arpa/inet.h&gt;<br>#<span class="hljs-keyword">include</span> &lt;sys/epoll.h&gt;<br>#<span class="hljs-keyword">include</span> &lt;unistd.h&gt;<br>#<span class="hljs-keyword">include</span> &lt;sys/types.h&gt;<br><br>#define IPADDRESS   <span class="hljs-string">"127.0.0.1"</span><br>#define PORT        <span class="hljs-number">8787</span><br>#define MAXSIZE     <span class="hljs-number">1024</span><br>#define LISTENQ     <span class="hljs-number">5</span><br>#define FDSIZE      <span class="hljs-number">1000</span><br>#define EPOLLEVENTS <span class="hljs-number">100</span><br><br><span class="hljs-comment">//函数声明</span><br><span class="hljs-comment">//创建套接字并进行绑定</span><br>static <span class="hljs-built_in">int</span> socket<span class="hljs-constructor">_bind(<span class="hljs-params">const</span> <span class="hljs-params">char</span><span class="hljs-operator">*</span> <span class="hljs-params">ip</span>,<span class="hljs-params">int</span> <span class="hljs-params">port</span>)</span>;<br><span class="hljs-comment">//IO多路复用epoll</span><br>static void <span class="hljs-keyword">do</span><span class="hljs-constructor">_epoll(<span class="hljs-params">int</span> <span class="hljs-params">listenfd</span>)</span>;<br><span class="hljs-comment">//事件处理函数</span><br>static void<br>handle<span class="hljs-constructor">_events(<span class="hljs-params">int</span> <span class="hljs-params">epollfd</span>,<span class="hljs-params">struct</span> <span class="hljs-params">epoll_event</span> <span class="hljs-operator">*</span><span class="hljs-params">events</span>,<span class="hljs-params">int</span> <span class="hljs-params">num</span>,<span class="hljs-params">int</span> <span class="hljs-params">listenfd</span>,<span class="hljs-params">char</span> <span class="hljs-operator">*</span><span class="hljs-params">buf</span>)</span>;<br><span class="hljs-comment">//处理接收到的连接</span><br>static void handle<span class="hljs-constructor">_accpet(<span class="hljs-params">int</span> <span class="hljs-params">epollfd</span>,<span class="hljs-params">int</span> <span class="hljs-params">listenfd</span>)</span>;<br><span class="hljs-comment">//读处理</span><br>static void <span class="hljs-keyword">do</span><span class="hljs-constructor">_read(<span class="hljs-params">int</span> <span class="hljs-params">epollfd</span>,<span class="hljs-params">int</span> <span class="hljs-params">fd</span>,<span class="hljs-params">char</span> <span class="hljs-operator">*</span><span class="hljs-params">buf</span>)</span>;<br><span class="hljs-comment">//写处理</span><br>static void <span class="hljs-keyword">do</span><span class="hljs-constructor">_write(<span class="hljs-params">int</span> <span class="hljs-params">epollfd</span>,<span class="hljs-params">int</span> <span class="hljs-params">fd</span>,<span class="hljs-params">char</span> <span class="hljs-operator">*</span><span class="hljs-params">buf</span>)</span>;<br><span class="hljs-comment">//添加事件</span><br>static void add<span class="hljs-constructor">_event(<span class="hljs-params">int</span> <span class="hljs-params">epollfd</span>,<span class="hljs-params">int</span> <span class="hljs-params">fd</span>,<span class="hljs-params">int</span> <span class="hljs-params">state</span>)</span>;<br><span class="hljs-comment">//修改事件</span><br>static void modify<span class="hljs-constructor">_event(<span class="hljs-params">int</span> <span class="hljs-params">epollfd</span>,<span class="hljs-params">int</span> <span class="hljs-params">fd</span>,<span class="hljs-params">int</span> <span class="hljs-params">state</span>)</span>;<br><span class="hljs-comment">//删除事件</span><br>static void delete<span class="hljs-constructor">_event(<span class="hljs-params">int</span> <span class="hljs-params">epollfd</span>,<span class="hljs-params">int</span> <span class="hljs-params">fd</span>,<span class="hljs-params">int</span> <span class="hljs-params">state</span>)</span>;<br><br><span class="hljs-built_in">int</span> main(<span class="hljs-built_in">int</span> argc,<span class="hljs-built_in">char</span> *argv<span class="hljs-literal">[]</span>)<br>&#123;<br>    <span class="hljs-built_in">int</span>  listenfd;<br>    listenfd = socket<span class="hljs-constructor">_bind(IPADDRESS,PORT)</span>;<br>    listen(listenfd,LISTENQ);<br>    <span class="hljs-keyword">do</span><span class="hljs-constructor">_epoll(<span class="hljs-params">listenfd</span>)</span>;<br>    return <span class="hljs-number">0</span>;<br>&#125;<br><br>static <span class="hljs-built_in">int</span> socket<span class="hljs-constructor">_bind(<span class="hljs-params">const</span> <span class="hljs-params">char</span><span class="hljs-operator">*</span> <span class="hljs-params">ip</span>,<span class="hljs-params">int</span> <span class="hljs-params">port</span>)</span><br>&#123;<br>    <span class="hljs-built_in">int</span>  listenfd;<br>    <span class="hljs-keyword">struct</span> sockaddr_in servaddr;<br>    listenfd = socket(AF_INET,SOCK_STREAM,<span class="hljs-number">0</span>);<br>    <span class="hljs-keyword">if</span> (listenfd<span class="hljs-operator"> == </span>-<span class="hljs-number">1</span>)<br>    &#123;<br>        perror(<span class="hljs-string">"socket error:"</span>);<br>        exit(<span class="hljs-number">1</span>);<br>    &#125;<br>    bzero(&amp;servaddr,sizeof(servaddr));<br>    servaddr.sin_family = AF_INET;<br>    inet<span class="hljs-constructor">_pton(AF_INET,<span class="hljs-params">ip</span>,&amp;<span class="hljs-params">servaddr</span>.<span class="hljs-params">sin_addr</span>)</span>;<br>    servaddr.sin_port = htons(port);<br>    <span class="hljs-keyword">if</span> (bind(listenfd,(<span class="hljs-keyword">struct</span> sockaddr*)&amp;servaddr,sizeof(servaddr))<span class="hljs-operator"> == </span>-<span class="hljs-number">1</span>)<br>    &#123;<br>        perror(<span class="hljs-string">"bind error: "</span>);<br>        exit(<span class="hljs-number">1</span>);<br>    &#125;<br>    return listenfd;<br>&#125;<br><br>static void <span class="hljs-keyword">do</span><span class="hljs-constructor">_epoll(<span class="hljs-params">int</span> <span class="hljs-params">listenfd</span>)</span><br>&#123;<br>    <span class="hljs-built_in">int</span> epollfd;<br>    <span class="hljs-keyword">struct</span> epoll_event events<span class="hljs-literal">[EPOLLEVENTS]</span>;<br>    <span class="hljs-built_in">int</span> ret;<br>    <span class="hljs-built_in">char</span> buf<span class="hljs-literal">[MAXSIZE]</span>;<br>    memset(buf,<span class="hljs-number">0</span>,MAXSIZE);<br>    <span class="hljs-comment">//创建一个描述符</span><br>    epollfd = epoll<span class="hljs-constructor">_create(FDSIZE)</span>;<br>    <span class="hljs-comment">//添加监听描述符事件</span><br>    add<span class="hljs-constructor">_event(<span class="hljs-params">epollfd</span>,<span class="hljs-params">listenfd</span>,EPOLLIN)</span>;<br>    for ( ; ; )<br>    &#123;<br>        <span class="hljs-comment">//获取已经准备好的描述符事件</span><br>        ret = epoll<span class="hljs-constructor">_wait(<span class="hljs-params">epollfd</span>,<span class="hljs-params">events</span>,EPOLLEVENTS,-1)</span>;<br>        handle<span class="hljs-constructor">_events(<span class="hljs-params">epollfd</span>,<span class="hljs-params">events</span>,<span class="hljs-params">ret</span>,<span class="hljs-params">listenfd</span>,<span class="hljs-params">buf</span>)</span>;<br>    &#125;<br>    close(epollfd);<br>&#125;<br><br>static void<br>handle<span class="hljs-constructor">_events(<span class="hljs-params">int</span> <span class="hljs-params">epollfd</span>,<span class="hljs-params">struct</span> <span class="hljs-params">epoll_event</span> <span class="hljs-operator">*</span><span class="hljs-params">events</span>,<span class="hljs-params">int</span> <span class="hljs-params">num</span>,<span class="hljs-params">int</span> <span class="hljs-params">listenfd</span>,<span class="hljs-params">char</span> <span class="hljs-operator">*</span><span class="hljs-params">buf</span>)</span><br>&#123;<br>    <span class="hljs-built_in">int</span> i;<br>    <span class="hljs-built_in">int</span> fd;<br>    <span class="hljs-comment">//进行选好遍历</span><br>    for (i = <span class="hljs-number">0</span>;i &lt; num;i++)<br>    &#123;<br>        fd = events<span class="hljs-literal">[<span class="hljs-identifier">i</span>]</span>.data.fd;<br>        <span class="hljs-comment">//根据描述符的类型和事件类型进行处理</span><br>        <span class="hljs-keyword">if</span> ((fd<span class="hljs-operator"> == </span>listenfd) &amp;&amp;(events<span class="hljs-literal">[<span class="hljs-identifier">i</span>]</span>.events &amp; EPOLLIN))<br>            handle<span class="hljs-constructor">_accpet(<span class="hljs-params">epollfd</span>,<span class="hljs-params">listenfd</span>)</span>;<br>        <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (events<span class="hljs-literal">[<span class="hljs-identifier">i</span>]</span>.events &amp; EPOLLIN)<br>            <span class="hljs-keyword">do</span><span class="hljs-constructor">_read(<span class="hljs-params">epollfd</span>,<span class="hljs-params">fd</span>,<span class="hljs-params">buf</span>)</span>;<br>        <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (events<span class="hljs-literal">[<span class="hljs-identifier">i</span>]</span>.events &amp; EPOLLOUT)<br>            <span class="hljs-keyword">do</span><span class="hljs-constructor">_write(<span class="hljs-params">epollfd</span>,<span class="hljs-params">fd</span>,<span class="hljs-params">buf</span>)</span>;<br>    &#125;<br>&#125;<br>static void handle<span class="hljs-constructor">_accpet(<span class="hljs-params">int</span> <span class="hljs-params">epollfd</span>,<span class="hljs-params">int</span> <span class="hljs-params">listenfd</span>)</span><br>&#123;<br>    <span class="hljs-built_in">int</span> clifd;<br>    <span class="hljs-keyword">struct</span> sockaddr_in cliaddr;<br>    socklen_t  cliaddrlen;<br>    clifd = accept(listenfd,(<span class="hljs-keyword">struct</span> sockaddr*)&amp;cliaddr,&amp;cliaddrlen);<br>    <span class="hljs-keyword">if</span> (clifd<span class="hljs-operator"> == </span>-<span class="hljs-number">1</span>)<br>        perror(<span class="hljs-string">"accpet error:"</span>);<br>    <span class="hljs-keyword">else</span><br>    &#123;<br>        printf(<span class="hljs-string">"accept a new client: %s:%d\n"</span>,inet<span class="hljs-constructor">_ntoa(<span class="hljs-params">cliaddr</span>.<span class="hljs-params">sin_addr</span>)</span>,cliaddr.sin_port);<br>        <span class="hljs-comment">//添加一个客户描述符和事件</span><br>        add<span class="hljs-constructor">_event(<span class="hljs-params">epollfd</span>,<span class="hljs-params">clifd</span>,EPOLLIN)</span>;<br>    &#125;<br>&#125;<br><br>static void <span class="hljs-keyword">do</span><span class="hljs-constructor">_read(<span class="hljs-params">int</span> <span class="hljs-params">epollfd</span>,<span class="hljs-params">int</span> <span class="hljs-params">fd</span>,<span class="hljs-params">char</span> <span class="hljs-operator">*</span><span class="hljs-params">buf</span>)</span><br>&#123;<br>    <span class="hljs-built_in">int</span> nread;<br>    nread = read(fd,buf,MAXSIZE);<br>    <span class="hljs-keyword">if</span> (nread<span class="hljs-operator"> == </span>-<span class="hljs-number">1</span>)<br>    &#123;<br>        perror(<span class="hljs-string">"read error:"</span>);<br>        close(fd);<br>        delete<span class="hljs-constructor">_event(<span class="hljs-params">epollfd</span>,<span class="hljs-params">fd</span>,EPOLLIN)</span>;<br>    &#125;<br>    <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (nread<span class="hljs-operator"> == </span><span class="hljs-number">0</span>)<br>    &#123;<br>        fprintf(stderr,<span class="hljs-string">"client close.\n"</span>);<br>        close(fd);<br>        delete<span class="hljs-constructor">_event(<span class="hljs-params">epollfd</span>,<span class="hljs-params">fd</span>,EPOLLIN)</span>;<br>    &#125;<br>    <span class="hljs-keyword">else</span><br>    &#123;<br>        printf(<span class="hljs-string">"read message is : %s"</span>,buf);<br>        <span class="hljs-comment">//修改描述符对应的事件，由读改为写</span><br>        modify<span class="hljs-constructor">_event(<span class="hljs-params">epollfd</span>,<span class="hljs-params">fd</span>,EPOLLOUT)</span>;<br>    &#125;<br>&#125;<br><br>static void <span class="hljs-keyword">do</span><span class="hljs-constructor">_write(<span class="hljs-params">int</span> <span class="hljs-params">epollfd</span>,<span class="hljs-params">int</span> <span class="hljs-params">fd</span>,<span class="hljs-params">char</span> <span class="hljs-operator">*</span><span class="hljs-params">buf</span>)</span><br>&#123;<br>    <span class="hljs-built_in">int</span> nwrite;<br>    nwrite = write(fd,buf,strlen(buf));<br>    <span class="hljs-keyword">if</span> (nwrite<span class="hljs-operator"> == </span>-<span class="hljs-number">1</span>)<br>    &#123;<br>        perror(<span class="hljs-string">"write error:"</span>);<br>        close(fd);<br>        delete<span class="hljs-constructor">_event(<span class="hljs-params">epollfd</span>,<span class="hljs-params">fd</span>,EPOLLOUT)</span>;<br>    &#125;<br>    <span class="hljs-keyword">else</span><br>        modify<span class="hljs-constructor">_event(<span class="hljs-params">epollfd</span>,<span class="hljs-params">fd</span>,EPOLLIN)</span>;<br>    memset(buf,<span class="hljs-number">0</span>,MAXSIZE);<br>&#125;<br><br>static void add<span class="hljs-constructor">_event(<span class="hljs-params">int</span> <span class="hljs-params">epollfd</span>,<span class="hljs-params">int</span> <span class="hljs-params">fd</span>,<span class="hljs-params">int</span> <span class="hljs-params">state</span>)</span><br>&#123;<br>    <span class="hljs-keyword">struct</span> epoll_event ev;<br>    ev.events = state;<br>    ev.data.fd = fd;<br>    epoll<span class="hljs-constructor">_ctl(<span class="hljs-params">epollfd</span>,EPOLL_CTL_ADD,<span class="hljs-params">fd</span>,&amp;<span class="hljs-params">ev</span>)</span>;<br>&#125;<br><br>static void delete<span class="hljs-constructor">_event(<span class="hljs-params">int</span> <span class="hljs-params">epollfd</span>,<span class="hljs-params">int</span> <span class="hljs-params">fd</span>,<span class="hljs-params">int</span> <span class="hljs-params">state</span>)</span><br>&#123;<br>    <span class="hljs-keyword">struct</span> epoll_event ev;<br>    ev.events = state;<br>    ev.data.fd = fd;<br>    epoll<span class="hljs-constructor">_ctl(<span class="hljs-params">epollfd</span>,EPOLL_CTL_DEL,<span class="hljs-params">fd</span>,&amp;<span class="hljs-params">ev</span>)</span>;<br>&#125;<br><br>static void modify<span class="hljs-constructor">_event(<span class="hljs-params">int</span> <span class="hljs-params">epollfd</span>,<span class="hljs-params">int</span> <span class="hljs-params">fd</span>,<span class="hljs-params">int</span> <span class="hljs-params">state</span>)</span><br>&#123;<br>    <span class="hljs-keyword">struct</span> epoll_event ev;<br>    ev.events = state;<br>    ev.data.fd = fd;<br>    epoll<span class="hljs-constructor">_ctl(<span class="hljs-params">epollfd</span>,EPOLL_CTL_MOD,<span class="hljs-params">fd</span>,&amp;<span class="hljs-params">ev</span>)</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<p>客户端也用 epoll 实现，控制 STDIN_FILENO、STDOUT_FILENO、和 sockfd 三个描述符，程序如下所示：</p>
+<figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br></pre></td><td class="code"><pre><code class="hljs reasonml">#<span class="hljs-keyword">include</span> &lt;netinet/<span class="hljs-keyword">in</span>.h&gt;<br>#<span class="hljs-keyword">include</span> &lt;sys/socket.h&gt;<br>#<span class="hljs-keyword">include</span> &lt;stdio.h&gt;<br>#<span class="hljs-keyword">include</span> &lt;<span class="hljs-built_in">string</span>.h&gt;<br>#<span class="hljs-keyword">include</span> &lt;stdlib.h&gt;<br>#<span class="hljs-keyword">include</span> &lt;sys/epoll.h&gt;<br>#<span class="hljs-keyword">include</span> &lt;time.h&gt;<br>#<span class="hljs-keyword">include</span> &lt;unistd.h&gt;<br>#<span class="hljs-keyword">include</span> &lt;sys/types.h&gt;<br>#<span class="hljs-keyword">include</span> &lt;arpa/inet.h&gt;<br><br>#define MAXSIZE     <span class="hljs-number">1024</span><br>#define IPADDRESS   <span class="hljs-string">"127.0.0.1"</span><br>#define SERV_PORT   <span class="hljs-number">8787</span><br>#define FDSIZE        <span class="hljs-number">1024</span><br>#define EPOLLEVENTS <span class="hljs-number">20</span><br><br>static void handle<span class="hljs-constructor">_connection(<span class="hljs-params">int</span> <span class="hljs-params">sockfd</span>)</span>;<br>static void<br>handle<span class="hljs-constructor">_events(<span class="hljs-params">int</span> <span class="hljs-params">epollfd</span>,<span class="hljs-params">struct</span> <span class="hljs-params">epoll_event</span> <span class="hljs-operator">*</span><span class="hljs-params">events</span>,<span class="hljs-params">int</span> <span class="hljs-params">num</span>,<span class="hljs-params">int</span> <span class="hljs-params">sockfd</span>,<span class="hljs-params">char</span> <span class="hljs-operator">*</span><span class="hljs-params">buf</span>)</span>;<br>static void <span class="hljs-keyword">do</span><span class="hljs-constructor">_read(<span class="hljs-params">int</span> <span class="hljs-params">epollfd</span>,<span class="hljs-params">int</span> <span class="hljs-params">fd</span>,<span class="hljs-params">int</span> <span class="hljs-params">sockfd</span>,<span class="hljs-params">char</span> <span class="hljs-operator">*</span><span class="hljs-params">buf</span>)</span>;<br>static void <span class="hljs-keyword">do</span><span class="hljs-constructor">_read(<span class="hljs-params">int</span> <span class="hljs-params">epollfd</span>,<span class="hljs-params">int</span> <span class="hljs-params">fd</span>,<span class="hljs-params">int</span> <span class="hljs-params">sockfd</span>,<span class="hljs-params">char</span> <span class="hljs-operator">*</span><span class="hljs-params">buf</span>)</span>;<br>static void <span class="hljs-keyword">do</span><span class="hljs-constructor">_write(<span class="hljs-params">int</span> <span class="hljs-params">epollfd</span>,<span class="hljs-params">int</span> <span class="hljs-params">fd</span>,<span class="hljs-params">int</span> <span class="hljs-params">sockfd</span>,<span class="hljs-params">char</span> <span class="hljs-operator">*</span><span class="hljs-params">buf</span>)</span>;<br>static void add<span class="hljs-constructor">_event(<span class="hljs-params">int</span> <span class="hljs-params">epollfd</span>,<span class="hljs-params">int</span> <span class="hljs-params">fd</span>,<span class="hljs-params">int</span> <span class="hljs-params">state</span>)</span>;<br>static void delete<span class="hljs-constructor">_event(<span class="hljs-params">int</span> <span class="hljs-params">epollfd</span>,<span class="hljs-params">int</span> <span class="hljs-params">fd</span>,<span class="hljs-params">int</span> <span class="hljs-params">state</span>)</span>;<br>static void modify<span class="hljs-constructor">_event(<span class="hljs-params">int</span> <span class="hljs-params">epollfd</span>,<span class="hljs-params">int</span> <span class="hljs-params">fd</span>,<span class="hljs-params">int</span> <span class="hljs-params">state</span>)</span>;<br><br><span class="hljs-built_in">int</span> main(<span class="hljs-built_in">int</span> argc,<span class="hljs-built_in">char</span> *argv<span class="hljs-literal">[]</span>)<br>&#123;<br>    <span class="hljs-built_in">int</span>                 sockfd;<br>    <span class="hljs-keyword">struct</span> sockaddr_in  servaddr;<br>    sockfd = socket(AF_INET,SOCK_STREAM,<span class="hljs-number">0</span>);<br>    bzero(&amp;servaddr,sizeof(servaddr));<br>    servaddr.sin_family = AF_INET;<br>    servaddr.sin_port = htons(SERV_PORT);<br>    inet<span class="hljs-constructor">_pton(AF_INET,IPADDRESS,&amp;<span class="hljs-params">servaddr</span>.<span class="hljs-params">sin_addr</span>)</span>;<br>    connect(sockfd,(<span class="hljs-keyword">struct</span> sockaddr*)&amp;servaddr,sizeof(servaddr));<br>    <span class="hljs-comment">//处理连接</span><br>    handle<span class="hljs-constructor">_connection(<span class="hljs-params">sockfd</span>)</span>;<br>    close(sockfd);<br>    return <span class="hljs-number">0</span>;<br>&#125;<br><br><br>static void handle<span class="hljs-constructor">_connection(<span class="hljs-params">int</span> <span class="hljs-params">sockfd</span>)</span><br>&#123;<br>    <span class="hljs-built_in">int</span> epollfd;<br>    <span class="hljs-keyword">struct</span> epoll_event events<span class="hljs-literal">[EPOLLEVENTS]</span>;<br>    <span class="hljs-built_in">char</span> buf<span class="hljs-literal">[MAXSIZE]</span>;<br>    <span class="hljs-built_in">int</span> ret;<br>    epollfd = epoll<span class="hljs-constructor">_create(FDSIZE)</span>;<br>    add<span class="hljs-constructor">_event(<span class="hljs-params">epollfd</span>,STDIN_FILENO,EPOLLIN)</span>;<br>    for ( ; ; )<br>    &#123;<br>        ret = epoll<span class="hljs-constructor">_wait(<span class="hljs-params">epollfd</span>,<span class="hljs-params">events</span>,EPOLLEVENTS,-1)</span>;<br>        handle<span class="hljs-constructor">_events(<span class="hljs-params">epollfd</span>,<span class="hljs-params">events</span>,<span class="hljs-params">ret</span>,<span class="hljs-params">sockfd</span>,<span class="hljs-params">buf</span>)</span>;<br>    &#125;<br>    close(epollfd);<br>&#125;<br><br>static void<br>handle<span class="hljs-constructor">_events(<span class="hljs-params">int</span> <span class="hljs-params">epollfd</span>,<span class="hljs-params">struct</span> <span class="hljs-params">epoll_event</span> <span class="hljs-operator">*</span><span class="hljs-params">events</span>,<span class="hljs-params">int</span> <span class="hljs-params">num</span>,<span class="hljs-params">int</span> <span class="hljs-params">sockfd</span>,<span class="hljs-params">char</span> <span class="hljs-operator">*</span><span class="hljs-params">buf</span>)</span><br>&#123;<br>    <span class="hljs-built_in">int</span> fd;<br>    <span class="hljs-built_in">int</span> i;<br>    for (i = <span class="hljs-number">0</span>;i &lt; num;i++)<br>    &#123;<br>        fd = events<span class="hljs-literal">[<span class="hljs-identifier">i</span>]</span>.data.fd;<br>        <span class="hljs-keyword">if</span> (events<span class="hljs-literal">[<span class="hljs-identifier">i</span>]</span>.events &amp; EPOLLIN)<br>            <span class="hljs-keyword">do</span><span class="hljs-constructor">_read(<span class="hljs-params">epollfd</span>,<span class="hljs-params">fd</span>,<span class="hljs-params">sockfd</span>,<span class="hljs-params">buf</span>)</span>;<br>        <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (events<span class="hljs-literal">[<span class="hljs-identifier">i</span>]</span>.events &amp; EPOLLOUT)<br>            <span class="hljs-keyword">do</span><span class="hljs-constructor">_write(<span class="hljs-params">epollfd</span>,<span class="hljs-params">fd</span>,<span class="hljs-params">sockfd</span>,<span class="hljs-params">buf</span>)</span>;<br>    &#125;<br>&#125;<br><br>static void <span class="hljs-keyword">do</span><span class="hljs-constructor">_read(<span class="hljs-params">int</span> <span class="hljs-params">epollfd</span>,<span class="hljs-params">int</span> <span class="hljs-params">fd</span>,<span class="hljs-params">int</span> <span class="hljs-params">sockfd</span>,<span class="hljs-params">char</span> <span class="hljs-operator">*</span><span class="hljs-params">buf</span>)</span><br>&#123;<br>    <span class="hljs-built_in">int</span> nread;<br>    nread = read(fd,buf,MAXSIZE);<br>        <span class="hljs-keyword">if</span> (nread<span class="hljs-operator"> == </span>-<span class="hljs-number">1</span>)<br>    &#123;<br>        perror(<span class="hljs-string">"read error:"</span>);<br>        close(fd);<br>    &#125;<br>    <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (nread<span class="hljs-operator"> == </span><span class="hljs-number">0</span>)<br>    &#123;<br>        fprintf(stderr,<span class="hljs-string">"server close.\n"</span>);<br>        close(fd);<br>    &#125;<br>    <span class="hljs-keyword">else</span><br>    &#123;<br>        <span class="hljs-keyword">if</span> (fd<span class="hljs-operator"> == </span>STDIN_FILENO)<br>            add<span class="hljs-constructor">_event(<span class="hljs-params">epollfd</span>,<span class="hljs-params">sockfd</span>,EPOLLOUT)</span>;<br>        <span class="hljs-keyword">else</span><br>        &#123;<br>            delete<span class="hljs-constructor">_event(<span class="hljs-params">epollfd</span>,<span class="hljs-params">sockfd</span>,EPOLLIN)</span>;<br>            add<span class="hljs-constructor">_event(<span class="hljs-params">epollfd</span>,STDOUT_FILENO,EPOLLOUT)</span>;<br>        &#125;<br>    &#125;<br>&#125;<br><br>static void <span class="hljs-keyword">do</span><span class="hljs-constructor">_write(<span class="hljs-params">int</span> <span class="hljs-params">epollfd</span>,<span class="hljs-params">int</span> <span class="hljs-params">fd</span>,<span class="hljs-params">int</span> <span class="hljs-params">sockfd</span>,<span class="hljs-params">char</span> <span class="hljs-operator">*</span><span class="hljs-params">buf</span>)</span><br>&#123;<br>    <span class="hljs-built_in">int</span> nwrite;<br>    nwrite = write(fd,buf,strlen(buf));<br>    <span class="hljs-keyword">if</span> (nwrite<span class="hljs-operator"> == </span>-<span class="hljs-number">1</span>)<br>    &#123;<br>        perror(<span class="hljs-string">"write error:"</span>);<br>        close(fd);<br>    &#125;<br>    <span class="hljs-keyword">else</span><br>    &#123;<br>        <span class="hljs-keyword">if</span> (fd<span class="hljs-operator"> == </span>STDOUT_FILENO)<br>            delete<span class="hljs-constructor">_event(<span class="hljs-params">epollfd</span>,<span class="hljs-params">fd</span>,EPOLLOUT)</span>;<br>        <span class="hljs-keyword">else</span><br>            modify<span class="hljs-constructor">_event(<span class="hljs-params">epollfd</span>,<span class="hljs-params">fd</span>,EPOLLIN)</span>;<br>    &#125;<br>    memset(buf,<span class="hljs-number">0</span>,MAXSIZE);<br>&#125;<br><br>static void add<span class="hljs-constructor">_event(<span class="hljs-params">int</span> <span class="hljs-params">epollfd</span>,<span class="hljs-params">int</span> <span class="hljs-params">fd</span>,<span class="hljs-params">int</span> <span class="hljs-params">state</span>)</span><br>&#123;<br>    <span class="hljs-keyword">struct</span> epoll_event ev;<br>    ev.events = state;<br>    ev.data.fd = fd;<br>    epoll<span class="hljs-constructor">_ctl(<span class="hljs-params">epollfd</span>,EPOLL_CTL_ADD,<span class="hljs-params">fd</span>,&amp;<span class="hljs-params">ev</span>)</span>;<br>&#125;<br><br>static void delete<span class="hljs-constructor">_event(<span class="hljs-params">int</span> <span class="hljs-params">epollfd</span>,<span class="hljs-params">int</span> <span class="hljs-params">fd</span>,<span class="hljs-params">int</span> <span class="hljs-params">state</span>)</span><br>&#123;<br>    <span class="hljs-keyword">struct</span> epoll_event ev;<br>    ev.events = state;<br>    ev.data.fd = fd;<br>    epoll<span class="hljs-constructor">_ctl(<span class="hljs-params">epollfd</span>,EPOLL_CTL_DEL,<span class="hljs-params">fd</span>,&amp;<span class="hljs-params">ev</span>)</span>;<br>&#125;<br><br>static void modify<span class="hljs-constructor">_event(<span class="hljs-params">int</span> <span class="hljs-params">epollfd</span>,<span class="hljs-params">int</span> <span class="hljs-params">fd</span>,<span class="hljs-params">int</span> <span class="hljs-params">state</span>)</span><br>&#123;<br>    <span class="hljs-keyword">struct</span> epoll_event ev;<br>    ev.events = state;<br>    ev.data.fd = fd;<br>    epoll<span class="hljs-constructor">_ctl(<span class="hljs-params">epollfd</span>,EPOLL_CTL_MOD,<span class="hljs-params">fd</span>,&amp;<span class="hljs-params">ev</span>)</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://www.cnblogs.com/Anker/p/3263780.html" target="_blank" rel="noopener">https://www.cnblogs.com/Anker/p/3263780.html</a></li>
+<li><a href="https://segmentfault.com/a/1190000003063859#item-3-11" target="_blank" rel="noopener">https://segmentfault.com/a/1190000003063859#item-3-11</a></li>
+<li><a href="https://www.cnblogs.com/shuqin/p/11772651.html" target="_blank" rel="noopener">https://www.cnblogs.com/shuqin/p/11772651.html</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/427512269" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/427512269</a></li>
+<li><a href="https://cloud.tencent.com/developer/article/1005481" target="_blank" rel="noopener">https://cloud.tencent.com/developer/article/1005481</a></li>
+<li><a href="https://www.163.com/dy/article/HO0L979A0518R7MO.html" target="_blank" rel="noopener">https://www.163.com/dy/article/HO0L979A0518R7MO.html</a></li>
+<li><a href="https://www.modb.pro/db/1773185223680921600" target="_blank" rel="noopener">https://www.modb.pro/db/1773185223680921600</a></li>
+<li><a href="https://www.jb51.net/program/290127gwn.htm" target="_blank" rel="noopener">https://www.jb51.net/program/290127gwn.htm</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/network/" class="category-chain-item">network</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/network/" class="print-no-link">#network</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>80-33 IO 模型-多路复用 epoll</div>
+      <div>https://flepeng.github.io/010-network-80-33-IO-模型-多路复用-epoll/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年3月8日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/010-network-80-33-IO-%E6%A8%A1%E5%9E%8B-%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8-epoll-2/" title="80-33 IO 模型-多路复用 epoll 2">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">80-33 IO 模型-多路复用 epoll 2</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/010-network-A-%E8%AE%B0%E5%BD%95%E4%B8%8E-CNAME-%E8%AE%B0%E5%BD%95/" title="A 记录与 CNAME 记录">
+                        <span class="hidden-mobile">A 记录与 CNAME 记录</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

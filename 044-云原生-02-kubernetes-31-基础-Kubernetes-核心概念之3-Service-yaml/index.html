@@ -1,0 +1,858 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="官方文档：https:&#x2F;&#x2F;kubernetes.io&#x2F;zh-cn&#x2F;docs&#x2F;concepts&#x2F;services-networking&#x2F;service&#x2F;  前言我们知道 Deployment 只是保证了支撑服务的微服务 Pod 的数量，但是没有解决如何访问这些服务的问题。 一个 Pod 是一个运行服务的实例，Pod 可能随时在一个节点上停止运行，在另一个节点上以一个新的 IP 启动，因此不能以">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kubernetes 核心概念之3 Service yaml">
+<meta property="og:url" content="https://flepeng.github.io/044-%E4%BA%91%E5%8E%9F%E7%94%9F-02-kubernetes-31-%E5%9F%BA%E7%A1%80-Kubernetes-%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5%E4%B9%8B3-Service-yaml/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="官方文档：https:&#x2F;&#x2F;kubernetes.io&#x2F;zh-cn&#x2F;docs&#x2F;concepts&#x2F;services-networking&#x2F;service&#x2F;  前言我们知道 Deployment 只是保证了支撑服务的微服务 Pod 的数量，但是没有解决如何访问这些服务的问题。 一个 Pod 是一个运行服务的实例，Pod 可能随时在一个节点上停止运行，在另一个节点上以一个新的 IP 启动，因此不能以">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/kubernetes/service/image-20201117093606710.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubernetes/service/image-20201117093902459.png">
+<meta property="article:published_time" content="2023-02-28T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.393Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Kubernetes">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/kubernetes/service/image-20201117093606710.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>Kubernetes 核心概念之3 Service yaml - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Kubernetes 核心概念之3 Service yaml"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-03-01 00:00" pubdate>
+          2023年3月1日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          22 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Kubernetes 核心概念之3 Service yaml</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <blockquote>
+<p>  官方文档：<a href="https://kubernetes.io/zh-cn/docs/concepts/services-networking/service/" target="_blank" rel="noopener">https://kubernetes.io/zh-cn/docs/concepts/services-networking/service/</a></p>
+</blockquote>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>我们知道 Deployment 只是保证了支撑服务的微服务 Pod 的数量，但是没有解决如何访问这些服务的问题。</p>
+<p>一个 Pod 是一个运行服务的实例，Pod 可能随时在一个节点上停止运行，在另一个节点上以一个新的 IP 启动，因此不能以固定的 IP 和端口号提供服务。</p>
+<p>要稳定地提供服务，需要服务发现和负载均衡的能力。</p>
+<ul>
+<li>服务发现是对客户端的请求找到对应的后端服务实例。在 Kubernetes 集群中，客户端需要访问的服务就是 Service 对象。每个 Service 会对应一个集群内部有效的 虚拟IP，集群内部通过 虚拟IP 访问一个服务。</li>
+<li>在 Kubernetes 集群中，微服务的负载均衡是由 kube-proxy 实现的。kube-proxy 是 Kubernetes 集群内部的负载均衡器。它是一个分布式代理服务器，在 Kubernetes 的每个节点上都有一个；这一设计体现了它的伸缩性优势，需要访问服务的节点越多，提供负载均衡能力的 kube-proxy 就越多，高可用节点也随之增多。与之相比，我们平时在服务器端使用反向代理作负载均衡，还要进一步解决反向代理的高可用问题。</li>
+</ul>
+<p><strong>我猜：通常 一个 web 服务需要创建一个 service。一个端口对应一个应用</strong></p>
+<h2 id="kube-proxy-三种代理模式"><a href="#kube-proxy-三种代理模式" class="headerlink" title="kube-proxy 三种代理模式"></a>kube-proxy 三种代理模式</h2><p>kubernetes 集群中有三层网络，一类是真实存在的，例如 Node Network、Pod Network，提供真实IP地址；一类是虚拟的，例如 Cluster Network 或 Service Network，提供虚拟 IP 地址，不会出现在接口上，仅会出现在 Service 当中。</p>
+<p>kube-proxy 始终 watch（监控）kube-apiserver 上关于 Service 相关的资源变动状态，一旦获取相关信息 kube-proxy 都要把相关信息转化为当前节点之上的，能够实现 Service 资源调度到特定 Pod 之上的规则，进而实现访问 Service 就能够获取 Pod 所提供的服务</p>
+<p>kube-proxy 三种代理模式：UserSpace 模式、iptables 模式、ipvs 模式</p>
+<h3 id="1-UserSpace-模式"><a href="#1-UserSpace-模式" class="headerlink" title="1 UserSpace 模式"></a>1 UserSpace 模式</h3><p>userspace 模式是 kube-proxy 使用的第一代模式，该模式在 kubernetes v1.0 版本开始支持使用。</p>
+<p>kube-proxy 会为每个 Service 随机监听一个端口(proxy port)，并增加一条 iptables 规则。所以通过 <code>ClusterIP:Port</code> 访问 Service 的报文都 redirect 到 proxy port，kube-proxy 从它监听的 proxy port 收到报文以后，走 round robin(默认) 或是 session affinity(会话亲和力，即同一 client IP 都走同一链路给同一 pod 服务)，分发给对应的 pod。</p>
+<p>由于 userspace 模式会造成所有报文都走一遍用户态（也就是 Service 请求会先从用户空间进入内核 iptables，然后再回到用户空间，由 kube-proxy 完成后端 Endpoints 的选择和代理工作），需要在内核空间和用户空间转换，流量从用户空间进出内核会带来性能损耗，所以这种模式效率低、性能不高，不推荐使用。</p>
+<h3 id="2-iptables-模式"><a href="#2-iptables-模式" class="headerlink" title="2 iptables 模式"></a>2 iptables 模式</h3><p>iptables 模式是 kube-proxy 使用的第二代模式，该模式在 kubernetes v1.1 版本开始支持，从 v1.2 版本开始成为 kube-proxy 的默认模式。</p>
+<p>iptables 模式的负载均衡模式是通过底层 netfilter&#x2F;iptables 规则来实现的，通过 Informer 机制 Watch 接口实时跟踪 Service 和 Endpoint 的变更事件，并触发对 iptables 规则的同步更新。</p>
+<p>在 iptables 模式下，kube-proxy 只是作为 controller，而不是 server，真正服务的是内核的 netfilter，体现在用户态的是 iptables。所以整体的效率会比 userspace 模式高</p>
+<h3 id="3-ipvs-模式"><a href="#3-ipvs-模式" class="headerlink" title="3 ipvs 模式"></a>3 ipvs 模式</h3><p>ipvs 模式被 kube-proxy 采纳为第三代模式，模式在 kubernetes v1.8 版本开始引入，在 v1.9 版本中处于 beta 阶段，在 v1.11 版本中正式开始使用。</p>
+<p>ipvs(IP Virtual Server) 实现了传输层负载均衡，也就是 4 层交换，作为 Linux 内核的一部分。ipvs 运行在主机上，在真实服务器前充当负载均衡器。ipvs 可以将基于 TCP 和 UDP 的服务请求转发到真实服务器上，并使真实服务器上的服务在单个 IP 地址上显示为虚拟服务。</p>
+<p>ipvs 和 iptables 都是基于 netfilter 的，那么 ipvs 模式有哪些更好的性能呢？</p>
+<ul>
+<li>ipvs 为大型集群提供了更好的可拓展性和性能</li>
+<li>ipvs 支持比 iptables 更复杂的负载均衡算法（包括：最小负载、最少连接、加权等）</li>
+<li>ipvs 支持服务器健康检查和连接重试等功能</li>
+<li>可以动态修改 ipset 的集合，即使 iptables 的规则正在使用这个集合</li>
+</ul>
+<p>ipvs 依赖于 iptables。ipvs 会使用 iptables 进行包过滤、airpin-masquerade tricks(地址伪装)、SNAT 等功能，但是使用的是 iptables 的扩展 ipset，并不是直接调用 iptables 来生成规则链。通过 ipset 来存储需要 DROP 或 masquerade 的流量的源或目标地址，用于确保 iptables 规则的数量是恒定的，这样我们就不需要关心有多少 Service 或是 Pod 了。</p>
+<p>使用 ipset 相较于 iptables 有什么优点呢？iptables 是线性的数据结构，而 ipset 引入了带索引的数据结构，当规则很多的时候，ipset 依然可以很高效的查找和匹配。我们可以将 ipset 简单理解为一个 IP(段) 的集合，这个集合的内容可以是 IP 地址、IP 网段、端口等，iptables 可以直接添加规则对这个“可变的集合进行操作”，这样就可以大大减少 iptables 规则的数量，从而减少性能损耗。</p>
+<p>举一个例子，如果我们要禁止成千上万个 IP 访问我们的服务器，如果使用 iptables 就需要一条一条的添加规则，这样会在 iptables 中生成大量的规则；如果用 ipset 就只需要将相关的 IP 地址(网段)加入到 ipset 集合中，然后只需要设置少量的 iptables 规则就可以实现这个目标。</p>
+<h2 id="Service"><a href="#Service" class="headerlink" title="Service"></a>Service</h2><p>Service 是 Kubernetes 的核心概念之一，创建一个 Service 可以为一组具有相同功能的容器应用提供一个统一的入口地址，并且将请求负载分发到后端的各个容器应用上。</p>
+<h3 id="防止-Pod-失联-服务发现"><a href="#防止-Pod-失联-服务发现" class="headerlink" title="防止 Pod 失联-服务发现"></a>防止 Pod 失联-服务发现</h3><p>因为 Pod 每次创建都对应一个 IP 地址，而这个 IP 地址是短暂的，每次随着 Pod 的更新都会变化，假设当我们的前端页面有多个 Pod 时候，同时后端也多个 Pod，这个时候，他们之间的相互访问，就需要通过注册中心，拿到 Pod 的 IP 地址，然后去访问对应的 Pod。</p>
+<p><img src="/img/kubernetes/service/image-20201117093606710.png" srcset="/img/loading.gif" lazyload></p>
+<h3 id="定义-Pod-访问策略-负载均衡"><a href="#定义-Pod-访问策略-负载均衡" class="headerlink" title="定义 Pod 访问策略-负载均衡"></a>定义 Pod 访问策略-负载均衡</h3><p>页面前端的 Pod 访问到后端的 Pod，中间会通过 Service 一层，而 Service 在这里还能做负载均衡，负载均衡的策略有很多种实现策略，例如：</p>
+<ul>
+<li>随机</li>
+<li>轮询</li>
+<li>响应比</li>
+</ul>
+<p><img src="/img/kubernetes/service/image-20201117093902459.png" srcset="/img/loading.gif" lazyload></p>
+<h2 id="Pod-和-Service-的关系"><a href="#Pod-和-Service-的关系" class="headerlink" title="Pod 和 Service 的关系"></a>Pod 和 Service 的关系</h2><p>Pod 和 Service 之间是根据 label 和 selector 之间的关系建立关联的（和 Controller 一样）。</p>
+<figure class="highlight dts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs dts"><span class="hljs-meta"># service 中</span><br><span class="hljs-symbol">selector:</span><br><span class="hljs-symbol">  app:</span> redis<br><br><span class="hljs-meta"># pod 中</span><br><span class="hljs-symbol">labels:</span><br><span class="hljs-symbol">  app:</span> redis<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="Service-常用类型"><a href="#Service-常用类型" class="headerlink" title="Service 常用类型"></a>Service 常用类型</h2><p>我们在访问 service 的时候，其实也是需要有一个 ip 地址，这个 ip 肯定不是 Pod 的 ip 地址，而是虚拟IP <code>vip</code>，这个 ip 有以下几种。</p>
+<p>Service 常用类型有三种：</p>
+<ul>
+<li>ClusterIp：集群内部可以访问的 虚拟IP，默认类型。只能通过集群内部访问。</li>
+<li>NodePort：对外访问应用使用。NodePort 端口范围为：30000-32767</li>
+<li>LoadBalancer：对外访问应用使用，公有云。使用云提供商的负载均衡器，可以向外部暴露服务，选择该值，外部的负载均衡器可以路由到 NodePort 服务和 Cluster IP 服务；</li>
+</ul>
+<h2 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h2><p>导出一个包含 service 配置信息的 yaml 文件。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">kubectl expose deployment web --port=80 --target-port=80 --dry-run -o yaml &gt; service.yaml<br></code></pre></td></tr></table></figure>
+
+<p><code>service.yaml</code> 如下所示</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span>  <span class="hljs-comment"># 版本</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Service</span>   <span class="hljs-comment"># 资源对象</span><br><span class="hljs-attr">metadata:</span>       <span class="hljs-comment"># 元数据</span><br>  <span class="hljs-attr">creationTimestamp:</span> <span class="hljs-literal">null</span><br>  <span class="hljs-attr">labels:</span>             <span class="hljs-comment"># 自定义标签属性列表</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">app:</span> <span class="hljs-string">web</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">web</span>           <span class="hljs-comment"># 指定 service 名称，在同一个namespace中必须唯一</span><br>  <span class="hljs-attr">namespace:</span> <span class="hljs-string">default</span>  <span class="hljs-comment"># 命名空间。不指定时默认为default命名空间</span><br>  <span class="hljs-attr">annotations:</span>  <span class="hljs-comment"># 自定义注解属性列表</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">string</span><br><span class="hljs-attr">spec:</span>                 <span class="hljs-comment"># 详细描述</span><br>  <span class="hljs-attr">type:</span> <span class="hljs-string">NodePort</span>    <span class="hljs-comment"># ervice的类型，如果没有设置的话，默认使用 ClusterIp，也就是只能在集群内部使用</span><br>  <span class="hljs-attr">ports:</span>              <span class="hljs-comment"># 指定端口</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">port:</span> <span class="hljs-number">80</span>          <span class="hljs-comment"># 指定 service 自己的端口</span><br>    <span class="hljs-attr">protocol:</span> <span class="hljs-string">TCP</span>     <span class="hljs-comment"># service 使用协议</span><br>    <span class="hljs-attr">targetPort:</span> <span class="hljs-number">80</span>    <span class="hljs-comment"># 容器端口，转发后端容器端口</span><br>    <span class="hljs-attr">nodePort:</span> <span class="hljs-number">30007</span>   <span class="hljs-comment"># 当type=NodePort时，指定映射到物理机的端口号。默认情况下，如不指定，Kubernetes 会从某个范围内分配一个端口号（默认：30000-32767）</span><br>  <span class="hljs-attr">selector:</span>           <span class="hljs-comment"># 标签选择器，通过标签匹配关联的pod</span><br>    <span class="hljs-attr">app:</span> <span class="hljs-string">web</span>          <span class="hljs-comment"># 标签</span><br><span class="hljs-attr">status:</span><br>  <span class="hljs-attr">loadBalancer:</span> <br>    <span class="hljs-attr">ingress:</span><br>      <span class="hljs-attr">ip:</span> <span class="hljs-string">string</span>    <span class="hljs-comment"># 外部负载均衡器的IP地址</span><br>      <span class="hljs-attr">hostname:</span> <span class="hljs-string">string</span>    <span class="hljs-comment"># 外部负载均衡器的主机名</span><br></code></pre></td></tr></table></figure>
+
+
+<h2 id="实例"><a href="#实例" class="headerlink" title="实例"></a>实例</h2><h3 id="1、创建-service-的-yml-文件"><a href="#1、创建-service-的-yml-文件" class="headerlink" title="1、创建 service 的 yml 文件"></a>1、创建 service 的 yml 文件</h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span>          <span class="hljs-comment"># 版本</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Service</span>           <span class="hljs-comment"># 资源对象</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">my-service</span>      <span class="hljs-comment"># 指定service名称</span><br>  <span class="hljs-attr">namespace:</span> <span class="hljs-string">default</span>    <span class="hljs-comment"># 命名空间    </span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">clusterIP:</span> <span class="hljs-number">10.0</span><span class="hljs-number">.0</span><span class="hljs-number">.123</span> <span class="hljs-comment"># 分配IP</span><br>  <span class="hljs-attr">ports:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">http</span>      <span class="hljs-comment"># 端口名称</span><br>    <span class="hljs-attr">port:</span> <span class="hljs-number">80</span>        <span class="hljs-comment"># 指定 service 自己的端口</span><br>    <span class="hljs-attr">protocol:</span> <span class="hljs-string">TCP</span>   <span class="hljs-comment"># service使用协议</span><br>    <span class="hljs-attr">targetPort:</span> <span class="hljs-number">80</span>  <span class="hljs-comment"># 容器端口，转发后端容器的端口</span><br>  <span class="hljs-attr">selector:</span><br>    <span class="hljs-attr">app:</span> <span class="hljs-string">nginx</span><br></code></pre></td></tr></table></figure>
+
+
+<h3 id="2、创建-service"><a href="#2、创建-service" class="headerlink" title="2、创建 service"></a>2、创建 service</h3><figure class="highlight coq"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs coq">kubectl <span class="hljs-built_in">apply</span> -f service.yaml<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="3、查看创建的-service"><a href="#3、查看创建的-service" class="headerlink" title="3、查看创建的 service"></a>3、查看创建的 service</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs 4"># kubectl get service <br>NAME             TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)        AGE<br>my-service       ClusterIP   10.0.0.123   &lt;none&gt;        80&#x2F;TCP         36s<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="4、动态感知查看分配到的-Node"><a href="#4、动态感知查看分配到的-Node" class="headerlink" title="4、动态感知查看分配到的 Node"></a>4、动态感知查看分配到的 Node</h3><figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs angelscript"># kubectl <span class="hljs-keyword">get</span> endpoints<br>NAME             ENDPOINTS                                   AGE<br>kubernetes       <span class="hljs-number">192.168</span><span class="hljs-number">.1</span><span class="hljs-number">.108</span>:<span class="hljs-number">6443</span>,<span class="hljs-number">192.168</span><span class="hljs-number">.1</span><span class="hljs-number">.109</span>:<span class="hljs-number">6443</span>       <span class="hljs-number">2</span>d16h<br>my-service       &lt;none&gt;                                      <span class="hljs-number">2</span>m54s<br>nginx-service    <span class="hljs-number">172.17</span><span class="hljs-number">.1</span><span class="hljs-number">.2</span>:<span class="hljs-number">80</span>,<span class="hljs-number">172.17</span><span class="hljs-number">.1</span><span class="hljs-number">.3</span>:<span class="hljs-number">80</span>,<span class="hljs-number">172.17</span><span class="hljs-number">.1</span><span class="hljs-number">.6</span>:<span class="hljs-number">80</span>   <span class="hljs-number">44</span>h<br>nginx-service2   &lt;none&gt;                                      <span class="hljs-number">17</span>h<br></code></pre></td></tr></table></figure>
+
+<p>注：每个 service 对应一个 ENDPOINTS 控制器，service 则用来关联 pod。</p>
+<h3 id="5、查看-ENDPOINTS-详细信息"><a href="#5、查看-ENDPOINTS-详细信息" class="headerlink" title="5、查看 ENDPOINTS 详细信息"></a>5、查看 ENDPOINTS 详细信息</h3><figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs routeros"><span class="hljs-comment"># kubectl describe service my-service</span><br>Name:              my-service<br>Namespace:         default<br>Labels:            &lt;none&gt;<br>Annotations:       kubectl.kubernetes.io/last-applied-configuration:<br>                     &#123;<span class="hljs-string">"apiVersion"</span>:<span class="hljs-string">"v1"</span>,<span class="hljs-string">"kind"</span>:<span class="hljs-string">"Service"</span>,<span class="hljs-string">"metadata"</span>:&#123;<span class="hljs-string">"annotations"</span>:&#123;&#125;,<span class="hljs-string">"name"</span>:<span class="hljs-string">"my-service"</span>,<span class="hljs-string">"namespace"</span>:<span class="hljs-string">"default"</span>&#125;,<span class="hljs-string">"spec"</span>:&#123;<span class="hljs-string">"clusterIP"</span>:<span class="hljs-string">"10.0.0.12...</span><br><span class="hljs-string">Selector:          app=nginx</span><br><span class="hljs-string">Type:              ClusterIP</span><br><span class="hljs-string">IP:                10.0.0.123</span><br><span class="hljs-string">Port:              http  80/TCP</span><br><span class="hljs-string">TargetPort:        80/TCP</span><br><span class="hljs-string">Endpoints:         &lt;none&gt;</span><br><span class="hljs-string">Session Affinity:  None</span><br><span class="hljs-string">Events:            &lt;none&gt;</span><br></code></pre></td></tr></table></figure>
+
+<p>最后剩下的一种方式就是 LoadBalanced：对外访问应用使用公有云。</p>
+<p>node 一般是在内网进行部署，而外网一般是不能访问到的，那么如何访问的呢？</p>
+<ul>
+<li>找到一台可以通过外网访问机器，安装 nginx，反向代理</li>
+<li>手动把可以访问的节点添加到 nginx 中</li>
+</ul>
+<p>如果我们使用 LoadBalancer，就会有负载均衡的控制器，类似于 nginx 的功能，就不需要自己添加到 nginx 上。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Kubernetes/" class="category-chain-item">Kubernetes</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Kubernetes/" class="print-no-link">#Kubernetes</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Kubernetes 核心概念之3 Service yaml</div>
+      <div>https://flepeng.github.io/044-云原生-02-kubernetes-31-基础-Kubernetes-核心概念之3-Service-yaml/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年3月1日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/044-%E4%BA%91%E5%8E%9F%E7%94%9F-02-kubernetes-31-%E5%9F%BA%E7%A1%80-Kubernetes-%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5%E4%B9%8B2-4-Job-CronJob-%E7%A6%BB%E7%BA%BF%E4%BB%BB%E5%8A%A1/" title="Kubernetes 核心概念之2.4 Job CronJob 离线任务">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Kubernetes 核心概念之2.4 Job CronJob 离线任务</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/044-%E4%BA%91%E5%8E%9F%E7%94%9F-02-kubernetes-31-%E5%9F%BA%E7%A1%80-Kubernetes-%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5%E4%B9%8B3-Service/" title="Kubernetes 核心概念之3 Service">
+                        <span class="hidden-mobile">Kubernetes 核心概念之3 Service</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

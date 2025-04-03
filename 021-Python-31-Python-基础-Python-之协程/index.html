@@ -1,0 +1,851 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="在操作系统中 进程是资源分配的最小单位,线程是 CPU 调度的最小单位。无论是创建多进程还是创建多线程来解决问题，都要消耗一定的时间来创建进程、创建线程、以及管理他们之间的切换。 随着我们对于效率的追求不断提高，基于单线程来实现并发 又成为一个新的课题，即只用一个主线程（很明显可利用的 CPU 只有一个）情况下实现并发。这样就可以节省创建线进程所消耗的时间。 为此我们需要先回顾下并发的本质：切换+">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Python 之协程">
+<meta property="og:url" content="https://flepeng.github.io/021-Python-31-Python-%E5%9F%BA%E7%A1%80-Python-%E4%B9%8B%E5%8D%8F%E7%A8%8B/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="在操作系统中 进程是资源分配的最小单位,线程是 CPU 调度的最小单位。无论是创建多进程还是创建多线程来解决问题，都要消耗一定的时间来创建进程、创建线程、以及管理他们之间的切换。 随着我们对于效率的追求不断提高，基于单线程来实现并发 又成为一个新的课题，即只用一个主线程（很明显可利用的 CPU 只有一个）情况下实现并发。这样就可以节省创建线进程所消耗的时间。 为此我们需要先回顾下并发的本质：切换+">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/dc0c4bbfccdaeffacb3a87e11c8f847a.png">
+<meta property="article:published_time" content="2016-07-31T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.332Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Python">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://i-blog.csdnimg.cn/blog_migrate/dc0c4bbfccdaeffacb3a87e11c8f847a.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>Python 之协程 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Python 之协程"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2016-08-01 00:00" pubdate>
+          2016年8月1日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          23 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Python 之协程</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>在操作系统中 <strong>进程是资源分配的最小单位,线程是 CPU 调度的最小单位</strong>。无论是创建多进程还是创建多线程来解决问题，都要消耗一定的时间来创建进程、创建线程、以及管理他们之间的切换。</p>
+<p>随着我们对于效率的追求不断提高，<strong>基于单线程来实现并发</strong> 又成为一个新的课题，即只用一个主线程（很明显可利用的 CPU 只有一个）情况下实现并发。这样就可以节省创建线进程所消耗的时间。</p>
+<p>为此我们需要先回顾下并发的本质：切换+保存状态</p>
+<p>CPU 正在运行一个任务，会在两种情况下切走去执行其他的任务（切换由操作系统强制控制）</p>
+<ul>
+<li>一种情况是该任务发生了阻塞</li>
+<li>另外一种情况是该任务计算的时间过长</li>
+</ul>
+<p><img src="https://i-blog.csdnimg.cn/blog_migrate/dc0c4bbfccdaeffacb3a87e11c8f847a.png" srcset="/img/loading.gif" lazyload></p>
+<p>ps：在介绍进程理论时，提及进程的三种执行状态，而线程才是执行单位，所以也可以将上图理解为线程的三种状态</p>
+<p>第二种情况并不能提升效率，只是为了让 CPU 能够雨露均沾，实现看起来所有任务都被“同时”执行的效果，如果多个任务都是纯计算的，这种切换反而会降低效率。</p>
+<p>为此我们可以基于 yield 来验证。yield 本身就是一种在单线程下可以保存任务运行状态的方法，我们来简单复习一下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 1 yiled 可以保存状态，yield 的状态保存与操作系统的保存线程状态很像，但是 yield 是代码级别控制的，更轻量级</span><br><span class="hljs-comment"># 2 send 可以把一个函数的结果传给另外一个函数，以此实现单线程内程序之间的切换</span><br><span class="hljs-comment"># 串行执行</span><br><span class="hljs-keyword">import</span> time<br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">consumer</span><span class="hljs-params">(res)</span>:</span><br>    <span class="hljs-comment"># 任务1:接收数据,处理数据</span><br>    <span class="hljs-keyword">pass</span><br> <br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">producer</span><span class="hljs-params">()</span>:</span><br>    <span class="hljs-comment"># 任务2:生产数据</span><br>    res = []<br>    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> range(<span class="hljs-number">10000000</span>):<br>        res.append(i)<br>    <span class="hljs-keyword">return</span> res<br> <br>start = time.time()<br>res=producer()    <span class="hljs-comment"># 串行执行</span><br>consumer(res)     <span class="hljs-comment"># 写成consumer(producer())会降低执行效率</span><br>stop = time.time()<br>print(stop-start) <span class="hljs-comment"># 1.5536692142486572</span><br> <br> <br><span class="hljs-comment"># 基于 yield 并发执行</span><br><span class="hljs-keyword">import</span> time<br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">consumer</span><span class="hljs-params">()</span>:</span><br>    <span class="hljs-comment"># 任务1:接收数据,处理数据</span><br>    <span class="hljs-keyword">while</span> <span class="hljs-literal">True</span>:<br>        x = <span class="hljs-keyword">yield</span><br> <br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">producer</span><span class="hljs-params">()</span>:</span><br>    <span class="hljs-comment"># 任务2:生产数据</span><br>    g = consumer()<br>    next(g)<br>    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> range(<span class="hljs-number">10000000</span>):<br>        g.send(i)<br> <br>start=time.time()<br><span class="hljs-comment"># 基于 yield 保存状态,实现两个任务直接来回切换,即并发的效果</span><br><span class="hljs-comment"># PS:如果每个任务中都加上打印,那么明显地看到两个任务的打印是你一次我一次,即并发执行的.</span><br>producer()<br>stop=time.time()<br>print(stop-start) <span class="hljs-comment">#2.0272178649902344</span><br></code></pre></td></tr></table></figure>
+
+<p>第一种情况的切换。在任务一遇到 IO 情况下，切到任务二去执行，这样就可以利用任务一阻塞的时间完成任务二的计算，效率的提升就在于此。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> time<br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">consumer</span><span class="hljs-params">()</span>:</span><br>    <span class="hljs-comment"># 任务1:接收数据,处理数据</span><br>    <span class="hljs-keyword">while</span> <span class="hljs-literal">True</span>:<br>        x=<span class="hljs-keyword">yield</span><br> <br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">producer</span><span class="hljs-params">()</span>:</span><br>    <span class="hljs-comment"># 任务2:生产数据</span><br>    g=consumer()<br>    next(g)<br>    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> range(<span class="hljs-number">10000000</span>):<br>        g.send(i)<br>        time.sleep(<span class="hljs-number">2</span>)<br> <br>start = time.time()<br>producer()   <span class="hljs-comment"># 并发执行,但是任务producer遇到 IO 就会阻塞住,并不会切到该线程内的其他任务去执行</span><br> <br>stop = time.time()<br>print(stop-start)<br></code></pre></td></tr></table></figure>
+
+<p><strong>对于单线程下，我们不可避免程序中出现 IO 操作，但如果我们能在自己的程序中（即用户程序级别，而非操作系统级别）控制单线程下的多个任务能在一个任务遇到 IO 阻塞时就切换到另外一个任务去计算，这样就保证了该线程能够最大限度地处于就绪态，即随时都可以被 CPU 执行的状态，相当于我们在用户程序级别将自己的 IO 操作最大限度地隐藏起来，从而可以迷惑操作系统，让其看到：该线程好像是一直在计算，IO 比较少，从而更多的将CPU 的执行权限分配给我们的线程。</strong></p>
+<p>协程的本质就是：在单线程下，由用户自己控制一个任务遇到 IO 阻塞了就切换另外一个任务去执行，以此来提升效率。为了实现它，我们需要找寻一种可以同时满足以下条件的解决方案：</p>
+<ul>
+<li>可以控制多个任务之间的切换，切换之前将任务的状态保存下来，以便重新运行时，可以基于暂停的位置继续执行。</li>
+<li>作为1的补充：可以检测 IO 操作，在遇到 IO 操作的情况下才发生切换</li>
+</ul>
+<h2 id="协程介绍"><a href="#协程介绍" class="headerlink" title="协程介绍"></a>协程介绍</h2><p>协程：是单线程下的并发，又称微线程，纤程。英文名 Coroutine。</p>
+<p>一句话说明什么是线程：<strong>协程是一种用户态的轻量级线程，即协程是由用户程序自己控制调度的。</strong></p>
+<p>需要强调的是：</p>
+<ul>
+<li>Python 的线程属于内核级别的，即由操作系统控制调度（如单线程遇到 IO 或执行时间过长就会被迫交出 CPU 执行权限，切换其他线程运行）</li>
+<li>单线程内开启协程，一旦遇到 IO ，就会从应用程序级别（而非操作系统）控制切换，以此来提升效率（！！！非 IO 操作的切换与效率无关）</li>
+</ul>
+<p>对比操作系统控制线程的切换，用户在单线程内控制协程的切换</p>
+<p>优点如下：</p>
+<ul>
+<li>协程的切换开销更小，属于程序级别的切换，操作系统完全感知不到，因而更加轻量级</li>
+<li>单线程内就可以实现并发的效果，最大限度地利用 CPU</li>
+</ul>
+<p>缺点如下：</p>
+<ul>
+<li>协程的本质是单线程，无法利用多核，可以是一个程序开启多个进程，每个进程内开启多个线程，每个线程内开启协程</li>
+<li>协程指的是单个线程，因而一旦协程出现阻塞，将会阻塞整个线程</li>
+</ul>
+<p>总结协程特点：</p>
+<ul>
+<li>必须在只有一个单线程里实现并发</li>
+<li>修改共享数据不需加锁</li>
+<li>用户程序里自己保存多个控制流的上下文栈</li>
+<li>附加：一个协程遇到 IO 操作自动切换到其它协程（如何实现检测 IO，yield、greenlet 都无法实现，就用到了gevent模块（select机制））</li>
+</ul>
+<p>提供协程支持的语言包括 Python，lua，go，erlang, scala和rust。</p>
+<h2 id="进程、线程、协程"><a href="#进程、线程、协程" class="headerlink" title="进程、线程、协程"></a>进程、线程、协程</h2><ol>
+<li>多进程能够利用多核优势，但是进程间通信比较麻烦，另外，进程数目的增加会使性能下降，进程切换的成本较高。程序流程复杂度相对I&#x2F;O多路复用要低。</li>
+<li>I&#x2F;O多路复用是在一个进程内部处理多个逻辑流程，不用进行进程切换，性能较高，另外流程间共享信息简单。但是无法利用多核优势，另外，程序流程被事件处理切割成一个个小块，程序比较复杂，难于理解。</li>
+<li>线程运行在一个进程内部，由操作系统调度，切换成本较低，另外，他们共享进程的虚拟地址空间，线程间共享信息简单。但是线程安全问题导致线程学习曲线陡峭，而且易出错。<br>Python 中 GIL 的存在，导致多线程一直不是很好用，相形之下，协程的优势就更加突出了。</li>
+<li>协程有编程语言提供，由程序员控制进行切换，所以没有线程安全问题，可以用来处理状态机，并发请求等。但是无法利用多核优势。</li>
+</ol>
+<p>上面的四种方案可以配合使用，我比较看好的是进程+协程的模式。</p>
+<h2 id="Greenlet-模块"><a href="#Greenlet-模块" class="headerlink" title="Greenlet 模块"></a>Greenlet 模块</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> greenlet <span class="hljs-keyword">import</span> greenlet<br> <br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">eat</span><span class="hljs-params">(name)</span>:</span><br>    print(<span class="hljs-string">'%s eat 1'</span> %name)<br>    g2.switch(<span class="hljs-string">'egon'</span>)<br>    print(<span class="hljs-string">'%s eat 2'</span> %name)<br>    g2.switch()<br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">play</span><span class="hljs-params">(name)</span>:</span><br>    print(<span class="hljs-string">'%s play 1'</span> %name)<br>    g1.switch()<br>    print(<span class="hljs-string">'%s play 2'</span> %name)<br> <br>g1=greenlet(eat)<br>g2=greenlet(play)<br> <br>g1.switch(<span class="hljs-string">'egon'</span>) <span class="hljs-comment"># 可以在第一次switch时传入参数，以后都不需要</span><br></code></pre></td></tr></table></figure>
+
+<p>单纯的切换（在没有 IO 的情况下或者没有重复开辟内存空间的操作），反而会降低程序的执行速度</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 顺序执行</span><br><span class="hljs-keyword">import</span> time<br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">f1</span><span class="hljs-params">()</span>:</span><br>    res=<span class="hljs-number">1</span><br>    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> range(<span class="hljs-number">100000000</span>):<br>        res+=i<br> <br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">f2</span><span class="hljs-params">()</span>:</span><br>    res=<span class="hljs-number">1</span><br>    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> range(<span class="hljs-number">100000000</span>):<br>        res*=i<br> <br>start=time.time()<br>f1()<br>f2()<br>stop=time.time()<br>print(<span class="hljs-string">'run time is %s'</span> %(stop-start)) <span class="hljs-comment">#10.985628366470337</span><br> <br><span class="hljs-comment"># 切换</span><br><span class="hljs-keyword">from</span> greenlet <span class="hljs-keyword">import</span> greenlet<br><span class="hljs-keyword">import</span> time<br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">f1</span><span class="hljs-params">()</span>:</span><br>    res=<span class="hljs-number">1</span><br>    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> range(<span class="hljs-number">100000000</span>):<br>        res+=i<br>        g2.switch()<br> <br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">f2</span><span class="hljs-params">()</span>:</span><br>    res=<span class="hljs-number">1</span><br>    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> range(<span class="hljs-number">100000000</span>):<br>        res*=i<br>        g1.switch()<br> <br>start=time.time()<br>g1=greenlet(f1)<br>g2=greenlet(f2)<br>g1.switch()<br>stop=time.time()<br>print(<span class="hljs-string">'run time is %s'</span> %(stop-start)) <span class="hljs-comment"># 52.763017892837524</span><br></code></pre></td></tr></table></figure>
+
+<p>greenlet 只是提供了一种比 generator 更加便捷的切换方式，当切到一个任务执行时如果遇到 IO，那就原地阻塞，仍然是没有解决遇到 IO 自动切换来提升效率的问题。</p>
+<p>单线程里的这 20 个任务的代码通常会既有计算操作又有阻塞操作，我们完全可以在执行任务1时遇到阻塞，就利用阻塞的时间去执行任务2。。。。如此，才能提高效率，这就用到了Gevent模块。</p>
+<h2 id="Gevent-模块"><a href="#Gevent-模块" class="headerlink" title="Gevent 模块"></a>Gevent 模块</h2><p>Gevent 是一个第三方库，可以轻松通过gevent实现并发同步或异步编程，它是以C扩展模块形式接入 Python的轻量级协程。 Greenlet全部运行在主程序操作系统进程的内部，但它们被协作式地调度。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python">g1=gevent.spawn(func,<span class="hljs-number">1</span>,,<span class="hljs-number">2</span>,<span class="hljs-number">3</span>,x=<span class="hljs-number">4</span>,y=<span class="hljs-number">5</span>) <span class="hljs-comment"># 创建一个协程对象g1，spawn括号内第一个参数是函数名，如eat，后面可以有多个参数，可以是位置实参或关键字实参，都是传给函数eat的</span><br><br>g2=gevent.spawn(func2)<br>g1.join() <span class="hljs-comment">#等待g1结束</span><br>g2.join() <span class="hljs-comment">#等待g2结束</span><br><br><span class="hljs-comment">#或者上述两步合作一步：gevent.joinall([g1,g2])</span><br>g1.value<span class="hljs-comment">#拿到func1的返回值</span><br></code></pre></td></tr></table></figure>
+
+<p><strong>上例 <code>gevent.sleep(2)</code> 模拟的是 gevent 可以识别的 IO 阻塞，而 <code>time.sleep(2)</code> 或其他的阻塞， gevent 是不能直接识别的需要用下面一行代码，打补丁，就可以识别了</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> gevent <span class="hljs-keyword">import</span> monkey;monkey.patch_all() <span class="hljs-comment"># 必须放到被打补丁者的前面，如time，socket模块之前或者我们干脆记忆成：要用gevent，需要将from gevent import monkey;monkey.patch_all()放到文件的开头</span><br> <br><span class="hljs-keyword">import</span> gevent<br><span class="hljs-keyword">import</span> time<br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">eat</span><span class="hljs-params">()</span>:</span><br>    print(<span class="hljs-string">'eat food 1'</span>)<br>    time.sleep(<span class="hljs-number">2</span>)<br>    print(<span class="hljs-string">'eat food 2'</span>)<br> <br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">play</span><span class="hljs-params">()</span>:</span><br>    print(<span class="hljs-string">'play 1'</span>)<br>    time.sleep(<span class="hljs-number">1</span>)<br>    print(<span class="hljs-string">'play 2'</span>)<br> <br>g1=gevent.spawn(eat)<br>g2=gevent.spawn(play)<br>gevent.joinall([g1,g2])<br>print(<span class="hljs-string">'主'</span>)<br></code></pre></td></tr></table></figure>
+
+<p>我们可以用 <code>threading.current_thread().getName()</code> 来查看每个 g1 和 g2，查看的结果为 DummyThread-n，即假线程</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> gevent <span class="hljs-keyword">import</span> monkey;monkey.patch_all()<br><span class="hljs-keyword">import</span> threading<br><span class="hljs-keyword">import</span> gevent<br><span class="hljs-keyword">import</span> time<br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">eat</span><span class="hljs-params">()</span>:</span><br>    print(threading.current_thread().getName())<br>    print(<span class="hljs-string">'eat food 1'</span>)<br>    time.sleep(<span class="hljs-number">2</span>)<br>    print(<span class="hljs-string">'eat food 2'</span>)<br> <br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">play</span><span class="hljs-params">()</span>:</span><br>    print(threading.current_thread().getName())<br>    print(<span class="hljs-string">'play 1'</span>)<br>    time.sleep(<span class="hljs-number">1</span>)<br>    print(<span class="hljs-string">'play 2'</span>)<br> <br>g1=gevent.spawn(eat)<br>g2=gevent.spawn(play)<br>gevent.joinall([g1,g2])<br>print(<span class="hljs-string">'主'</span>)<br> <br><span class="hljs-comment"># 查看threading.current_thread().getName()</span><br></code></pre></td></tr></table></figure>
+
+<h2 id="Gevent之同步与异步"><a href="#Gevent之同步与异步" class="headerlink" title="Gevent之同步与异步"></a>Gevent之同步与异步</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> gevent <span class="hljs-keyword">import</span> spawn,joinall,monkey;monkey.patch_all()<br> <br><span class="hljs-keyword">import</span> time<br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">task</span><span class="hljs-params">(pid)</span>:</span><br>    <span class="hljs-string">"""</span><br><span class="hljs-string">    Some non-deterministic task</span><br><span class="hljs-string">    """</span><br>    time.sleep(<span class="hljs-number">0.5</span>)<br>    print(<span class="hljs-string">'Task %s done'</span> % pid)<br> <br> <br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">synchronous</span><span class="hljs-params">()</span>:</span>  <span class="hljs-comment"># 同步</span><br>    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> range(<span class="hljs-number">10</span>):<br>        task(i)<br> <br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">asynchronous</span><span class="hljs-params">()</span>:</span> <span class="hljs-comment"># 异步</span><br>    g_l=[spawn(task,i) <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> range(<span class="hljs-number">10</span>)]<br>    joinall(g_l)<br>    print(<span class="hljs-string">'DONE'</span>)<br>    <br><span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">'__main__'</span>:<br>    print(<span class="hljs-string">'Synchronous:'</span>)<br>    synchronous()<br>    print(<span class="hljs-string">'Asynchronous:'</span>)<br>    asynchronous()<br><span class="hljs-comment">#  上面程序的重要部分是将task函数封装到Greenlet内部线程的gevent.spawn。</span><br><span class="hljs-comment">#  初始化的greenlet列表存放在数组threads中，此数组被传给gevent.joinall 函数，</span><br><span class="hljs-comment">#  后者阻塞当前流程，并执行所有给定的greenlet任务。执行流程只会在 所有greenlet执行完后才会继续向下走。</span><br></code></pre></td></tr></table></figure>
+
+
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Python/" class="category-chain-item">Python</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Python/" class="print-no-link">#Python</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Python 之协程</div>
+      <div>https://flepeng.github.io/021-Python-31-Python-基础-Python-之协程/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2016年8月1日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/021-Python-31-Python-%E5%9F%BA%E7%A1%80-Python-%E4%B9%8B-new/" title="Python 之__new__">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Python 之__new__</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/021-Python-31-Python-%E5%9F%BA%E7%A1%80-Python-%E4%B9%8B%E5%BC%95%E5%8C%85%E6%9C%BA%E5%88%B6/" title="Python 之引包机制">
+                        <span class="hidden-mobile">Python 之引包机制</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

@@ -1,0 +1,977 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="简介kubeadm 是官方社区推出的一个用于快速部署kubernetes集群的工具。 这个工具能通过两条指令完成一个kubernetes集群的部署： 12345# 创建一个 Master 节点kubeadm init# 将一个 Node 节点加入到当前集群中kubeadm join &lt;Master节点的IP和端口 &gt;  Kubeadm方式搭建K8S集群步骤使用kubeadm方式搭建K8">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kubernetes 安装 kubeadm 方式 1.18.0 版本">
+<meta property="og:url" content="https://flepeng.github.io/044-%E4%BA%91%E5%8E%9F%E7%94%9F-02-kubernetes-11-install-Kubernetes-%E5%AE%89%E8%A3%85-kubeadm-%E6%96%B9%E5%BC%8F-1-18-0-%E7%89%88%E6%9C%AC/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="简介kubeadm 是官方社区推出的一个用于快速部署kubernetes集群的工具。 这个工具能通过两条指令完成一个kubernetes集群的部署： 12345# 创建一个 Master 节点kubeadm init# 将一个 Node 节点加入到当前集群中kubeadm join &lt;Master节点的IP和端口 &gt;  Kubeadm方式搭建K8S集群步骤使用kubeadm方式搭建K8">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/kubernetes/image-20200929094302491.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubernetes/image-20200929094620145.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubernetes/image-20200929094933142.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubernetes/image-20201113165358663.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubernetes/image-20201113165929510.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubernetes/image-20201113194557147.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubernetes/image-20201113203537028.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubernetes/image-20201113203840915.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubernetes/image-20201113204056851.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubernetes/image-20201113204158884.png">
+<meta property="article:published_time" content="2023-02-28T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.371Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Kubernetes">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/kubernetes/image-20200929094302491.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>Kubernetes 安装 kubeadm 方式 1.18.0 版本 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Kubernetes 安装 kubeadm 方式 1.18.0 版本"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-03-01 00:00" pubdate>
+          2023年3月1日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          22 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Kubernetes 安装 kubeadm 方式 1.18.0 版本</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>kubeadm 是官方社区推出的一个用于快速部署kubernetes集群的工具。</p>
+<p>这个工具能通过两条指令完成一个kubernetes集群的部署：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 创建一个 Master 节点</span><br>kubeadm init<br><br><span class="hljs-comment"># 将一个 Node 节点加入到当前集群中</span><br>kubeadm join &lt;Master节点的IP和端口 &gt;<br></code></pre></td></tr></table></figure>
+
+<h2 id="Kubeadm方式搭建K8S集群步骤"><a href="#Kubeadm方式搭建K8S集群步骤" class="headerlink" title="Kubeadm方式搭建K8S集群步骤"></a>Kubeadm方式搭建K8S集群步骤</h2><p>使用kubeadm方式搭建K8s集群主要分为以下几步</p>
+<ul>
+<li>准备三台虚拟机，同时安装操作系统CentOS 7.x</li>
+<li>对三个安装之后的操作系统进行初始化操作</li>
+<li>在三个节点安装 docker kubelet kubeadm kubectl</li>
+<li>在master节点执行kubeadm init命令初始化</li>
+<li>在node节点上执行 kubeadm join命令，把node节点添加到当前集群</li>
+<li>配置CNI网络插件，用于节点之间的连通【失败了可以多试几次】</li>
+<li>通过拉取一个nginx进行测试，能否进行外网测试</li>
+</ul>
+<h2 id="安装要求"><a href="#安装要求" class="headerlink" title="安装要求"></a>安装要求</h2><p>在开始之前，部署Kubernetes集群机器需要满足以下几个条件：</p>
+<ul>
+<li>一台或多台机器，操作系统 CentOS7.x-86_x64</li>
+<li>硬件配置：2GB或更多RAM，2个CPU或更多CPU，硬盘30GB或更多【注意master需要两核】</li>
+<li>可以访问外网，需要拉取镜像，如果服务器不能上网，需要提前下载镜像并导入节点</li>
+<li>禁止swap分区</li>
+</ul>
+<h2 id="准备环境"><a href="#准备环境" class="headerlink" title="准备环境"></a>准备环境</h2><table>
+<thead>
+<tr>
+<th>角色</th>
+<th>IP</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>master</td>
+<td>192.168.177.130</td>
+</tr>
+<tr>
+<td>node1</td>
+<td>192.168.177.131</td>
+</tr>
+<tr>
+<td>node2</td>
+<td>192.168.177.132</td>
+</tr>
+</tbody></table>
+<p>然后开始在每台机器上执行下面的命令</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 关闭防火墙</span><br>systemctl stop firewalld<br>systemctl <span class="hljs-built_in">disable</span> firewalld<br><br><span class="hljs-comment"># 关闭selinux</span><br><span class="hljs-comment"># 永久关闭</span><br>sed -i <span class="hljs-string">'s/enforcing/disabled/'</span> /etc/selinux/config  <br><span class="hljs-comment"># 临时关闭</span><br>setenforce 0  <br><br><span class="hljs-comment"># 关闭swap</span><br><span class="hljs-comment"># 临时</span><br>swapoff -a <br><span class="hljs-comment"># 永久关闭</span><br>sed -ri <span class="hljs-string">'s/.*swap.*/#&amp;/'</span> /etc/fstab<br><br><span class="hljs-comment"># 根据规划设置主机名【master节点上操作】</span><br>hostnamectl <span class="hljs-built_in">set</span>-hostname k8smaster<br><span class="hljs-comment"># 根据规划设置主机名【node1节点操作】</span><br>hostnamectl <span class="hljs-built_in">set</span>-hostname k8snode1<br><span class="hljs-comment"># 根据规划设置主机名【node2节点操作】</span><br>hostnamectl <span class="hljs-built_in">set</span>-hostname k8snode2<br><br><span class="hljs-comment"># 在master添加hosts</span><br>cat &gt;&gt; /etc/hosts &lt;&lt; EOF<br>192.168.177.130 k8smaster<br>192.168.177.131 k8snode1<br>192.168.177.132 k8snode2<br>EOF<br><br><br><span class="hljs-comment"># 将桥接的IPv4流量传递到iptables的链</span><br>cat &gt; /etc/sysctl.d/k8s.conf &lt;&lt; EOF<br>net.bridge.bridge-nf-call-ip6tables = 1<br>net.bridge.bridge-nf-call-iptables = 1<br>EOF<br><span class="hljs-comment"># 生效</span><br>sysctl --system  <br><br><span class="hljs-comment"># 时间同步</span><br>yum install ntpdate -y<br>ntpdate time.windows.com<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="安装Docker-x2F-kubeadm-x2F-kubelet"><a href="#安装Docker-x2F-kubeadm-x2F-kubelet" class="headerlink" title="安装Docker&#x2F;kubeadm&#x2F;kubelet"></a>安装Docker&#x2F;kubeadm&#x2F;kubelet</h2><p>所有节点安装Docker&#x2F;kubeadm&#x2F;kubelet ，Kubernetes默认CRI（容器运行时）为Docker，因此先安装Docker</p>
+<h3 id="安装Docker"><a href="#安装Docker" class="headerlink" title="安装Docker"></a>安装Docker</h3><p>首先配置一下Docker的阿里yum源</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs bash">cat &gt;/etc/yum.repos.d/docker.repo&lt;&lt;EOF<br>[docker-ce-edge]<br>name=Docker CE Edge - \<span class="hljs-variable">$basearch</span><br>baseurl=https://mirrors.aliyun.com/docker-ce/linux/centos/7/\<span class="hljs-variable">$basearch</span>/edge<br>enabled=1<br>gpgcheck=1<br>gpgkey=https://mirrors.aliyun.com/docker-ce/linux/centos/gpg<br>EOF<br></code></pre></td></tr></table></figure>
+
+<p>然后yum方式安装docker</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># yum安装</span><br>yum -y install docker-ce<br><br><span class="hljs-comment"># 查看docker版本</span><br>docker --version  <br><br><span class="hljs-comment"># 启动docker</span><br>systemctl <span class="hljs-built_in">enable</span> docker<br>systemctl start docker<br></code></pre></td></tr></table></figure>
+
+<p>配置docker的镜像源</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs bash">cat &gt;&gt; /etc/docker/daemon.json &lt;&lt; EOF<br>&#123;<br>  <span class="hljs-string">"registry-mirrors"</span>: [<span class="hljs-string">"https://b9pmyelo.mirror.aliyuncs.com"</span>]<br>&#125;<br>EOF<br></code></pre></td></tr></table></figure>
+
+<p>然后重启docker</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">systemctl restart docker<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="添加kubernetes软件源"><a href="#添加kubernetes软件源" class="headerlink" title="添加kubernetes软件源"></a>添加kubernetes软件源</h3><p>然后我们还需要配置一下yum的k8s软件源</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs bash">cat &gt; /etc/yum.repos.d/kubernetes.repo &lt;&lt; EOF<br>[kubernetes]<br>name=Kubernetes<br>baseurl=https://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64<br>enabled=1<br>gpgcheck=0<br>repo_gpgcheck=0<br>gpgkey=https://mirrors.aliyun.com/kubernetes/yum/doc/yum-key.gpg https://mirrors.aliyun.com/kubernetes/yum/doc/rpm-package-key.gpg<br>EOF<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="安装kubeadm，kubelet和kubectl"><a href="#安装kubeadm，kubelet和kubectl" class="headerlink" title="安装kubeadm，kubelet和kubectl"></a>安装kubeadm，kubelet和kubectl</h3><p>由于版本更新频繁，这里指定版本号部署：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 安装kubelet、kubeadm、kubectl，同时指定版本</span><br>yum install -y kubelet-1.18.0 kubeadm-1.18.0 kubectl-1.18.0<br><span class="hljs-comment"># 设置开机启动</span><br>systemctl <span class="hljs-built_in">enable</span> kubelet<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="部署Kubernetes-Master【master节点】"><a href="#部署Kubernetes-Master【master节点】" class="headerlink" title="部署Kubernetes Master【master节点】"></a>部署Kubernetes Master【master节点】</h2><p>在   192.168.177.130  执行，也就是master节点</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">kubeadm init --apiserver-advertise-address=192.168.177.130 --image-repository registry.aliyuncs.com/google_containers --kubernetes-version v1.18.0 --service-cidr=10.96.0.0/12  --pod-network-cidr=10.244.0.0/16<br></code></pre></td></tr></table></figure>
+
+<p>由于默认拉取镜像地址k8s.gcr.io国内无法访问，这里指定阿里云镜像仓库地址，【执行上述命令会比较慢，因为后台其实已经在拉取镜像了】，我们 docker images 命令即可查看已经拉取的镜像</p>
+<p><img src="/img/kubernetes/image-20200929094302491.png" srcset="/img/loading.gif" lazyload alt="image-20200929094302491"></p>
+<p>当我们出现下面的情况时，表示kubernetes的镜像已经安装成功</p>
+<p><img src="/img/kubernetes/image-20200929094620145.png" srcset="/img/loading.gif" lazyload alt="image-20200929094620145"></p>
+<p>使用kubectl工具 【master节点操作】</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">mkdir -p <span class="hljs-variable">$HOME</span>/.kube<br>sudo cp -i /etc/kubernetes/admin.conf <span class="hljs-variable">$HOME</span>/.kube/config<br>sudo chown $(id -u):$(id -g) <span class="hljs-variable">$HOME</span>/.kube/config<br></code></pre></td></tr></table></figure>
+
+<p>执行完成后，我们使用下面命令，查看我们正在运行的节点</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">kubectl get nodes<br></code></pre></td></tr></table></figure>
+
+<p><img src="/img/kubernetes/image-20200929094933142.png" srcset="/img/loading.gif" lazyload alt="image-20200929094933142"></p>
+<p>能够看到，目前有一个master节点已经运行了，但是还处于未准备状态</p>
+<p>下面我们还需要在Node节点执行其它的命令，将node1和node2加入到我们的master节点上</p>
+<h2 id="加入Kubernetes-Node【Slave节点】"><a href="#加入Kubernetes-Node【Slave节点】" class="headerlink" title="加入Kubernetes Node【Slave节点】"></a>加入Kubernetes Node【Slave节点】</h2><p>下面我们需要到 node1 和 node2服务器，执行下面的代码向集群添加新节点</p>
+<p>执行在kubeadm init输出的kubeadm join命令：</p>
+<blockquote>
+<p>注意，以下的命令是在master初始化完成后，每个人的都不一样！！！需要复制自己生成的</p>
+</blockquote>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">kubeadm join 192.168.177.130:6443 --token 8j6ui9.gyr4i156u30y80xf \<br>    --discovery-token-ca-cert-hash sha256:eda1380256a62d8733f4bddf926f148e57cf9d1a3a58fb45dd6e80768af5a500<br></code></pre></td></tr></table></figure>
+
+<p>默认token有效期为24小时，当过期之后，该token就不可用了。这时就需要重新创建token，操作如下：</p>
+<figure class="highlight gauss"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs gauss">kubeadm <span class="hljs-built_in">token</span> <span class="hljs-keyword">create</span> --<span class="hljs-keyword">print</span>-join-command<br></code></pre></td></tr></table></figure>
+
+<p>当我们把两个节点都加入进来后，我们就可以去Master节点 执行下面命令查看情况</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">kubectl get node<br></code></pre></td></tr></table></figure>
+
+<p><img src="/img/kubernetes/image-20201113165358663.png" srcset="/img/loading.gif" lazyload alt="image-20201113165358663"></p>
+<h2 id="部署CNI网络插件"><a href="#部署CNI网络插件" class="headerlink" title="部署CNI网络插件"></a>部署CNI网络插件</h2><p>上面的状态还是NotReady，下面我们需要网络插件，来进行联网访问</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 下载网络插件配置</span><br>wget https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml<br></code></pre></td></tr></table></figure>
+
+<p>默认镜像地址无法访问，sed命令修改为docker hub镜像仓库。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 添加</span><br>kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml<br><br><span class="hljs-comment">## ①首先下载v0.13.1-rc2-amd64 镜像</span><br><span class="hljs-comment">## 参考博客：https://www.cnblogs.com/pyxuexi/p/14288591.html</span><br><span class="hljs-comment">## ② 导入镜像，命令，，特别提示，3个机器都需要导入，3个机器都需要导入，3个机器都需要导入，3个机器都需要导入，重要的事情说3遍。不然抱错。如果没有操作，报错后，需要删除节点，重置，在导入镜像，重新加入才行。本地就是这样操作成功的！</span><br>docker load &lt; flanneld-v0.13.1-rc2-amd64.docker<br><span class="hljs-comment">#####下载本地，替换将image: quay.io/coreos/flannel:v0.13.1-rc2 替换为 image: quay.io/coreos/flannel:v0.13.1-rc2-amd64</span><br><br><span class="hljs-comment"># 查看状态 【kube-system是k8s中的最小单元】</span><br>kubectl get pods -n kube-system<br></code></pre></td></tr></table></figure>
+
+<p>运行后的结果</p>
+<p><img src="/img/kubernetes/image-20201113165929510.png" srcset="/img/loading.gif" lazyload alt="image-20201113165929510"></p>
+<p>运行完成后，我们查看状态可以发现，已经变成了Ready状态了</p>
+<p><img src="/img/kubernetes/image-20201113194557147.png" srcset="/img/loading.gif" lazyload alt="image-20201113194557147"></p>
+<p>如果上述操作完成后，还存在某个节点处于NotReady状态，可以在Master将该节点删除</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># master节点将该节点删除</span><br><br><span class="hljs-comment">##20210223 yan 查阅资料添加###kubectl drain k8snode1 --delete-local-data --force --ignore-daemonsets</span><br><br>kubectl delete node k8snode1<br> <br><span class="hljs-comment"># 然后到k8snode1节点进行重置</span><br> kubeadm reset<br><span class="hljs-comment"># 重置完后在加入</span><br>kubeadm join 192.168.177.130:6443 --token 8j6ui9.gyr4i156u30y80xf     --discovery-token-ca-cert-hash sha256:eda1380256a62d8733f4bddf926f148e57cf9d1a3a58fb45dd6e80768af5a500<br></code></pre></td></tr></table></figure>
+
+<h2 id="测试kubernetes集群"><a href="#测试kubernetes集群" class="headerlink" title="测试kubernetes集群"></a>测试kubernetes集群</h2><p>我们都知道K8S是容器化技术，它可以联网去下载镜像，用容器的方式进行启动</p>
+<p>在Kubernetes集群中创建一个pod，验证是否正常运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 下载nginx 【会联网拉取nginx镜像】</span><br>kubectl create deployment nginx --image=nginx<br><span class="hljs-comment"># 查看状态</span><br>kubectl get pod<br></code></pre></td></tr></table></figure>
+
+<p>如果我们出现Running状态的时候，表示已经成功运行了</p>
+<p><img src="/img/kubernetes/image-20201113203537028.png" srcset="/img/loading.gif" lazyload alt="image-20201113203537028"></p>
+<p>下面我们就需要将端口暴露出去，让其它外界能够访问</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 暴露端口</span><br>kubectl expose deployment nginx --port=80 --<span class="hljs-built_in">type</span>=NodePort<br><span class="hljs-comment"># 查看一下对外的端口</span><br>kubectl get pod,svc<br></code></pre></td></tr></table></figure>
+
+<p>能够看到，我们已经成功暴露了 80端口  到 30529上</p>
+<p><img src="/img/kubernetes/image-20201113203840915.png" srcset="/img/loading.gif" lazyload alt="image-20201113203840915"></p>
+<p>我们到我们的宿主机浏览器上，访问如下地址</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">http://192.168.177.130:30529/<br></code></pre></td></tr></table></figure>
+
+<p>发现我们的nginx已经成功启动了</p>
+<p><img src="/img/kubernetes/image-20201113204056851.png" srcset="/img/loading.gif" lazyload alt="image-20201113204056851"></p>
+<p>到这里为止，我们就搭建了一个单master的k8s集群</p>
+<p><img src="/img/kubernetes/image-20201113204158884.png" srcset="/img/loading.gif" lazyload alt="image-20201113204158884"></p>
+<h2 id="错误汇总"><a href="#错误汇总" class="headerlink" title="错误汇总"></a>错误汇总</h2><h3 id="错误一"><a href="#错误一" class="headerlink" title="错误一"></a>错误一</h3><p>在执行Kubernetes  init方法的时候，出现这个问题</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">error execution phase preflight: [preflight] Some fatal errors occurred:<br>    [ERROR NumCPU]: the number of available CPUs 1 is less than the required 2<br></code></pre></td></tr></table></figure>
+
+<p>是因为VMware设置的核数为1，而K8S需要的最低核数应该是2，调整核数重启系统即可</p>
+<h3 id="错误二"><a href="#错误二" class="headerlink" title="错误二"></a>错误二</h3><p>我们在给node1节点使用 kubernetes join命令的时候，出现以下错误</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">error execution phase preflight: [preflight] Some fatal errors occurred:<br>    [ERROR Swap]: running with swap on is not supported. Please <span class="hljs-built_in">disable</span> swap<br></code></pre></td></tr></table></figure>
+
+<p>错误原因是我们需要关闭swap</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 关闭swap</span><br><span class="hljs-comment"># 临时</span><br>swapoff -a <br><span class="hljs-comment"># 临时</span><br>sed -ri <span class="hljs-string">'s/.*swap.*/#&amp;/'</span> /etc/fstab<br></code></pre></td></tr></table></figure>
+
+<h3 id="错误三"><a href="#错误三" class="headerlink" title="错误三"></a>错误三</h3><p>在给node1节点使用 kubernetes join命令的时候，出现以下错误</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">The HTTP call equal to <span class="hljs-string">'curl -sSL http://localhost:10248/healthz'</span> failed with error: Get http://localhost:10248/healthz: dial tcp [::1]:10248: connect: connection refused<br></code></pre></td></tr></table></figure>
+
+<p>解决方法，首先需要到 master 节点，创建一个文件</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 创建文件夹</span><br>mkdir /etc/systemd/system/kubelet.service.d<br><br><span class="hljs-comment"># 创建文件</span><br>vim /etc/systemd/system/kubelet.service.d/10-kubeadm.conf<br><br><span class="hljs-comment"># 添加如下内容</span><br>Environment=<span class="hljs-string">"KUBELET_SYSTEM_PODS_ARGS=--pod-manifest-path=/etc/kubernetes/manifests --allow-privileged=true --fail-swap-on=false"</span><br><br><span class="hljs-comment"># 重置</span><br>kubeadm reset<br></code></pre></td></tr></table></figure>
+
+<p>然后删除刚刚创建的配置目录</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">rm -rf <span class="hljs-variable">$HOME</span>/.kube<br></code></pre></td></tr></table></figure>
+
+<p>然后 在master重新初始化</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">kubeadm init --apiserver-advertise-address=202.193.57.11 --image-repository registry.aliyuncs.com/google_containers --kubernetes-version v1.18.0 --service-cidr=10.96.0.0/12  --pod-network-cidr=10.244.0.0/16<br></code></pre></td></tr></table></figure>
+
+<p>初始完成后，我们再到 node1节点，执行 kubeadm join命令，加入到master</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">kubeadm join 202.193.57.11:6443 --token c7a7ou.z00fzlb01d76r37s \<br>    --discovery-token-ca-cert-hash sha256:9c3f3cc3f726c6ff8bdff14e46b1a856e3b8a4cbbe30cab185f6c5ee453aeea5<br></code></pre></td></tr></table></figure>
+
+<p>添加完成后，我们使用下面命令，查看节点是否成功添加</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">kubectl get nodes<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="错误四"><a href="#错误四" class="headerlink" title="错误四"></a>错误四</h3><p>我们再执行查看节点的时候，  kubectl get nodes 会出现问题</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">Unable to connect to the server: x509: certificate signed by unknown authority (possibly because of <span class="hljs-string">"crypto/rsa: verification error"</span> <span class="hljs-keyword">while</span> trying to verify candidate authority certificate <span class="hljs-string">"kubernetes"</span>)<br></code></pre></td></tr></table></figure>
+
+<p>这是因为我们之前创建的配置文件还存在，也就是这些配置</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">mkdir -p <span class="hljs-variable">$HOME</span>/.kube<br>sudo cp -i /etc/kubernetes/admin.conf <span class="hljs-variable">$HOME</span>/.kube/config<br>sudo chown $(id -u):$(id -g) <span class="hljs-variable">$HOME</span>/.kube/config<br></code></pre></td></tr></table></figure>
+
+<p>我们需要做的就是把配置文件删除，然后重新执行一下</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">rm -rf <span class="hljs-variable">$HOME</span>/.kube<br></code></pre></td></tr></table></figure>
+
+<p>然后再次创建一下即可</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">mkdir -p <span class="hljs-variable">$HOME</span>/.kube<br>sudo cp -i /etc/kubernetes/admin.conf <span class="hljs-variable">$HOME</span>/.kube/config<br>sudo chown $(id -u):$(id -g) <span class="hljs-variable">$HOME</span>/.kube/config<br></code></pre></td></tr></table></figure>
+
+<p>这个问题主要是因为我们在执行 kubeadm reset 的时候，没有把 $HOME&#x2F;.kube 给移除掉，再次创建时就会出现问题了</p>
+<h3 id="错误五"><a href="#错误五" class="headerlink" title="错误五"></a>错误五</h3><p>安装的时候，出现以下错误</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">Another app is currently holding the yum lock; waiting <span class="hljs-keyword">for</span> it to <span class="hljs-built_in">exit</span>...<br></code></pre></td></tr></table></figure>
+
+<p>是因为yum上锁占用，解决方法</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">yum -y install docker-ce<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="错误六"><a href="#错误六" class="headerlink" title="错误六"></a>错误六</h3><p>在使用下面命令，添加node节点到集群上的时候</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">kubeadm join 192.168.177.130:6443 --token jkcz0t.3c40t0bqqz5g8wsb  --discovery-token-ca-cert-hash sha256:bc494eeab6b7bac64c0861da16084504626e5a95ba7ede7b9c2dc7571ca4c9e5<br></code></pre></td></tr></table></figure>
+
+<p>然后出现了这个错误</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@k8smaster ~]<span class="hljs-comment"># kubeadm join 192.168.177.130:6443 --token jkcz0t.3c40t0bqqz5g8wsb     --discovery-token-ca-cert-hash sha256:bc494eeab6b7bac64c0861da16084504626e5a95ba7ede7b9c2dc7571ca4c9e5</span><br>W1117 06:55:11.220907   11230 join.go:346] [preflight] WARNING: JoinControlPane.controlPlane settings will be ignored when control-plane flag is not <span class="hljs-built_in">set</span>.<br>[preflight] Running pre-flight checks<br>	[WARNING IsDockerSystemdCheck]: detected <span class="hljs-string">"cgroupfs"</span> as the Docker cgroup driver. The recommended driver is <span class="hljs-string">"systemd"</span>. Please follow the guide at https://kubernetes.io/docs/setup/cri/<br>error execution phase preflight: [preflight] Some fatal errors occurred:<br>	[ERROR FileContent--proc-sys-net-ipv4-ip_forward]: /proc/sys/net/ipv4/ip_forward contents are not <span class="hljs-built_in">set</span> to 1<br>[preflight] If you know what you are doing, you can make a check non-fatal with `--ignore-preflight-errors=...`<br>To see the stack trace of this error execute with --v=5 or higher<br></code></pre></td></tr></table></figure>
+
+<p>出于安全考虑，Linux系统<strong>默认是禁止数据包转发</strong>的。所谓<strong>转发即当主机拥有多于一块的网卡时，其中一块收到数据包，根据数据包的目的ip地址将包发往本机另一网卡，该网卡根据路由表继续发送数据包</strong>。这通常就是路由器所要实现的功能。也就是说  <strong>&#x2F;proc&#x2F;sys&#x2F;net&#x2F;ipv4&#x2F;ip_forward</strong> 文件的值不支持转发</p>
+<ul>
+<li>0：禁止</li>
+<li>1：转发</li>
+</ul>
+<p>所以我们需要将值修改成1即可</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">echo</span> “1” &gt; /proc/sys/net/ipv4/ip_forward<br></code></pre></td></tr></table></figure>
+
+<p>修改完成后，重新执行命令即可</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Kubernetes/" class="category-chain-item">Kubernetes</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Kubernetes/" class="print-no-link">#Kubernetes</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Kubernetes 安装 kubeadm 方式 1.18.0 版本</div>
+      <div>https://flepeng.github.io/044-云原生-02-kubernetes-11-install-Kubernetes-安装-kubeadm-方式-1-18-0-版本/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年3月1日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/044-%E4%BA%91%E5%8E%9F%E7%94%9F-02-kubernetes-00-%E7%AE%80%E4%BB%8B-02-Kubernetes-%E7%AE%80%E4%BB%8B/" title="02-Kubernetes 简介">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">02-Kubernetes 简介</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/044-%E4%BA%91%E5%8E%9F%E7%94%9F-02-kubernetes-11-install-Kubernetes-%E5%AE%89%E8%A3%85-%E4%BA%8C%E8%BF%9B%E5%88%B6-%E6%96%B9%E5%BC%8F-1-18-0-%E7%89%88%E6%9C%AC/" title="Kubernetes 安装 二进制 方式 1.18.0 版本">
+                        <span class="hidden-mobile">Kubernetes 安装 二进制 方式 1.18.0 版本</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

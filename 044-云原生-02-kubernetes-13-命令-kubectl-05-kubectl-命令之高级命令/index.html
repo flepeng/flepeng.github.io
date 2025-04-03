@@ -1,0 +1,896 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="kubectl-diff：对比本地json&#x2F;yaml文件与kube-apiserver中运行的配置文件是否有差异 kubectl-apply：通过json&#x2F;yaml文件 标准输入对资源进行配置更新或者创建 kubectl-patch：通过patch方式修改资源对象字段（补丁式） kubectl-replace：通过json&#x2F;yaml文件或者标准输入来替换资源对象 k">
+<meta property="og:type" content="article">
+<meta property="og:title" content="05-kubectl 命令之高级命令">
+<meta property="og:url" content="https://flepeng.github.io/044-%E4%BA%91%E5%8E%9F%E7%94%9F-02-kubernetes-13-%E5%91%BD%E4%BB%A4-kubectl-05-kubectl-%E5%91%BD%E4%BB%A4%E4%B9%8B%E9%AB%98%E7%BA%A7%E5%91%BD%E4%BB%A4/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="kubectl-diff：对比本地json&#x2F;yaml文件与kube-apiserver中运行的配置文件是否有差异 kubectl-apply：通过json&#x2F;yaml文件 标准输入对资源进行配置更新或者创建 kubectl-patch：通过patch方式修改资源对象字段（补丁式） kubectl-replace：通过json&#x2F;yaml文件或者标准输入来替换资源对象 k">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-02-28T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.389Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Kubernetes">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>05-kubectl 命令之高级命令 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="05-kubectl 命令之高级命令"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-03-01 00:00" pubdate>
+          2023年3月1日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          13 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">05-kubectl 命令之高级命令</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <ul>
+<li>kubectl-diff：对比本地json&#x2F;yaml文件与kube-apiserver中运行的配置文件是否有差异</li>
+<li><a href="#kubectl-apply">kubectl-apply</a>：通过json&#x2F;yaml文件 标准输入对资源进行配置更新或者创建</li>
+<li><a href="#kubectl-patch">kubectl-patch</a>：通过patch方式修改资源对象字段（补丁式）</li>
+<li><a href="#kubectl-replace">kubectl-replace</a>：通过json&#x2F;yaml文件或者标准输入来替换资源对象</li>
+<li>kubectl-wait：在一个或者多个资源上等待条件达成</li>
+<li><a href="#kubectl-convert">kubectl-convert</a>：转换json&#x2F;yaml文件为不同的资源版本</li>
+<li>kubectl-kustomize：定制kubernetes配置</li>
+</ul>
+<h2 id="kubectl-diff"><a href="#kubectl-diff" class="headerlink" title="kubectl diff"></a>kubectl diff</h2><p><strong>官方文档</strong></p>
+<ul>
+<li><a href="https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#diff" target="_blank" rel="noopener">https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#diff</a></li>
+</ul>
+<h2 id="kubectl-apply"><a href="#kubectl-apply" class="headerlink" title="kubectl apply"></a>kubectl apply</h2><p>通过文件名或控制台输入，对资源进行配置。 如果资源不存在，将会新建一个。可以使用 JSON 或者 YAML 格式。</p>
+<p><strong>官方文档</strong></p>
+<ul>
+<li><a href="https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#apply" target="_blank" rel="noopener">https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#apply</a></li>
+</ul>
+<p><strong>语法：</strong></p>
+<figure class="highlight coq"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs coq">kubectl <span class="hljs-built_in">apply</span> -f FILENAME<br></code></pre></td></tr></table></figure>
+
+<p><strong>选项</strong></p>
+<ul>
+<li><code>-f, --filename=[]</code>: 包含配置信息的文件名，目录名或者URL。</li>
+<li><code>-o, --output=&quot;&quot;</code>: 输出格式，使用“-o name”来输出简短格式（资源类型&#x2F;资源名）。</li>
+<li><code>--schema-cache-dir=&quot;/tmp/kubectl.schema&quot;</code>: 如果不为空，将API schema缓存为指定文件，默认缓存到“&#x2F;tmp&#x2F;kubectl.schema”。</li>
+<li><code>--validate[=true]</code>: 如果为true，在发送到服务端前先使用schema来验证输入。</li>
+</ul>
+<p><strong>继承自父命令的选项</strong></p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs routeros">--alsologtostderr[=<span class="hljs-literal">false</span>]: 同时输出日志到标准错误控制台和文件。<br><span class="hljs-attribute">--api-version</span>=<span class="hljs-string">""</span>: 和服务端交互使用的API版本。<br><span class="hljs-attribute">--certificate-authority</span>=<span class="hljs-string">""</span>: 用以进行认证授权的.cert文件路径。<br><span class="hljs-attribute">--client-certificate</span>=<span class="hljs-string">""</span>: TLS使用的客户端证书路径。<br><span class="hljs-attribute">--client-key</span>=<span class="hljs-string">""</span>: TLS使用的客户端密钥路径。<br><span class="hljs-attribute">--cluster</span>=<span class="hljs-string">""</span>: 指定使用的kubeconfig配置文件中的集群名。<br><span class="hljs-attribute">--context</span>=<span class="hljs-string">""</span>: 指定使用的kubeconfig配置文件中的环境名。<br>--insecure-skip-tls-verify[=<span class="hljs-literal">false</span>]: 如果为<span class="hljs-literal">true</span>，将不会检查服务器凭证的有效性，这会导致你的HTTPS链接变得不安全。<br><span class="hljs-attribute">--kubeconfig</span>=<span class="hljs-string">""</span>: 命令行请求使用的配置文件路径。<br><span class="hljs-attribute">--log-backtrace-at</span>=:0: 当日志长度超过定义的行数时，忽略堆栈信息。<br><span class="hljs-attribute">--log-dir</span>=<span class="hljs-string">""</span>: 如果不为空，将日志文件写入此目录。<br><span class="hljs-attribute">--log-flush-frequency</span>=5s: 刷新日志的最大时间间隔。<br>--logtostderr[=<span class="hljs-literal">true</span>]: 输出日志到标准错误控制台，不输出到文件。<br>--match-server-version[=<span class="hljs-literal">false</span>]: 要求服务端和客户端版本匹配。<br><span class="hljs-attribute">--namespace</span>=<span class="hljs-string">""</span>: 如果不为空，命令将使用此namespace。<br><span class="hljs-attribute">--password</span>=<span class="hljs-string">""</span>: API Server进行简单认证使用的密码。<br>-s, <span class="hljs-attribute">--server</span>=<span class="hljs-string">""</span>: Kubernetes API Server的地址和端口号。<br><span class="hljs-attribute">--stderrthreshold</span>=2: 高于此级别的日志将被输出到错误控制台。<br><span class="hljs-attribute">--token</span>=<span class="hljs-string">""</span>: 认证到API Server使用的令牌。<br><span class="hljs-attribute">--user</span>=<span class="hljs-string">""</span>: 指定使用的kubeconfig配置文件中的用户名。<br><span class="hljs-attribute">--username</span>=<span class="hljs-string">""</span>: API Server进行简单认证使用的用户名。<br><span class="hljs-attribute">--v</span>=0: 指定输出日志的级别。<br><span class="hljs-attribute">--vmodule</span>=: 指定输出日志的模块，格式如下：<span class="hljs-attribute">pattern</span>=N，使用逗号分隔。<br></code></pre></td></tr></table></figure>
+
+<p><strong>使用kubectl create 和 kubectl apply创建资源对象的区别</strong></p>
+<table>
+<thead>
+<tr>
+<th align="left">序号</th>
+<th align="left">kubectl apply</th>
+<th align="left">kubectl create</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">1</td>
+<td align="left">根据yaml文件中包含的字段（yaml文件可以只写需要改动的字段），直接升级集群中的现有资源对象</td>
+<td align="left">首先删除集群中现有的所有资源，然后重新根据yaml文件（必须是完整的配置信息）生成新的资源对象</td>
+</tr>
+<tr>
+<td align="left">2</td>
+<td align="left">yaml文件可以不完整，只写需要的字段</td>
+<td align="left">yaml文件必须是完整的配置字段内容</td>
+</tr>
+<tr>
+<td align="left">3</td>
+<td align="left">kubectl apply只工作在yaml文件中的某些改动过的字段</td>
+<td align="left">kubectl create工作在yaml文件中的所有字段</td>
+</tr>
+<tr>
+<td align="left">4</td>
+<td align="left">在只改动了yaml文件中的某些声明时，而不是全部改动，你可以使用kubectl apply</td>
+<td align="left">在没有改动yaml文件时，使用同一个yaml文件执行命令kubectl replace，将不会成功（fail掉），因为缺少相关改动信息</td>
+</tr>
+</tbody></table>
+<p><strong>示例</strong></p>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs pgsql"># 将pod.json中的配置应用到pod<br>kubectl apply -f ./pod.json<br><br># 将控制台输入的<span class="hljs-type">JSON</span>配置应用到Pod<br>cat pod.json | kubectl apply -f -<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="kubectl-patch"><a href="#kubectl-patch" class="headerlink" title="kubectl patch"></a>kubectl patch</h2><p>使用补丁修改，更新资源的字段，也就是修改资源的部分内容</p>
+<p><strong>官方文档</strong></p>
+<ul>
+<li><a href="https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#patch" target="_blank" rel="noopener">https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#patch</a></li>
+</ul>
+<p><strong>语法</strong></p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs routeros">kubectl patch (-f FILENAME |<span class="hljs-built_in"> TYPE </span>NAME) -p PATCH<br></code></pre></td></tr></table></figure>
+
+<p><strong>选项</strong></p>
+<ul>
+<li><code>-f, --filename=[]</code>: 包含配置信息的文件名，目录名或者URL。</li>
+<li><code>--include-extended-apis[=true]</code>: If true, include definitions of new APIs via calls to the API server. [default true]</li>
+<li><code>-o, --output=&quot;&quot;</code>: 输出格式，使用“-o name”来输出简短格式（资源类型&#x2F;资源名）。</li>
+<li><code>--record[=false]</code>: 在资源注释中记录当前 kubectl 命令。</li>
+<li><code>-R, --recursive[=false]</code>: Process the directory used in -f, –filename recursively. Useful when you want to manage related manifests organized within the same directory.</li>
+<li><code>--schema-cache-dir=&quot;/tmp/kubectl.schema&quot;</code>: 如果不为空，将API schema缓存为指定文件，默认缓存到“&#x2F;tmp&#x2F;kubectl.schema”。</li>
+<li><code>--validate[=true]</code>: 如果为true，在发送到服务端前先使用schema来验证输入。</li>
+</ul>
+<p><strong>示例</strong></p>
+<figure class="highlight crmsh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs crmsh"><span class="hljs-comment"># 部分更新节点</span><br>kubectl patch <span class="hljs-keyword">node</span> <span class="hljs-title">k8s-node-1</span> -p '&#123;<span class="hljs-string">"spec"</span>:&#123;<span class="hljs-string">"unschedulable"</span>:<span class="hljs-literal">true</span>&#125;&#125;'<br><br><span class="hljs-comment"># 更新容器镜像；spec.containers[*].name 是必须的，因为这是合并的关键字</span><br>kubectl patch pod valid-pod -p '&#123;<span class="hljs-string">"spec"</span>:&#123;<span class="hljs-string">"containers"</span>:[&#123;<span class="hljs-string">"name"</span>:<span class="hljs-string">"kubernetes-serve-hostname"</span>,<span class="hljs-string">"image"</span>:<span class="hljs-string">"new image"</span>&#125;]&#125;&#125;'<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="kubectl-replace"><a href="#kubectl-replace" class="headerlink" title="kubectl replace"></a>kubectl replace</h2><p>通过文件或者标准输入替换原有资源</p>
+<p><strong>官方文档</strong></p>
+<ul>
+<li><a href="https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#replace" target="_blank" rel="noopener">https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#replace</a></li>
+</ul>
+<p><strong>语法</strong></p>
+<figure class="highlight sas"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sas">kubectl <span class="hljs-meta">replace</span> -f <span class="hljs-meta">FILENAME</span><br></code></pre></td></tr></table></figure>
+
+<p><strong>示例</strong></p>
+<figure class="highlight crmsh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs crmsh"><span class="hljs-comment"># 重启pod</span><br>kubectl get pod nginx2 -n default -o yaml|kubectl replace --force -f -<br><br><br><span class="hljs-comment"># Replace a pod using the data in pod.json.</span><br>[root@<span class="hljs-keyword">master</span> <span class="hljs-title">~]# kubectl</span> replace -f ./pod.json<br><br><br><span class="hljs-comment"># Replace a pod based on the JSON passed into stdin.</span><br>[root@<span class="hljs-keyword">master</span> <span class="hljs-title">~]# cat</span> pod.json | kubectl replace -f -<br><br><br><span class="hljs-comment"># Update a single-container pod’s image version (tag) to v4</span><br>[root@<span class="hljs-keyword">master</span> <span class="hljs-title">~]# kubectl</span> get pod mypod -o yaml | sed 's/\(image: myimage\):.*[root@<span class="hljs-keyword">master</span> <span class="hljs-title">~]#/\1</span>:v4/' | kubectl replace -f -<br><br><br><span class="hljs-comment"># Force replace, delete and then re-create the resource</span><br>[root@<span class="hljs-keyword">master</span> <span class="hljs-title">~]# kubectl</span> replace --force -f ./pod.json<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="kubectl-wait"><a href="#kubectl-wait" class="headerlink" title="kubectl wait"></a>kubectl wait</h2><p><strong>官方文档</strong></p>
+<ul>
+<li><a href="https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#wait" target="_blank" rel="noopener">https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#wait</a></li>
+</ul>
+<h2 id="kubectl-convert"><a href="#kubectl-convert" class="headerlink" title="kubectl convert"></a>kubectl convert</h2><p>转换配置文件为不同的API版本，支持YAML和JSON格式。</p>
+<p>该命令将配置文件名，目录或URL作为输入，并将其转换为指定的版本格式，如果目标版本未指定或不支持，则转换为最新版本。</p>
+<p>默认输出将以YAML格式打印出来，可以使用- o选项改变输出格式。</p>
+<p><strong>官方文档</strong></p>
+<ul>
+<li><a href="https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#convert" target="_blank" rel="noopener">https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#convert</a></li>
+<li><a href="http://docs.kubernetes.org.cn/488.html" target="_blank" rel="noopener">http://docs.kubernetes.org.cn/488.html</a></li>
+</ul>
+<p><strong>语法</strong></p>
+<figure class="highlight dos"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs dos"><span class="hljs-built_in">convert</span> -f FILENAME<br></code></pre></td></tr></table></figure>
+
+<p><strong>示例</strong></p>
+<figure class="highlight livecodeserver"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs livecodeserver"><br><span class="hljs-comment"># 将“pod.yaml”转换为最新版本并打印到stdout。</span><br>kubectl <span class="hljs-built_in">convert</span> -f pod.yaml<br><br><br><span class="hljs-comment"># 将“pod.yaml”指定的资源的实时状态转换为最新版本＃，并以json格式打印到stdout。</span><br>kubectl <span class="hljs-built_in">convert</span> -f pod.yaml <span class="hljs-comment">--local -o json</span><br><br><br><span class="hljs-comment"># 将当前目录下的所有文件转换为最新版本，并将其全部创建。</span><br>kubectl <span class="hljs-built_in">convert</span> -f . | kubectl <span class="hljs-built_in">create</span> -f -<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="kubectl-kustomize"><a href="#kubectl-kustomize" class="headerlink" title="kubectl kustomize"></a>kubectl kustomize</h2><p><strong>官方文档</strong></p>
+<ul>
+<li><a href="https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#kustomize" target="_blank" rel="noopener">https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#kustomize</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Kubernetes/" class="category-chain-item">Kubernetes</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Kubernetes/" class="print-no-link">#Kubernetes</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>05-kubectl 命令之高级命令</div>
+      <div>https://flepeng.github.io/044-云原生-02-kubernetes-13-命令-kubectl-05-kubectl-命令之高级命令/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年3月1日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/044-%E4%BA%91%E5%8E%9F%E7%94%9F-02-kubernetes-13-%E5%91%BD%E4%BB%A4-kubectl-02-kubectl-%E5%91%BD%E4%BB%A4%E4%B9%8B%E9%83%A8%E7%BD%B2%E5%91%BD%E4%BB%A4/" title="02-kubectl 命令之部署命令">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">02-kubectl 命令之部署命令</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/044-%E4%BA%91%E5%8E%9F%E7%94%9F-02-kubernetes-13-%E5%91%BD%E4%BB%A4-kubectl-06-kubectl-%E5%91%BD%E4%BB%A4%E4%B9%8B%E8%AE%BE%E7%BD%AE%E5%91%BD%E4%BB%A4/" title="06-kubectl 命令之设置命令">
+                        <span class="hidden-mobile">06-kubectl 命令之设置命令</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

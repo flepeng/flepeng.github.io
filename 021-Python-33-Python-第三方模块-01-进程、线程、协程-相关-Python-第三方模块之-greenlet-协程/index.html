@@ -1,0 +1,881 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="官网文档：http:&#x2F;&#x2F;greenlet.readthedocs.io&#x2F;en&#x2F;latest&#x2F; github：https:&#x2F;&#x2F;github.com&#x2F;python-greenlet&#x2F;greenlet   一句话来说明 greenlet 的实现原理：通过栈的复制切换来实现不同协程之间的切换 greenlet初体验Greenlet 是 Python 的一个 C 扩展，来源于Stackless pyth">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Python 第三方模块之 greenlet - 协程">
+<meta property="og:url" content="https://flepeng.github.io/021-Python-33-Python-%E7%AC%AC%E4%B8%89%E6%96%B9%E6%A8%A1%E5%9D%97-01-%E8%BF%9B%E7%A8%8B%E3%80%81%E7%BA%BF%E7%A8%8B%E3%80%81%E5%8D%8F%E7%A8%8B-%E7%9B%B8%E5%85%B3-Python-%E7%AC%AC%E4%B8%89%E6%96%B9%E6%A8%A1%E5%9D%97%E4%B9%8B-greenlet-%E5%8D%8F%E7%A8%8B/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="官网文档：http:&#x2F;&#x2F;greenlet.readthedocs.io&#x2F;en&#x2F;latest&#x2F; github：https:&#x2F;&#x2F;github.com&#x2F;python-greenlet&#x2F;greenlet   一句话来说明 greenlet 的实现原理：通过栈的复制切换来实现不同协程之间的切换 greenlet初体验Greenlet 是 Python 的一个 C 扩展，来源于Stackless pyth">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2016-08-02T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.335Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="Python 第三方模块">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>Python 第三方模块之 greenlet - 协程 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Python 第三方模块之 greenlet - 协程"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2016-08-03 00:00" pubdate>
+          2016年8月3日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          20 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Python 第三方模块之 greenlet - 协程</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <blockquote>
+<ul>
+<li>官网文档：<a href="http://greenlet.readthedocs.io/en/latest/" target="_blank" rel="noopener">http://greenlet.readthedocs.io/en/latest/</a></li>
+<li>github：<a href="https://github.com/python-greenlet/greenlet" target="_blank" rel="noopener">https://github.com/python-greenlet/greenlet</a></li>
+</ul>
+</blockquote>
+<p>一句话来说明 greenlet 的实现原理：通过栈的复制切换来实现不同协程之间的切换</p>
+<h2 id="greenlet初体验"><a href="#greenlet初体验" class="headerlink" title="greenlet初体验"></a>greenlet初体验</h2><p>Greenlet 是 Python 的一个 C 扩展，来源于<a href="https://en.wikipedia.org/wiki/Stackless_Python" target="_blank" rel="noopener">Stackless python</a>，旨在提供可自行调度的‘微线程’，即协程。generator 实现的协程在 yield value 时只能将 value 返回给调用者(caller)。而在 greenlet 中，<code>target.switch(value)</code> 可以切换到指定的协程(target)，然后 yield value。greenlet 用 switch 来表示协程的切换，从一个协程切换到另一个协程需要显式指定。</p>
+<p>greenlet 安装</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs cmake">pip <span class="hljs-keyword">install</span> greenlet<br></code></pre></td></tr></table></figure>
+
+<p>安装好了之后我们来看一个官方的例子</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> greenlet <span class="hljs-keyword">import</span> greenlet<br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test1</span><span class="hljs-params">()</span>:</span><br>    print(<span class="hljs-number">12</span>)<br>    gr2.switch()<br>    print(<span class="hljs-number">34</span>)<br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test2</span><span class="hljs-params">()</span>:</span><br>    print(<span class="hljs-number">56</span>)<br>    gr1.switch()<br>    print(<span class="hljs-number">78</span>)<br><br>gr1 = greenlet(test1)<br>gr2 = greenlet(test2)<br>gr1.switch()<br></code></pre></td></tr></table></figure>
+
+<p>输出为：</p>
+<figure class="highlight basic"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs basic"><span class="hljs-symbol">12 </span><span class="hljs-number">56</span> <span class="hljs-number">34</span><br></code></pre></td></tr></table></figure>
+
+<p>当创建一个 greenlet 时，首先初始化一个空的栈，switch 到这个栈的时候，会运行在 greenlet 构造时传入的函数（首先在test1中打印 12），如果在这个函数（test1）中 switch 到其他协程（到了 test2 打印 34），那么该协程会被挂起，等到切换回来（在 test2 中切换回来打印 34）。当这个协程对应函数执行完毕，那么这个协程就变成 dead 状态。  </p>
+<p><strong>注意：</strong> 上面没有打印 test2 的最后一行输出 78，因为在 test2 中切换到 gr1 之后挂起，但是没有地方再切换回来。这个可能造成泄漏，后面细说。</p>
+<h2 id="greenlet-module-与-class"><a href="#greenlet-module-与-class" class="headerlink" title="greenlet module 与 class"></a>greenlet module 与 class</h2><p>我们首先看一下 greenlet 这个 module 里面的属性</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> greenlet<br>dir(greenlet)<br><span class="hljs-comment"># ['GREENLET_USE_GC', 'GREENLET_USE_TRACING', 'GreenletExit', '_C_API', '__doc__', '__file__', '__name__', '__package__', '__version__', 'error', 'getcurrent', 'gettrace', 'greenlet', 'settrace']</span><br></code></pre></td></tr></table></figure>
+
+<p>其中，比较重要的是 <code>getcurrent()</code>，<code>类 greenlet</code>、<code>异常类 GreenletExit</code>。</p>
+<ul>
+<li><code>getcurrent()</code>：返回当前的 greenlet 实例；</li>
+<li><code>GreenletExit</code>：是一个特殊的异常，当触发了这个异常的时候，即使不处理，也不会抛到其parent（后面会提到协程中对返回值或者异常的处理）</li>
+</ul>
+<p>然后我们再来看看 <code>greenlet.greenlet</code> 这个类：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> greenlet<br>dir(greenlet.greenlet)<br><br><span class="hljs-comment"># ['GreenletExit', '__class__', '__delattr__', '__dict__', '__doc__', '__format__', '__getattribute__', '__getstate__', '__hash__', '__init__', '__new__', '__nonzero__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', '_stack_saved', 'dead', 'error', 'getcurrent', 'gettrace', 'gr_frame', 'parent', 'run', 'settrace','switch', 'throw']</span><br></code></pre></td></tr></table></figure>
+<p>比较重要的几个属性：</p>
+<ul>
+<li>run：当 greenlet 启动的时候会调用到这个 callable，如果我们需要继承 greenlet.greenlet 时，需要重写该方法</li>
+<li>switch：前面已经介绍过了，在 greenlet 之间切换</li>
+<li>parent：可读写属性，后面介绍</li>
+<li>dead：如果 greenlet 执行结束，那么该属性为 true</li>
+<li>throw：切换到指定 greenlet 后立即跑出异常</li>
+</ul>
+<p><strong>文章后面提到的 greenlet 大多都是指 greenlet.greenlet 这个 class，请注意区别</strong></p>
+<h2 id="Switch-not-call"><a href="#Switch-not-call" class="headerlink" title="Switch not call"></a>Switch not call</h2><p>对于 greenlet，最常用的写法是 <code>x = gr.switch(y)</code>。 这句话的意思是切换到gr，传入参数y。当从其他协程（_不一定是这个gr_）切换回来的时候，将值付给x。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> greenlet<br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test1</span><span class="hljs-params">(x, y)</span>:</span><br>    z = gr2.switch(x+y)<br>    print(<span class="hljs-string">'test1 '</span>, z)<br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test2</span><span class="hljs-params">(u)</span>:</span><br>    print(<span class="hljs-string">'test2 '</span>, u)<br>    gr1.switch(<span class="hljs-number">10</span>)<br><br>gr1 = greenlet.greenlet(test1)<br>gr2 = greenlet.greenlet(test2)<br>print(gr1.switch(<span class="hljs-string">"hello"</span>, <span class="hljs-string">" world"</span>))<br></code></pre></td></tr></table></figure>
+
+<p>输出：  </p>
+<figure class="highlight hy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs hy">(<span class="hljs-name">'test2</span> ', 'hello world')  <br>(<span class="hljs-name">'test1</span> ', <span class="hljs-number">10</span>)  <br><span class="hljs-literal">None</span><br></code></pre></td></tr></table></figure>
+
+<p>上面的例子，第 12 行从 main greenlet 切换到了 gr1，test1 第 3 行切换到了 gs2，然后 gr1 挂起，第 8 行从 gr2 切回 gr1 时，将值（10）返回值给了 z。</p>
+<p>每一个 Greenlet 都有一个 parent，一个新的 greenlet 在哪里创生，_当前环境的 greenlet 就是这个新 greenlet 的 parent_。所有的 greenlet 构成一棵树，其跟节点就是还没有手动创建 greenlet 时候的”main” greenlet（事实上，在首次 <code>import greenlet</code> 的时候实例化）。当一个协程正常结束，执行流程回到其对应的 parent；或者在一个协程中抛出未被捕获的异常，该异常也是传递到其 parent。学习 Python 的时候，有一句话会被无数次重复”<strong>everything is oblect</strong>”, 在学习 greenlet 的调用中，同样有一句话应该深刻理解，“<strong>switch not call</strong>”。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> greenlet<br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test1</span><span class="hljs-params">(x, y)</span>:</span><br>    print(id(greenlet.getcurrent()), id(greenlet.getcurrent().parent)) <span class="hljs-comment"># 40240272 40239952</span><br>    z = gr2.switch(x+y)<br>    print(<span class="hljs-string">'back z'</span>, z)<br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test2</span><span class="hljs-params">(u)</span>:</span><br>    print(id(greenlet.getcurrent()), id(greenlet.getcurrent().parent)) <span class="hljs-comment"># 40240352 40239952</span><br>    <span class="hljs-keyword">return</span> <span class="hljs-string">'hehe'</span><br><br>gr1 = greenlet.greenlet(test1)<br>gr2 = greenlet.greenlet(test2)<br>print(id(greenlet.getcurrent()), id(gr1), id(gr2))     <span class="hljs-comment"># 40239952, 40240272, 40240352</span><br>print(gr1.switch(<span class="hljs-string">"hello"</span>, <span class="hljs-string">" world"</span>), <span class="hljs-string">'back to main'</span>)    <span class="hljs-comment"># hehe back to main</span><br></code></pre></td></tr></table></figure>
+
+<p>上述例子可以看到，尽量是从 test1 所在的协程 gr1 切换到了 gr2，但 gr2 的 parent 还是’main’ greenlet，因为默认的 parent 取决于 greenlet 的创生环境。另外在 test2 中 return 之后整个返回值返回到了其 parent，而不是 switch 到该协程的地方（即不是test1），这个跟我们平时的函数调用不一样，记住“switch not call”。对于异常 也是展开至parent</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> greenlet<br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test1</span><span class="hljs-params">(x, y)</span>:</span><br>    <span class="hljs-keyword">try</span>:<br>        z = gr2.switch(x+y)<br>    <span class="hljs-keyword">except</span> Exception:<br>        print(<span class="hljs-string">'catch Exception in test1'</span>)<br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test2</span><span class="hljs-params">(u)</span>:</span><br>    <span class="hljs-keyword">assert</span> <span class="hljs-literal">False</span><br><br>gr1 = greenlet.greenlet(test1)<br>gr2 = greenlet.greenlet(test2)<br><span class="hljs-keyword">try</span>:<br>    gr1.switch(<span class="hljs-string">"hello"</span>, <span class="hljs-string">" world"</span>)<br><span class="hljs-keyword">except</span>:<br>    print(<span class="hljs-string">'catch Exception in main'</span>)<br></code></pre></td></tr></table></figure>
+
+<p>输出为：</p>
+<figure class="highlight julia"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs julia"><span class="hljs-keyword">catch</span> <span class="hljs-built_in">Exception</span> <span class="hljs-keyword">in</span> main<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="greenlet-生命周期"><a href="#greenlet-生命周期" class="headerlink" title="greenlet 生命周期"></a>greenlet 生命周期</h2><p>文章开始的地方提到第一个例子中的 gr2 其实并没有正常结束，我们可以借用 greenlet.dead 这个属性来查看</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> greenlet <span class="hljs-keyword">import</span> greenlet<br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test1</span><span class="hljs-params">()</span>:</span><br>    gr2.switch(<span class="hljs-number">1</span>)<br>    print(<span class="hljs-string">'test1 finished'</span>)<br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test2</span><span class="hljs-params">(x)</span>:</span><br>    print(<span class="hljs-string">'test2 first'</span>, x)<br>    z = gr1.switch()<br>    print(<span class="hljs-string">'test2 back'</span>, z)<br><br>gr1 = greenlet(test1)<br>gr2 = greenlet(test2)<br>gr1.switch()<br>print(<span class="hljs-string">'gr1 is dead?: %s, gr2 is dead?: %s'</span> % (gr1.dead, gr2.dead))<br>gr2.switch()<br>print(<span class="hljs-string">'gr1 is dead?: %s, gr2 is dead?: %s'</span> % (gr1.dead, gr2.dead))<br>print(gr2.switch(<span class="hljs-number">10</span>))<br></code></pre></td></tr></table></figure>
+
+<p>输出：</p>
+<figure class="highlight ada"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs ada">test2 first <span class="hljs-number">1</span>  <br>test1 finished  <br>_gr1 <span class="hljs-keyword">is</span> dead?: <span class="hljs-literal">True</span>, gr2 <span class="hljs-keyword">is</span> dead?: False_  <br>test2 back ()  <br>_gr1 <span class="hljs-keyword">is</span> dead?: <span class="hljs-literal">True</span>, gr2 <span class="hljs-keyword">is</span> dead?: True_  <br>_10_<br></code></pre></td></tr></table></figure>
+
+<p>从这个例子可以看出</p>
+<ul>
+<li>只有当协 <strong>程对应的函数执行完毕，协程才会die</strong>，所以第一次 Check 的时候 gr2 并没有 die，因为第9行切换出去了就没切回来。在 main 中再 switch 到 gr2 的时候，执行后面的逻辑，gr2 die</li>
+<li>如果<strong>试图再次 switch 到一个已经是 dead 状态的 greenlet 会怎么样呢，事实上会切换到其 parent greenlet</strong>。</li>
+</ul>
+<h2 id="greenlet-Traceing"><a href="#greenlet-Traceing" class="headerlink" title="greenlet Traceing"></a>greenlet Traceing</h2><p>Greenlet 也提供了接口使得程序员可以监控 greenlet 的整个调度流程。主要是 gettrace 和 settrace(callback) 函数。下面看一个例子：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> greenlet<br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_greenlet_tracing</span><span class="hljs-params">()</span>:</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">callback</span><span class="hljs-params">(event, args)</span>:</span><br>        print(event, <span class="hljs-string">'from'</span>, id(args[<span class="hljs-number">0</span>]), <span class="hljs-string">'to'</span>, id(args[<span class="hljs-number">1</span>]))<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">dummy</span><span class="hljs-params">()</span>:</span><br>        g2.switch()<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">dummyexception</span><span class="hljs-params">()</span>:</span><br>        <span class="hljs-keyword">raise</span> Exception(<span class="hljs-string">'excep in coroutine'</span>)<br><br>    main = greenlet.getcurrent()<br>    g1 = greenlet.greenlet(dummy)<br>    g2 = greenlet.greenlet(dummyexception)<br>    print(<span class="hljs-string">'main id %s, gr1 id %s, gr2 id %s'</span> % (id(main), id(g1), id(g2)))<br>    oldtrace = greenlet.settrace(callback)<br>    <span class="hljs-keyword">try</span>:<br>        g1.switch()<br>    <span class="hljs-keyword">except</span>:<br>        print(<span class="hljs-string">'Exception'</span>)<br>    <span class="hljs-keyword">finally</span>:<br>        greenlet.settrace(oldtrace)<br><br>test_greenlet_tracing()<br></code></pre></td></tr></table></figure>
+
+<p>输出：</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">main id <span class="hljs-number">40604416</span>, gr1 id <span class="hljs-number">40604736</span>, gr2 id <span class="hljs-number">40604816</span>  <br><span class="hljs-keyword">switch</span> <span class="hljs-keyword">from</span> <span class="hljs-number">40604416</span> to <span class="hljs-number">40604736</span>  <br><span class="hljs-keyword">switch</span> <span class="hljs-keyword">from</span> <span class="hljs-number">40604736</span> to <span class="hljs-number">40604816</span>  <br>throw <span class="hljs-keyword">from</span> <span class="hljs-number">40604816</span> to <span class="hljs-number">40604416</span>  <br>Exception<br></code></pre></td></tr></table></figure>
+
+<p>其中 callback 函数 event 是 switch 或者 throw 之一，表明是正常调度还是异常跑出；args 是二元组，表示是从协程 <code>args[0]</code> 切换到了协程 <code>args[1]</code>。上面的输出展示了切换流程：从 main 到 gr1，然后到 gr2，最后回到 main。</p>
+<h2 id="greenlet-使用建议"><a href="#greenlet-使用建议" class="headerlink" title="greenlet 使用建议"></a>greenlet 使用建议</h2><p>使用 greenlet 需要注意一下三点：</p>
+<ul>
+<li>第一：greenlet 创生之后，一定要结束，不能 switch 出去就不回来了，否则容易造成内存泄露</li>
+<li>第二：Python 中每个线程都有自己的 main greenlet 及其对应的 sub-greenlet，不同线程之间的 greenlet 是不能相互切换的</li>
+<li>第三：不能存在循环引用，这个是官方文档明确说明<blockquote>
+<p>Greenlets do not participate in garbage collection; cycles involving data that is present in a greenlet’s frames will not be detected.</p>
+</blockquote>
+</li>
+</ul>
+<p>对于第一点，我们来看一个例子：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> greenlet <span class="hljs-keyword">import</span> greenlet, GreenletExit<br>huge = []<br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">show_leak</span><span class="hljs-params">()</span>:</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test1</span><span class="hljs-params">()</span>:</span><br>        gr2.switch()<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test2</span><span class="hljs-params">()</span>:</span><br>        huge.extend([x* x <span class="hljs-keyword">for</span> x <span class="hljs-keyword">in</span> range(<span class="hljs-number">100</span>)])<br>        gr1.switch()<br>        print(<span class="hljs-string">'finish switch del huge'</span>)<br>        <span class="hljs-keyword">del</span> huge[:]<br><br>    gr1 = greenlet(test1)<br>    gr2 = greenlet(test2)<br>    gr1.switch()<br>    gr1 = gr2 = <span class="hljs-literal">None</span><br>    print(<span class="hljs-string">'length of huge is zero ? %s'</span> % len(huge))<br><br><span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">'__main__'</span>:<br>    show_leak() <span class="hljs-comment"># output： length of huge is zero ? 100</span><br></code></pre></td></tr></table></figure>
+
+<p>在 test2 函数中第 11 行，我们将 huge 清空，然后在第 16 行将 gr1、gr2 的引用计数降到了 0。但运行结果告诉我们，第 11 行并没有执行，所以如果一个协程没有正常结束是很危险的，往往不符合程序员的预期。greenlet 提供了解决这个问题的办法，官网文档提到：如果一个 greenlet 实例的引用计数变成 0，那么会在上次挂起的地方抛出 GreenletExit 异常，这就使得我们可以通过 <code>try ... finally</code> 处理资源泄露的情况。如下面的代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> greenlet <span class="hljs-keyword">import</span> greenlet, GreenletExit<br>huge = []<br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">show_leak</span><span class="hljs-params">()</span>:</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test1</span><span class="hljs-params">()</span>:</span><br>        gr2.switch()<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test2</span><span class="hljs-params">()</span>:</span><br>        huge.extend([x* x <span class="hljs-keyword">for</span> x <span class="hljs-keyword">in</span> range(<span class="hljs-number">100</span>)])<br>        <span class="hljs-keyword">try</span>:<br>            gr1.switch()<br>        <span class="hljs-keyword">finally</span>:<br>            print(<span class="hljs-string">'finish switch del huge'</span>)<br>            <span class="hljs-keyword">del</span> huge[:]<br><br>    gr1 = greenlet(test1)<br>    gr2 = greenlet(test2)<br>    gr1.switch()<br>    gr1 = gr2 = <span class="hljs-literal">None</span><br>    print(<span class="hljs-string">'length of huge is zero ? %s'</span> % len(huge))<br><br><span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">'__main__'</span>:<br>    show_leak()<br>    <span class="hljs-comment"># output :</span><br>    <span class="hljs-comment"># finish switch del huge</span><br>   <span class="hljs-comment"># length of huge is zero ? 0</span><br></code></pre></td></tr></table></figure>
+
+<p>上述代码的 switch 流程：<code>main greenlet --&gt; gr1 --&gt; gr2 --&gt; gr1 --&gt; main greenlet</code>, 很明显 gr2 没有正常结束（在第10行刮起了）。第 18 行之后 gr1,gr2 的引用计数都变成 0，那么会在第 10 行抛出 GreenletExit 异常，因此 finally 语句有机会执行。同时，在文章开始介绍 Greenlet module 的时候也提到了，GreenletExit 这个异常并不会抛出到 parent，所以 main greenlet 也不会出异常。</p>
+<p>看上去貌似解决了问题，但这对程序员要求太高了，百密一疏。所以最好的办法还是保证协程的正常结束。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>之前的文章其实已经提到提到了 coroutine 协程的强大之处，对于异步非阻塞，而且还需要保留上下文的场景非常适用。greenlet 跟强大，可以从一个协程切换到任意其他协程，这是 generator 做不到的，但这种能力其实也是双刃剑，前面的注意事项也提到了，必须保证 greenlet 的正常结束，在协程之间任意的切换很容易出问题。</p>
+<p>比如对于服务之间异步请求的例子，简化为服务A的一个函数 foo 需要异步访问服务B，可以这样封装 greenlet：用 decorator 装饰函数 foo，当调用这个 foo 的时候建立一个 greenlet 实例，并为这个 greenley 对应一个唯一的 gid，在foo方法发出异步请求（写到gid）之后，switch到parent，这个时候这个新的协程处于挂起状态。当请求返回之后，通过gid找到之前被挂起的协程，恢复该协程即可。More simple More safety，保证旨在main和一级子协程之间切换。需要注意的是处理各种异常 以及请求超时的情况，避免内存泄露，gvent对greenlet的使用大致也是这样的。</p>
+<h2 id="references"><a href="#references" class="headerlink" title="references"></a>references</h2><ul>
+<li><a href="https://www.cnblogs.com/xybaby/p/6337944.html" target="_blank" rel="noopener">https://www.cnblogs.com/xybaby/p/6337944.html</a></li>
+<li><a href="https://www.cnblogs.com/xybaby/p/6323358.html" target="_blank" rel="noopener">https://www.cnblogs.com/xybaby/p/6323358.html</a></li>
+<li>源码梳理：<a href="https://zhuanlan.zhihu.com/p/359595405" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/359595405</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Python/" class="category-chain-item">Python</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/Python/Python-%E7%AC%AC%E4%B8%89%E6%96%B9%E6%A8%A1%E5%9D%97/" class="category-chain-item">Python 第三方模块</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Python/" class="print-no-link">#Python</a>
+      
+        <a href="/tags/Python-%E7%AC%AC%E4%B8%89%E6%96%B9%E6%A8%A1%E5%9D%97/" class="print-no-link">#Python 第三方模块</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Python 第三方模块之 greenlet - 协程</div>
+      <div>https://flepeng.github.io/021-Python-33-Python-第三方模块-01-进程、线程、协程-相关-Python-第三方模块之-greenlet-协程/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2016年8月3日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/021-Python-33-Python-%E7%AC%AC%E4%B8%89%E6%96%B9%E6%A8%A1%E5%9D%97-01-%E8%BF%9B%E7%A8%8B%E3%80%81%E7%BA%BF%E7%A8%8B%E3%80%81%E5%8D%8F%E7%A8%8B-%E7%9B%B8%E5%85%B3-Python-%E7%AC%AC%E4%B8%89%E6%96%B9%E6%A8%A1%E5%9D%97%E4%B9%8B-Gevent-%E5%8D%8F%E7%A8%8B%EF%BC%88%E5%AE%98%E6%96%B9%EF%BC%89/" title="Python 第三方模块之 Gevent - 协程（官方）">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Python 第三方模块之 Gevent - 协程（官方）</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/021-Python-33-Python-%E7%AC%AC%E4%B8%89%E6%96%B9%E6%A8%A1%E5%9D%97-01-%E8%BF%9B%E7%A8%8B%E3%80%81%E7%BA%BF%E7%A8%8B%E3%80%81%E5%8D%8F%E7%A8%8B-%E7%9B%B8%E5%85%B3-Python-%E7%AC%AC%E4%B8%89%E6%96%B9%E6%A8%A1%E5%9D%97%E4%B9%8B-Gevent-%E5%8D%8F%E7%A8%8B/" title="Python 第三方模块之 Gevent - 协程">
+                        <span class="hidden-mobile">Python 第三方模块之 Gevent - 协程</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

@@ -1,0 +1,958 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="简介sar（System Activity Reporter 系统活动情况报告）是目前 Linux 上最为全面的系统性能分析工具之一，可以从多方面对系统的活动进行报告，包括：文件的读写情况、系统调用的使用情况、磁盘 I&#x2F;O、CPU 效率、内存使用状况、进程活动及 IPC 有关的活动等。 我们可以使用 sar 命令来获得整个系统性能的报告。这有助于我们定位系统性能的瓶颈，并且有助于我们找出">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux 状态命令之 sar">
+<meta property="og:url" content="https://flepeng.github.io/003-Linux-21-%E5%91%BD%E4%BB%A4-Linux-%E7%8A%B6%E6%80%81%E5%91%BD%E4%BB%A4%E4%B9%8B-sar/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="简介sar（System Activity Reporter 系统活动情况报告）是目前 Linux 上最为全面的系统性能分析工具之一，可以从多方面对系统的活动进行报告，包括：文件的读写情况、系统调用的使用情况、磁盘 I&#x2F;O、CPU 效率、内存使用状况、进程活动及 IPC 有关的活动等。 我们可以使用 sar 命令来获得整个系统性能的报告。这有助于我们定位系统性能的瓶颈，并且有助于我们找出">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-07-04T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.270Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Linux">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>Linux 状态命令之 sar - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Linux 状态命令之 sar"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-07-05 00:00" pubdate>
+          2021年7月5日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          29 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Linux 状态命令之 sar</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p><code>sar</code>（System Activity Reporter 系统活动情况报告）是目前 Linux 上最为全面的系统性能分析工具之一，可以从多方面对系统的活动进行报告，包括：<strong>文件的读写情况、系统调用的使用情况、磁盘 I&#x2F;O、CPU 效率、内存使用状况、进程活动及 IPC 有关的活动</strong>等。</p>
+<p>我们可以使用 <code>sar</code> 命令来获得整个系统性能的报告。这有助于我们定位系统性能的瓶颈，并且有助于我们找出这些烦人的性能问题的解决方法。</p>
+<p>Linux 内核维护着一些内部计数器，这些计数器包含了所有的请求及其完成时间和 I&#x2F;O 块数等信息，<code>sar</code> 命令从所有的这些信息中计算出请求的利用率和比例，以便找出瓶颈所在。</p>
+<p>性能问题排查技巧：</p>
+<ul>
+<li>怀疑 CPU 存在瓶颈，可用 <code>sar -u</code> 和 <code>sar -q</code> 等来查看。</li>
+<li>怀疑 内存存在瓶颈，可用 <code>sar -B</code>、<code>sar -r</code> 和 <code>sar -W</code> 等来查看。</li>
+<li>怀疑 I&#x2F;O 存在瓶颈，可用 <code>sar -b</code>、<code>sar -u</code> 和 <code>sar -d</code> 等来查看。</li>
+</ul>
+<h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><p><code>sar</code> 命令来自于 <code>sysstat</code> 工具包，如果提示 <code>sar</code> 命令不存在，需先安装 <code>sysstat</code>。</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs cmake">yum <span class="hljs-keyword">install</span> systat<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="语法"><a href="#语法" class="headerlink" title="语法"></a>语法</h2><figure class="highlight haml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs haml">语法：sar [选项] [参数]<br><br>选项：<br>    -<span class="ruby">A：显示所有的报告信息；</span><br><span class="ruby">    -b：显示I/O速率；</span><br><span class="ruby">    -B：显示换页状态；</span><br><span class="ruby">    -c：显示进程创建活动；</span><br><span class="ruby">    -d：显示每个块设备的状态；</span><br><span class="ruby">    -e：设置显示报告的结束时间；</span><br><span class="ruby">    -f：从指定文件提取报告；</span><br><span class="ruby">    -i：设状态信息刷新的间隔时间；</span><br><span class="ruby">    -n：网络统计信息；</span><br><span class="ruby">    -R：显示内存状态；</span><br><span class="ruby">    -P：报告每个CPU的状态；</span><br><span class="ruby">    -u：显示CPU整体的利用率；</span><br><span class="ruby">    -v：显示索引节点，文件和其他内核表的状态；</span><br><span class="ruby">    -w：显示交换分区状态；</span><br><span class="ruby">    -x：显示给定进程的状态。</span><br><br><span class="ruby">参数：</span><br><span class="ruby">    间隔时间：每次报告的间隔时间（秒）；</span><br><span class="ruby">    次数：显示报告的次数。</span><br></code></pre></td></tr></table></figure>
+
+
+<h2 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h2><p><strong>常用用法</strong></p>
+<ul>
+<li><p><code>sar [command] 2 5</code>：每2秒输出一次 <code>sar [command]</code>，总计输入五次，省略5表示持续输出。</p>
+</li>
+<li><p><code>sar -n DEV 1 -e 22:26:00 &gt;/tmp/123 &amp;</code>：每秒采样一次网络情况直到22:26并把采样数据输出到 <code>/tmp/123</code>。</p>
+</li>
+<li><p><code>sar -f /var/log/sa/sa27 -s 23:00:00 -e 00:00:00 -r</code>：本月27日23点至0点的内存数据，需要通过 crontab 设置定时任务。</p>
+</li>
+</ul>
+<h3 id="CPU-状态统计"><a href="#CPU-状态统计" class="headerlink" title="CPU 状态统计"></a>CPU 状态统计</h3><p><strong><code>-p</code></strong></p>
+<p>**<code>-P {CPU_LIST | ALL}</code>**：用于分析多核CPU的性能状况，可以使用 CPU_LIST 分析指定核心的CPU状态，可以使用离散值和连续值，也可以使用ALL分析所有CPU核心状态。</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">[<span class="hljs-symbol">fenglepeng@</span>centos]# sar -P <span class="hljs-number">0</span> <span class="hljs-number">1</span> <span class="hljs-number">3</span>  # 表示每秒采集<span class="hljs-number">0</span>号CPU状态，总共采样<span class="hljs-number">3</span>次。<br>Linux <span class="hljs-number">3.10</span><span class="hljs-number">.0</span><span class="hljs-number">-1160.11</span><span class="hljs-number">.1</span>.el7.x86_64 (template-centos7) 	<span class="hljs-number">12</span>/<span class="hljs-number">21</span>/<span class="hljs-number">2022</span> 	_x86_64_	(<span class="hljs-number">4</span> CPU)<br><br><span class="hljs-number">11</span>:<span class="hljs-number">15</span>:<span class="hljs-number">32</span> AM     CPU     %user     %nice   %system   %iowait    %steal     %idle<br><span class="hljs-number">11</span>:<span class="hljs-number">15</span>:<span class="hljs-number">33</span> AM       <span class="hljs-number">0</span>      <span class="hljs-number">2.97</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.99</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>     <span class="hljs-number">96.04</span><br><span class="hljs-number">11</span>:<span class="hljs-number">15</span>:<span class="hljs-number">34</span> AM       <span class="hljs-number">0</span>      <span class="hljs-number">1.02</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">1.02</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>     <span class="hljs-number">97.96</span><br><span class="hljs-number">11</span>:<span class="hljs-number">15</span>:<span class="hljs-number">35</span> AM       <span class="hljs-number">0</span>      <span class="hljs-number">2.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">2.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>     <span class="hljs-number">96.00</span><br>Average:          <span class="hljs-number">0</span>      <span class="hljs-number">2.01</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">1.34</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>     <span class="hljs-number">96.66</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><code>CPU</code>：0 表示采集的是 0 号 CPU，all 表示统计信息为所有 CPU 的平均值。</li>
+<li><code>%user</code>：指运行非特权用户进程时间百分率。</li>
+<li><code>%nice</code>：是指运行特权用户进程时间百分率。</li>
+<li><code>%system</code>：是指运行内核进程时间，这个时间包括了CPU处理软硬中断的时间。</li>
+<li><code>%iowait</code>：是指等待I&#x2F;O完成的时间。</li>
+<li><code>%steal</code>：是指运行虚拟机的时间百分率，steal意味着被偷走的时间。</li>
+<li><code>%idle</code>：是指cpu空闲时间百分率，我的机器上并未运行任何程序，所以此列一直为100%。</li>
+</ul>
+<p>注意说明：</p>
+<ol>
+<li>若 %iowait 的值过高，表示硬盘存在I&#x2F;O瓶颈。</li>
+<li>若 %idle 的值高但系统响应慢时，有可能是 CPU 等待分配内存，此时应加大内存容量。</li>
+<li>若 %idle 的值持续低于1，则系统的 CPU 处理能力相对较低，表明系统中最需要解决的资源是 CPU。</li>
+</ol>
+<p><strong><code>-u</code></strong></p>
+<p>**<code>-u[ALL]</code>**：报告 cpu 使用情况，与 <code>-p</code> 不同的是，<code>-u</code> 只能报告所有cpu。<code>ALL</code> 选项输出详细信息。</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">[<span class="hljs-symbol">fenglepeng@</span>centos]# sar -u <span class="hljs-number">1</span> <span class="hljs-number">3</span><br>Linux <span class="hljs-number">3.10</span><span class="hljs-number">.0</span><span class="hljs-number">-1160.11</span><span class="hljs-number">.1</span>.el7.x86_64 (template-centos7) 	<span class="hljs-number">12</span>/<span class="hljs-number">21</span>/<span class="hljs-number">2022</span> 	_x86_64_	(<span class="hljs-number">4</span> CPU)<br><br><span class="hljs-number">11</span>:<span class="hljs-number">18</span>:<span class="hljs-number">56</span> AM     CPU     %user     %nice   %system   %iowait    %steal     %idle<br><span class="hljs-number">11</span>:<span class="hljs-number">18</span>:<span class="hljs-number">57</span> AM     all      <span class="hljs-number">0.75</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.50</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>     <span class="hljs-number">98.74</span><br><span class="hljs-number">11</span>:<span class="hljs-number">18</span>:<span class="hljs-number">58</span> AM     all      <span class="hljs-number">0.75</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">1.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>     <span class="hljs-number">98.25</span><br><span class="hljs-number">11</span>:<span class="hljs-number">18</span>:<span class="hljs-number">59</span> AM     all      <span class="hljs-number">1.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">1.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>     <span class="hljs-number">97.99</span><br>Average:        all      <span class="hljs-number">0.84</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.84</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>     <span class="hljs-number">98.33</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><code>%usr</code>：和-P的%user的区别在于%usr不包括虚拟机运行的时间。</li>
+<li><code>%sys</code>：和-P的%system的区别在于%sys不包括各种软硬中断时间。</li>
+<li><code>%irq</code>：是指处理硬中断的cpu时间百分率。</li>
+<li><code>%soft</code>：是指处理软中断的cpu时间百分率。</li>
+<li><code>%guest</code>和<code>%gnice</code>：分别指运行普通虚拟程序和特权虚拟程序的时间百分率</li>
+</ul>
+<p><strong><code>-q</code></strong></p>
+<p>**<code>-q</code>**：用于报告队列长度以及平均负载。</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">[<span class="hljs-symbol">fenglepeng@</span>centos]# sar -q <span class="hljs-number">1</span> <span class="hljs-number">3</span><br>Linux <span class="hljs-number">3.10</span><span class="hljs-number">.0</span><span class="hljs-number">-1160.11</span><span class="hljs-number">.1</span>.el7.x86_64 (template-centos7) 	<span class="hljs-number">12</span>/<span class="hljs-number">21</span>/<span class="hljs-number">2022</span> 	_x86_64_	(<span class="hljs-number">4</span> CPU)<br><br><span class="hljs-number">11</span>:<span class="hljs-number">21</span>:<span class="hljs-number">52</span> AM   runq-sz  plist-sz   ldavg<span class="hljs-number">-1</span>   ldavg<span class="hljs-number">-5</span>  ldavg<span class="hljs-number">-15</span>   blocked<br><span class="hljs-number">11</span>:<span class="hljs-number">21</span>:<span class="hljs-number">53</span> AM         <span class="hljs-number">1</span>       <span class="hljs-number">274</span>      <span class="hljs-number">0.01</span>      <span class="hljs-number">0.05</span>      <span class="hljs-number">0.05</span>         <span class="hljs-number">0</span><br><span class="hljs-number">11</span>:<span class="hljs-number">21</span>:<span class="hljs-number">54</span> AM         <span class="hljs-number">2</span>       <span class="hljs-number">274</span>      <span class="hljs-number">0.01</span>      <span class="hljs-number">0.05</span>      <span class="hljs-number">0.05</span>         <span class="hljs-number">0</span><br><span class="hljs-number">11</span>:<span class="hljs-number">21</span>:<span class="hljs-number">55</span> AM         <span class="hljs-number">1</span>       <span class="hljs-number">274</span>      <span class="hljs-number">0.01</span>      <span class="hljs-number">0.05</span>      <span class="hljs-number">0.05</span>         <span class="hljs-number">0</span><br>Average:            <span class="hljs-number">1</span>       <span class="hljs-number">274</span>      <span class="hljs-number">0.01</span>      <span class="hljs-number">0.05</span>      <span class="hljs-number">0.05</span>         <span class="hljs-number">0</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><code>runq-sz</code>：等待cpu调度的任务数。</li>
+<li><code>plist-sz</code>：处于任务列表的任务总数。</li>
+<li><code>ldavg-1</code>，<code>ldavg-5</code>，<code>ldavg-15</code>：分别指1分钟，5分钟，15分钟内cpu的负载。</li>
+<li><code>blocked</code>：表示等待I&#x2F;O完成而被阻塞的任务总数，不为0则需要留意I&#x2F;O是否存在性能瓶颈。</li>
+</ul>
+<p><strong><code>-w</code></strong></p>
+<p>**<code>-w</code>**：报告进程上下文切换的次数。</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">[<span class="hljs-symbol">fenglepeng@</span>centos]# sar -w <span class="hljs-number">1</span> <span class="hljs-number">3</span><br>Linux <span class="hljs-number">3.10</span><span class="hljs-number">.0</span><span class="hljs-number">-1160.11</span><span class="hljs-number">.1</span>.el7.x86_64 (template-centos7) 	<span class="hljs-number">12</span>/<span class="hljs-number">21</span>/<span class="hljs-number">2022</span> 	_x86_64_	(<span class="hljs-number">4</span> CPU)<br><br><span class="hljs-number">11</span>:<span class="hljs-number">22</span>:<span class="hljs-number">40</span> AM    proc/s   cswch/s<br><span class="hljs-number">11</span>:<span class="hljs-number">22</span>:<span class="hljs-number">41</span> AM      <span class="hljs-number">1.00</span>    <span class="hljs-number">470.00</span><br><span class="hljs-number">11</span>:<span class="hljs-number">22</span>:<span class="hljs-number">42</span> AM      <span class="hljs-number">0.00</span>    <span class="hljs-number">554.00</span><br><span class="hljs-number">11</span>:<span class="hljs-number">22</span>:<span class="hljs-number">43</span> AM      <span class="hljs-number">1.00</span>    <span class="hljs-number">576.00</span><br>Average:         <span class="hljs-number">0.67</span>    <span class="hljs-number">533.33</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><code>proc/s</code>:指每秒创建的进程数。</li>
+<li><code>cswch/s</code>:指每秒自愿上下文切换的次数，是指进程无法获取所需资源，导致的上下文切换。比如说， I&#x2F;O、内存等系统资源不足时，就会发生自愿上下文切换。<br>还有一个非自愿的上下文切换次数<code>nvcswch/s</code>表示则是指进程由于时间片已到等原因，被系统强制调度，进而发生的上下文切换。非自愿次数明显升高意味着cpu产生了性能瓶颈。非自愿上下文切换可以使用pidstat加上<code>-w</code>选项来输出。</li>
+</ul>
+<h3 id="内存状态统计"><a href="#内存状态统计" class="headerlink" title="内存状态统计"></a>内存状态统计</h3><p><strong><code>-r</code></strong></p>
+<p>**<code>-r [-h]</code>**：输出内存使用率统计信息，-h输出更加利于阅读的结果。</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">[<span class="hljs-symbol">fenglepeng@</span>centos]# sar -r <span class="hljs-number">1</span> <span class="hljs-number">3</span><br>Linux <span class="hljs-number">3.10</span><span class="hljs-number">.0</span><span class="hljs-number">-1160.11</span><span class="hljs-number">.1</span>.el7.x86_64 (template-centos7) 	<span class="hljs-number">12</span>/<span class="hljs-number">21</span>/<span class="hljs-number">2022</span> 	_x86_64_	(<span class="hljs-number">4</span> CPU)<br><br><span class="hljs-number">11</span>:<span class="hljs-number">25</span>:<span class="hljs-number">33</span> AM kbmemfree kbmemused  %memused kbbuffers  kbcached  kbcommit   %commit  kbactive   kbinact   kbdirty<br><span class="hljs-number">11</span>:<span class="hljs-number">25</span>:<span class="hljs-number">34</span> AM    <span class="hljs-number">267436</span>   <span class="hljs-number">7722624</span>     <span class="hljs-number">96.65</span>         <span class="hljs-number">8</span>   <span class="hljs-number">5884448</span>   <span class="hljs-number">2678356</span>     <span class="hljs-number">26.55</span>   <span class="hljs-number">4260324</span>   <span class="hljs-number">2498512</span>        <span class="hljs-number">52</span><br><span class="hljs-number">11</span>:<span class="hljs-number">25</span>:<span class="hljs-number">35</span> AM    <span class="hljs-number">267452</span>   <span class="hljs-number">7722608</span>     <span class="hljs-number">96.65</span>         <span class="hljs-number">8</span>   <span class="hljs-number">5884448</span>   <span class="hljs-number">2678356</span>     <span class="hljs-number">26.55</span>   <span class="hljs-number">4260324</span>   <span class="hljs-number">2498512</span>        <span class="hljs-number">52</span><br><span class="hljs-number">11</span>:<span class="hljs-number">25</span>:<span class="hljs-number">36</span> AM    <span class="hljs-number">267452</span>   <span class="hljs-number">7722608</span>     <span class="hljs-number">96.65</span>         <span class="hljs-number">8</span>   <span class="hljs-number">5884448</span>   <span class="hljs-number">2678356</span>     <span class="hljs-number">26.55</span>   <span class="hljs-number">4260328</span>   <span class="hljs-number">2498512</span>        <span class="hljs-number">52</span><br>Average:       <span class="hljs-number">267447</span>   <span class="hljs-number">7722613</span>     <span class="hljs-number">96.65</span>         <span class="hljs-number">8</span>   <span class="hljs-number">5884448</span>   <span class="hljs-number">2678356</span>     <span class="hljs-number">26.55</span>   <span class="hljs-number">4260325</span>   <span class="hljs-number">2498512</span>        <span class="hljs-number">52</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><code>kbmemfree</code>：剩余内存总量。</li>
+<li><code>kbavail</code>：可用内存总量，可用内存≈剩余内存+buffer+cache。</li>
+<li><code>kbmemused</code>：使用的内存总量，使用量&#x3D;总内存-剩余内存-buffer-cache-slab。</li>
+<li><code>kbbuffers</code>：被内核用来作为buffer的内存量。</li>
+<li><code>kbcached</code>：被内核用来作为cache的内存量。</li>
+<li><code>kbcommit</code>：当前工作负载下，可以保证不出现内存不足的内存量。</li>
+<li><code>%commit</code>：指<code>kbcommit</code>占内存&#x2F;swap的百分率。</li>
+<li><code>kbactive</code>：当前活跃内存量。除非万不得已，这部分内存才会被回收。</li>
+<li><code>kbinact</code>：当前非活跃内存总量，当内存不足时，这部分内存最容易被内核收回。</li>
+<li><code>kbdirty</code>：脏页大小，脏页指的是暂存于内存还没来得及持久化到硬盘的数据。可以使用<code>sync</code>刷入硬盘。</li>
+</ul>
+<p><strong><code>-B</code></strong></p>
+<p><code>-B</code>：报告系统中分页统计信息。</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">[<span class="hljs-symbol">fenglepeng@</span>centos]#sar -B <span class="hljs-number">1</span> <span class="hljs-number">3</span><br>Linux <span class="hljs-number">3.10</span><span class="hljs-number">.0</span><span class="hljs-number">-1160.11</span><span class="hljs-number">.1</span>.el7.x86_64 (template-centos7) 	<span class="hljs-number">12</span>/<span class="hljs-number">21</span>/<span class="hljs-number">2022</span> 	_x86_64_	(<span class="hljs-number">4</span> CPU)<br><br><span class="hljs-number">11</span>:<span class="hljs-number">26</span>:<span class="hljs-number">53</span> AM  pgpgin/s pgpgout/s   fault/s  majflt/s  pgfree/s pgscank/s pgscand/s pgsteal/s    %vmeff<br><span class="hljs-number">11</span>:<span class="hljs-number">26</span>:<span class="hljs-number">54</span> AM      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>     <span class="hljs-number">37.00</span>      <span class="hljs-number">0.00</span>    <span class="hljs-number">108.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span><br><span class="hljs-number">11</span>:<span class="hljs-number">26</span>:<span class="hljs-number">55</span> AM      <span class="hljs-number">0.00</span>      <span class="hljs-number">9.00</span>     <span class="hljs-number">33.00</span>      <span class="hljs-number">0.00</span>     <span class="hljs-number">50.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span><br><span class="hljs-number">11</span>:<span class="hljs-number">26</span>:<span class="hljs-number">56</span> AM      <span class="hljs-number">0.00</span>      <span class="hljs-number">9.00</span>     <span class="hljs-number">23.00</span>      <span class="hljs-number">0.00</span>     <span class="hljs-number">63.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span><br>Average:         <span class="hljs-number">0.00</span>      <span class="hljs-number">6.00</span>     <span class="hljs-number">31.00</span>      <span class="hljs-number">0.00</span>     <span class="hljs-number">73.67</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><code>pgpgin/s</code>：表示每秒从磁盘中换入内存的字节数。</li>
+<li><code>pgpgout/s</code>：表示每秒从内存换出到磁盘的字节数。</li>
+<li><code>fault/s</code>：表示系统每秒产生的缺页异常（报告主缺页和次缺页），这不是产生I&#x2F;O的缺页中断的次数，因为部分缺页中断不需要I&#x2F;O就能处理。</li>
+<li><code>majflt/s</code>：表示每秒产生的主缺页异常。</li>
+<li><code>pgfree/s</code>：每秒被系统放到空闲列表的分页数量。</li>
+<li><code>pgscank/s</code>：每秒被内核线程[kswapd]扫描的分页数量。</li>
+<li><code>pgscand/s</code>：每秒被直接扫描的数量。</li>
+<li><code>pgsteal/s</code>：系统为满足其内存需求声明每秒从cache(分页缓存和swap缓存)回收的页的数量。</li>
+<li><code>%vmeff</code>：这个指标由pgsteal&#x2F;(pgscand+pgscank)得到，这是一个衡量页面回收效率的指标。</li>
+</ul>
+<p><strong><code>-S</code></strong></p>
+<p><code>-s [h]</code>：输出swap空间的使用率统计信息。</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">[<span class="hljs-symbol">fenglepeng@</span>centos]# sar -S <span class="hljs-number">1</span> <span class="hljs-number">3</span><br>Linux <span class="hljs-number">3.10</span><span class="hljs-number">.0</span><span class="hljs-number">-1160.11</span><span class="hljs-number">.1</span>.el7.x86_64 (template-centos7) 	<span class="hljs-number">12</span>/<span class="hljs-number">21</span>/<span class="hljs-number">2022</span> 	_x86_64_	(<span class="hljs-number">4</span> CPU)<br><br><span class="hljs-number">11</span>：<span class="hljs-number">28</span>：<span class="hljs-number">03</span> AM kbswpfree kbswpused  %swpused  kbswpcad   %swpcad<br><span class="hljs-number">11</span>:<span class="hljs-number">28</span>:<span class="hljs-number">04</span> AM   <span class="hljs-number">2097148</span>         <span class="hljs-number">0</span>      <span class="hljs-number">0.00</span>         <span class="hljs-number">0</span>      <span class="hljs-number">0.00</span><br><span class="hljs-number">11</span>:<span class="hljs-number">28</span>:<span class="hljs-number">05</span> AM   <span class="hljs-number">2097148</span>         <span class="hljs-number">0</span>      <span class="hljs-number">0.00</span>         <span class="hljs-number">0</span>      <span class="hljs-number">0.00</span><br><span class="hljs-number">11</span>:<span class="hljs-number">28</span>:<span class="hljs-number">06</span> AM   <span class="hljs-number">2097148</span>         <span class="hljs-number">0</span>      <span class="hljs-number">0.00</span>         <span class="hljs-number">0</span>      <span class="hljs-number">0.00</span><br>Average:      <span class="hljs-number">2097148</span>         <span class="hljs-number">0</span>      <span class="hljs-number">0.00</span>         <span class="hljs-number">0</span>      <span class="hljs-number">0.00</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><code>kbswpfree</code>：未使用的swap量。</li>
+<li><code>kbswpused</code>：使用中的swap内存量。</li>
+<li><code>%swpused</code>：使用中的swap内存量占总swap的百分率。</li>
+<li><code>kbswpcad</code>：被swap缓存的内存量，这部分内存曾经被换出，现在又被换入但仍然位于swap空间。</li>
+<li><code>%swpcad：</code>kbswpcad占kbswpused的百分率。</li>
+</ul>
+<p><strong><code>-W</code></strong></p>
+<p><code>-W</code> 统计输出swap换入换出信息。</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">[<span class="hljs-symbol">fenglepeng@</span>centos]#sar -W <span class="hljs-number">1</span> <span class="hljs-number">3</span><br>Linux <span class="hljs-number">3.10</span><span class="hljs-number">.0</span><span class="hljs-number">-1160.11</span><span class="hljs-number">.1</span>.el7.x86_64 (template-centos7) 	<span class="hljs-number">12</span>/<span class="hljs-number">21</span>/<span class="hljs-number">2022</span> 	_x86_64_	(<span class="hljs-number">4</span> CPU)<br><br><span class="hljs-number">11</span>:<span class="hljs-number">28</span>:<span class="hljs-number">52</span> AM  pswpin/s pswpout/s<br><span class="hljs-number">11</span>:<span class="hljs-number">28</span>:<span class="hljs-number">53</span> AM      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span><br><span class="hljs-number">11</span>:<span class="hljs-number">28</span>:<span class="hljs-number">54</span> AM      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span><br><span class="hljs-number">11</span>:<span class="hljs-number">28</span>:<span class="hljs-number">55</span> AM      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span><br>Average:         <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><code>pswpin/s</code>：每秒换入swap的内存量。</li>
+<li><code>pswpout/s</code>：每秒换出swap的内存量。</li>
+</ul>
+<p>若这两项数值很高，表示内存短缺导致需要频繁换入换出。</p>
+<h3 id="I-x2F-O篇状态统计"><a href="#I-x2F-O篇状态统计" class="headerlink" title="I&#x2F;O篇状态统计"></a>I&#x2F;O篇状态统计</h3><p><strong><code>-b</code></strong></p>
+<p><code>-b</code>：报告I&#x2F;O及传输速率统计信息。</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">[<span class="hljs-symbol">fenglepeng@</span>centos]#sar -b <span class="hljs-number">1</span> <span class="hljs-number">3</span><br>Linux <span class="hljs-number">3.10</span><span class="hljs-number">.0</span><span class="hljs-number">-1160.11</span><span class="hljs-number">.1</span>.el7.x86_64 (template-centos7) 	<span class="hljs-number">12</span>/<span class="hljs-number">21</span>/<span class="hljs-number">2022</span> 	_x86_64_	(<span class="hljs-number">4</span> CPU)<br><br><span class="hljs-number">11</span>:<span class="hljs-number">29</span>:<span class="hljs-number">34</span> AM       tps      rtps      wtps   bread/s   bwrtn/s<br><span class="hljs-number">11</span>:<span class="hljs-number">29</span>:<span class="hljs-number">35</span> AM      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span><br><span class="hljs-number">11</span>:<span class="hljs-number">29</span>:<span class="hljs-number">36</span> AM      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span><br><span class="hljs-number">11</span>:<span class="hljs-number">29</span>:<span class="hljs-number">37</span> AM      <span class="hljs-number">5.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">5.00</span>      <span class="hljs-number">0.00</span>     <span class="hljs-number">87.00</span><br>Average:         <span class="hljs-number">1.67</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">1.67</span>      <span class="hljs-number">0.00</span>     <span class="hljs-number">29.00</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><code>tps</code>：每秒钟加到物理设备上的传输总量。一次传输就是加到物理设备的一次I&#x2F;O请求，由于多次逻辑请求可以合并为单次的I&#x2F;O请求，所以一次传输的大小是不确定的。</li>
+<li><code>rtps</code>：每秒加到物理设备的读请求总数。</li>
+<li><code>wtps</code>：每秒加到物理设备上的写请求总数。</li>
+<li><code>dtps</code>：每秒丢弃的请求总数。</li>
+<li><code>bread/s</code>：以块为单位每秒钟从磁盘读取的数据总量，块的大小等同于一个扇区的大小，512字节。</li>
+<li><code>bwrtn/s</code>：以块为单位每秒钟写入磁盘的数据总量。</li>
+<li><code>bdscd/s</code>以块为单位丢弃的数据总量。</li>
+</ul>
+<p><strong><code>-d</code></strong></p>
+<p><code>-d -h[--dev=dev_list]</code>：报告块设备的活动情况。</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">[<span class="hljs-symbol">fenglepeng@</span>centos]#sar -d <span class="hljs-number">1</span> <span class="hljs-number">1</span><br>Linux <span class="hljs-number">3.10</span><span class="hljs-number">.0</span><span class="hljs-number">-1160.11</span><span class="hljs-number">.1</span>.el7.x86_64 (template-centos7) 	<span class="hljs-number">12</span>/<span class="hljs-number">21</span>/<span class="hljs-number">2022</span> 	_x86_64_	(<span class="hljs-number">4</span> CPU)<br><br><span class="hljs-number">11</span>:<span class="hljs-number">30</span>:<span class="hljs-number">26</span> AM       DEV       tps  rd_sec/s  wr_sec/s  avgrq-sz  avgqu-sz     await     svctm     %util<br><span class="hljs-number">11</span>:<span class="hljs-number">30</span>:<span class="hljs-number">27</span> AM    dev2<span class="hljs-number">-0</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span><br><span class="hljs-number">11</span>:<span class="hljs-number">30</span>:<span class="hljs-number">27</span> AM   dev8<span class="hljs-number">-16</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span><br><span class="hljs-number">11</span>:<span class="hljs-number">30</span>:<span class="hljs-number">27</span> AM    dev8<span class="hljs-number">-0</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span><br><span class="hljs-number">11</span>:<span class="hljs-number">30</span>:<span class="hljs-number">27</span> AM  dev253<span class="hljs-number">-0</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span><br><span class="hljs-number">11</span>:<span class="hljs-number">30</span>:<span class="hljs-number">27</span> AM  dev253<span class="hljs-number">-1</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span><br><br>Average:          DEV       tps  rd_sec/s  wr_sec/s  avgrq-sz  avgqu-sz     await     svctm     %util<br>Average:       dev2<span class="hljs-number">-0</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span><br>Average:      dev8<span class="hljs-number">-16</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span><br>Average:       dev8<span class="hljs-number">-0</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span><br>Average:     dev253<span class="hljs-number">-0</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span><br>Average:     dev253<span class="hljs-number">-1</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><code>tps</code>：和<code>-b</code>的<code>tps</code>含义一样，都表示每秒钟加到物理设备上的传输总量。</li>
+<li><code>rkB/s</code>：每秒从设备读到的字节数。</li>
+<li><code>wkB/s</code>：每秒写入设备的字节数。</li>
+<li><code>areq-sz</code>：加到设备上I&#x2F;O请求平均大小(以字节为大小)。</li>
+<li><code>aqu-sz</code>：加到设备上请求长度的平均值。</li>
+<li><code>await</code>：加到设备上I&#x2F;O请求的平均响应时间，这个时间包括了请求处于等待队列中的时间。</li>
+<li><code>%util</code>：加到设备上I&#x2F;O请求所用的时间百分比，对于串行设备，接近100%意味着设备出现了性能瓶颈，但是对于并行设备比如RAID或者SSD，这个值实际上并不能反映出设备的极限。</li>
+</ul>
+<p><strong><code>-v</code></strong></p>
+<p><code>-v</code>：报告inode，文件以及其他内核表状态。</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">Linux <span class="hljs-number">3.10</span><span class="hljs-number">.0</span><span class="hljs-number">-1160.11</span><span class="hljs-number">.1</span>.el7.x86_64 (template-centos7) 	<span class="hljs-number">12</span>/<span class="hljs-number">21</span>/<span class="hljs-number">2022</span> 	_x86_64_	(<span class="hljs-number">4</span> CPU)<br><br><span class="hljs-number">11</span>:<span class="hljs-number">31</span>:<span class="hljs-number">03</span> AM dentunusd   file-nr  inode-nr    pty-nr<br><span class="hljs-number">11</span>:<span class="hljs-number">31</span>:<span class="hljs-number">04</span> AM    <span class="hljs-number">259766</span>      <span class="hljs-number">2112</span>    <span class="hljs-number">252444</span>         <span class="hljs-number">1</span><br>Average:       <span class="hljs-number">259766</span>      <span class="hljs-number">2112</span>    <span class="hljs-number">252444</span>         <span class="hljs-number">1</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><code>dentunusd</code>：目录缓存中未使用的缓存项数。</li>
+<li><code>file-nr</code>：系统使用的文件句柄数，查看目前使用的文件句柄数<code>lsof|awk &#39;{print $2}&#39;|wc -l</code>。</li>
+<li><code>inode-nr</code>：系统使用的inode处理程序数。</li>
+<li><code>pty-nr</code>:打开的伪终端数，即几个人登陆了系统。</li>
+</ul>
+<h3 id="网络篇状态统计"><a href="#网络篇状态统计" class="headerlink" title="网络篇状态统计"></a>网络篇状态统计</h3><p><strong><code>-n</code></strong></p>
+<p><code>sar -n { DEV | EDEV | NFS | NFSD | SOCK | ALL }</code>，sar 提供六种不同的语法选项来显示网络信息。</p>
+<ul>
+<li>DEV显示网络接口信息。</li>
+<li>EDEV显示关于网络错误的统计数据。</li>
+<li>NFS统计活动的NFS客户端的信息。</li>
+<li>NFSD统计NFS服务器的信息。</li>
+<li>SOCK显示套接字信息。</li>
+<li>ALL显示所有5个开关。它们可以单独或者一起使用。</li>
+</ul>
+<p>如果你使用DEV关键字，那么sar将汇报和网络设备相关的信息，如lo，ens160等，例如：</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">[<span class="hljs-symbol">fenglepeng@</span>centos]# sar -n DEV <span class="hljs-number">1</span> <span class="hljs-number">1</span><br>Linux <span class="hljs-number">3.10</span><span class="hljs-number">.0</span><span class="hljs-number">-1160.11</span><span class="hljs-number">.1</span>.el7.x86_64 (template-centos7) 	<span class="hljs-number">12</span>/<span class="hljs-number">21</span>/<span class="hljs-number">2022</span> 	_x86_64_	(<span class="hljs-number">4</span> CPU)<br><br><span class="hljs-number">11</span>:<span class="hljs-number">31</span>:<span class="hljs-number">48</span> AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s<br><span class="hljs-number">11</span>:<span class="hljs-number">31</span>:<span class="hljs-number">49</span> AM        lo      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span><br><span class="hljs-number">11</span>:<span class="hljs-number">31</span>:<span class="hljs-number">49</span> AM    ens160     <span class="hljs-number">13.00</span>      <span class="hljs-number">2.00</span>      <span class="hljs-number">1.24</span>      <span class="hljs-number">0.35</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span><br><br>Average:        IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s<br>Average:           lo      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span><br>Average:       ens160     <span class="hljs-number">13.00</span>      <span class="hljs-number">2.00</span>      <span class="hljs-number">1.24</span>      <span class="hljs-number">0.35</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span>      <span class="hljs-number">0.00</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><code>IFACE</code>：网络接口。</li>
+<li><code>rxpck/s</code>：每秒接收的报文数。</li>
+<li><code>txpck/s</code>：每秒发送的报文数。</li>
+<li><code>rxkB/s</code>：每秒接收的字节数,<code>rxkB/s * 1024 / rxpck/s</code> &lt; 60B,意味着收到的是小包。</li>
+<li><code>txkB/s</code>：每秒发送的字节数。</li>
+<li><code>rxcmp/s</code>：每秒接收的压缩数据包数。</li>
+<li><code>txcmp/s</code>：每秒发送的压缩数据包数。</li>
+<li><code>rxmcst/s</code>：每秒接收的多播数据包数。</li>
+<li><code>%ifutil</code>：网络接口的利用率百分比，对于半双工接口，利用率使用<code>rxkB/s</code>和<code>txkB/s</code>之和作为接口速度的百分比计算。对于全双工，这是<code>rxkB/s</code>或<code>txkB/s</code>中的较大值。。</li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Linux/" class="category-chain-item">Linux</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Linux/" class="print-no-link">#Linux</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Linux 状态命令之 sar</div>
+      <div>https://flepeng.github.io/003-Linux-21-命令-Linux-状态命令之-sar/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年7月5日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/003-Linux-21-%E5%91%BD%E4%BB%A4-Linux-%E6%9F%A5%E7%9C%8B%E6%96%87%E4%BB%B6%E5%91%BD%E4%BB%A4%E4%B9%8B-less-more/" title="Linux 查看文件命令之 less more">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Linux 查看文件命令之 less more</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/003-Linux-21-%E5%91%BD%E4%BB%A4-Linux-%E7%8A%B6%E6%80%81%E5%91%BD%E4%BB%A4%E4%B9%8B-top/" title="Linux 状态命令之 top">
+                        <span class="hidden-mobile">Linux 状态命令之 top</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

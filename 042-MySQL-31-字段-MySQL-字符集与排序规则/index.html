@@ -1,0 +1,853 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="背景数据库表被用来存储和检索数据。不同的语言和字符集需要以不同的方式存储和检索。因此，MySQL需要适应不同的字符集（不同的字母和字符），适应不同的排序和检索数据的方法 几个重要术语 字符集：为字母和符号的集合 编码：为某个字符集成员的内部表示 排序规则：为规定字符如何比较的指令。（排序规则也称为”校对顺序”）  为什么校对这么重要 排序英文其实没有想象的那么简单。例如APE、apex和Apple">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL 字符集与排序规则">
+<meta property="og:url" content="https://flepeng.github.io/042-MySQL-31-%E5%AD%97%E6%AE%B5-MySQL-%E5%AD%97%E7%AC%A6%E9%9B%86%E4%B8%8E%E6%8E%92%E5%BA%8F%E8%A7%84%E5%88%99/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="背景数据库表被用来存储和检索数据。不同的语言和字符集需要以不同的方式存储和检索。因此，MySQL需要适应不同的字符集（不同的字母和字符），适应不同的排序和检索数据的方法 几个重要术语 字符集：为字母和符号的集合 编码：为某个字符集成员的内部表示 排序规则：为规定字符如何比较的指令。（排序规则也称为”校对顺序”）  为什么校对这么重要 排序英文其实没有想象的那么简单。例如APE、apex和Apple">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-03-06T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.359Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="MySQL">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>MySQL 字符集与排序规则 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="MySQL 字符集与排序规则"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-03-07 00:00" pubdate>
+          2021年3月7日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.8k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          15 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">MySQL 字符集与排序规则</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>数据库表被用来存储和检索数据。<strong>不同的语言和字符集</strong>需要以<strong>不同的方式存储和检索</strong>。因此，MySQL需要适应<strong>不同的字符集</strong>（不同的字母和字符），适应不同的排序和检索数据的方法</p>
+<h3 id="几个重要术语"><a href="#几个重要术语" class="headerlink" title="几个重要术语"></a>几个重要术语</h3><ul>
+<li><strong>字符集：</strong>为字母和符号的集合</li>
+<li><strong>编码：</strong>为某个字符集成员的内部表示</li>
+<li><strong>排序规则：</strong>为规定字符如何比较的指令。（排序规则也称为”校对顺序”）</li>
+</ul>
+<h3 id="为什么校对这么重要"><a href="#为什么校对这么重要" class="headerlink" title="为什么校对这么重要"></a>为什么校对这么重要</h3><ul>
+<li>排序英文其实没有想象的那么简单。例如APE、apex和Apple，它们处于正确的排列顺序吗？这还依赖于你是否想区分大小写。使用区分大小写的校对顺序，这些词会有另一种排序方式。这不仅影响排序（如用order by排序数据），还影响搜索（例如，寻找apple的where子句是否能找到APPLE）</li>
+<li>在使用诸如发文或德文这样的特殊字符时，情况更复杂，在使用不基于拉丁文的字符集（日文、希伯来文、俄文等）时，情况更复杂</li>
+</ul>
+<h2 id="一、字符集"><a href="#一、字符集" class="headerlink" title="一、字符集"></a>一、字符集</h2><p>先说字符，字符是各种文字和符号的总称，包括各国家文字、标点符号、图形符号、字母、数字等，比如“啊、a、1、+、！、&amp;”等均表示一个字符。</p>
+<p>在UTF8编码中，一个字母、数字、符号占一个字节，中文占三个字节，emoji表情和一些比较复杂的文字、繁体字则占四个字节。其中一个字节由8个位组成，位为数据存储的最小单位，每个二进制数字0或者1就是1个位。</p>
+<p>换算公式：1byte(字节) &#x3D; 8bit(位)，1KB(千字节) &#x3D; 1024byte(字节)，1MB(兆) &#x3D; 1024KB(千字节)。</p>
+<p>字符集是一套符号和编码，是多个字符的集合。常见的字符集有UTF8、Unicode、GBK、GB2312、ASCCI</p>
+<p>。在MySQL中常用的字符集有UTF8和UTF8MB4这两种，一般而言我们选择UTF8MB4，而不选择UTF8，因为MySQL中的UTF8并不是真正的UTF8字符集，它只支持三个字节，emoji表情和复杂的文字无法存储，并不能代表全部的UTF8，在5.5.3版本后新增的支持四个字节的UTF8MB4才是真正的UTF8编码，为了更好的兼容性，推荐使用UTF8MB4字符集。</p>
+<p>此外，对于CHAR类型数据，UTF8MB4会多消耗一些空间，比如CHAR(10)，UTF8会保留30字节长度，UTF8MB4会保留40字节长度，根据MySQL官方建议，使用VARCHAR替代CHAR。同时UTF8MB4也是UTF8的超集，所以UTF8可以直接切换至UTF8MB4。</p>
+<h3 id="查看所支持的字符集"><a href="#查看所支持的字符集" class="headerlink" title="查看所支持的字符集"></a>查看所支持的字符集</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">SHOW</span> <span class="hljs-built_in">CHARACTER</span> <span class="hljs-keyword">SET</span>;<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight asciidoc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs asciidoc"><span class="hljs-code">+----------+</span>---------------------------------<span class="hljs-code">+---------------------+</span>--------+<br>| Charset  | Description                     | Default collation   | Maxlen |<br><span class="hljs-code">+----------+</span>---------------------------------<span class="hljs-code">+---------------------+</span>--------+<br>| big5     | Big5 Traditional Chinese        | big5<span class="hljs-emphasis">_chinese_</span>ci     |      2 |<br>| dec8     | DEC West European               | dec8<span class="hljs-emphasis">_swedish_</span>ci     |      1 |<br>| cp850    | DOS West European               | cp850<span class="hljs-emphasis">_general_</span>ci    |      1 |<br>......<br><span class="hljs-code">+----------+</span>---------------------------------<span class="hljs-code">+---------------------+</span>--------+<br></code></pre></td></tr></table></figure>
+
+<h3 id="查看当前字符集"><a href="#查看当前字符集" class="headerlink" title="查看当前字符集"></a>查看当前字符集</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">SHOW</span> <span class="hljs-keyword">VARIABLES</span> <span class="hljs-keyword">LIKE</span> <span class="hljs-string">'character%'</span>;<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="二、排序规则"><a href="#二、排序规则" class="headerlink" title="二、排序规则"></a>二、排序规则</h2><p>排序规则指定后，它会影响我们使用 ORDER BY语句查询的结果顺序，会影响到 WHERE条件中大于小于号的筛选结果，会影响 DISTINCT、GROUP BY、HAVING 语句的查询结果。另外，mysql 建索引的时候，如果索引列是字符类型，也会影响索引创建，只不过这种影响我们感知不到。总之，凡是涉及到字符类型比较或排序的地方，都和排序规则有关。</p>
+<p>命名规则：</p>
+<ul>
+<li>排序规则的命令通常是以对应的字符集的名字为开头，并以自己的特定属性结尾，比如排序规则utf8_general_ci和latin1_swedish_ci就分别是对应utf8和latin1字符集的排序规则。</li>
+<li>当排序规则特指某种语言时，则中间的部分就为这种语言的名字，比如utf8_turkish_ci和utf8_hungarian_ci就代表UTF8字符集中的土耳其语和匈牙利语。</li>
+</ul>
+<p>UTF8MB4常用的排序规则有</p>
+<ul>
+<li>utf8mb4_unicode_ci: 基于标准Unicode来排序和比较，能够在各种语言之间精确排序。且在特殊情况下，Unicode排序规则为了能够处理特殊字符的情况，实现了略微复杂的排序算法。但是在绝大多数情况下不会发生此类复杂比较。</li>
+<li>utf8mb4_general_ci: 没有实现Unicode排序规则，在遇到某些特殊字符情况下，排序结果可能不一致。但是，在绝大多数情况下，这些特殊字符的顺序并不需要那么精确。</li>
+<li>utf8mb4_bin: 将字符串的每个字符用二进制数据编译存储，区分大小写，可以存二进制的内容。</li>
+</ul>
+<p>综合来说，utf8mb4_unicode_ci比较准确，utf8mb4_general_ci速度较快。utf8mb4_unicode_ci对于特殊字符的处理，在中文、英文应用中不会使用到，除非你的应用有德语、法语、俄语等，则需要使用utf8mb4_unicode_ci，否则一般选用utf8mb4_general_ci就可以了。</p>
+<p>通常: </p>
+<ul>
+<li>bin结尾的是以二进制存储的，区分大小写，</li>
+<li>cs结尾的是区分大小写的</li>
+<li>ci结尾的不区分大小写。</li>
+<li>ai结尾的重音不敏感</li>
+<li>as结尾的重音敏感</li>
+</ul>
+<h3 id="查看所支持的校对列表"><a href="#查看所支持的校对列表" class="headerlink" title="查看所支持的校对列表"></a>查看所支持的校对列表</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs has">SHOW COLLATION;<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight gherkin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs gherkin">+--------------------------+----------+-----+---------+----------+---------+<br>|<span class="hljs-string"> Collation                </span>|<span class="hljs-string"> Charset  </span>|<span class="hljs-string"> Id  </span>|<span class="hljs-string"> Default </span>|<span class="hljs-string"> Compiled </span>|<span class="hljs-string"> Sortlen </span>|<br>+--------------------------+----------+-----+---------+----------+---------+<br>|<span class="hljs-string"> big5_chinese_ci          </span>|<span class="hljs-string"> big5     </span>|<span class="hljs-string">   1 </span>|<span class="hljs-string"> Yes     </span>|<span class="hljs-string"> Yes      </span>|<span class="hljs-string">       1 </span>|<br>|<span class="hljs-string"> big5_bin                 </span>|<span class="hljs-string"> big5     </span>|<span class="hljs-string">  84 </span>|<span class="hljs-string">         </span>|<span class="hljs-string"> Yes      </span>|<span class="hljs-string">       1 </span>|<br>|<span class="hljs-string"> dec8_swedish_ci          </span>|<span class="hljs-string"> dec8     </span>|<span class="hljs-string">   3 </span>|<span class="hljs-string"> Yes     </span>|<span class="hljs-string"> Yes      </span>|<span class="hljs-string">       1 </span>|<br>|<span class="hljs-string"> dec8_bin                 </span>|<span class="hljs-string"> dec8     </span>|<span class="hljs-string">  69 </span>|<span class="hljs-string">         </span>|<span class="hljs-string"> Yes      </span>|<span class="hljs-string">       1 </span>|<br>......<br>+--------------------------+----------+-----+---------+----------+---------+<br></code></pre></td></tr></table></figure>
+
+<h3 id="查看当前校对列表"><a href="#查看当前校对列表" class="headerlink" title="查看当前校对列表"></a>查看当前校对列表</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">SHOW</span> <span class="hljs-keyword">VARIABLES</span> <span class="hljs-keyword">LIKE</span> <span class="hljs-string">'collation%'</span>;<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="指定字符集"><a href="#指定字符集" class="headerlink" title="指定字符集"></a>指定字符集</h2><p>排序规则设置可以分为：MySQL实例级别、库级别、表级别、列级别以及SQL指定。</p>
+<p>优先级顺序是 SQL语句 &gt; 列级别设置 &gt; 表级别设置 &gt; 库级别设置 &gt; 实例级别设置</p>
+<p>也就是说，如果SQL语句中指定了排序规则，则以其指定为准，否则以下一级为准（也就是列级别），如果列级别没有指定，默认是继承表级别的设置，以此类推。</p>
+<h3 id="1、MySQL实例级别设置"><a href="#1、MySQL实例级别设置" class="headerlink" title="1、MySQL实例级别设置"></a>1、MySQL实例级别设置</h3><p>实例级别的排序规则设置就是 MySQL 配置文件或启动指令中的 collation_connection 系统变量。</p>
+<p>可以通过修改mysql的配置文件 my.ini来修改相应的排序规则，修改好后，重启mysql服务。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-comment"># 查看MySQL实例级别的字符集</span><br><span class="hljs-keyword">show</span> <span class="hljs-keyword">variables</span> <span class="hljs-keyword">like</span> <span class="hljs-string">'%character%'</span>;<br><br><span class="hljs-comment"># 查看MySQL实例级别的排序规则</span><br><span class="hljs-keyword">show</span> <span class="hljs-keyword">variables</span> <span class="hljs-keyword">like</span> <span class="hljs-string">'%collation%'</span>;<br></code></pre></td></tr></table></figure>
+
+<h3 id="2、库级别设置"><a href="#2、库级别设置" class="headerlink" title="2、库级别设置"></a>2、库级别设置</h3><p>在创建数据库的时候指定数据集和排序规则,指定完之后创建表的时候就可以不指定了，如果不指定就是跟随库的默认设置。</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs routeros">CREATE DATABASE TESTDB <br>DEFAULT CHARACTER <span class="hljs-builtin-name">SET</span> utf8mb4 COLLATE utf8mb4_general_ci;<br></code></pre></td></tr></table></figure>
+
+<p>查看库级别排序规则</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">show</span> <span class="hljs-keyword">create</span> <span class="hljs-keyword">database</span> 数据库名;<br></code></pre></td></tr></table></figure>
+
+<h3 id="3、表级别设置"><a href="#3、表级别设置" class="headerlink" title="3、表级别设置"></a>3、表级别设置</h3><p>在创建表的时候指定表的数据集和排序规则</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">TABLE</span> <span class="hljs-keyword">user</span>(<br>  <span class="hljs-string">`id`</span> <span class="hljs-built_in">int</span>(<span class="hljs-number">11</span>) <span class="hljs-keyword">NOT</span> <span class="hljs-literal">NULL</span>,<br>) <span class="hljs-keyword">ENGINE</span>=<span class="hljs-keyword">InnoDB</span> <span class="hljs-keyword">DEFAULT</span> <span class="hljs-keyword">CHARSET</span>=utf8mb4 <span class="hljs-keyword">COLLATE</span>=utf8mb4_unicode_ci;<br></code></pre></td></tr></table></figure>
+
+<p>查看表级别排序规则</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">show</span> <span class="hljs-keyword">table</span> <span class="hljs-keyword">status</span> <span class="hljs-keyword">from</span> 数据库名 <span class="hljs-keyword">like</span> <span class="hljs-string">'表名'</span>;<br><span class="hljs-comment">-- testdb 为数据库名， user 为要查看的表名</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="4、列级别设置"><a href="#4、列级别设置" class="headerlink" title="4、列级别设置"></a>4、列级别设置</h3><p>在创建表的时候指定列的数据集和排序规则。<br>只有在字符才有，也就是字符类型，char、varchar、tinytext等等。。。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">TABLE</span> <span class="hljs-string">`test`</span>  (<br>  <span class="hljs-string">`id`</span> <span class="hljs-built_in">int</span>(<span class="hljs-number">11</span>) <span class="hljs-keyword">NOT</span> <span class="hljs-literal">NULL</span>,<br>  <span class="hljs-string">`name`</span> <span class="hljs-built_in">varchar</span>(<span class="hljs-number">255</span>) <span class="hljs-built_in">CHARACTER</span> <span class="hljs-keyword">SET</span> utf8 <span class="hljs-keyword">COLLATE</span> utf8_bin <span class="hljs-literal">NULL</span> <span class="hljs-keyword">DEFAULT</span> <span class="hljs-literal">NULL</span>,<br>);<br></code></pre></td></tr></table></figure>
+
+<p>查看列级别排序规则</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs commonlisp">show full columns from test;<br></code></pre></td></tr></table></figure>
+
+
+<h4 id="2-3-5、SQL指定设置"><a href="#2-3-5、SQL指定设置" class="headerlink" title="2.3.5、SQL指定设置"></a>2.3.5、SQL指定设置</h4><p>SQL语句中指定排序规则,当然不能乱设置，假如表用的utf8的，你设置utf8mb4_unicode_ci，他是会直接查询报错的。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">SELECT</span><br>	<span class="hljs-keyword">id</span>,<br>  <span class="hljs-keyword">name</span> <br><span class="hljs-keyword">FROM</span><br>	<span class="hljs-keyword">test</span> <br><span class="hljs-keyword">ORDER</span> <span class="hljs-keyword">BY</span><br>	<span class="hljs-keyword">name</span> <span class="hljs-keyword">COLLATE</span> utf8_unicode_ci;<br></code></pre></td></tr></table></figure>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/MySQL/" class="category-chain-item">MySQL</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/MySQL/" class="print-no-link">#MySQL</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>MySQL 字符集与排序规则</div>
+      <div>https://flepeng.github.io/042-MySQL-31-字段-MySQL-字符集与排序规则/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年3月7日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/042-MySQL-31-%E5%AD%97%E6%AE%B5-MySQL-%E5%A4%A7%E5%B0%8F%E5%86%99/" title="MySQL 大小写">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">MySQL 大小写</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/042-MySQL-31-%E5%AD%97%E6%AE%B5-MySQL-%E6%95%B0%E6%8D%AE%E5%BA%93%E5%8F%8A%E8%A1%A8%E7%BC%96%E7%A0%81%E6%A0%BC%E5%BC%8F%E6%9F%A5%E7%9C%8B%E5%92%8C%E4%BF%AE%E6%94%B9/" title="MySQL 数据库及表编码格式查看和修改">
+                        <span class="hidden-mobile">MySQL 数据库及表编码格式查看和修改</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

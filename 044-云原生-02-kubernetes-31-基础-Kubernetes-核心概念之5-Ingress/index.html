@@ -1,0 +1,986 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="官方文档：https:&#x2F;&#x2F;kubernetes.io&#x2F;docs&#x2F;concepts&#x2F;services-networking&#x2F;ingress&#x2F; 部署文档：https:&#x2F;&#x2F;github.com&#x2F;kubernetes&#x2F;ingress-nginx&#x2F;blob&#x2F;master&#x2F;docs&#x2F;deploy&#x2F;index.md   1、前言一般情况下，如果我们部署 web 应用，我们需要将端口号对外暴露，通过 ip +">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kubernetes 核心概念之5 Ingress">
+<meta property="og:url" content="https://flepeng.github.io/044-%E4%BA%91%E5%8E%9F%E7%94%9F-02-kubernetes-31-%E5%9F%BA%E7%A1%80-Kubernetes-%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5%E4%B9%8B5-Ingress/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="官方文档：https:&#x2F;&#x2F;kubernetes.io&#x2F;docs&#x2F;concepts&#x2F;services-networking&#x2F;ingress&#x2F; 部署文档：https:&#x2F;&#x2F;github.com&#x2F;kubernetes&#x2F;ingress-nginx&#x2F;blob&#x2F;master&#x2F;docs&#x2F;deploy&#x2F;index.md   1、前言一般情况下，如果我们部署 web 应用，我们需要将端口号对外暴露，通过 ip +">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/kubernetes/ingress/7893b5568884f7a43f24932a99ef588e98dffc.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubernetes/ingress/372ed58c52b84828a430691d07e6b5f2.jpeg">
+<meta property="og:image" content="https://flepeng.github.io/img/kubernetes/ingress/712d2a40c608.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubernetes/ingress/1679278990-a9ce56658f1776f1bc102a07c0c27e03.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubernetes/ingress/1679278990-5e17bf4b6af085bc67ae5043a2e8b4c1.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubernetes/ingress/image-20201118111700534.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubernetes/ingress/image-20201118112029820.png">
+<meta property="og:image" content="https://flepeng.github.io/img/kubernetes/ingress/image-20201118112212519.png">
+<meta property="article:published_time" content="2023-02-28T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.393Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Kubernetes">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/kubernetes/ingress/7893b5568884f7a43f24932a99ef588e98dffc.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>Kubernetes 核心概念之5 Ingress - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Kubernetes 核心概念之5 Ingress"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-03-01 00:00" pubdate>
+          2023年3月1日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          59 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Kubernetes 核心概念之5 Ingress</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <blockquote>
+<ul>
+<li>官方文档：<a href="https://kubernetes.io/docs/concepts/services-networking/ingress/" target="_blank" rel="noopener">https://kubernetes.io/docs/concepts/services-networking/ingress/</a></li>
+<li>部署文档：<a href="https://github.com/kubernetes/ingress-nginx/blob/master/docs/deploy/index.md" target="_blank" rel="noopener">https://github.com/kubernetes/ingress-nginx/blob/master/docs/deploy/index.md</a></li>
+</ul>
+</blockquote>
+<h1 id="1、前言"><a href="#1、前言" class="headerlink" title="1、前言"></a>1、前言</h1><p>一般情况下，如果我们部署 web 应用，我们需要将端口号对外暴露，通过 <code>ip + 端口号</code> 就可以进行访问</p>
+<p>使用 Service 中的 NodePort 来实现</p>
+<ul>
+<li>在每个节点上都会启动端口。</li>
+<li>在访问的时候通过任何节点，通过 <code>ip + 端口号</code> 就能实现访问。</li>
+</ul>
+<p>但是 NodePort 还存在一些缺陷</p>
+<ul>
+<li>因为端口不能重复，所以每个端口只能使用一次，一个端口对应一个应用。当需要对外暴露的服务量比较多的时候，NodePort&#x2F;LoadBalancer 在每个节点上开启的端口数量会极其庞大，而且难以维护(NodePort 默认使用 <code>30000~32767</code> 端口)。</li>
+<li>实际访问中都是用域名，根据不同域名跳转到不同端口服务中。</li>
+</ul>
+<p>这时候引出的思考问题是 “能不能使用 Nginx 啥的只监听一个端口(eg：80)，然后按照域名向后转发？”这思路可以，简单的实现就是使用 DaemonSet 在每个 Node 节点上监听 80 端口，然后写好规则，因为 Nginx 外面绑定了宿主机 80 端口(就像 NodePort 那样)，本身又在集群内，那么向后直接转发到相应 Service IP 就行了。</p>
+<p>由上面的思路，采用 Nginx 似乎已经解决了问题，但是其实这里面有一个弊端：每次有新服务加入怎么改 Nginx 配置？难道要手动改或者来个 Rolling Update 前端 Nginx Pod 么？这种人工介入的方式显然不那么理想。  </p>
+<p>通过如上介绍，使用 NodePort 和 LoadBalancer 类型的 Service 除了有这些问题之外，加上其自带的跃点现象，增加网络延迟，更增加使用云服务维护成本，同时自动化也做得不够理想。因此，Kubernetes 为这种需求提供了一种更为高级的流量管理方式，使用 Ingress 资源以 Kubernetes 标准的资源格式定义流量调度、路由等规则，通过 Ingress 控制器监视 API Server 上 Ingress 资源的变动，并将其体现在自身的配置文件中。这样一来，流量由 Ingress 控制器(基于 Ingress 的定义)直接到达相关 Service 的后端端点(Pod 对象)，该转发过程不再经由 Service 进行，从而<strong>节省了由 kube-proxy 产生的流量代理(转发)开销</strong>。同时 Ingress 仍然借助 Service 资源完成服务发现(即全过程为：<code>Ingress Controller + Ingress 规则 -&gt; Service后端端点</code>)。  </p>
+<p>从本质上说，Ingress 资源基于 HTTP 虚拟主机或 URL 路径的流量转发规则，把需要暴露给集群外部的 Service 对象映射为 Ingress 控制器上的一个个虚拟主机或某个虚拟主机上的路径。</p>
+<ul>
+<li>service 用于集群内部应用的网络调用，处理东西流量</li>
+<li>ingress 用于集群外部用户访问内部服务，处理南北流量</li>
+</ul>
+<h1 id="2、介绍"><a href="#2、介绍" class="headerlink" title="2、介绍"></a>2、介绍</h1><p>Ingress 是 Kubernetes 集群中的一种资源类型，用于实现 <strong>用域名的方式</strong> 访问 Kubernetes 内部应用。它为 Kubernetes 集群中的服务提供了入口，可以提供 <strong>负载均衡、SSL终端和基于名称的虚拟主机</strong>。简单点来说它就是外网访问集群应用的媒介。</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs routeros">+----------+  Ingress   +---------+<br>| internet | ---------&gt; |<span class="hljs-built_in"> Service </span>|<br>+----------+            +---------+<br></code></pre></td></tr></table></figure>
+
+<h2 id="为什么需要-Ingress-Controller-Ingress-控制器"><a href="#为什么需要-Ingress-Controller-Ingress-控制器" class="headerlink" title="为什么需要 Ingress-Controller(Ingress 控制器)"></a>为什么需要 Ingress-Controller(Ingress 控制器)</h2><p>如果说 Service 本质上就是一个由 kube-proxy 控制的四层负载均衡，在 TCP&#x2F;IP 协议栈上转发流量，则 Ingress 就是工作在七层之上的另一种形式的 Service，它同样会代理一些后端的 Pod，也定义一些路由规则说明流量该如何转发，只不过这些规则使用的是 HTTP&#x2F;HTTPS 协议。  </p>
+<p>Service 本身只是一些 iptables&#x2F;ipvs 规则，真正配置、应用这些规则的实际上是节点里的 kube-proxy 组件。如果没有 kube-proxy，Service 定义得再完善也没有用。</p>
+<p>同样的，Ingress 也只是一些 HTTP 路由规则的集合，相当于一份静态的描述文件，真正要把这些规则在集群里实施运行，还需要有另外一个东西，这就是 Ingress Controller，它的作用就相当于 Service 的 kube-proxy，能够读取、应用 Ingress 规则，处理、调度流量。  </p>
+<p>事实上，Ingress 控制器本身就是一类以代理 HTTP&#x2F;HTTPS 协议为主要功能的代理程序，它可以由任何具有反向代理功能的服务程序实现，比如 Ingress-Nginx(使用较多)、Haproxy、Traefik、Gloo、Contour 等。Kubernetes 支持同时部署多个 Ingress 控制器。但为了避免一个 Ingress 资源被多个 Ingress 控制器重复加载，需要在 Ingress 资源指定加载该资源的 Ingress 控制器。  </p>
+<p>下图来自 Nginx 官网，比较清楚地展示了 Ingress Controller 在 Kubernetes 集群里的地位。</p>
+<p><img src="/img/kubernetes/ingress/7893b5568884f7a43f24932a99ef588e98dffc.png" srcset="/img/loading.gif" lazyload></p>
+<p>在生产环境中常用的 Ingress 控制器有 <code>Treafik</code>、<code>Nginx</code>、<code>HAProxy</code>、<code>Istio</code> 等。Ingress 控制器用于从集群外部到集群内部 Service 的 HTTP 和 HTTPS 路由，流量从 Internet 到 Ingress 再到 Services 最后到 Pod 上。</p>
+<p>通常情况下，Ingress 部署在所有的 Node 节点上，可以配置提供服务外部访问的 URL、负载均衡、终止 SSL，并提供基于域名的虚拟主机，但它不会暴露任意端口或协议。</p>
+<p><img src="/img/kubernetes/ingress/372ed58c52b84828a430691d07e6b5f2.jpeg" srcset="/img/loading.gif" lazyload></p>
+<h2 id="为什么要有-Ingress-Class"><a href="#为什么要有-Ingress-Class" class="headerlink" title="为什么要有 Ingress-Class"></a>为什么要有 Ingress-Class</h2><p>有了 Ingress 和 Ingress 控制器就一定能完美管控集群的进出流量呢？未必。随着 Ingress 在实践中的大量应用，很多用户发现这种用法会带来一些问题，比如：</p>
+<ul>
+<li>由于某些原因，项目组需要引入不同的 Ingress Controller，但 Kubernetes 不允许这样做；</li>
+<li>Ingress 规则过多，都交给一个 Ingress Controller 处理会让它不堪重负；</li>
+<li>多个 Ingress 对象没有很好的逻辑分组方式，管理和维护成本很高；</li>
+<li>集群里有不同的租户，他们对 Ingress 的需求差异很大甚至有冲突，无法部署在同一个 Ingress Controller 上。</li>
+</ul>
+<p>因此，Kubernetes 就又提出了一个 Ingress Class 的概念，让它在 Ingress 和 Ingress Controller 中间，作为流量规则和控制器的协调人，解除了 Ingress 和 Ingress Controller 的强绑定关系，用它来定义不同的业务逻辑分组，简化 Ingress 规则的复杂度。比如，我们可以用 Class A 处理博客流量、Class B 处理短视频流量、Class C 处理购物流量。</p>
+<p><img src="/img/kubernetes/ingress/712d2a40c608.png" srcset="/img/loading.gif" lazyload></p>
+<h2 id="ingress-配置示例"><a href="#ingress-配置示例" class="headerlink" title="ingress 配置示例"></a>ingress 配置示例</h2><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">networking.k8s.io/v1beta1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Ingress</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">test-ingress</span><br>  <span class="hljs-attr">annotations:</span><br>    <span class="hljs-attr">nginx.ingress.kubernetes.io/rewrite-target:</span> <span class="hljs-string">/</span>  <span class="hljs-comment"># Ingress 经常使用注解（Annotations）来配置一些选项，具体取决于 Ingress 控制器，例如 rewrite-target 注解。不同的 Ingress 控制器支持不同的注解。</span><br><span class="hljs-attr">spec:</span>       <span class="hljs-comment"># spec字段包含了负载均衡器或代理服务器的配置，最重要的是它包含了所有传入请求的匹配规则。Ingress 资源仅支持用于转发 HTTP(S) 流量的规则。</span><br>  <span class="hljs-attr">ingressClassName:</span> <span class="hljs-string">nginx-example</span><br>  <span class="hljs-attr">rules:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">http:</span><br>      <span class="hljs-attr">paths:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">path:</span> <span class="hljs-string">/testpath</span><br>        <span class="hljs-attr">backend:</span><br>          <span class="hljs-attr">serviceName:</span> <span class="hljs-string">test</span><br>          <span class="hljs-attr">servicePort:</span> <span class="hljs-number">80</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>Ingress 经常使用注解（Annotations）来配置一些选项，具体取决于 Ingress 控制器，例如 rewrite-target 注解。不同的 Ingress 控制器支持不同的注解。</li>
+<li>spec 字段包含了负载均衡器或代理服务器的配置，最重要的是它包含了所有传入请求的匹配规则。Ingress 资源仅支持用于转发 HTTP(S) 流量的规则。</li>
+<li>rules 字段是 Ingress 中比较重要的一部分，即上述示例中的 rules 字段的含义（它是一个可以包含多种 rule 对象的数组），每个 Http 的 rule 都应该包含如下的信息：<ol>
+<li><code>host</code>：可选参数，用于限定 rule 适用的 host，如指定为 foo.bar.com，那该 rule 只应用于这个 host，上述示例中未指定，则该 rule 适用于通过指定 IP 地址的所有入站 HTTP 流量；</li>
+<li><code>paths</code>：一系列的 path 对象组成的数组，上述示例中只有一个 path 为 &#x2F;testpath，每个 path 都有一个 backend 对象（代表的是后端服务）与之对应</li>
+<li><code>backend</code>：是一个 serviceName 和 servicePort 的组合对象，只有 host 和 path 都匹配成功的情况下，LoadBalancer 才会将流量导向引用的服务。<br>通常 Ingress 会有一个 Default Backend，当在上述我们自定义的 Ingress Resource 没有匹配的 rule 对象时，流量就会被导向这个 Default Backend。当然这个 default backend 需要我们自己去配，通常不会在 Ingress Resource 中配置 default backend，而是应该在 Ingress Controller 中进行指定。</li>
+</ol>
+</li>
+<li>如果 ingressClassName 被省略，那么你应该定义一个默认的 Ingress 类。<br>有些 Ingress 控制器不需要定义默认的 IngressClass。比如：Ingress-NGINX 控制器可以通过参数 –watch-ingress-without-class 来配置。不过仍然推荐设置默认的 IngressClass。</li>
+</ul>
+<h2 id="ingress-原理"><a href="#ingress-原理" class="headerlink" title="ingress 原理"></a>ingress 原理</h2><p>Ingress 的原理涉及到以下几个组件：</p>
+<ol>
+<li><strong>Ingress 资源</strong>：这是 Kubernetes 中的一个 API 对象，用于定义路由规则，将外部的 HTTP&#x2F;HTTPS 请求路由到集群内部的服务。Ingress 资源描述了哪些主机和路径应该路由到哪些服务，这是 Ingress 实现方案的基础。可以理解为配置模板或者配置文件。</li>
+<li><strong>Ingress 控制器</strong>：Ingress 控制器是实际执行路由功能的组件。它需要解析 Ingress 资源中的规则，并设置相应的代理或负载均衡策略。当 Ingress 资源发生变化时，Ingress 控制器需要动态地更新其配置，以保持与 Ingress 资源的同步。ingress-controller并不是k8s自带的组件，实际上它只是一个统称，用户可以选择不同的 ingress-controller 来实现功能。其中由 k8s 官方维护的是 nginx-ingress。</li>
+</ol>
+<p>Ingress 的原理：</p>
+<ol>
+<li>首先，部署一个 Ingress 控制器，例如 Nginx、Traefik 等。这个控制器会运行在 Kubernetes 集群中，并监听 Ingress 资源的变化。控制器通过和 Kubernetes API Server 交互，动态的去感知集群中 Ingress 规则变化。</li>
+<li>接下来，创建 Ingress 资源，定义路由规则。例如，可以定义一个规则，将所有以 example.com 为域名的请求路由到名为 my-service 的服务。</li>
+<li>Ingress 控制器会解析这个 Ingress 资源，并根据定义的规则设置代理或负载均衡。例如，如果 Ingress 资源指定了使用轮询策略进行负载均衡，那么 Ingress 控制器就会配置其代理组件以轮询方式将请求发送到后端服务。</li>
+<li>当外部请求到达 Ingress 控制器时，它会根据定义的规则将请求转发到相应的服务。这样，就可以通过简单的配置实现复杂的路由和负载均衡策略。</li>
+</ol>
+<p>说白了，Ingress 控制器解决了之前手动改 Nginx 的问题，自动生成 Nginx 配置，再写入 Pod 中，再 Reload 使之生效。</p>
+<p>需要注意的是，Ingress 的实现方案可能会因所选的 Ingress 控制器而有所不同。不同的 Ingress 控制器可能支持不同的功能、性能和扩展性。因此，在选择 Ingress 控制器时，需要根据实际需求进行评估和选择。</p>
+<h3 id="Nginx-类型-Ingress-实现"><a href="#Nginx-类型-Ingress-实现" class="headerlink" title="Nginx 类型 Ingress 实现"></a>Nginx 类型 Ingress 实现</h3><p>Nginx 类型的 Ingress 实现是通过<strong>Nginx Ingress Controller</strong>来完成的。Nginx Ingress Controller 是一个符合 Kubernetes Ingress 规范的实现，它使用 Nginx 作为反向代理来实现 Ingress 的功能。具体实现过程如下：</p>
+<ol>
+<li><strong>安装 Nginx Ingress Controller</strong>：首先需要安装 Nginx Ingress Controller。可以通过 Kubernetes 的官方 Helm chart 或者其他方式进行安装。安装完成后，Nginx Ingress Controller 会以 Kubernetes Pod 的形式运行在集群中。</li>
+<li><strong>创建 Ingress 资源</strong>：定义 Ingress 资源，描述路由规则。Ingress 资源会包含一些字段，比如 <code>host</code>、<code>path</code> 等，用于匹配并路由请求到对应的服务。例如，可以根据不同的主机名和路径将请求路由到不同的后端服务。</li>
+<li><strong>Nginx Ingress Controller 解析 Ingress 资源</strong>：Nginx Ingress Controller 会监听 Kubernetes API Server 中的 Ingress 资源变化，并及时解析 Ingress 资源中的规则。</li>
+<li><strong>配置 Nginx</strong>：根据解析得到的规则，Nginx Ingress Controller 会动态生成 Nginx 配置文件，并更新 Nginx 的配置。这样，Nginx 就可以根据配置文件的规则，将请求正确地代理到后端服务。<br>当 Ingress 资源发生变化时，Nginx Ingress Controller 会相应地更新 Nginx 的配置，以保持与实际路由规则的一致。</li>
+<li><strong>请求路由</strong>：一旦 Nginx 的配置更新完成，外部的请求到达 Nginx 时，就会根据配置文件中的规则被路由到正确的后端服务。这样，通过 Nginx Ingress Controller 和 Nginx 的配合，就实现了 Ingress 的路由功能。</li>
+</ol>
+<p>需要注意的是，Nginx 类型的 Ingress 实现可以通过扩展 Nginx Ingress Controller 来实现更多的功能，比如认证、限流、重定向等。同时，也可以根据实际需求调整 Nginx 的配置参数，以满足特定的性能和安全要求。</p>
+<h3 id="Treafik-类型-Ingress-实现"><a href="#Treafik-类型-Ingress-实现" class="headerlink" title="Treafik 类型 Ingress 实现"></a>Treafik 类型 Ingress 实现</h3><p>Treafik 类型的 Ingress 实现是通过<strong>Traefik Ingress Controller</strong>来完成的。Traefik 是一个现代的 HTTP 反向代理和负载均衡器，可以很好地与 Kubernetes 集成，并实现 Ingress 的功能。具体实现过程如下：</p>
+<ol>
+<li><strong>安装 Traefik Ingress Controller</strong>：首先需要在 Kubernetes 集群中安装 Traefik Ingress Controller。可以通过 Kubernetes 的官方 Helm chart 或其他方式进行安装。安装完成后，Traefik 会以 Kubernetes Pod 的形式运行在集群中。</li>
+<li><strong>配置 Traefik</strong>：根据实际需求配置 Traefik。Traefik 支持通过配置文件、环境变量或 Kubernetes 自定义资源等方式进行配置。可以配置一些参数，比如监听端口、访问日志、SSL证书等。</li>
+<li><strong>创建 Ingress 资源</strong>：定义 Ingress 资源，描述路由规则。Ingress 资源会包含一些字段，比如<code>host</code>、<code>path</code>等，用于匹配并路由请求到对应的服务。</li>
+<li><strong>Traefik 解析 Ingress 资源</strong>：Traefik 会监听 Kubernetes API Server 中的 Ingress 资源变化，并及时解析 Ingress 资源中的规则。它会自动发现 Kubernetes 服务，并根据 Ingress 资源的定义生成相应的路由配置。</li>
+<li><strong>请求路由</strong>：一旦 Traefik 的配置和路由规则生成完成，外部的请求到达 Traefik 时，就会根据配置的规则被路由到正确的后端服务。Traefik 会根据请求的主机名、路径等信息匹配 Ingress 资源中的规则，并将请求代理到相应的服务。</li>
+<li><strong>扩展功能</strong>：Traefik 还支持许多扩展功能，比如自动 SSL 证书管理（通过Let’s Encrypt等）、认证和授权、限流、重定向等。可以根据实际需求启用和配置这些功能。</li>
+</ol>
+<p>需要注意的是，Traefik 类型 Ingress 实现可以通过自定义中间件来扩展功能。中间件是在请求到达后端服务之前或之后执行的插件，可以实现各种功能，比如请求头修改、请求体转换等。</p>
+<p>总结来说，通过 Traefik Ingress Controller 和 Traefik 的配合，可以实现灵活且功能丰富的 Ingress 路由方案。</p>
+<h3 id="HAProxy-类型-ingress-实现"><a href="#HAProxy-类型-ingress-实现" class="headerlink" title="HAProxy 类型 ingress 实现"></a>HAProxy 类型 ingress 实现</h3><p>HAProxy 类型的 Ingress 实现是通过<strong>HAProxy Ingress Controller</strong>来完成的。HAProxy 是一个高性能的负载均衡器和反向代理服务器，可以作为 Ingress 控制器来实现 Ingress 的功能。具体实现过程如下：</p>
+<ol>
+<li><strong>安装 HAProxy Ingress Controller</strong>：首先需要在 Kubernetes 集群中安装 HAProxy Ingress Controller。可以通过 Kubernetes 的官方 Helm chart 或其他方式进行安装。安装完成后，HAProxy Ingress Controller 会以 Kubernetes Pod 的形式运行在集群中。</li>
+<li><strong>配置 HAProxy</strong>：根据实际需求配置HAProxy。HAProxy 支持通过配置文件、环境变量或 Kubernetes 自定义资源等方式进行配置。可以配置一些参数，比如监听端口、会话保持、SSL证书等。</li>
+<li><strong>创建 Ingress 资源</strong>：定义 Ingress 资源，描述路由规则。Ingress 资源会包含一些字段，比如<code>host</code>、<code>path</code>等，用于匹配并路由请求到对应的服务。</li>
+<li><strong>HAProxy 解析 Ingress 资源</strong>：HAProxy Ingress Controller 会监听 Kubernetes API Server 中的 Ingress 资源变化，并及时解析 Ingress 资源中的规则。它会自动发现 Kubernetes 服务，并根据 Ingress 资源的定义生成相应的路由配置。</li>
+<li><strong>请求路由</strong>：一旦 HAProxy 的配置和路由规则生成完成，外部的请求到达 HAProxy 时，就会根据配置的规则被路由到正确的后端服务。HAProxy 会根据请求的主机名、路径等信息匹配 Ingress 资源中的规则，并将请求代理到相应的服务。</li>
+<li><strong>扩展功能</strong>：HAProxy 还支持许多扩展功能，比如自动SSL证书管理（通过Let’s Encrypt等）、会话保持、重定向等。可以根据实际需求启用和配置这些功能。</li>
+</ol>
+<p>需要注意的是，HAProxy 类型的 Ingress 实现也可以通过自定义中间件来扩展功能。中间件是在请求到达后端服务之前或之后执行的插件，可以实现各种功能，比如请求头修改、请求体转换等。</p>
+<p>总结来说，通过 HAProxy Ingress Controller 和 HAProxy 的配合，可以实现高性能、可扩展且功能丰富的 Ingress 路由方案。</p>
+<h3 id="Istio-类型-ingress-实现"><a href="#Istio-类型-ingress-实现" class="headerlink" title="Istio 类型 ingress 实现"></a>Istio 类型 ingress 实现</h3><p>Istio 类型的 Ingress实 现是通过<strong>Istio Ingress Controller</strong>来完成的。Istio是一个服务网格平台，提供了强大的流量管理和安全功能。它提供了与Kubernetes集成的Ingress功能，可以轻松地实现复杂的路由和负载均衡策略。具体实现过程如下：</p>
+<ol>
+<li><strong>安装 Istio</strong>：首先需要在 Kubernetes 集群中安装 Istio。可以通过 Kubernetes 的官方 Helm chart 或其他方式进行安装。安装完成后，Istio 会以 Kubernetes Pod 的形式运行在集群中，并自动发现 Kubernetes 服务。</li>
+<li><strong>创建 Ingress 资源</strong>：定义 Ingress 资源，描述路由规则。Ingress 资源会包含一些字段，比如<code>host</code>、<code>path</code>等，用于匹配并路由请求到对应的服务。Istio 支持多种类型的 Ingress，包括 v1alpha1 和 networking.gRPC API。</li>
+<li><strong>Istio 解析 Ingress 资源</strong>：Istio Ingress Controller 会监听 Kubernetes API Server 中的 Ingress 资源变化，并及时解析 Ingress 资源中的规则。它会自动发现 Kubernetes 服务，并根据 Ingress 资源的定义生成相应的路由配置。</li>
+<li><strong>配置 Istio Ingress Controller</strong>：通过配置文件或 Kubernetes 自定义资源等方式配置 Istio Ingress Controller。可以配置一些参数，比如监听端口、SSL证书等。在 Istio 中，Ingress Controller 与 Egress Controlle r协同工作，实现了强大的流量管理和安全功能。</li>
+<li><strong>请求路由</strong>：一旦 Istio 的配置和路由规则生成完成，外部的请求到达 Istio 时，就会根据配置的规则被路由到正确的后端服务。Istio 会根据请求的主机名、路径等信息匹配 Ingress 资源中的规则，并将请求代理到相应的服务。它还提供了许多扩展功能，比如认证、限流、重定向等。可以根据实际需求启用和配置这些功能。</li>
+</ol>
+<p>需要注意的是，Istio 类型的 Ingress 实现具有强大的流量管理和安全功能，但也需要更多的配置和维护工作。在使用 Istio 时，需要仔细考虑其性能和可扩展性方面的影响，并根据实际需求进行配置和优化。</p>
+<h3 id="APISIX-类型-ingress-实现"><a href="#APISIX-类型-ingress-实现" class="headerlink" title="APISIX 类型 ingress 实现"></a>APISIX 类型 ingress 实现</h3><p>APISIX 是阿里巴巴开源的一个高性能、可扩展的 API 网关，它提供了 Ingress 功能，可以作为 Kubernetes 集群的 Ingress Controller。以下是 APISIX 类型 Ingress 的实现过程：</p>
+<ol>
+<li><strong>安装 APISIX</strong>：在 Kubernetes 集群中安装 APISIX。可以通过 Kubernetes 的官方 Helm chart 或其他方式进行安装。安装完成后，APISIX 会以 Kubernetes Pod 的形式运行在集群中。</li>
+<li><strong>配置 APISIX</strong>：根据实际需求配置 APISIX。可以配置一些参数，比如监听端口、访问日志、SSL证书等。APISIX 提供了丰富的配置项和插件机制，可以灵活地满足不同的需求。</li>
+<li><strong>创建 Ingress 资源</strong>：定义 Ingress 资源，描述路由规则。Ingress 资源会包含一些字段，比如<code>host</code>、<code>path</code>等，用于匹配并路由请求到对应的服务。</li>
+<li><strong>APISIX 解析 Ingress 资源</strong>：APISIX 会监听 Kubernetes API Server 中的 Ingress 资源变化，并及时解析 Ingress 资源中的规则。它会自动发现 Kubernetes 服务，并根据 Ingress 资源的定义生成相应的路由配置。</li>
+<li><strong>请求路由</strong>：一旦 APISIX 的配置和路由规则生成完成，外部的请求到达 APISIX 时，就会根据配置的规则被路由到正确的后端服务。APISIX 会根据请求的主机名、路径等信息匹配 Ingress 资源中的规则，并将请求代理到相应的服务。它支持多种协议和负载均衡算法，可以根据实际需求进行配置。</li>
+<li><strong>扩展功能</strong>：APISIX 还支持许多扩展功能，比如自动SSL证书管理（通过Let’s Encrypt等）、认证和授权、限流、重定向等。可以根据实际需求启用和配置这些功能。</li>
+</ol>
+<p>需要注意的是，使用 APISIX 作为 Ingress Controller 时，需要考虑到性能和可扩展性方面的影响。APISIX 具有很高的性能和可扩展性，但也需要根据实际需求进行配置和优化。同时，需要仔细考虑与 Kubernetes 的集成和自动化部署等方面的问题。</p>
+<h2 id="负载均衡策略"><a href="#负载均衡策略" class="headerlink" title="负载均衡策略"></a>负载均衡策略</h2><p>Ingress 的负载均衡策略主要有以下几种：</p>
+<ol>
+<li><code>round_robin</code>：轮询调度，默认的负载均衡策略，按照每个后端服务的权重进行请求分配。</li>
+<li><code>ewma</code>：指数加权移动平均策略，它是一种动态的负载均衡策略，权重计算基于后端服务的响应时间。如果某个服务的响应时间较长，那么它的权重会相应降低，从而分配到的请求会减少。</li>
+<li><code>chash</code>：基于哈希的负载均衡策略，它将请求的 URL 和 HTTP 方法作为 key，将后端服务作为 value，相同的 key 会被映射到相同的服务。</li>
+<li><code>chashsubset</code>：基于哈希子集的负载均衡策略，它将请求的 URL 和 HTTP 方法作为 key，将后端服务作为 value，相同的 key 会被映射到相同的服务。同时，它还会根据后端服务的性能和健康状况动态地调整权重。</li>
+<li><code>sticky</code>：粘性负载均衡策略，它根据客户端的 IP 地址和请求的 URL 和 HTTP 方法来分配请求。同一个IP地址的请求会被映射到同一个后端服务。</li>
+</ol>
+<p>以上是 Ingress 支持的一些负载均衡策略，可以根据实际需求选择合适的策略。</p>
+<h2 id="两种部署方式"><a href="#两种部署方式" class="headerlink" title="两种部署方式"></a>两种部署方式</h2><p>Ingress 在 Kubernetes 中主要有两种部署方式，分别是 <code>HostNetwork</code> 模式和 <code>NodePort</code> 模式。</p>
+<ul>
+<li>HostNetwork 模式：在每个节点上都创建一个 ingress-controller 的容器，该容器的网络模式设为 hostNetwork。也就是说每个节点物理机的 80 和 443 端口将会被 ingress-controller 中的 nginx 容器占用。当流量通过 80&#x2F;443 端口进入时，将直接进入到 nginx 中，然后 ingress-controller 根据 ingress 规则再将流量转发到对应的业务容器中。</li>
+<li>NodePort 模式：在每个节点上开辟 NodePort 的端口，将流量引入进来，访问流量先通过 NodePort 进入到节点，然后经 iptables(svc) 转发至 ingress-controller 容器，再根据规则转发至后端各业务的容器中。</li>
+</ul>
+<p><a href="https://blog.csdn.net/RtxTitanV/article/details/107993967" target="_blank" rel="noopener">https://blog.csdn.net/RtxTitanV/article/details/107993967</a></p>
+<h2 id="Ingress-和-Pod-关系"><a href="#Ingress-和-Pod-关系" class="headerlink" title="Ingress 和 Pod 关系"></a>Ingress 和 Pod 关系</h2><p>Pod 和 ingress 是通过 service 进行关联的，而 ingress 作为统一入口，由 service 关联一组 pod 中。支持 TCP&#x2F;UDP 4层和 HTTP 7层。</p>
+<p><img src="/img/kubernetes/ingress/1679278990-a9ce56658f1776f1bc102a07c0c27e03.png" srcset="/img/loading.gif" lazyload></p>
+<p>早期的 ingress 方案是流量先到 service，然后再由 service 负载均衡一次到 pod。</p>
+<p>目前的方案，都是直接到 pod。这样不但性能更好，而且本身 traefik 之类的代理就具备负载均衡能力。此时的 service 只是起到了服务发现的作用。ingress controller 会通过 service 的 endpoint 获得所有 pod 的地址，发起 http 或者 grpc 调用完成七层负载调用</p>
+<h2 id="Ingress-工作流程"><a href="#Ingress-工作流程" class="headerlink" title="Ingress 工作流程"></a>Ingress 工作流程</h2><p>在实际的访问中，我们都是需要维护很多域名，<code>a.com</code> 和 <code>b.com</code>。</p>
+<p>然后不同的域名对应的不同的 Service，然后 Service 管理不同的 pod</p>
+<p><img src="/img/kubernetes/ingress/1679278990-5e17bf4b6af085bc67ae5043a2e8b4c1.png" srcset="/img/loading.gif" lazyload></p>
+<p>需要注意，ingress 不是内置的组件，需要我们单独的安装</p>
+<h1 id="3、ingress-的类型"><a href="#3、ingress-的类型" class="headerlink" title="3、ingress 的类型"></a>3、ingress 的类型</h1><h2 id="3-1、Single-Service-Ingress"><a href="#3-1、Single-Service-Ingress" class="headerlink" title="3.1、Single Service Ingress"></a>3.1、Single Service Ingress</h2><p>即单服务 Ingress，K8S 当前是支持暴露单个服务的，可以通过在没有规则的情况下指定默认后端来使用 Ingress 来完成此操作，如：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-comment"># ingress.yaml</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">networking.k8s.io/v1beta1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Ingress</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">test-ingress</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">backend:</span><br>    <span class="hljs-attr">serviceName:</span> <span class="hljs-string">testsvc</span><br>    <span class="hljs-attr">servicePort:</span> <span class="hljs-number">80</span><br></code></pre></td></tr></table></figure>
+
+<p>注意：安装完 Ingress 之后，还要执行</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 创建命名空间 ingress-nginx</span><br>kubectl create namespace ingress-nginx<br>kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/rbac.yaml<br>kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/with-rbac.yaml<br></code></pre></td></tr></table></figure>
+
+<p><code>kubectl apply -f ingress.yaml</code> 即可，通过 <code>kubectl get ingress test-ingress</code> 可以查看详情，包括 Ingress 分配给这个default backend的IP</p>
+<h2 id="3-2、Simple-fanout"><a href="#3-2、Simple-fanout" class="headerlink" title="3.2、Simple fanout"></a>3.2、Simple fanout</h2><p>fanout 基于请求的 HTTP URI 将配置流量从单个 IP 路由到多个服务，Ingress 是允许将负载平衡器的数量降到最低，如：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">foo.bar.com -&gt; 178.91.123.132 -&gt; / foo    service1:4200<br>                                 / bar    service2:8080<br></code></pre></td></tr></table></figure>
+
+<p>上述的过程需要一个如下的 Ingress（同一个域名配置了2个 path）：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">networking.k8s.io/v1beta1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Ingress</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">simple-fanout-example</span><br>  <span class="hljs-attr">annotations:</span><br>    <span class="hljs-attr">nginx.ingress.kubernetes.io/rewrite-target:</span> <span class="hljs-string">/</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">rules:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">host:</span> <span class="hljs-string">foo.bar.com</span><br>    <span class="hljs-attr">http:</span><br>      <span class="hljs-attr">paths:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">path:</span> <span class="hljs-string">/foo</span><br>        <span class="hljs-attr">backend:</span><br>          <span class="hljs-attr">serviceName:</span> <span class="hljs-string">service1</span><br>          <span class="hljs-attr">servicePort:</span> <span class="hljs-number">4200</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">path:</span> <span class="hljs-string">/bar</span><br>        <span class="hljs-attr">backend:</span><br>          <span class="hljs-attr">serviceName:</span> <span class="hljs-string">service2</span><br>          <span class="hljs-attr">servicePort:</span> <span class="hljs-number">8080</span><br></code></pre></td></tr></table></figure>
+
+
+<h2 id="3-3、基于名字虚拟-host"><a href="#3-3、基于名字虚拟-host" class="headerlink" title="3.3、基于名字虚拟 host"></a>3.3、基于名字虚拟 host</h2><p>和 2 类似，这种类型的 Ingress 支持将 HTTP 流量路由到在同一个 IP 上的多个 host name，流程如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">foo.bar.com --|                 |-&gt; foo.bar.com s1:80<br>              | 178.91.123.132  |<br>bar.foo.com --|                 |-&gt; bar.foo.com s2:80<br></code></pre></td></tr></table></figure>
+
+<p>此时的 Ingress Resource 应该为：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">networking.k8s.io/v1beta1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Ingress</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">name-virtual-host-ingress</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">rules:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">host:</span> <span class="hljs-string">foo.bar.com</span><br>    <span class="hljs-attr">http:</span><br>      <span class="hljs-attr">paths:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">backend:</span><br>          <span class="hljs-attr">serviceName:</span> <span class="hljs-string">service1</span><br>          <span class="hljs-attr">servicePort:</span> <span class="hljs-number">80</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">host:</span> <span class="hljs-string">bar.foo.com</span><br>    <span class="hljs-attr">http:</span><br>      <span class="hljs-attr">paths:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">backend:</span><br>          <span class="hljs-attr">serviceName:</span> <span class="hljs-string">service2</span><br>          <span class="hljs-attr">servicePort:</span> <span class="hljs-number">80</span><br></code></pre></td></tr></table></figure>
+
+<p>此时 Ingress 会告诉负载均衡器将请求根据 Host header 路由到指定地方。如果不指定 host，任意到 Ingress Controller IP 地址的 Web 流量都可以匹配，而不需要基于名称的虚拟主机</p>
+<h2 id="3-4、TLS"><a href="#3-4、TLS" class="headerlink" title="3.4、TLS"></a>3.4、TLS</h2><p>可以指定包含一对 TLS 私钥、证书的方式来保护 Ingress，当前 Ingress 只支持 TLS 443 端口和 TLS 终端，TLS 必须包含 tls.crt（即证书）和 tls.key（即私钥），如：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Secret</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">testsecret-tls</span><br>  <span class="hljs-attr">namespace:</span> <span class="hljs-string">default</span><br><span class="hljs-attr">data:</span><br>  <span class="hljs-attr">tls.crt:</span> <span class="hljs-string">base64</span> <span class="hljs-string">encoded</span> <span class="hljs-string">cert</span><br>  <span class="hljs-attr">tls.key:</span> <span class="hljs-string">base64</span> <span class="hljs-string">encoded</span> <span class="hljs-string">key</span><br><span class="hljs-attr">type:</span> <span class="hljs-string">kubernetes.io/tls</span><br></code></pre></td></tr></table></figure>
+
+<p>在 Ingress 中引用这个密钥将告诉 Ingress Controller 使用 TLS 保护 Ingress 从客户端到负载平衡器的通道。此外，还需要确保创建的 TLS 机密来自包含 CN 的证书，如：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">networking.k8s.io/v1beta1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Ingress</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">tls-example-ingress</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">tls:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">hosts:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">sslexample.foo.com</span><br>    <span class="hljs-attr">secretName:</span> <span class="hljs-string">testsecret-tls</span><br>  <span class="hljs-attr">rules:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-attr">host:</span> <span class="hljs-string">sslexample.foo.com</span><br>      <span class="hljs-attr">http:</span><br>        <span class="hljs-attr">paths:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">path:</span> <span class="hljs-string">/</span><br>          <span class="hljs-attr">backend:</span><br>            <span class="hljs-attr">serviceName:</span> <span class="hljs-string">service1</span><br>            <span class="hljs-attr">servicePort:</span> <span class="hljs-number">80</span><br></code></pre></td></tr></table></figure>
+
+<p>注：TLS 对于 nginx 和 GCE Controller 稍有不同。在实际配置中可能在配置完整证书后想让 http 请求也强制转到 https，此后可使用如下注解：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 在配置了证书时，重定向到https</span><br>nginx.ingress.kubernetes.io/ssl-redirect: <span class="hljs-string">"true"</span><br></code></pre></td></tr></table></figure>
+
+<p>若没有配置证书仍然想强制跳转 https，需要使用注解 nginx.ingress.kubernetes.io&#x2F;force-ssl-redirect。上述重定向到 https 时默认状态码 308 或者 307，老版本浏览器可能不支持，可选择性配置状态码为 301。</p>
+<h1 id="4、Ingress-示例"><a href="#4、Ingress-示例" class="headerlink" title="4、Ingress 示例"></a>4、Ingress 示例</h1><p>步骤如下所示</p>
+<ul>
+<li>部署 Ingress Controller【需要下载官方的】。为了让 Ingress 资源工作，集群必须有一个正在运行的 Ingress 控制器。<br>与作为 kube-controller-manager 可执行文件的一部分运行的其他类型的控制器不同，Ingress 控制器不是随集群自动启动的，需要在集群上单独部署。<br>Kubernetes 项目目前支持和维护 GCE 和 nginx 控制器。至于其他控制器可以参考 <a href="https://kubernetes.io/zh/docs/concepts/services-networking/ingress-controllers/" target="_blank" rel="noopener">Ingress控制器官方文档</a>。</li>
+<li>创建 Ingress 规则【对哪个Pod、名称空间配置规则】</li>
+<li>创建 web 服务</li>
+</ul>
+<h2 id="部署-Ingress-controller"><a href="#部署-Ingress-controller" class="headerlink" title="部署 Ingress controller"></a>部署 Ingress controller</h2><p>参考：<a href="https://blog.51cto.com/u_15796303/6788265" target="_blank" rel="noopener">https://blog.51cto.com/u_15796303/6788265</a></p>
+<h2 id="创建-Ingress-规则文件"><a href="#创建-Ingress-规则文件" class="headerlink" title="创建 Ingress 规则文件"></a>创建 Ingress 规则文件</h2><p>创建 Ingress 规则文件，ingress-h.yaml</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">networking.k8s.io/v1beta1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Ingress</span>                <span class="hljs-comment"># 资源类型为 Ingress</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">test-nginx-ingress</span><br>  <span class="hljs-attr">annotations:</span><br>    <span class="hljs-attr">kubernetes.io/ingress.class:</span> <span class="hljs-string">"nginx"</span><br>    <span class="hljs-attr">nginx.ingress.kubernetes.io/rewrite-target:</span> <span class="hljs-string">/</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">rules:</span>                        <span class="hljs-comment"># ingress 规则配置，可以配置多个</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">host:</span> <span class="hljs-string">example.ingredemo.cn</span>  <span class="hljs-comment"># 域名配置，可以使用通配符 *</span><br>    <span class="hljs-attr">http:</span><br>      <span class="hljs-attr">paths:</span>                 <span class="hljs-comment"># 相当于 nginx 的 location 配置，可以配置多个</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">pathType:</span> <span class="hljs-string">/</span>          <span class="hljs-comment"># 路径类型，按照路径类型进行匹配 </span><br>        <span class="hljs-attr">backend:</span><br>          <span class="hljs-attr">service:</span> <br>            <span class="hljs-attr">name:</span> <span class="hljs-string">nginx-svc</span>  <span class="hljs-comment"># 代理到哪个 service</span><br>            <span class="hljs-attr">port:</span> <br>              <span class="hljs-attr">number:</span> <span class="hljs-number">80</span>     <span class="hljs-comment"># service 的端口</span><br></code></pre></td></tr></table></figure>
+
+<p><img src="/img/kubernetes/ingress/image-20201118111700534.png" srcset="/img/loading.gif" lazyload></p>
+<h2 id="创建-web-服务"><a href="#创建-web-服务" class="headerlink" title="创建 web 服务"></a>创建 web 服务</h2><p>创建一个 nginx 应用，然后对外暴露端口</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 创建pod</span><br>kubectl create deployment web --image=nginx<br><span class="hljs-comment"># 查看</span><br>kubectl get pods<br></code></pre></td></tr></table></figure>
+
+<p>对外暴露端口</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">kubectl expose deployment web --port=80 --target-port=80 --<span class="hljs-built_in">type</span>:NodePort<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="添加域名访问规则"><a href="#添加域名访问规则" class="headerlink" title="添加域名访问规则"></a>添加域名访问规则</h3><p>在 windows 的 hosts 文件，添加域名访问规则【因为我们没有域名解析，所以只能这样做】</p>
+<p><img src="/img/kubernetes/ingress/image-20201118112029820.png" srcset="/img/loading.gif" lazyload></p>
+<p>最后通过域名就能访问</p>
+<p><img src="/img/kubernetes/ingress/image-20201118112212519.png" srcset="/img/loading.gif" lazyload></p>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ul>
+<li><a href="https://blog.csdn.net/zhangzehai2234/article/details/134616667" target="_blank" rel="noopener">https://blog.csdn.net/zhangzehai2234/article/details/134616667</a></li>
+<li><a href="https://blog.51cto.com/u_15796303/6788265" target="_blank" rel="noopener">https://blog.51cto.com/u_15796303/6788265</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Kubernetes/" class="category-chain-item">Kubernetes</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Kubernetes/" class="print-no-link">#Kubernetes</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Kubernetes 核心概念之5 Ingress</div>
+      <div>https://flepeng.github.io/044-云原生-02-kubernetes-31-基础-Kubernetes-核心概念之5-Ingress/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年3月1日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/044-%E4%BA%91%E5%8E%9F%E7%94%9F-02-kubernetes-31-%E5%9F%BA%E7%A1%80-Kubernetes-%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5%E4%B9%8B4-Secret-%E9%85%8D%E7%BD%AE%E7%AE%A1%E7%90%86/" title="Kubernetes 核心概念之4 Secret 配置管理">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Kubernetes 核心概念之4 Secret 配置管理</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/044-%E4%BA%91%E5%8E%9F%E7%94%9F-02-kubernetes-80-%E7%9B%91%E6%8E%A7-Kubernetes-%E4%BD%BF%E7%94%A8-prometheus-%E9%9B%86%E7%BE%A4%E8%B5%84%E6%BA%90%E7%9B%91%E6%8E%A7/" title="Kubernetes 使用 prometheus 集群资源监控">
+                        <span class="hidden-mobile">Kubernetes 使用 prometheus 集群资源监控</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

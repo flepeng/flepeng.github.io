@@ -1,0 +1,855 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="原文连接：https:&#x2F;&#x2F;www.infoq.cn&#x2F;article&#x2F;2017hongbao-weixin 百亿级微信红包的高并发资金交易系统设计方案2017 年 1 月 28 日，正月初一，微信公布了用户在除夕当天收发微信红包的数量——142 亿个，而其收发峰值也已达到 76 万每秒。百亿级别的红包，如何保障并发性能与资金安全？这给微信带来了超级挑战。面对挑战，微信红包在分析了业界“秒杀”系统解决">
+<meta property="og:type" content="article">
+<meta property="og:title" content="百亿级微信红包的高并发资金交易系统设计方案-方乐明">
+<meta property="og:url" content="https://flepeng.github.io/%E6%9E%B6%E6%9E%84-%E6%A1%88%E4%BE%8B-%E7%99%BE%E4%BA%BF%E7%BA%A7%E5%BE%AE%E4%BF%A1%E7%BA%A2%E5%8C%85%E7%9A%84%E9%AB%98%E5%B9%B6%E5%8F%91%E8%B5%84%E9%87%91%E4%BA%A4%E6%98%93%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1%E6%96%B9%E6%A1%88-%E6%96%B9%E4%B9%90%E6%98%8E/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="原文连接：https:&#x2F;&#x2F;www.infoq.cn&#x2F;article&#x2F;2017hongbao-weixin 百亿级微信红包的高并发资金交易系统设计方案2017 年 1 月 28 日，正月初一，微信公布了用户在除夕当天收发微信红包的数量——142 亿个，而其收发峰值也已达到 76 万每秒。百亿级别的红包，如何保障并发性能与资金安全？这给微信带来了超级挑战。面对挑战，微信红包在分析了业界“秒杀”系统解决">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/architecture/1701066387-e3896e1b6cbae5ad975525fe5ce57050.png">
+<meta property="og:image" content="https://flepeng.github.io/img/architecture/1701066387-5f54feb657794ba77c2501f4c1805c38.png">
+<meta property="og:image" content="https://flepeng.github.io/img/architecture/1701066387-3cdaf8839786a4221d16eaa19ba62708.png">
+<meta property="og:image" content="https://flepeng.github.io/img/architecture/1701066387-1281c071ca69aacbd54659b78c37773d.png">
+<meta property="og:image" content="https://flepeng.github.io/img/architecture/1701066387-2ada5d8afd220bdcaea17b32aa23301b.png">
+<meta property="article:published_time" content="2023-01-31T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.501Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="architecture">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/architecture/1701066387-e3896e1b6cbae5ad975525fe5ce57050.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>百亿级微信红包的高并发资金交易系统设计方案-方乐明 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="百亿级微信红包的高并发资金交易系统设计方案-方乐明"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-02-01 00:00" pubdate>
+          2023年2月1日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.8k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          33 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">百亿级微信红包的高并发资金交易系统设计方案-方乐明</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>原文连接：<a href="https://www.infoq.cn/article/2017hongbao-weixin" target="_blank" rel="noopener">https://www.infoq.cn/article/2017hongbao-weixin</a></p>
+<h1 id="百亿级微信红包的高并发资金交易系统设计方案"><a href="#百亿级微信红包的高并发资金交易系统设计方案" class="headerlink" title="百亿级微信红包的高并发资金交易系统设计方案"></a>百亿级微信红包的高并发资金交易系统设计方案</h1><p>2017 年 1 月 28 日，正月初一，微信公布了用户在除夕当天收发微信红包的数量——142 亿个，而其收发峰值也已达到 76 万每秒。百亿级别的红包，如何保障并发性能与资金安全？这给微信带来了超级挑战。面对挑战，微信红包在分析了业界“秒杀”系统解决方案的基础上，采用了 SET 化、请求排队串行化、双维度分库表等设计，形成了独特的高并发、资金安全系统解决方案。实践证明，该方案表现稳定，且实现了除夕夜系统零故障运行。</p>
+<p>本文将为读者介绍百亿级别红包背后的系统高并发设计方案，包括微信红包的两大业务特点、微信红包系统的技术难点、解决高并发问题通常使用的方案，以及微信红包系统的高并发解决方案。</p>
+<h1 id="一、微信红包的两大业务特点"><a href="#一、微信红包的两大业务特点" class="headerlink" title="一、微信红包的两大业务特点"></a>一、微信红包的两大业务特点</h1><p>微信红包（尤其是发在微信群里的红包，即群红包）业务形态上很类似网上的普通商品“秒杀”活动。</p>
+<ul>
+<li>用户在微信群里发一个红包，等同于是普通商品“秒杀”活动的商品上架；</li>
+<li>微信群里的所有用户抢红包的动作，等同于“秒杀”活动中的查询库存；</li>
+<li>用户抢到红包后拆红包的动作，则对应“秒杀”活动中用户的“秒杀”动作。</li>
+</ul>
+<p>不过除了上面的相同点之外，微信红包在业务形态上与普通商品“秒杀”活动相比，还具备自身的特点：</p>
+<ul>
+<li><p><strong>首先，微信红包业务比普通商品“秒杀”有更海量的并发要求。</strong><br>微信红包用户在微信群里发一个红包，等同于在网上发布一次商品“秒杀”活动。假设同一时间有 10 万个群里的用户同时在发红包，那就相当于同一时间有 10 万个“秒杀”活动发布出去。10 万个微信群里的用户同时抢红包，将产生海量的并发请求。</p>
+</li>
+<li><p><strong>其次，微信红包业务要求更严格的安全级别。</strong><br>微信红包业务本质上是资金交易。微信红包是微信支付的一个商户，提供资金流转服务。<br>用户发红包时，相当于在微信红包这个商户上使用微信支付购买一笔“钱”，并且收货地址是微信群。当用户支付成功后，红包“发货”到微信群里，群里的用户拆开红包后，微信红包提供了将“钱”转入折红包用户微信零钱的服务。<br>资金交易业务比普通商品“秒杀”活动有更高的安全级别要求。普通的商品“秒杀”商品由商户提供，库存是商户预设的，“秒杀”时可以允许存在“超卖”（即实际被抢的商品数量比计划的库存多）、“少卖”（即实际被抢的商户数量比计划的库存少）的情况。但是对于微信红包，用户发 100 元的红包绝对不可以被拆出 101 元；用户发 100 元只被领取 99 元时，剩下的 1 元在 24 小时过期后要精确地退还给发红包用户，不能多也不能少。</p>
+</li>
+</ul>
+<p>以上是微信红包业务模型上的两大特点。</p>
+<h1 id="二、-微信红包系统的技术难点"><a href="#二、-微信红包系统的技术难点" class="headerlink" title="二、 微信红包系统的技术难点"></a>二、 微信红包系统的技术难点</h1><p>在介绍微信红包系统的技术难点之前，先介绍下简单的、典型的商品“秒杀”系统的架构设计，如下图所示。</p>
+<p><img src="/img/architecture/1701066387-e3896e1b6cbae5ad975525fe5ce57050.png" srcset="/img/loading.gif" lazyload></p>
+<p>该系统由接入层、逻辑服务层、存储层与缓存构成。Proxy 处理请求接入，Server 承载主要的业务逻辑，Cache 用于缓存库存数量、DB 则用于数据持久化。</p>
+<p>一个“秒杀”活动，对应 DB 中的一条库存记录。当用户进行商品“秒杀”时，系统的主要逻辑在于 DB 中库存的操作上。一般来说，对 DB 的操作流程有以下三步：</p>
+<p>a. 锁库存<br>b. 插入“秒杀”记录<br>c. 更新库存</p>
+<p>其中，锁库存是为了避免并发请求时出现“超卖”情况。同时要求这三步操作需要在一个事务中完成（所谓的事务，是指作为单个逻辑工作单元执行的一系列操作，要么完全地执行，要么完全地不执行）。</p>
+<p>“秒杀”系统的设计难点就在这个事务操作上。商品库存在 DB 中记为一行，大量用户同时“秒杀”同一商品时，第一个到达 DB 的请求锁住了这行库存记录。在第一个事务完成提交之前这个锁一直被第一个请求占用，后面的所有请求需要排队等待。同时参与“秒杀”的用户越多，并发进 DB 的请求越多，请求排队越严重。因此，并发请求抢锁，是典型的商品“秒杀”系统的设计难点。</p>
+<p>微信红包业务相比普通商品“秒杀”活动，具有海量并发、高安全级别要求的特点。在微信红包系统的设计上，<strong>除了并发请求抢锁之外，还有以下两个突出难点</strong>：</p>
+<p><strong>首先，事务级操作量级大</strong>。上文介绍微信红包业务特点时提到，普遍情况下同时会有数以万计的微信群在发红包。这个业务特点映射到微信红包系统设计上，就是有数以万计的“并发请求抢锁”同时在进行。这使得 DB 的压力比普通单个商品“库存”被锁要大很多倍。</p>
+<p><strong>其次，事务性要求严格</strong>。微信红包系统本质上是一个资金交易系统，相比普通商品“秒杀”系统有更高的事务级别要求。</p>
+<h1 id="三、解决高并发问题通常使用的方案"><a href="#三、解决高并发问题通常使用的方案" class="headerlink" title="三、解决高并发问题通常使用的方案"></a>三、解决高并发问题通常使用的方案</h1><p>普通商品“秒杀”活动系统，解决高并发问题的方案，大体有以下几种：</p>
+<p><strong>方案一，使用内存操作替代实时的 DB 事务操作。</strong></p>
+<p>如图 2 所示，将“实时扣库存”的行为上移到内存 Cache 中操作，内存 Cache 操作成功直接给 Server 返回成功，然后异步落 DB 持久化。</p>
+<p><img src="/img/architecture/1701066387-5f54feb657794ba77c2501f4c1805c38.png" srcset="/img/loading.gif" lazyload></p>
+<p><strong>这个方案的优点是用内存操作替代磁盘操作，提高了并发性能。</strong></p>
+<p>但是缺点也很明显，在内存操作成功但 DB 持久化失败，或者内存 Cache 故障的情况下，DB 持久化会丢数据，不适合微信红包这种资金交易系统。</p>
+<p><strong>方案二，使用乐观锁替代悲观锁。</strong></p>
+<p>所谓悲观锁，是关系数据库管理系统里的一种并发控制的方法。它可以阻止一个事务以影响其他用户的方式来修改数据。如果一个事务执行的操作对某行数据应用了锁，那只有当这个事务把锁释放，其他事务才能够执行与该锁冲突的操作。对应于上文分析中的“并发请求抢锁”行为。</p>
+<p>所谓乐观锁，它假设多用户并发的事务在处理时不会彼此互相影响，各事务能够在不产生锁的情况下处理各自影响的那部分数据。在提交数据更新之前，每个事务会先检查在该事务读取数据后，有没有其他事务又修改了该数据。如果其他事务有更新的话，正在提交的事务会进行回滚。</p>
+<p>商品“秒杀”系统中，乐观锁的具体应用方法，是在 DB 的“库存”记录中维护一个版本号。在更新“库存”的操作进行前，先去 DB 获取当前版本号。在更新库存的事务提交时，检查该版本号是否已被其他事务修改。如果版本没被修改，则提交事务，且版本号加 1；如果版本号已经被其他事务修改，则回滚事务，并给上层报错。</p>
+<p>这个方案解决了“并发请求抢锁”的问题，可以提高 DB 的并发处理能力。</p>
+<p>但是如果<strong>应用于微信红包系统，则会存在下面三个问题</strong>：</p>
+<ol>
+<li>如果拆红包采用乐观锁，那么在并发抢到相同版本号的拆红包请求中，只有一个能拆红包成功，其他的请求将事务回滚并返回失败，给用户报错，用户体验完全不可接受。</li>
+<li>如果采用乐观锁，将会导致第一时间同时拆红包的用户有一部分直接返回失败，反而那些“手慢”的用户，有可能因为并发减小后拆红包成功，这会带来用户体验上的负面影响。</li>
+<li>如果采用乐观锁的方式，会带来大数量的无效更新请求、事务回滚，给 DB 造成不必要的额外压力。</li>
+</ol>
+<p>基于以上原因，微信红包系统不能采用乐观锁的方式解决并发抢锁问题。</p>
+<h1 id="四、微信红包系统的高并发解决方案"><a href="#四、微信红包系统的高并发解决方案" class="headerlink" title="四、微信红包系统的高并发解决方案"></a>四、微信红包系统的高并发解决方案</h1><p>综合上面的分析，微信红包系统针对相应的技术难点，采用了下面几个方案，解决高并发问题。</p>
+<p><strong>1. 系统垂直 SET 化，分而治之。</strong></p>
+<p>微信红包用户发一个红包时，微信红包系统生成一个 ID 作为这个红包的唯一标识。接下来这个红包的所有发红包、抢红包、拆红包、查询红包详情等操作，都根据这个 ID 关联。</p>
+<p>红包系统根据这个红包 ID，按一定的规则（如按 ID 尾号取模等），垂直上下切分。切分后，一个垂直链条上的逻辑 Server 服务器、DB 统称为一个 SET。</p>
+<p>各个 SET 之间相互独立，互相解耦。并且同一个红包 ID 的所有请求，包括发红包、抢红包、拆红包、查详情详情等，垂直 stick 到同一个 SET 内处理，高度内聚。通过这样的方式，系统将所有红包请求这个巨大的洪流分散为多股小流，互不影响，分而治之，如下图所示。</p>
+<p><img src="/img/architecture/1701066387-3cdaf8839786a4221d16eaa19ba62708.png" srcset="/img/loading.gif" lazyload></p>
+<p>这个方案解决了同时存在海量事务级操作的问题，将海量化为小量。</p>
+<p><strong>2. 逻辑 Server 层将请求排队，解决 DB 并发问题。</strong></p>
+<p>红包系统是资金交易系统，DB 操作的事务性无法避免，所以会存在“并发抢锁”问题。但是如果到达 DB 的事务操作（也即拆红包行为）不是并发的，而是串行的，就不会存在“并发抢锁”的问题了。</p>
+<p>按这个思路，为了使拆红包的事务操作串行地进入 DB，只需要将请求在 Server 层以 FIFO（先进先出）的方式排队，就可以达到这个效果。从而问题就集中到 Server 的 FIFO 队列设计上。</p>
+<p>微信红包系统设计了分布式的、轻巧的、灵活的 FIFO 队列方案。其具体实现如下：</p>
+<p><strong>首先，将同一个红包 ID 的所有请求 stick 到同一台 Server。</strong></p>
+<p>上面 SET 化方案已经介绍，同个红包 ID 的所有请求，按红包 ID stick 到同个 SET 中。不过在同个 SET 中，会存在多台 Server 服务器同时连接同一台 DB（基于容灾、性能考虑，需要多台 Server 互备、均衡压力）。</p>
+<p>为了使同一个红包 ID 的所有请求，stick 到同一台 Server 服务器上，在 SET 化的设计之外，微信红包系统添加了一层基于红包 ID hash 值的分流，如下图所示。</p>
+<p><img src="/img/architecture/1701066387-1281c071ca69aacbd54659b78c37773d.png" srcset="/img/loading.gif" lazyload></p>
+<p><strong>其次，设计单机请求排队方案。</strong></p>
+<p>将 stick 到同一台 Server 上的所有请求在被接收进程接收后，按红包 ID 进行排队。然后串行地进入 worker 进程（执行业务逻辑）进行处理，从而达到排队的效果，如下图所示。</p>
+<p><img src="/img/architecture/1701066387-2ada5d8afd220bdcaea17b32aa23301b.png" srcset="/img/loading.gif" lazyload></p>
+<p><strong>最后，增加 memcached 控制并发。</strong></p>
+<p>为了防止 Server 中的请求队列过载导致队列被降级，从而所有请求拥进 DB，系统增加了与 Server 服务器同机部署的 memcached，用于控制拆同一个红包的请求并发数。</p>
+<p>具体来说，利用 memcached 的 CAS 原子累增操作，控制同时进入 DB 执行拆红包事务的请求数，超过预先设定数值则直接拒绝服务。用于 DB 负载升高时的降级体验。</p>
+<p>通过以上三个措施，系统有效地控制了 DB 的“并发抢锁”情况。</p>
+<p><strong>3. 双维度库表设计，保障系统性能稳定</strong></p>
+<p>红包系统的分库表规则，初期是根据红包 ID 的 hash 值分为多库多表。随着红包数据量逐渐增大，单表数据量也逐渐增加。而 DB 的性能与单表数据量有一定相关性。当单表数据量达到一定程度时，DB 性能会有大幅度下降，影响系统性能稳定性。采用冷热分离，将历史冷数据与当前热数据分开存储，可以解决这个问题。</p>
+<p>处理微信红包数据的冷热分离时，系统在以红包 ID 维度分库表的基础上，增加了以循环天分表的维度，形成了双维度分库表的特色。</p>
+<p>具体来说，就是分库表规则像 <code>db_xx.t_y_dd</code> 设计，其中，<code>xx/y</code> 是红包 ID 的 hash 值后三位，<code>dd</code> 的取值范围在 01~31，代表一个月天数最多 31 天。</p>
+<p>例如：<code>db_12.t_3_03</code>，这样一天内同一个set中的红包可以分到 999 个表中。</p>
+<p>通过这种双维度分库表方式，解决了 DB 单表数据量膨胀导致性能下降的问题，保障了系统性能的稳定性。同时，在热冷分离的问题上，又使得数据搬迁变得简单而优雅。</p>
+<p>综上所述，微信红包系统在解决高并发问题上的设计，主要采用了 SET 化分治、请求排队、双维度分库表等方案，使得单组 DB 的并发性能提升了 8 倍左右，取得了很好的效果。</p>
+<h1 id="五、总结"><a href="#五、总结" class="headerlink" title="五、总结"></a>五、总结</h1><p>微信红包系统是一个高并发的资金交易系统，最大的技术挑战是保障并发性能与资金安全。这种全新的技术挑战，传统的“秒杀”系统设计方案已不能完全解决。在分析了业界“秒杀”系统解决方案的基础上，微信红包采用了 SET 化、请求排队串行化、双维度分库表等设计，形成了独特的高并发、资金安全系统解决方案，并在平时节假日、2015 和 2016 春节实践中充分证明了可行性，取得了显著的效果。在刚刚过去的 2017 鸡年除夕夜，微信红包收发峰值达到 76 万每秒，收发微信红包 142 亿个，微信红包系统的表现稳定，实现了除夕夜系统零故障。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/architecture/" class="category-chain-item">architecture</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/architecture/" class="print-no-link">#architecture</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>百亿级微信红包的高并发资金交易系统设计方案-方乐明</div>
+      <div>https://flepeng.github.io/架构-案例-百亿级微信红包的高并发资金交易系统设计方案-方乐明/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年2月1日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/%E6%9E%B6%E6%9E%84-%E6%A1%88%E4%BE%8B-%E6%9E%B6%E6%9E%84%E3%80%81%E6%8A%A2%E7%BA%A2%E5%8C%85%E7%AE%97%E6%B3%95%E3%80%81%E9%AB%98%E5%B9%B6%E5%8F%91%E5%92%8C%E9%99%8D%E7%BA%A7%E6%96%B9%E6%A1%88-%E7%AC%AC%E5%85%AB%E5%8F%B7%E5%BD%93%E9%93%BA/" title="架构、抢红包算法、高并发和降级方案-第八号当铺">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">架构、抢红包算法、高并发和降级方案-第八号当铺</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/%E6%9E%B6%E6%9E%84-%E5%90%84%E7%A7%8D%E6%9E%B6%E6%9E%84%E5%9B%BE-%E4%B8%9A%E5%8A%A1%E6%9E%B6%E6%9E%84%E5%9B%BE%E3%80%81%E4%BA%A7%E5%93%81%E6%9E%B6%E6%9E%84%E5%9B%BE%E3%80%81%E5%BA%94%E7%94%A8%E6%9E%B6%E6%9E%84%E5%9B%BE%E3%80%81%E6%8A%80%E6%9C%AF%E6%9E%B6%E6%9E%84%E5%9B%BE/" title="业务架构图、产品架构图、应用架构图、技术架构图">
+                        <span class="hidden-mobile">业务架构图、产品架构图、应用架构图、技术架构图</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

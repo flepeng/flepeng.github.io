@@ -1,0 +1,916 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="这篇文章写的不错，转载一下 https:&#x2F;&#x2F;zhuanlan.zhihu.com&#x2F;p&#x2F;43789231 为什么需要加密？因为 http 的内容是明文传输的，明文数据会经过中间代理服务器、路由器、wifi热点、通信服务运营商等多个物理节点，如果信息在传输过程中被劫持，传输的内容就完全暴露了。劫持者还可以篡改传输的信息且不被双方察觉，这就是中间人攻击。所以我们才需要对信息进行加密。最容易理解的就是对称">
+<meta property="og:type" content="article">
+<meta property="og:title" content="71-HTTPS">
+<meta property="og:url" content="https://flepeng.github.io/010-network-70-%E5%BA%94%E7%94%A8%E5%B1%82-71-HTTPS/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="这篇文章写的不错，转载一下 https:&#x2F;&#x2F;zhuanlan.zhihu.com&#x2F;p&#x2F;43789231 为什么需要加密？因为 http 的内容是明文传输的，明文数据会经过中间代理服务器、路由器、wifi热点、通信服务运营商等多个物理节点，如果信息在传输过程中被劫持，传输的内容就完全暴露了。劫持者还可以篡改传输的信息且不被双方察觉，这就是中间人攻击。所以我们才需要对信息进行加密。最容易理解的就是对称">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://pic2.zhimg.com/80/v2-7c78935389af46e197e96d9cd91c06dd_720w.webp">
+<meta property="og:image" content="https://pic2.zhimg.com/80/v2-04cd27f3f46388df2d8d70375c4ecac5_720w.webp">
+<meta property="og:image" content="https://pic2.zhimg.com/80/v2-a0d10af45e785fe8d3f5cd12f8c309f5_720w.webp">
+<meta property="og:image" content="https://pic2.zhimg.com/80/v2-7ae07af75faf459f780609c9710270ad_720w.jpg">
+<meta property="article:published_time" content="2021-03-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.274Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="HTTP">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://pic2.zhimg.com/80/v2-7c78935389af46e197e96d9cd91c06dd_720w.webp">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>71-HTTPS - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="71-HTTPS"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-03-08 00:00" pubdate>
+          2021年3月8日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          42 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">71-HTTPS</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>这篇文章写的不错，转载一下 <a href="https://zhuanlan.zhihu.com/p/43789231" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/43789231</a></p>
+<h2 id="为什么需要加密？"><a href="#为什么需要加密？" class="headerlink" title="为什么需要加密？"></a>为什么需要加密？</h2><p>因为 http 的内容是明文传输的，明文数据会经过中间代理服务器、路由器、wifi热点、通信服务运营商等多个物理节点，如果信息在传输过程中被劫持，传输的内容就完全暴露了。劫持者还可以篡改传输的信息且不被双方察觉，这就是<code>中间人攻击</code>。所以我们才需要对信息进行加密。最容易理解的就是<code>对称加密</code> 。</p>
+<h2 id="什么是对称加密？"><a href="#什么是对称加密？" class="headerlink" title="什么是对称加密？"></a>什么是对称加密？</h2><p>简单说就是有一个密钥，它可以加密一段信息，也可以对加密后的信息进行解密，和我们日常生活中用的钥匙作用差不多。</p>
+<h2 id="用对称加密可行吗？"><a href="#用对称加密可行吗？" class="headerlink" title="用对称加密可行吗？"></a>用对称加密可行吗？</h2><p><strong>如果通信双方都各自持有同一个密钥，且没有别人知道，这两方的通信安全当然是可以被保证的（除非密钥被破解）。</strong></p>
+<p>然而最大的问题就是<strong>这个密钥怎么让传输的双方知晓，同时不被别人知道</strong>。如果由服务器生成一个密钥并传输给浏览器，那在这个传输过程中密钥被别人劫持到手了怎么办？之后他就能用密钥解开双方传输的任何内容了，所以这么做当然不行。</p>
+<p>换种思路？试想一下，如果浏览器内部就预存了网站A的密钥，且可以确保除了浏览器和网站A，不会有任何外人知道该密钥，那理论上用对称加密是可以的，这样浏览器只要预存好世界上所有HTTPS网站的密钥就行了！这么做显然不现实。怎么办？所以我们就需要<code>非对称加密</code> 。</p>
+<h2 id="什么是非对称加密？"><a href="#什么是非对称加密？" class="headerlink" title="什么是非对称加密？"></a>什么是非对称加密？</h2><p>简单说就是有两把密钥，通常一把叫做公钥、一把叫私钥，用公钥加密的内容必须用私钥才能解开，同样，私钥加密的内容只有公钥能解开。</p>
+<h2 id="用非对称加密可行吗？"><a href="#用非对称加密可行吗？" class="headerlink" title="用非对称加密可行吗？"></a>用非对称加密可行吗？</h2><p>鉴于非对称加密的机制，我们可能会有这种思路：服务器先把公钥以明文方式传输给浏览器，之后浏览器向服务器传数据前都先用这个公钥加密好再传，这条数据的安全似乎可以保障了！</p>
+<p><strong>因为只有服务器有相应的私钥能解开公钥加密的数据</strong>。</p>
+<p>那有人会问 <strong>由服务器到浏览器的这条路怎么保障安全？</strong></p>
+<p>如果服务器用它的私钥加密数据传给浏览器，那么浏览器用公钥可以解密它，而这个公钥是一开始通过明文传输给浏览器的，若这个公钥被中间人劫持到了，那他也能用该公钥解密服务器传来的信息了。</p>
+<p>所以<strong>目前似乎只能保证由浏览器向服务器传输数据的安全性</strong>（其实仍有漏洞，下文会说），那利用这点你能想到什么解决方案吗？</p>
+<h2 id="改良的非对称加密方案，似乎可以？"><a href="#改良的非对称加密方案，似乎可以？" class="headerlink" title="改良的非对称加密方案，似乎可以？"></a>改良的非对称加密方案，似乎可以？</h2><p>我们已经理解通过一组公钥私钥，可以保证单个方向传输的安全性，那用两组公钥私钥，是否就能保证双向传输都安全了？请看下面的过程：</p>
+<ol>
+<li>某网站服务器拥有 <code>公钥A</code> 与对应的 <code>私钥A’</code>；浏览器拥有 <code>公钥B</code> 与对应的 <code>私钥B’</code>。</li>
+<li>浏览器把 <code>公钥B</code> 明文传输给服务器。</li>
+<li>服务器把 <code>公钥A</code> 明文给传输浏览器。</li>
+<li>之后浏览器向服务器传输的内容都用 <code>公钥A</code> 加密，服务器收到后用 <code>私钥A’</code> 解密。由于只有服务器拥有 <code>私钥A’</code>，所以能保证这条数据的安全。</li>
+<li>同理，服务器向浏览器传输的内容都用 <code>公钥B</code> 加密，浏览器收到后用 <code>私钥B’</code> 解密。同上也可以保证这条数据的安全。</li>
+</ol>
+<p>的确可以！但这里面仍有的漏洞（中间人劫持服务器，下文会讲），HTTPS的加密却没使用这种方案，为什么？</p>
+<p>很重要的原因是非对称加密算法非常耗时，而对称加密快很多。那我们能不能运用非对称加密的特性解决前面提到的对称加密的漏洞？</p>
+<h2 id="非对称加密-对称加密？"><a href="#非对称加密-对称加密？" class="headerlink" title="非对称加密+对称加密？"></a>非对称加密+对称加密？</h2><p>既然非对称加密耗时，那非对称加密+对称加密结合可以吗？而且得尽量减少非对称加密的次数。当然是可以的，且非对称加密、解密各只需用一次即可。请看一下这个过程：</p>
+<ol>
+<li>某网站拥有用于非对称加密的 <code>公钥A、私钥A’</code>。</li>
+<li>浏览器向网站服务器请求，服务器把 <code>公钥A</code> 明文给传输浏览器。</li>
+<li>浏览器随机生成一个用于对称加密的 <code>密钥X</code>，用 <code>公钥A</code> 加密后传给服务器。</li>
+<li>服务器拿到后用 <code>私钥A’</code> 解密得到 <code>密钥X</code>。</li>
+<li>这样双方就都拥有 <code>密钥X</code> 了，且别人无法知道它。之后双方所有数据都通过密钥X加密解密即可。</li>
+</ol>
+<p>完美！HTTPS基本就是采用了这种方案。完美？还是有漏洞的（中间人劫持服务器）。</p>
+<h2 id="中间人攻击"><a href="#中间人攻击" class="headerlink" title="中间人攻击"></a>中间人攻击</h2><p>在上述数据传输过程中，中间人在第二步劫持到了数据，此时他的确无法得到浏览器生成的密钥X，因为这个密钥本身被公钥A加密了，只有服务器才有私钥A’解开它，然而中间人却完全不需要拿到私钥A’就能干坏事了。请看：</p>
+<ol>
+<li>某网站有用于非对称加密的 <code>公钥A、私钥A’</code>。</li>
+<li>浏览器向网站服务器请求，服务器把 <code>公钥A</code> 明文给传输浏览器。</li>
+<li><strong>中间人劫持到 <code>公钥A</code>，保存下来，把数据包中的 <code>公钥A</code> 替换成自己伪造的 <code>公钥B</code>（它当然也拥有 <code>公钥B</code> 对应的 <code>私钥B’</code>）</strong>。</li>
+<li>浏览器生成一个用于对称加密的 <code>密钥X</code>，用 <code>公钥B</code>（浏览器无法得知公钥被替换了）加密后传给服务器。</li>
+<li><strong>中间人劫持后用 <code>私钥B’</code> 解密得到 <code>密钥X</code>，再用 <code>公钥A</code> 加密后传给服务器</strong>。</li>
+<li>服务器拿到后用 <code>私钥A’</code> 解密得到 <code>密钥X</code>。</li>
+</ol>
+<p>这样在双方都不会发现异常的情况下，中间人通过一套“狸猫换太子”的操作，掉包了服务器传来的公钥，进而得到了 <code>密钥X</code>。其根本原因是 <strong>浏览器无法确认收到的公钥是不是网站自己的，</strong> 因为公钥本身是明文传输的，难道还得对公钥的传输进行加密？这似乎变成鸡生蛋、蛋生鸡的问题了。解法是什么？</p>
+<h2 id="如何证明浏览器收到的公钥一定是该网站的公钥？"><a href="#如何证明浏览器收到的公钥一定是该网站的公钥？" class="headerlink" title="如何证明浏览器收到的公钥一定是该网站的公钥？"></a>如何证明浏览器收到的公钥一定是该网站的公钥？</h2><p>其实所有证明的源头都是一条或多条不证自明的“公理”（可以回想一下数学上公理），由它推导出一切。比如现实生活中，若想证明某身份证号一定是小明的，可以看他身份证，而身份证是由政府作证的，这里的“公理”就是“政府机构可信”，这也是社会正常运作的前提。</p>
+<p>那能不能类似地有个机构充当互联网世界的“公理”呢？让它作为一切证明的源头，给网站颁发一个“身份证”？</p>
+<p>它就是<strong>CA机构</strong>，它是如今互联网世界正常运作的前提，而CA机构颁发的“身份证”就是<strong>数字证书</strong>。</p>
+<h2 id="数字证书"><a href="#数字证书" class="headerlink" title="数字证书"></a>数字证书</h2><p>网站在使用 HTTPS 前，需要向 <strong>CA机构</strong> 申领一份<strong>数字证书</strong>，数字证书里含有证书持有者信息、公钥信息等。服务器把证书传输给浏览器，浏览器从证书里获取公钥就行了，证书就如身份证，证明“该公钥对应该网站”。</p>
+<p>而这里又有一个显而易见的问题，<strong>证书本身的传输过程中，如何防止被篡改</strong>？即如何证明证书本身的真实性？身份证运用了一些防伪技术，而数字证书怎么防伪呢？解决这个问题我们就接近胜利了！</p>
+<h2 id="如何放防止数字证书被篡改？"><a href="#如何放防止数字证书被篡改？" class="headerlink" title="如何放防止数字证书被篡改？"></a>如何放防止数字证书被篡改？</h2><p>我们把证书原本的内容生成一份“签名”，比对证书内容和签名是否一致就能判别是否被篡改。这就是数字证书的“防伪技术”，这里的“签名”就叫<code>数字签名</code>：</p>
+<h2 id="数字签名"><a href="#数字签名" class="headerlink" title="数字签名"></a>数字签名</h2><p>这部分内容建议看下图并结合后面的文字理解，图中左侧是数字签名的制作过程，右侧是验证过程：</p>
+<p><img src="https://pic2.zhimg.com/80/v2-7c78935389af46e197e96d9cd91c06dd_720w.webp" srcset="/img/loading.gif" lazyload></p>
+<p>数字签名的制作过程：</p>
+<ol>
+<li>CA 机构拥有非对称加密的私钥和公钥。</li>
+<li>CA 机构对证书明文数据 T 进行 hash。</li>
+<li>对 hash 后的值用私钥加密，得到数字签名 S。</li>
+</ol>
+<p>明文 T 和数字签名 S 共同组成了数字证书，这样一份数字证书就可以颁发给网站了。  </p>
+<p>那浏览器拿到服务器传来的数字证书后，如何验证它是不是真的？（有没有被篡改、掉包）</p>
+<p>浏览器验证过程：</p>
+<ol>
+<li>拿到证书，得到明文 T、签名 S。</li>
+<li>用 CA 机构的公钥对 S 解密（由于是浏览器信任的机构，所以浏览器保有它的公钥。详情见下文），得到 S’。</li>
+<li>用证书里指明的 hash 算法对明文 T 进行 hash 得到 T’。</li>
+<li>显然通过以上步骤，T’ 应当等于 S’，除非明文或签名被篡改。所以此时比较 S’ 是否等于 T’，等于则表明证书可信。</li>
+</ol>
+<p>为何么这样可以保证证书可信呢？我们来仔细想一下。</p>
+<h2 id="中间人有可能篡改该证书吗？"><a href="#中间人有可能篡改该证书吗？" class="headerlink" title="中间人有可能篡改该证书吗？"></a>中间人有可能篡改该证书吗？</h2><p>假设中间人篡改了证书的原文，由于他没有CA机构的私钥，所以无法得到此时加密后签名，无法相应地篡改签名。浏览器收到该证书后会发现原文和签名解密后的值不一致，则说明证书已被篡改，证书不可信，从而终止向服务器传输信息，防止信息泄露给中间人。</p>
+<h2 id="既然不可能篡改，中间人有可能把证书掉包吗？"><a href="#既然不可能篡改，中间人有可能把证书掉包吗？" class="headerlink" title="既然不可能篡改，中间人有可能把证书掉包吗？"></a>既然不可能篡改，中间人有可能把证书掉包吗？</h2><p>假设有另一个网站B也拿到了CA机构认证的证书，它想劫持网站A的信息。于是它成为中间人拦截到了网站A传给浏览器的证书，然后替换成自己的证书，传给浏览器，之后浏览器就会错误地拿到B的证书里的公钥了，这确实会导致上文“中间人攻击”那里提到的漏洞？</p>
+<p>其实这并不会发生，因为证书里包含了网站A的信息，包括域名，浏览器把证书里的域名与自己请求的域名比对一下就知道有没有被掉包了。这个是浏览器自己的策略。</p>
+<h2 id="为什么制作数字签名时需要hash一次？"><a href="#为什么制作数字签名时需要hash一次？" class="headerlink" title="为什么制作数字签名时需要hash一次？"></a>为什么制作数字签名时需要hash一次？</h2><p>我初识HTTPS的时候就有这个疑问，因为似乎那里的hash有点多余，把hash过程去掉也能保证证书没有被篡改。</p>
+<p>最显然的是性能问题，前面我们已经说了非对称加密效率较差，证书信息一般较长，比较耗时。而hash后得到的是固定长度的信息（比如用md5算法hash后可以得到固定的128位的值），这样加解密就快很多。</p>
+<p>当然也有安全上的原因，这部分内容相对深一些，感兴趣的可以看这篇解答：<a href="crypto.stackexchange.com/a/12780">crypto.stackexchange.com&#x2F;a&#x2F;12780</a></p>
+<h2 id="怎么证明CA机构的公钥是可信的？"><a href="#怎么证明CA机构的公钥是可信的？" class="headerlink" title="怎么证明CA机构的公钥是可信的？"></a>怎么证明CA机构的公钥是可信的？</h2><p>你们可能会发现上文中说到CA机构的公钥，我几乎一笔带过，“浏览器保有它的公钥”，这是个什么保有法？怎么证明这个公钥是否可信？</p>
+<p>让我们回想一下数字证书到底是干啥的？没错，为了证明某公钥是可信的，即“该公钥是否对应该网站”，那CA机构的公钥是否也可以用数字证书来证明？没错，操作系统、浏览器本身会预装一些它们信任的根证书，如果其中有CA机构的根证书，这样就可以拿到它对应的可信公钥了。</p>
+<p>实际上证书之间的认证也可以不止一层，可以A信任B，B信任C，以此类推，我们把它叫做<code>信任链</code>或<code>数字证书链</code>。也就是一连串的数字证书，由根证书为起点，透过层层信任，使终端实体证书的持有者可以获得转授的信任，以证明身份。</p>
+<p>另外，不知你们是否遇到过网站访问不了、提示需安装证书的情况？这里安装的就是根证书。说明浏览器不认给这个网站颁发证书的机构，那么你就得手动下载安装该机构的根证书（风险自己承担）。安装后，你就有了它的公钥，就可以用它验证服务器发来的证书是否可信了。</p>
+<p><img src="https://pic2.zhimg.com/80/v2-04cd27f3f46388df2d8d70375c4ecac5_720w.webp" srcset="/img/loading.gif" lazyload></p>
+<h2 id="每次进行-HTTPS-请求时都必须在-SSL-x2F-TLS-层进行握手传输密钥吗？"><a href="#每次进行-HTTPS-请求时都必须在-SSL-x2F-TLS-层进行握手传输密钥吗？" class="headerlink" title="每次进行 HTTPS 请求时都必须在 SSL&#x2F;TLS 层进行握手传输密钥吗？"></a>每次进行 HTTPS 请求时都必须在 SSL&#x2F;TLS 层进行握手传输密钥吗？</h2><p>这也是我当时的困惑之一，显然每次请求都经历一次密钥传输过程非常耗时，那怎么达到只传输一次呢？</p>
+<p>服务器会为每个浏览器（或客户端软件）维护一个session ID，在TLS握手阶段传给浏览器，浏览器生成好密钥传给服务器后，服务器会把该密钥存到相应的session ID下，之后浏览器每次请求都会携带session ID，服务器会根据session ID找到相应的密钥并进行解密加密操作，这样就不必要每次重新制作、传输密钥了！</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>可以看下这张图，梳理一下整个流程（SSL、TLS握手有一些区别，不同版本间也有区别，不过大致过程就是这样）：</p>
+<p><img src="https://pic2.zhimg.com/80/v2-a0d10af45e785fe8d3f5cd12f8c309f5_720w.webp" srcset="/img/loading.gif" lazyload></p>
+<ol>
+<li><p>client 向 server 发送请求 <a href="https://baidu.com,然后连接到/" target="_blank" rel="noopener">https://baidu.com，然后连接到</a> server 的 443 端口，发送的信息主要是</p>
+<ul>
+<li><code>随机值1</code></li>
+<li><code>客户端支持的加密算法</code></li>
+<li><code>支持的协议版本，比如TLS 1.2版</code></li>
+<li><code> 一个 session id，标识是否复用服务器之前的tls连接（需要服务器支持）</code></li>
+</ul>
+</li>
+<li><p>server 接收到信息之后给予 client 响应握手信息，包括</p>
+<ul>
+<li><code>随机值2</code></li>
+<li><code>确认使用的加密通信协议版本，比如 TLS 1.2 版本</code>。如果浏览器与服务器支持的版本不一致，服务器关闭加密通信</li>
+<li><code>匹配好的协商加密算法</code>，这个加密算法一定是 client 发送给 server 加密算法的子集</li>
+<li><code>一个 session id（若同意复用连接）</code></li>
+</ul>
+</li>
+<li><p>随即 server 给 client 发送第二个响应报文是数字证书。server 必须要有一套数字证书，可以自己制作，也可以向组织申请。区别就是自己颁发的证书需要客户端验证通过，才可以继续访问，而使用受信任的公司申请的证书则不会弹出提示页面，这套证书其实就是一对公钥和私钥。<br>传送证书，这个证书其实就是公钥，只是包含了很多信息，如证书的颁发机构，过期时间、server 端的公钥，第三方证书认证机构(CA)的签名，server 端的域名信息等内容。</p>
+</li>
+<li><p>client 解析证书，这部分工作是由 client 的 TLS 来完成的，首先会验证公钥是否有效，比如颁发机构，过期时间等等，如果发现异常，则会弹出一个警告框，提示证书存在问题。如果证书没有问题，那么就生成一个随即值（预主秘钥）。</p>
+</li>
+<li><p>client 认证证书通过之后，接下来是通过 <code>随机值1</code>、<code>随机值2</code> 和 <code>预主秘钥</code> 组装会话秘钥。然后通过证书的公钥加密会话秘钥。</p>
+</li>
+<li><p>传送加密信息，这部分传送的是用证书加密后的会话秘钥，目的就是让 server 使用秘钥解密得到<code>随机值1</code>、<code>随机值2</code>和<code>预主秘钥</code>。</p>
+</li>
+<li><p>server 解密得到<code>随机值1</code>、<code>随机值2</code>和<code>预主秘钥</code>，然后组装会话秘钥，跟客户端会话秘钥相同。</p>
+</li>
+<li><p>client 通过会话秘钥加密一条消息发送给服务端，主要验证服务端是否正常接受客户端加密的消息。</p>
+</li>
+<li><p>同样 server 也会通过会话秘钥加密一条消息回传给客户端，如果客户端能够正常接受的话表明SSL层连接建立完成了。</p>
+</li>
+</ol>
+<p>至此，我们已自上而下地打通了HTTPS加密的整体脉络以及核心知识点，不知你是否真正搞懂了HTTPS呢？  </p>
+<p>找几个时间，多看、多想、多理解几次就会越来越清晰的！那么，下面的问题你是否已经可以解答了呢？</p>
+<ol>
+<li>为什么要用对称加密+非对称加密？</li>
+<li>为什么不能只用非对称加密？</li>
+<li>为什么需要数字证书？</li>
+<li>为什么需要数字签名？<br>…</li>
+</ol>
+<p>还有一些补充：</p>
+<h2 id="为什么一定要用三个随机数，来生成”会话密钥”呢"><a href="#为什么一定要用三个随机数，来生成”会话密钥”呢" class="headerlink" title="为什么一定要用三个随机数，来生成”会话密钥”呢"></a>为什么一定要用三个随机数，来生成”会话密钥”呢</h2><p>不管是客户端还是服务器，都需要随机数，这样生成的密钥才不会每次都一样。由于 SSL 协议中证书是静态的，因此十分有必要引入一种随机因素来保证协商出来的密钥的随机性。</p>
+<p>对于 RSA 密钥交换算法来说，pre-master-key 本身就是一个随机数，再加上 hello 消息中的随机数，三个随机数通过一个密钥导出器最终导出一个对称密钥。</p>
+<p>pre-master 的存在在于 SSL 协议不信任每个主机都能产生完全随机的随机数，如果随机数不随机，那么 pre-master-secret 就有可能被猜出来，那么仅适用 pre-master-secret 作为密钥就不合适了，因此必须引入新的随机因素，那么客户端和服务器加上 pre-master-secret 三个随机数一同生成的密钥就不容易被猜出了，一个伪随机可能完全不随机，可是是三个伪随机就十分接近随机了，每增加一个自由度，随机性增加的可不是一。</p>
+<h2 id="HTTPS-很安全，很古老也很成熟，为什么一直到今天我们还有66-的网站不支持HTTPS呢？"><a href="#HTTPS-很安全，很古老也很成熟，为什么一直到今天我们还有66-的网站不支持HTTPS呢？" class="headerlink" title="HTTPS 很安全，很古老也很成熟，为什么一直到今天我们还有66%的网站不支持HTTPS呢？"></a>HTTPS 很安全，很古老也很成熟，为什么一直到今天我们还有66%的网站不支持HTTPS呢？</h2><ol>
+<li><p>慢，HTTPS未经任何优化的情况下要比HTTP慢几百毫秒以上（需多次握手），特别在移动端可能要慢500毫秒以上，关于HTTPS慢和如何优化已经是一个非常系统和复杂的话题</p>
+</li>
+<li><p>贵，特别在计算性能和服务器成本方面。大家也都清楚HTTPS要额外计算，要频繁地做加密和解密操作，几乎每一个字节都需要做加解密，这就产生了服务器成本</p>
+</li>
+<li><p>协议的网络交互。从TLS的握手过程可以看出，即使不需要进行任何计算，TLS的握手也需要至少1个RTT（round trip time)以上的网络交互。<br>RTT(Round-Trip Time): 往返时延。在计算机网络中它是一个重要的性能指标，表示从发送端发送数据开始，到发送端收到来自接收端的确认（接收端收到数据后便立即发送确认），总共经历的时延。</p>
+</li>
+</ol>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://blog.csdn.net/qq_35642036/article/details/82788421" target="_blank" rel="noopener">https://blog.csdn.net/qq_35642036/article/details/82788421</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/43789231" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/43789231</a></li>
+</ul>
+<p><img src="https://pic2.zhimg.com/80/v2-7ae07af75faf459f780609c9710270ad_720w.jpg" srcset="/img/loading.gif" lazyload alt="img"></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/HTTP/" class="category-chain-item">HTTP</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/HTTP/" class="print-no-link">#HTTP</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>71-HTTPS</div>
+      <div>https://flepeng.github.io/010-network-70-应用层-71-HTTPS/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年3月8日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/010-network-70-%E5%BA%94%E7%94%A8%E5%B1%82-70-HTTP/" title="70-HTTP">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">70-HTTP</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/010-network-70-%E5%BA%94%E7%94%A8%E5%B1%82-71-SSL-TLS-%E6%8F%A1%E6%89%8B%E5%8D%8F%E8%AE%AE/" title="71-SSL TLS 握手协议">
+                        <span class="hidden-mobile">71-SSL TLS 握手协议</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

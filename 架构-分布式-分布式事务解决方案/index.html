@@ -1,0 +1,936 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="分布式事务分布式事务顾名思义就是要在分布式系统中实现事务，它其实是由多个本地事务组合而成。 对于分布式事务而言几乎满足不了 ACID，其实对于单机事务而言大部分情况下也没有满足 ACID，不然怎么会有四种隔离级别呢？所以更别说分布在不同数据库或者不同应用上的分布式事务了。 分布式事务有几种解决方案：  2PC（Two-phase commit protocol、二阶段提交） 3PC TCC（Try">
+<meta property="og:type" content="article">
+<meta property="og:title" content="分布式事务解决方案">
+<meta property="og:url" content="https://flepeng.github.io/%E6%9E%B6%E6%9E%84-%E5%88%86%E5%B8%83%E5%BC%8F-%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="分布式事务分布式事务顾名思义就是要在分布式系统中实现事务，它其实是由多个本地事务组合而成。 对于分布式事务而言几乎满足不了 ACID，其实对于单机事务而言大部分情况下也没有满足 ACID，不然怎么会有四种隔离级别呢？所以更别说分布在不同数据库或者不同应用上的分布式事务了。 分布式事务有几种解决方案：  2PC（Two-phase commit protocol、二阶段提交） 3PC TCC（Try">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/distributed/01/1672151430-0c8bcc9b907ff375926c2799c542a7d0.webp">
+<meta property="og:image" content="https://flepeng.github.io/img/distributed/01/1672151430-492e2135800014dbb69d90784eaf31ac.webp">
+<meta property="og:image" content="https://flepeng.github.io/img/distributed/01/1672151430-36e35a1a45d775aae5c9ac03e583650b.webp">
+<meta property="og:image" content="https://flepeng.github.io/img/distributed/01/1672151430-4ada29ae6800aa1a911cde4b39a27bf0.webp">
+<meta property="og:image" content="https://flepeng.github.io/img/distributed/01/1672151430-2ee4ec7d829db68d099bde8e598d6562.webp">
+<meta property="article:published_time" content="2022-11-30T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.500Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="分布式">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/distributed/01/1672151430-0c8bcc9b907ff375926c2799c542a7d0.webp">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>分布式事务解决方案 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="分布式事务解决方案"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2022-12-01 00:00" pubdate>
+          2022年12月1日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          6.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          51 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">分布式事务解决方案</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="分布式事务"><a href="#分布式事务" class="headerlink" title="分布式事务"></a>分布式事务</h2><p>分布式事务顾名思义就是要在分布式系统中实现事务，它其实是由多个本地事务组合而成。</p>
+<p>对于分布式事务而言几乎满足不了 ACID，其实对于单机事务而言大部分情况下也没有满足 ACID，不然怎么会有四种隔离级别呢？所以更别说分布在不同数据库或者不同应用上的分布式事务了。</p>
+<p>分布式事务有几种解决方案：</p>
+<ul>
+<li>2PC（Two-phase commit protocol、二阶段提交）</li>
+<li>3PC</li>
+<li>TCC（Try、Confirm、Cancel）</li>
+<li>SAGA事务</li>
+<li>本地消息表</li>
+<li>消息事务</li>
+<li>最大努力通知</li>
+</ul>
+<h2 id="2PC（Two-phase-commit-protocol、二阶段提交）"><a href="#2PC（Two-phase-commit-protocol、二阶段提交）" class="headerlink" title="2PC（Two-phase commit protocol、二阶段提交）"></a>2PC（Two-phase commit protocol、二阶段提交）</h2><p><strong>2PC是一种强一致性设计</strong>，2PC 引入一个事务协调者的角色来协调管理各参与者（也可称之为各本地资源）的提交和回滚，二阶段分别指的是准备（投票）和提交两个阶段。</p>
+<p>注意这只是协议或者说是理论指导，只阐述了大方向，具体落地还是有会有差异的。让我们来看下两个阶段的具体流程。</p>
+<ul>
+<li><p><strong>准备阶段（prepare）</strong>：协调者会给各参与者发送准备命令，你可以把准备命令理解成除了提交事务之外啥事都做完了。</p>
+</li>
+<li><p><strong>提交阶段（commit&#x2F;rollback）</strong>：同步等待所有资源的响应之后就进入第二阶段即提交阶段（注意提交阶段不一定是提交事务，也可能是回滚事务）。</p>
+</li>
+</ul>
+<p>假如在第一阶段所有参与者都返回准备成功，那么协调者则向所有参与者发送提交事务命令，然后等待所有事务都提交成功之后，返回事务执行成功。</p>
+<p><img src="/img/distributed/01/1672151430-0c8bcc9b907ff375926c2799c542a7d0.webp" srcset="/img/loading.gif" lazyload></p>
+<p>假如在第一阶段有一个参与者返回失败，那么协调者就会向所有参与者发送回滚事务的请求，即分布式事务执行失败。</p>
+<p><img src="/img/distributed/01/1672151430-492e2135800014dbb69d90784eaf31ac.webp" srcset="/img/loading.gif" lazyload></p>
+<p>那可能就有人问了，那第二阶段提交失败的话呢？这里有两种情况。</p>
+<ul>
+<li>第一种是<strong>第二阶段执行的是回滚事务操作</strong>，那么答案是不断重试，直到所有参与者都回滚了，不然那些在第一阶段准备成功的参与者会一直阻塞着。</li>
+<li>第二种是<strong>第二阶段执行的是提交事务操作</strong>，那么答案也是不断重试，因为有可能一些参与者的事务已经提交成功了，这个时候只有一条路，就是头铁往前冲，不断的重试，直到提交成功，到最后真的不行只能人工介入处理。</li>
+</ul>
+<p>大体上二阶段提交的流程就是这样，<strong>我们再来看看细节</strong>。</p>
+<p>首先 2PC 是一个<strong>同步阻塞协议</strong>，像第一阶段协调者会等待所有参与者响应才会进行下一步操作，当然第一阶段的<strong>协调者有超时机制</strong>，假设因为网络原因没有收到某参与者的响应或某参与者挂了，那么超时后就会判断事务失败，向所有参与者发送回滚命令。</p>
+<p>在第二阶段协调者的没法超时，因为按照我们上面分析只能不断重试！</p>
+<p>两阶段提交的原理简单，所以缺点也很明显：</p>
+<ul>
+<li>协调者单点问题：若协调者宕机，那所有的参与者必须一直等待。</li>
+<li>性能问题：要等待所有的参与者处理完毕为止，性能较差（木桶原理）。</li>
+<li>一致性问题：协调者如果因为网络问题或者宕机了，向一部分参与者发送了commit，另一部分还没来得及发就宕机了，就会造成数据不一致。</li>
+</ul>
+<h3 id="协调者故障分析"><a href="#协调者故障分析" class="headerlink" title="协调者故障分析"></a>协调者故障分析</h3><p><strong>协调者是一个单点，存在单点故障问题</strong>。</p>
+<ul>
+<li>假设协调者在<strong>发送准备命令之前</strong>挂了，还行等于事务还没开始。这个没有问题。</li>
+<li>假设协调者在<strong>发送准备命令之后</strong>挂了，这就不太行了，有些参与者等于都执行了处于事务资源锁定的状态。不仅事务执行不下去，还会因为锁定了一些公共资源而阻塞系统其它操作。</li>
+<li>假设协调者在<strong>发送回滚事务命令之前</strong>挂了，那么事务也是执行不下去，且在第一阶段那些准备成功参与者都阻塞着。</li>
+<li>假设协调者在<strong>发送回滚事务命令之后</strong>挂了，这个还行，至少命令发出去了，很大的概率都会回滚成功，资源都会释放。但是如果出现网络分区问题，某些参与者将因为收不到命令而阻塞着。</li>
+<li>假设协调者在<strong>发送提交事务命令之前</strong>挂了，这个不行，傻了！这下是所有资源都阻塞着。</li>
+<li>假设协调者在<strong>发送提交事务命令之后</strong>挂了，这个还行，也是至少命令发出去了，很大概率都会提交成功，然后释放资源，但是如果出现网络分区问题某些参与者将因为收不到命令而阻塞着。</li>
+</ul>
+<h3 id="协调者故障，通过选举得到新协调者"><a href="#协调者故障，通过选举得到新协调者" class="headerlink" title="协调者故障，通过选举得到新协调者"></a>协调者故障，通过选举得到新协调者</h3><p>因为协调者单点问题，因此我们可以通过选举等操作选出一个新协调者来顶替。</p>
+<ul>
+<li>如果处于第一阶段，其实影响不大都回滚好了，在第一阶段事务肯定还没提交。</li>
+<li>如果处于第二阶段，假设参与者都没挂，此时新协调者可以向所有参与者确认它们自身情况来推断下一步的操作。</li>
+</ul>
+<p>假设有个别参与者挂了！这就有点僵硬了，比如协调者发送了回滚命令，此时第一个参与者收到了并执行，然后协调者和第一个参与者都挂了。</p>
+<p>此时其他参与者都没收到请求，然后新协调者来了，它询问其他参与者都说OK，但它不知道挂了的那个参与者到底O不OK，所以它傻了。</p>
+<p>问题其实就出在<strong>每个参与者自身的状态只有自己和协调者知道</strong>，因此新协调者无法通过在场的参与者的状态推断出挂了的参与者是什么情况。</p>
+<p>虽然协议上没说，不过在实现的时候我们可以灵活的让协调者将自己发过的请求在哪个地方记一下，也就是日志记录，这样新协调者来的时候不就知道此时该不该发了？</p>
+<p>但是就算协调者知道自己该发提交请求，那么在参与者也一起挂了的情况下没用，因为你不知道参与者在挂之前有没有提交事务。</p>
+<p>如果参与者在挂之前事务提交成功，新协调者确定存活着的参与者都没问题，那肯定得向其他参与者发送提交事务命令才能保证数据一致。</p>
+<p>如果参与者在挂之前事务还未提交成功，参与者恢复了之后数据是回滚的，此时协调者必须是向其他参与者发送回滚事务命令才能保持事务的一致。</p>
+<p>所以说极端情况下还是无法避免数据不一致问题。</p>
+<p>talk is cheap 让我们再来看下代码，可能更加的清晰。以下代码取自 <code>&lt;&lt;Distributed System: Principles and Paradigms&gt;&gt;</code>。</p>
+<p>这个代码就是实现了 2PC，但是相比于2PC增加了写日志的动作、参与者之间还会互相通知、参与者也实现了超时。这里要注意，一般所说的2PC，不含上述功能，这都是实现的时候添加的。</p>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">协调者:<br>    <span class="hljs-keyword">write</span> START_2PC <span class="hljs-keyword">to</span> <span class="hljs-keyword">local</span> <span class="hljs-keyword">log</span>; //开始事务<br>    multicast VOTE_REQUEST <span class="hljs-keyword">to</span> <span class="hljs-keyword">all</span> participants; //广播通知参与者投票<br>    <span class="hljs-keyword">while</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">all</span> votes have been collected &#123;<br>        wait <span class="hljs-keyword">for</span> <span class="hljs-keyword">any</span> incoming vote;<br>        <span class="hljs-keyword">if</span> timeout &#123; //协调者超时<br>            <span class="hljs-keyword">write</span> GLOBAL_ABORT <span class="hljs-keyword">to</span> <span class="hljs-keyword">local</span> <span class="hljs-keyword">log</span>; //写日志<br>            multicast GLOBAL_ABORT <span class="hljs-keyword">to</span> <span class="hljs-keyword">all</span> participants; //通知事务中断<br>            <span class="hljs-keyword">exit</span>;<br>        &#125;<br>        <span class="hljs-type">record</span> vote;<br>    &#125;<br>    //如果所有参与者都ok<br>    <span class="hljs-keyword">if</span> <span class="hljs-keyword">all</span> participants sent VOTE_COMMIT <span class="hljs-keyword">and</span> coordinator votes <span class="hljs-keyword">COMMIT</span> &#123;<br>        <span class="hljs-keyword">write</span> GLOBAL_COMMIT <span class="hljs-keyword">to</span> <span class="hljs-keyword">local</span> <span class="hljs-keyword">log</span>;<br>        multicast GLOBAL_COMMIT <span class="hljs-keyword">to</span> <span class="hljs-keyword">all</span> participants;<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        <span class="hljs-keyword">write</span> GLOBAL_ABORT <span class="hljs-keyword">to</span> <span class="hljs-keyword">local</span> <span class="hljs-keyword">log</span>;<br>        multicast GLOBAL_ABORT <span class="hljs-keyword">to</span> <span class="hljs-keyword">all</span> participants;<br>    &#125;<br><br>参与者:<br><br>    <span class="hljs-keyword">write</span> INIT <span class="hljs-keyword">to</span> <span class="hljs-keyword">local</span> <span class="hljs-keyword">log</span>; //写日志<br>    wait <span class="hljs-keyword">for</span> VOTE_REQUEST <span class="hljs-keyword">from</span> coordinator;<br>    <span class="hljs-keyword">if</span> timeout &#123; //等待超时<br>        <span class="hljs-keyword">write</span> VOTE_ABORT <span class="hljs-keyword">to</span> <span class="hljs-keyword">local</span> <span class="hljs-keyword">log</span>;<br>        <span class="hljs-keyword">exit</span>;<br>    &#125;<br>    <span class="hljs-keyword">if</span> participant votes <span class="hljs-keyword">COMMIT</span> &#123;<br>        <span class="hljs-keyword">write</span> VOTE_COMMIT <span class="hljs-keyword">to</span> <span class="hljs-keyword">local</span> <span class="hljs-keyword">log</span>; //记录自己的决策<br>        send VOTE_COMMIT <span class="hljs-keyword">to</span> coordinator;<br>        wait <span class="hljs-keyword">for</span> DECISION <span class="hljs-keyword">from</span> coordinator;<br>        <span class="hljs-keyword">if</span> timeout &#123;<br>            multicast DECISION_REQUEST <span class="hljs-keyword">to</span> other participants; //超时通知<br>            wait <span class="hljs-keyword">until</span> DECISION <span class="hljs-keyword">is</span> received;  <span class="hljs-comment">/* remain blocked*/</span><br>            <span class="hljs-keyword">write</span> DECISION <span class="hljs-keyword">to</span> <span class="hljs-keyword">local</span> <span class="hljs-keyword">log</span>;<br>        &#125;<br>        <span class="hljs-keyword">if</span> DECISION == GLOBAL_COMMIT<br>            <span class="hljs-keyword">write</span> GLOBAL_COMMIT <span class="hljs-keyword">to</span> <span class="hljs-keyword">local</span> <span class="hljs-keyword">log</span>;<br>        <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> DECISION == GLOBAL_ABORT<br>            <span class="hljs-keyword">write</span> GLOBAL_ABORT <span class="hljs-keyword">to</span> <span class="hljs-keyword">local</span> <span class="hljs-keyword">log</span>;<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        <span class="hljs-keyword">write</span> VOTE_ABORT <span class="hljs-keyword">to</span> <span class="hljs-keyword">local</span> <span class="hljs-keyword">log</span>;<br>        send VOTE_ABORT <span class="hljs-keyword">to</span> coordinator;<br>    &#125;<br><br><br>每个参与者维护一个线程处理其它参与者的DECISION_REQUEST请求：<br><br>    <span class="hljs-keyword">while</span> <span class="hljs-keyword">true</span> &#123;<br>        wait <span class="hljs-keyword">until</span> <span class="hljs-keyword">any</span> incoming DECISION_REQUEST <span class="hljs-keyword">is</span> received;<br>        <span class="hljs-keyword">read</span> most recently recorded STATE <span class="hljs-keyword">from</span> the <span class="hljs-keyword">local</span> <span class="hljs-keyword">log</span>;<br>        <span class="hljs-keyword">if</span> STATE == GLOBAL_COMMIT<br>            send GLOBAL_COMMIT <span class="hljs-keyword">to</span> requesting participant;<br>        <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> STATE == INIT <span class="hljs-keyword">or</span> STATE == GLOBAL_ABORT;<br>            send GLOBAL_ABORT <span class="hljs-keyword">to</span> requesting participant;<br>        <span class="hljs-keyword">else</span><br>            skip;  <span class="hljs-comment">/* participant remains blocked */</span><br>    &#125;<br></code></pre></td></tr></table></figure>
+
+<p>至此我们已经详细的分析的 2PC 的各种细节，我们来总结一下！</p>
+<p>2PC 是一种<strong>尽量保证强一致性</strong>的分布式事务，因此它是<strong>同步阻塞</strong>的，而同步阻塞就导致长久的资源锁定问题，<strong>总体而言效率低</strong>，并且存在<strong>单点故障</strong>问题，在极端条件下存在<strong>数据不一致</strong>的风险。</p>
+<p>当然具体的实现可以变形，而且 2PC 也有变种，例如 Tree 2PC、Dynamic 2PC。</p>
+<p>还有一点不知道你们看出来没，2PC 适用于<strong>数据库层面的分布式事务场景</strong>，而我们业务需求有时候不仅仅关乎数据库，也有可能是上传一张图片或者发送一条短信。</p>
+<p>而且像 Java 中的 JTA 只能解决一个应用下多数据库的分布式事务问题，跨服务了就不能用了。</p>
+<p>简单说下 Java 中 JTA，它是基于XA规范实现的事务接口，这里的 XA 你可以简单理解为基于数据库的 XA 规范来实现的 2PC。（至于XA规范到底是啥，篇幅有限，下次有机会再说）</p>
+<h2 id="3PC"><a href="#3PC" class="headerlink" title="3PC"></a>3PC</h2><p>3PC 的出现是为了解决 2PC 的一些问题，相比于 2PC 它在<strong>参与者中也引入了超时机制</strong>，并且<strong>新增了一个阶段</strong>使得参与者可以利用这一个阶段统一各自的状态。</p>
+<p>3PC 包含了三个阶段，分别是<strong>准备阶段、预提交阶段和提交阶段</strong>，对应的英文就是：<code>CanCommit、PreCommit 和 DoCommit</code>。</p>
+<p>看起来是<strong>把 2PC 的提交阶段变成了预提交阶段和提交阶段</strong>，但是 3PC 的准备阶段协调者只是询问参与者的自身状况，比如你现在还好吗？负载重不重？这类的。</p>
+<p>而预提交阶段就是和 2PC 的准备阶段一样，除了事务的提交该做的都做了。</p>
+<p>提交阶段和 2PC 的一样，让我们来看一下图。</p>
+<p><img src="/img/distributed/01/1672151430-36e35a1a45d775aae5c9ac03e583650b.webp" srcset="/img/loading.gif" lazyload></p>
+<p>不管哪一个阶段有参与者返回失败都会宣布事务失败，这和 2PC 是一样的（当然到最后的提交阶段和 2PC 一样只要是提交请求就只能不断重试）。</p>
+<p>我们先来看一下 3PC 的阶段变更有什么影响。</p>
+<p>首先<strong>准备阶段的变更成不会直接执行事务</strong>，而是会先去询问此时的参与者是否有条件接这个事务，因此<strong>不会一来就干活直接锁资源</strong>，使得在某些资源不可用的情况下所有参与者都阻塞着。</p>
+<p>而<strong>预提交阶段的引入起到了一个统一状态的作用</strong>，它像一道栅栏，表明在预提交阶段前所有参与者其实还未都回应，在预处理阶段表明所有参与者都已经回应了。</p>
+<p>假如你是一位参与者，你知道自己进入了预提交状态那你就可以推断出来其他参与者也都进入了预提交状态。</p>
+<p>但是多引入一个阶段也多一个交互，因此<strong>性能会差一些</strong>，而且<strong>绝大部分的情况下资源应该都是可用的</strong>，这样等于每次明知可用执行还得询问一次。</p>
+<p>我们再来看下参与者超时能带来什么样的影响。</p>
+<p>我们知道 2PC 是同步阻塞的，上面我们已经分析了协调者挂在了提交请求还未发出去的时候是最伤的，所有参与者都已经锁定资源并且阻塞等待着。</p>
+<p>那么引入了超时机制，参与者就不会傻等了，<strong>如果是等待提交命令超时，那么参与者就会提交事务了</strong>，因为都到了这一阶段了大概率是提交的，<strong>如果是等待预提交命令超时，那该干啥就干啥了，反正本来啥也没干</strong>。</p>
+<p>然而超时机制也会带来数据不一致的问题，比如在等待提交命令时候超时了，参与者默认执行的是提交事务操作，但是<strong>有可能执行的是回滚操作，这样一来数据就不一致了</strong>。</p>
+<p>当然 3PC 协调者超时还是在的，具体不分析了和 2PC 是一样的。</p>
+<p>从维基百科上看，3PC 的引入是为了解决提交阶段 2PC 协调者和某参与者都挂了之后新选举的协调者不知道当前应该提交还是回滚的问题。</p>
+<p>新协调者来的时候发现有一个参与者处于预提交或者提交阶段，那么表明已经经过了所有参与者的确认了，所以此时执行的就是提交命令。</p>
+<p>所以说 3PC 就是通过引入预提交阶段来使得参与者之间的状态得到统一，也就是留了一个阶段让大家同步一下。</p>
+<p>但是这也只能让协调者知道该如果做，但不能保证这样做一定对，这其实和上面 2PC 分析一致，因为挂了的参与者到底有没有执行事务无法断定。</p>
+<p>所以说 3PC 通过预提交阶段可以减少故障恢复时候的复杂性，但是不能保证数据一致，除非挂了的那个参与者恢复。</p>
+<p>让我们总结一下， 3PC 相对于 2PC 做了一定的改进：引入了参与者超时机制，并且增加了预提交阶段使得故障恢复之后协调者的决策复杂度降低，但整体的交互过程更长了，性能有所下降，并且还是会存在数据不一致问题。</p>
+<p>所以 2PC 和 3PC 都不能保证数据100%一致，因此一般都需要有定时扫描补偿机制。</p>
+<p>我再说下 3PC 我没有找到具体的实现，所以我认为 3PC 只是纯的理论上的东西，而且可以看到相比于 2PC 它是做了一些努力但是效果甚微，所以只做了解即可。</p>
+<h2 id="TCC-事务补偿"><a href="#TCC-事务补偿" class="headerlink" title="TCC(事务补偿)"></a>TCC(事务补偿)</h2><p><strong>2PC 和 3PC 都是数据库层面的，而 TCC 是业务层面的分布式事务</strong>，就像前面说的分布式事务不仅仅包括数据库的操作，还包括发送短信等，这时候 TCC 就派上用场了！</p>
+<p>TCC 其实就是采用的补偿机制，其核心思想是：针对每个操作，都要注册一个与其对应的确认和补偿（撤销）操作。TCC 模型是把锁的粒度完全交给业务处理。TCC 分为三个阶段：</p>
+<ul>
+<li><code>Try</code> 指的是预留，即资源的预留和锁定。</li>
+<li><code>Confirm</code> 指的是确认操作，这一步其实就是真正的执行了。Try 阶段执行成功并开始执行。Confirm 阶段时，默认 Confirm 阶段是不会出错的。即：只要 Try 成功，Confirm 一定成功。</li>
+<li><code>Cancel</code> 指的是撤销操作，可以理解为在业务执行错误，需要回滚的状态下执行的业务取消，预留资源释放。</li>
+</ul>
+<p>其实从思想上看和 2PC 差不多，都是先试探性的执行，如果都可以那就真正的执行，如果不行就回滚。</p>
+<p>比如说一个事务要执行 A、B、C 三个操作，那么先对三个操作执行预留动作。如果都预留成功了那么就执行确认操作，如果有一个预留失败那就都执行撤销动作。</p>
+<p>我们来看下流程，TCC模型还有个事务管理者的角色，用来记录TCC全局事务状态并提交或者回滚事务。</p>
+<p><img src="/img/distributed/01/1672151430-4ada29ae6800aa1a911cde4b39a27bf0.webp" srcset="/img/loading.gif" lazyload></p>
+<ul>
+<li>可以看到流程还是很简单的，难点在于业务上的定义。对于每一个操作你都需要定义三个动作分别对应<code>Try - Confirm - Cancel</code>。因此 <strong>TCC 对业务的侵入较大和业务紧耦合</strong>，需要根据特定的场景和业务逻辑来设计相应的操作。</li>
+<li>撤销和确认操作的执行可能需要重试，因此还需要保证<strong>操作的幂等</strong>。</li>
+<li>相对于 2PC、3PC ，TCC 适用的范围更大，但是开发量也更大，毕竟都在业务上实现。</li>
+<li>也因为是在业务上实现的，所以<strong>TCC可以跨数据库、跨不同的业务系统来实现事务</strong>。</li>
+<li>技术不可控。如果你对接的有第三方服务（比如银行），别人不愿意按照TCC的方式来修改代码，那就推动不下去了。</li>
+</ul>
+<h2 id="SAGA-事务"><a href="#SAGA-事务" class="headerlink" title="SAGA 事务"></a>SAGA 事务</h2><p>针对技术不可控，我们可以考虑采用下面的柔性事务方案：SAGA 事务。</p>
+<p>SAGA 事务把大事务拆分成若干个子事务，每个子事务都可以被看作原子行为。我们需要对每个子事务设计对应的补偿动作。如果各个子事务都能提交成功，那么事务就可以顺利完成，否则我们就要采取以下两种恢复策略之一：</p>
+<ul>
+<li>正向恢复：如果某个子事务提交失败，则一直对该事务进行重试，直至成功为止，这种适用于事务最终都要成功的场景。</li>
+<li>反向恢复：如果某个子事务提交失败，则对该子事务及其之前所有的子事务进行补偿操作。</li>
+</ul>
+<p>与 TCC 相比，SAGA 不需要为资源设计冻结状态和撤销冻结的操作，补偿操作往往要比冻结操作容易实现的多。</p>
+<p>缺点：</p>
+<ul>
+<li>SAGA 必须保证所有子事务都能提交或者补偿，但是 SAGA 系统本身也可能会崩溃，所以它必须设计成与数据库类似的日志机制。</li>
+<li>需要保证正向、反向恢复过程能严谨执行。</li>
+</ul>
+<p>SAGA 是基于数据补偿来代替回滚的思路，也可以应用在其他事务方案上。想要进一步研究 SAGA，go 语言可参考 DTM，Java 语言可参考阿里的 seata。</p>
+<h2 id="本地消息表"><a href="#本地消息表" class="headerlink" title="本地消息表"></a>本地消息表</h2><p>本地消息表这种实现方式应该是业界使用最多的。本地消息表其实就是利用了 <strong>各系统本地的事务</strong> 来实现分布式事务。</p>
+<p>本地消息表顾名思义就是会有一张存放本地消息的表，一般都是放在数据库中，然后在执行业务的时候 <strong>将业务的执行和将消息放入消息表中的操作放在同一个事务中</strong>，这样就能保证消息放入本地表中业务肯定是执行成功的。</p>
+<p>然后再去调用下一个操作，如果下一个操作调用成功了好说，消息表的消息状态可以直接改成已成功。</p>
+<p>如果调用失败也没事，会有 <strong>后台任务定时去读取本地消息表</strong>，筛选出还未成功的消息再调用对应的服务，服务更新成功了再变更消息的状态。</p>
+<p>这时候有可能消息对应的操作不成功，因此也需要重试，重试就得保证对应服务的方法是幂等的，而且一般重试会有最大次数，超过最大次数可以记录下报警让人工处理。</p>
+<p>可以看到本地消息表其实实现的是<strong>最终一致性</strong>，容忍了数据暂时不一致的情况。</p>
+<h2 id="消息事务"><a href="#消息事务" class="headerlink" title="消息事务"></a>消息事务</h2><p>在上述的本地消息表方案中，生产者需要额外创建消息表，还需要对本地消息表进行轮询，业务负担较重。阿里开源的 RocketMQ 4.3 之后的版本正式支持事务消息，该事务消息本质上是把本地消息表放到 RocketMQ 上，解决生产端的消息发送与本地事务执行的原子性问题。</p>
+<p>第一步先给 Broker 发送事务消息即半消息，<strong>半消息不是说一半消息，而是这个消息对消费者来说不可见</strong>，然后<strong>发送成功后发送方再执行本地事务</strong>。</p>
+<p>再根据<strong>本地事务的结果向 Broker 发送 Commit 或者 RollBack 命令</strong>。</p>
+<p>并且 RocketMQ 的发送方会提供一个<strong>反查事务状态接口</strong>，如果一段时间内半消息没有收到任何操作请求，那么 Broker 会通过反查接口得知发送方事务是否执行成功，然后执行 Commit 或者 RollBack 命令。</p>
+<p>如果是 Commit 那么订阅方就能收到这条消息，然后再做对应的操作，做完了之后再消费这条消息即可。</p>
+<p>如果是 RollBack 那么订阅方收不到这条消息，等于事务就没执行过。</p>
+<p>可以看到通过 RocketMQ 还是比较容易实现的，RocketMQ 提供了事务消息的功能，我们只需要定义好事务反查接口即可。</p>
+<p><img src="/img/distributed/01/1672151430-2ee4ec7d829db68d099bde8e598d6562.webp" srcset="/img/loading.gif" lazyload></p>
+<p>可以看到消息事务实现的也是最终一致性。</p>
+<h2 id="最大努力通知"><a href="#最大努力通知" class="headerlink" title="最大努力通知"></a>最大努力通知</h2><p>其实我觉得本地消息表也可以算最大努力，事务消息也可以算最大努力。</p>
+<p>就本地消息表来说会有后台任务定时去查看未完成的消息，然后去调用对应的服务，当一个消息多次调用都失败的时候可以记录下然后引入人工，或者直接舍弃。这其实算是最大努力了。</p>
+<p>事务消息也是一样，当半消息被 commit 了之后确实就是普通消息了，如果订阅者一直不消费或者消费不了则会一直重试，到最后进入死信队列。其实这也算最大努力。</p>
+<p>所以<strong>最大努力通知其实只是表明了一种柔性事务的思想</strong>：我已经尽力我最大的努力想达成事务的最终一致了。</p>
+<p>适用于对时间不敏感的业务，例如短信通知。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ul>
+<li><p>2PC 和 3PC：依赖于数据库，能够很好的提供强一致性和强事务性，但相对来说延迟比较高，比较适合传统的单体应用，在同一个方法中存在跨库操作的情况，不适合高并发和高性能要求的场景。</p>
+</li>
+<li><p>TCC 是一种补偿性事务思想，适用的范围更广，在业务层面实现，因此对业务的侵入性较大，每一个操作都需要实现对应的三个方法。适用于执行时间确定且较短，实时性要求高，对数据一致性要求高，比如互联网金融企业最核心的三个服务：交易、支付、账务</p>
+</li>
+<li><p>本地消息、事务消息和最大努力通知其实都是最终一致性事务，因此适用于一些对时间不敏感的业务。适用于事务中参与方支持操作幂等，对一致性要求不高，业务上能容忍数据不一致到一个人工检查周期，事务涉及的参与方、参与环节较少，业务上有对账&#x2F;校验系统兜底。</p>
+</li>
+<li><p>Saga 事务：由于 Saga 事务不能保证隔离性，需要在业务层控制并发，适合于业务场景事务并发操作同一资源较少的情况。Saga 相比缺少预提交动作，导致补偿动作的实现比较麻烦，例如业务是发送短信，补偿动作则得再发送一次短信说明撤销，用户体验比较差。Saga 事务较适用于补偿动作容易处理的场景。</p>
+</li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F/" class="category-chain-item">分布式</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" class="print-no-link">#分布式</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>分布式事务解决方案</div>
+      <div>https://flepeng.github.io/架构-分布式-分布式事务解决方案/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2022年12月1日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/%E6%9E%B6%E6%9E%84-%E5%88%86%E5%B8%83%E5%BC%8F-CAP-%E7%90%86%E8%AE%BA/" title="CAP 理论">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">CAP 理论</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/%E6%9E%B6%E6%9E%84-%E5%88%86%E5%B8%83%E5%BC%8F-%E5%B9%82%E7%AD%89/" title="幂等">
+                        <span class="hidden-mobile">幂等</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

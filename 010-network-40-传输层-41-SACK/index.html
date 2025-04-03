@@ -1,0 +1,801 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="标准的 TCP 确认机制中，如果发送方发送了 0-1000 序号之间的数据，接收方收到了 0-100、300-1000，那么接收方只能向发送方确认 101，这时发送方会重传所有 101-1000 之间的数据，实际上这是不必要的，因为有可能仅仅是丢了一小段而已，但是在标准的 TCP 确认机制中，发送方无法感知这一事情，只能重传从 101 开始的所有数据。 为了优化这种情况，必须让发送方知道更多的接收">
+<meta property="og:type" content="article">
+<meta property="og:title" content="41-SACK">
+<meta property="og:url" content="https://flepeng.github.io/010-network-40-%E4%BC%A0%E8%BE%93%E5%B1%82-41-SACK/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="标准的 TCP 确认机制中，如果发送方发送了 0-1000 序号之间的数据，接收方收到了 0-100、300-1000，那么接收方只能向发送方确认 101，这时发送方会重传所有 101-1000 之间的数据，实际上这是不必要的，因为有可能仅仅是丢了一小段而已，但是在标准的 TCP 确认机制中，发送方无法感知这一事情，只能重传从 101 开始的所有数据。 为了优化这种情况，必须让发送方知道更多的接收">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/network/sack/01.png">
+<meta property="og:image" content="https://flepeng.github.io/img/network/sack/02.png">
+<meta property="article:published_time" content="2021-03-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.273Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="network">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/network/sack/01.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>41-SACK - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="41-SACK"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-03-08 00:00" pubdate>
+          2021年3月8日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          10 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">41-SACK</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>标准的 TCP 确认机制中，如果发送方发送了 0-1000 序号之间的数据，接收方收到了 0-100、300-1000，那么接收方只能向发送方确认 101，这时发送方会重传所有 101-1000 之间的数据，实际上这是不必要的，因为有可能仅仅是丢了一小段而已，但是在标准的 TCP 确认机制中，发送方无法感知这一事情，只能重传从 101 开始的所有数据。</p>
+<p>为了优化这种情况，必须让发送方知道更多的接收信息，所以发展出了SACK 选项，关于 SACK 的标准见 RFC 2018。</p>
+<h2 id="1、概述"><a href="#1、概述" class="headerlink" title="1、概述"></a>1、概述</h2><p>SACK 实现的需要发送方和接收方协作。为此，TCP 首部实际上定义了两种选项：SACK允许选项、SACK选项。</p>
+<h3 id="1-1、SACK-允许选项"><a href="#1-1、SACK-允许选项" class="headerlink" title="1.1、SACK 允许选项"></a>1.1、SACK 允许选项</h3><p>SACK 特性是 TCP 的一个可选特性，是否启用需要收发双发进行协商，通信双发在 SYN 段或 SYN+ACK 段中添加 SACK 允许选项通知对端本端是否支持SACK，如果双发都支持，那么后续连接态通信过程中就可以使用 SACK 选项了。所以 SACK 允许选项只能出现在 SYN 段中。</p>
+<p>SACK允许选项格式如下图：<br><img src="/img/network/sack/01.png" srcset="/img/loading.gif" lazyload alt="SACK允许选项"></p>
+<h3 id="1-2、SACK-选项"><a href="#1-2、SACK-选项" class="headerlink" title="1.2、SACK 选项"></a>1.2、SACK 选项</h3><p>连接建立后，如果出现开头所述的情况，接收方就可以通过 SACK 选项告诉发送方字节的实际接收情况。</p>
+<p>SACK选项格式如下：<br><img src="/img/network/sack/02.png" srcset="/img/loading.gif" lazyload></p>
+<p>由于整个 TCP 首部的选项部分不能超过 40 字节，所以一个 ACK 段中最多可以容纳 4 组 SACK 信息。</p>
+<p>Left Edge 表示已收到的不连续块的第一个序号，Right Edge 表示已收到的不连续块的最后一个序号+1，即左闭右开区间。通过 ACK 和 SACK 信息，发送方就可以确定接收方具体没有收到的数据就是从 ACK 到最大 SACK 信息之间的那些空洞的序号。</p>
+<p>内核定义了两个数据结构用于表示这种左右边界组合：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-comment">//大端表示，即对网络上要传输的数据的直接表示</span><br><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">tcp_sack_block_wire</span> &#123;</span><br>    __be32    start_seq;<br>    __be32    end_seq;<br>&#125;;<br><br><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">tcp_sack_block</span> &#123;</span><br>    u32    start_seq;<br>    u32    end_seq;<br>&#125;;<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="2、SACK-允许选项的发送"><a href="#2、SACK-允许选项的发送" class="headerlink" title="2、SACK 允许选项的发送"></a>2、SACK 允许选项的发送</h2><p>下面看看 TCP 建链过程中对 SACK 允许选项是如何处理的。</p>
+<h3 id="2-1、SYN-段发送"><a href="#2-1、SYN-段发送" class="headerlink" title="2.1、SYN 段发送"></a>2.1、SYN 段发送</h3><p>与 SACK 允许选项相关的处理是在 <code>tcp_transmit_skb()</code> 中进行的，代码如下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-function"><span class="hljs-keyword">static</span> <span class="hljs-keyword">int</span> <span class="hljs-title">tcp_transmit_skb</span><span class="hljs-params">(struct sock *sk, struct sk_buff *skb, <span class="hljs-keyword">int</span> clone_it,</span></span><br><span class="hljs-function"><span class="hljs-params">                <span class="hljs-keyword">gfp_t</span> gfp_mask)</span></span><br><span class="hljs-function"></span>&#123;<br>...<br>    <span class="hljs-keyword">int</span> sysctl_flags;<br>...<br><br>    sysctl_flags = <span class="hljs-number">0</span>;<br>    <span class="hljs-keyword">if</span> (unlikely(tcb-&gt;flags &amp; TCPCB_FLAG_SYN)) &#123;<br>...<br>        <span class="hljs-comment">//可见，是否启用SACK选项是有系统参数sysctl_tcp_sack(/proc/sys/net/ipv4/tcp_sack)控制的</span><br>        <span class="hljs-keyword">if</span> (sysctl_tcp_sack) &#123;<br>            sysctl_flags |= SYSCTL_FLAG_SACK;<br>            <span class="hljs-comment">//这里之所以考虑时间戳选项，是因为可以将SACK允许选项和时间戳选项拼到一起以节省头部空间</span><br>            <span class="hljs-keyword">if</span> (!(sysctl_flags &amp; SYSCTL_FLAG_TSTAMPS))<br>                tcp_header_size += TCPOLEN_SACKPERM_ALIGNED;<br>        &#125;<br>    &#125;<br>...<br><br>    <span class="hljs-keyword">if</span> (unlikely(tcb-&gt;flags &amp; TCPCB_FLAG_SYN)) &#123;<br>        tcp_syn_build_options((__be32 *)(th + <span class="hljs-number">1</span>),<br>                      tcp_advertise_mss(sk),<br>                      (sysctl_flags &amp; SYSCTL_FLAG_TSTAMPS),<br>                      <span class="hljs-comment">//标识是否启用SACK，如果为1，则tcp_syn_build_options()会构造SACK允许选项</span><br>                      (sysctl_flags &amp; SYSCTL_FLAG_SACK),<br>                      (sysctl_flags &amp; SYSCTL_FLAG_WSCALE),<br>                      tp-&gt;rx_opt.rcv_wscale,<br>                      tcb-&gt;when,<br>                      tp-&gt;rx_opt.ts_recent,<br><br>#ifdef CONFIG_TCP_MD5SIG<br>                      md5 ? &amp;md5_hash_location :<br>#endif<br>                      <span class="hljs-literal">NULL</span>);<br>    &#125;<br>...<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="2-2、接收-SYN-段"><a href="#2-2、接收-SYN-段" class="headerlink" title="2.2、接收 SYN 段"></a>2.2、接收 SYN 段</h3><p>这个过程中和 SACK 允许选项相关的内容主要是对选项的解析，这是由<code>tcp_parse_options()</code> 完成的。不过我们知道，接收到的 TCP 选项都是解析到了结构 <code>struct tcp_options_received</code> 中，所以先来看看该结构中和 SACK 有关的字段定义：</p>
+<h4 id="2-2-1、struct-tcp-options-received"><a href="#2-2-1、struct-tcp-options-received" class="headerlink" title="2.2.1、struct tcp_options_received"></a>2.2.1、<code>struct tcp_options_received</code></h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">tcp_options_received</span> &#123;</span><br>...<br>    u16 dsack : <span class="hljs-number">1</span>,        <span class="hljs-comment">/* D-SACK is scheduled            */</span><br>...<br>    <span class="hljs-comment">//标识对端是否支持SACK，来源于SYN段，见下文</span><br>    sack_ok : <span class="hljs-number">4</span>,    <span class="hljs-comment">/* SACK seen on SYN packet        */</span><br>...<br><span class="hljs-comment">/*    SACKs data    */</span><br>    u8    eff_sacks;    <span class="hljs-comment">/* Size of SACK array to send with next packet */</span><br>    u8    num_sacks;    <span class="hljs-comment">/* Number of SACK blocks        */</span><br>...<br>&#125;;<br></code></pre></td></tr></table></figure>
+
+<h4 id="2-2-2、tcp-parse-options"><a href="#2-2-2、tcp-parse-options" class="headerlink" title="2.2.2、tcp_parse_options()"></a>2.2.2、<code>tcp_parse_options()</code></h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">tcp_parse_options</span><span class="hljs-params">(struct sk_buff *skb, struct tcp_options_received *opt_rx,</span></span><br><span class="hljs-function"><span class="hljs-params">               <span class="hljs-keyword">int</span> estab)</span></span><br><span class="hljs-function"></span>&#123;<br>...<br>    <span class="hljs-keyword">case</span> TCPOPT_SACK_PERM:<br>        <span class="hljs-comment">//解析SACK允许选项，必须是SYN段、非连接态、sysctl_tcp_sack打开</span><br>        <span class="hljs-keyword">if</span> (opsize == TCPOLEN_SACK_PERM &amp;&amp; th-&gt;syn &amp;&amp;<br>            !estab &amp;&amp; sysctl_tcp_sack) &#123;<br>            <span class="hljs-comment">//sack_ol置1表示对端支持SACK特性</span><br>            opt_rx-&gt;sack_ok = <span class="hljs-number">1</span>;<br>            tcp_sack_reset(opt_rx);<br>        &#125;<br>        <span class="hljs-keyword">break</span>;<br>    <span class="hljs-keyword">case</span> TCPOPT_SACK:<br>        <span class="hljs-comment">//解析SACK信息</span><br>        <span class="hljs-keyword">if</span> ((opsize &gt;= (TCPOLEN_SACK_BASE + TCPOLEN_SACK_PERBLOCK)) &amp;&amp;<br>           !((opsize - TCPOLEN_SACK_BASE) % TCPOLEN_SACK_PERBLOCK) &amp;&amp;<br>           opt_rx-&gt;sack_ok) &#123;<br>            <span class="hljs-comment">//可见，TCB控制块中的sacked记录的是SACK选项与TCP首部的偏移量</span><br>            TCP_SKB_CB(skb)-&gt;sacked = (ptr - <span class="hljs-number">2</span>) - (<span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">char</span> *)th;<br>        &#125;<br>        <span class="hljs-keyword">break</span>;<br>...<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="2-3、发送-SYN-ACK-段"><a href="#2-3、发送-SYN-ACK-段" class="headerlink" title="2.3、发送 SYN+ACK 段"></a>2.3、发送 SYN+ACK 段</h3><p>显然，和发送 SYN 段时的处理相同，都是在 <code>tcp_transmit_skb()</code> 中完成的。</p>
+<h2 id="3、D-SACK"><a href="#3、D-SACK" class="headerlink" title="3、D-SACK"></a>3、D-SACK</h2><p>为了更好的反应网络情况，RFC 2883 在 SACK 选项的基础上提出了D-SACK（即Duplicate SACK）。接收方收到的乱序报文中同样有可能是会出现重复段，在 SACK 选项的第一个块中携带该重复段的序号，该序号可能是已经确认过的（小于ACK序号），或者大于其后面其它 SACK 的序号，发送方可以根据第一个块更加精细的判断网络状况：如数据段被复制、错误重传等。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/network/" class="category-chain-item">network</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/network/" class="print-no-link">#network</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>41-SACK</div>
+      <div>https://flepeng.github.io/010-network-40-传输层-41-SACK/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年3月8日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/010-network-40-%E4%BC%A0%E8%BE%93%E5%B1%82-41-ARQ/" title="41-ARQ">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">41-ARQ</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/010-network-70-%E5%BA%94%E7%94%A8%E5%B1%82-70-HTTP-POST-%E8%AF%B7%E6%B1%82%E5%8F%82%E6%95%B0%E5%BD%A2%E5%BC%8F/" title="70-HTTP POST 请求参数形式">
+                        <span class="hidden-mobile">70-HTTP POST 请求参数形式</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

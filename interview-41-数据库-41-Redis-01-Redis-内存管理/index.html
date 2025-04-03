@@ -1,0 +1,862 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="官网保平安：https:&#x2F;&#x2F;redis.io&#x2F;  Redis 内存管理Redis 给缓存数据设置过期时间有啥用？一般情况下，我们设置保存的缓存数据的时候都会设置一个过期时间。为什么呢？ 内存是有限且珍贵的，如果不对缓存数据设置过期时间，那内存占用就会一直增长，最终可能会导致 OOM 问题。通过设置合理的过期时间，Redis 会自动删除暂时不需要的数据，为新的缓存数据腾出空间。 Redis 自带了">
+<meta property="og:type" content="article">
+<meta property="og:title" content="01-Redis 内存管理">
+<meta property="og:url" content="https://flepeng.github.io/interview-41-%E6%95%B0%E6%8D%AE%E5%BA%93-41-Redis-01-Redis-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="官网保平安：https:&#x2F;&#x2F;redis.io&#x2F;  Redis 内存管理Redis 给缓存数据设置过期时间有啥用？一般情况下，我们设置保存的缓存数据的时候都会设置一个过期时间。为什么呢？ 内存是有限且珍贵的，如果不对缓存数据设置过期时间，那内存占用就会一直增长，最终可能会导致 OOM 问题。通过设置合理的过期时间，Redis 会自动删除暂时不需要的数据，为新的缓存数据腾出空间。 Redis 自带了">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://oss.javaguide.cn/github/javaguide/database/redis/redis-expired-dictionary.png">
+<meta property="og:image" content="https://oss.javaguide.cn/github/javaguide/database/redis/redis.conf-hz.png">
+<meta property="article:published_time" content="2020-08-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.488Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="面试">
+<meta property="article:tag" content="Redis">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://oss.javaguide.cn/github/javaguide/database/redis/redis-expired-dictionary.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>01-Redis 内存管理 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="01-Redis 内存管理"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2020-08-08 00:00" pubdate>
+          2020年8月8日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          27 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">01-Redis 内存管理</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <blockquote>
+<p>官网保平安：<a href="https://redis.io/" target="_blank" rel="noopener">https://redis.io/</a></p>
+</blockquote>
+<h2 id="Redis-内存管理"><a href="#Redis-内存管理" class="headerlink" title="Redis 内存管理"></a>Redis 内存管理</h2><h3 id="Redis-给缓存数据设置过期时间有啥用？"><a href="#Redis-给缓存数据设置过期时间有啥用？" class="headerlink" title="Redis 给缓存数据设置过期时间有啥用？"></a>Redis 给缓存数据设置过期时间有啥用？</h3><p>一般情况下，我们设置保存的缓存数据的时候都会设置一个过期时间。为什么呢？</p>
+<p>内存是有限且珍贵的，如果不对缓存数据设置过期时间，那内存占用就会一直增长，最终可能会导致 OOM 问题。通过设置合理的过期时间，Redis 会自动删除暂时不需要的数据，为新的缓存数据腾出空间。</p>
+<p>Redis 自带了给缓存数据设置过期时间的功能，比如：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs bash">127.0.0.1:6379&gt; expire key 60 <span class="hljs-comment"># 数据在 60s 后过期</span><br>(<span class="hljs-built_in">integer</span>) 1<br>127.0.0.1:6379&gt; setex key 60 value <span class="hljs-comment"># 数据在 60s 后过期 (setex:[set] + [ex]pire)</span><br>OK<br>127.0.0.1:6379&gt; ttl key <span class="hljs-comment"># 查看数据还有多久过期</span><br>(<span class="hljs-built_in">integer</span>) 56<br></code></pre></td></tr></table></figure>
+
+<p>注意：<strong>Redis 中除了字符串类型有自己独有设置过期时间的命令 <code>setex</code> 外，其他方法都需要依靠 <code>expire</code> 命令来设置过期时间 。另外，<code>persist</code> 命令可以移除一个键的过期时间。</strong></p>
+<p><strong>过期时间除了有助于缓解内存的消耗，还有什么其他用么？</strong></p>
+<p>很多时候，我们的业务场景就是需要某个数据只在某一时间段内存在，比如我们的短信验证码可能只在 1 分钟内有效，用户登录的 Token 可能只在 1 天内有效。</p>
+<p>如果使用传统的数据库来处理的话，一般都是自己判断过期，这样更麻烦并且性能要差很多。</p>
+<h3 id="Redis-是如何判断数据是否过期的呢？"><a href="#Redis-是如何判断数据是否过期的呢？" class="headerlink" title="Redis 是如何判断数据是否过期的呢？"></a>Redis 是如何判断数据是否过期的呢？</h3><p>Redis 通过一个叫做过期字典（可以看作是 hash 表）来保存数据过期的时间。</p>
+<ul>
+<li>过期字典的键：指向 Redis 数据库中的某个 key(键)</li>
+<li>过期字典的值：key 所指向的数据库键的过期时间（毫秒精度的 UNIX 时间戳）。是一个 long long 类型的整数。</li>
+</ul>
+<p><img src="https://oss.javaguide.cn/github/javaguide/database/redis/redis-expired-dictionary.png" srcset="/img/loading.gif" lazyload alt="Redis 过期字典"></p>
+<p>过期字典是存储在 redisDb 这个结构里的：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">typedef</span> <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">redisDb</span> &#123;</span><br>    ...<br><br>    dict *dict;     <span class="hljs-comment">//数据库键空间,保存着数据库中所有键值对</span><br>    dict *expires   <span class="hljs-comment">// 过期字典,保存着键的过期时间</span><br>    ...<br>&#125; redisDb;<br></code></pre></td></tr></table></figure>
+
+<p>在查询一个 key 的时候，Redis 首先检查该 key 是否存在于过期字典中（时间复杂度为 O(1)），如果不在就直接返回，在的话需要判断一下这个 key 是否过期，过期直接删除 key 然后返回 null。</p>
+<h3 id="Redis-过期-key-删除策略了解么？"><a href="#Redis-过期-key-删除策略了解么？" class="headerlink" title="Redis 过期 key 删除策略了解么？"></a>Redis 过期 key 删除策略了解么？</h3><p>如果假设你设置了一批 key 只能存活 1 分钟，那么 1 分钟后，Redis 是怎么对这批 key 进行删除的呢？</p>
+<p>首先看一下常用的过期数据的删除策略就下面这几种（重要！自己造缓存轮子的时候需要格外考虑的东西）：</p>
+<ol>
+<li><strong>惰性删除</strong>：只会在取出&#x2F;查询 key 的时候才对数据进行过期检查。这种方式对 CPU 最友好，但是可能会造成太多过期 key 没有被删除。</li>
+<li><strong>定期删除</strong>：周期性地随机从设置了过期时间的 key 中抽查一批，然后逐个检查这些 key 是否过期，过期就删除 key。相比于惰性删除，定期删除对内存更友好，对 CPU 不太友好。</li>
+<li><strong>延迟队列</strong>：把设置过期时间的 key 放到一个延迟队列里，到期之后就删除 key。这种方式可以保证每个过期 key 都能被删除，但维护延迟队列太麻烦，队列本身也要占用资源。</li>
+<li><strong>定时删除</strong>：每个设置了过期时间的 key 都会在设置的时间到达时立即被删除。这种方法可以确保内存中不会有过期的键，但是它对 CPU 的压力最大，因为它需要为每个键都设置一个定时器。</li>
+</ol>
+<p><strong>Redis 采用的那种删除策略呢？</strong></p>
+<p>Redis 采用的是 <strong>定期删除+惰性&#x2F;懒汉式删除</strong> 结合的策略，这也是大部分缓存框架的选择。定期删除对内存更加友好，惰性删除对 CPU 更加友好。两者各有千秋，结合起来使用既能兼顾 CPU 友好，又能兼顾内存友好。</p>
+<p>下面是我们详细介绍一下 Redis 中的定期删除具体是如何做的。</p>
+<h4 id="定期删除"><a href="#定期删除" class="headerlink" title="定期删除"></a>定期删除</h4><p>Redis 的定期删除过程是随机的（周期性地随机从设置了过期时间的 key 中抽查一批），所以并不保证所有过期键都会被立即删除。这也就解释了为什么有的 key 过期了，并没有被删除。并且，Redis 底层会通过限制删除操作执行的时长和频率来减少删除操作对 CPU 时间的影响。</p>
+<p>另外，定期删除还会受到执行时间和过期 key 的比例的影响：</p>
+<ul>
+<li>执行时间已经超过了阈值，那么就中断这一次定期删除循环，以避免使用过多的 CPU 时间。</li>
+<li>如果这一批过期的 key 比例超过一个比例，就会重复执行此删除流程，以更积极地清理过期 key。相应地，如果过期的 key 比例低于这个比例，就会中断这一次定期删除循环，避免做过多的工作而获得很少的内存回收。</li>
+</ul>
+<p>Redis 7.2 版本的执行时间阈值是 <strong>25ms</strong>，过期 key 比例设定值是 **10%**。</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs java">#define ACTIVE_EXPIRE_CYCLE_FAST_DURATION 1000 /* Microseconds. */<br>#define ACTIVE_EXPIRE_CYCLE_SLOW_TIME_PERC 25 /* Max % of CPU to use. */<br>#define ACTIVE_EXPIRE_CYCLE_ACCEPTABLE_STALE 10 /* % of stale keys after which we do extra efforts. */<br></code></pre></td></tr></table></figure>
+
+<p><strong>每次随机抽查数量是多少？</strong></p>
+<p><code>expire.c</code>中定义了每次随机抽查的数量，Redis 7.2 版本为 20 ，也就是说每次会随机选择 20 个设置了过期时间的 key 判断是否过期。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> ACTIVE_EXPIRE_CYCLE_KEYS_PER_LOOP 20 <span class="hljs-comment">/* Keys for each DB loop. */</span></span><br></code></pre></td></tr></table></figure>
+
+<p><strong>如何控制定期删除的执行频率？</strong></p>
+<p>在 Redis 中，定期删除的频率是由 <strong>hz</strong> 参数控制的。hz 默认为 10，代表每秒执行 10 次，也就是每秒钟进行 10 次尝试来查找并删除过期的 key。</p>
+<p>hz 的取值范围为 1~500。增大 hz 参数的值会提升定期删除的频率。如果你想要更频繁地执行定期删除任务，可以适当增加 hz 的值，但这会加 CPU 的使用率。根据 Redis 官方建议，hz 的值不建议超过 100，对于大部分用户使用默认的 10 就足够了。</p>
+<p>下面是 hz 参数的官方注释，我翻译了其中的重要信息（Redis 7.2 版本）。</p>
+<p><img src="https://oss.javaguide.cn/github/javaguide/database/redis/redis.conf-hz.png" srcset="/img/loading.gif" lazyload alt="redis.conf 对于 hz 的注释"></p>
+<p>类似的参数还有一个 <strong>dynamic-hz</strong>，这个参数开启之后 Redis 就会在 hz 的基础上动态计算一个值。Redis 提供并默认启用了使用自适应 hz 值的能力，</p>
+<p>这两个参数都在 Redis 配置文件 <code>redis.conf</code> 中：</p>
+<figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs properties"><span class="hljs-comment"># 默认为 10</span><br><span class="hljs-attr">hz</span> <span class="hljs-string">10</span><br><span class="hljs-comment"># 默认开启</span><br><span class="hljs-meta">dynamic-hz</span> <span class="hljs-string">yes</span><br></code></pre></td></tr></table></figure>
+
+<p>多提一嘴，除了定期删除过期 key 这个定期任务之外，还有一些其他定期任务例如关闭超时的客户端连接、更新统计信息，这些定期任务的执行频率也是通过 hz 参数决定。</p>
+<p><strong>为什么定期删除不是把所有过期 key 都删除呢？</strong></p>
+<p>这样会对性能造成太大的影响。如果我们 key 数量非常庞大的话，挨个遍历检查是非常耗时的，会严重影响性能。Redis 设计这种策略的目的是为了平衡内存和性能。</p>
+<p><strong>为什么 key 过期之后不立马把它删掉呢？这样不是会浪费很多内存空间吗？</strong></p>
+<p>因为不太好办到，或者说这种删除方式的成本太高了。假如我们使用延迟队列作为删除策略，这样存在下面这些问题：</p>
+<ol>
+<li>队列本身的开销可能很大：key 多的情况下，一个延迟队列可能无法容纳。</li>
+<li>维护延迟队列太麻烦：修改 key 的过期时间就需要调整期在延迟队列中的位置，并且，还需要引入并发控制。</li>
+</ol>
+<h4 id="惰性删除"><a href="#惰性删除" class="headerlink" title="惰性删除"></a>惰性删除</h4><p>惰性删除：定期删除可能会导致很多过期 key 到了时间并没有被删除掉。所以就有了惰性删除。假如过期的 key，靠定期删除没有被删除掉，还停留在内存里，这个时候你去系统查一下那个 key， Redis 发现这个 key 过期了，就会把这个 key 删除掉。</p>
+<h4 id="策略配置"><a href="#策略配置" class="headerlink" title="策略配置"></a>策略配置</h4><ul>
+<li><p>惰性删除为 Redis 服务器内置策略，不可以配置。</p>
+</li>
+<li><p>定期删除可以通过：</p>
+<ol>
+<li>配置 redis.conf 的 hz 选项，默认为 10（即1秒执行 10 次，100ms 一次，值越大说明刷新频率越快，Redis 性能损耗也越大）。 </li>
+<li>配置 redis.conf 的 maxmemory 最大值，当已用内存超过 maxmemory 限定时，就会触发主动清理策略。</li>
+</ol>
+</li>
+</ul>
+<h3 id="Redis-内存淘汰策略了解么？"><a href="#Redis-内存淘汰策略了解么？" class="headerlink" title="Redis 内存淘汰策略了解么？"></a>Redis 内存淘汰策略了解么？</h3><p>仅仅通过设置过期时间还是有问题的。想一下如果定期删除漏掉了很多过期 key，然后你也没及时去查，此时会怎么样？如果这种过期的 key 大量堆积在内存里，就会导致 Redis 内存块耗尽。那怎么解决这个问题呢？ </p>
+<p>答案是：<strong>Redis 内存淘汰机制</strong>。</p>
+<p>在 redis.conf 中有一行配置 <code>maxmemory-policy volatile-lru</code>，这行配置就是设置内存淘汰策略的。Redis 配置文件 redis.conf 中有相关注释，大家可以自行查阅或者通过这个网址查看：<a href="http://download.redis.io/redis-stable/redis.conf" target="_blank" rel="noopener">http://download.redis.io/redis-stable/redis.conf</a></p>
+<p>Redis 的内存淘汰策略只有在运行内存达到了配置的最大内存阈值时才会触发，这个阈值是通过 <code>redis.conf</code> 的 <code>maxmemory</code> 参数来定义的。64 位操作系统下，<code>maxmemory</code> 默认为 0 ，表示不限制内存大小。32 位操作系统下，默认的最大内存值是 3GB。</p>
+<p>你可以使用命令 <code>config get maxmemory</code> 来查看 <code>maxmemory</code> 的值。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">&gt; config get maxmemory<br>maxmemory<br>0<br></code></pre></td></tr></table></figure>
+
+<p>Redis 提供了 6 种内存淘汰策略：</p>
+<ol>
+<li><strong>volatile-lru（least recently used）</strong>：从已设置过期时间的数据集（<code>server.db[i].expires</code>）中挑选最近最少使用的数据淘汰。</li>
+<li><strong>volatile-ttl</strong>：从已设置过期时间的数据集（<code>server.db[i].expires</code>）中挑选将要过期的数据淘汰。</li>
+<li><strong>volatile-random</strong>：从已设置过期时间的数据集（<code>server.db[i].expires</code>）中任意选择数据淘汰。</li>
+<li><strong>allkeys-lru（least recently used）</strong>：从数据集（<code>server.db[i].dict</code>）中移除最近最少使用的数据淘汰。</li>
+<li><strong>allkeys-random</strong>：从数据集（<code>server.db[i].dict</code>）中任意选择数据淘汰。</li>
+<li><strong>no-eviction</strong>（默认内存淘汰策略）：禁止驱逐数据，当内存不足以容纳新写入数据时，新写入操作会报错。</li>
+</ol>
+<p>4.0 版本后增加以下两种：</p>
+<ol start="7">
+<li><strong>volatile-lfu（least frequently used）</strong>：从已设置过期时间的数据集（<code>server.db[i].expires</code>）中挑选最不经常使用的数据淘汰。</li>
+<li><strong>allkeys-lfu（least frequently used）</strong>：从数据集（<code>server.db[i].dict</code>）中移除最不经常使用的数据淘汰。</li>
+</ol>
+<p><code>allkeys-xxx</code> 表示从所有的键值中淘汰数据，而 <code>volatile-xxx</code> 表示从设置了过期时间的键值中淘汰数据。</p>
+<blockquote>
+<p>ps：如果没有设置 expire 的 key, 不满足先决条件，那么 volatile-lru, volatile-random 和 volatile-ttl 策略的行为和 no-eviction(不删除) 基本上一致。</p>
+</blockquote>
+<p><code>config.c</code>中定义了内存淘汰策略的枚举数组：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs c">configEnum maxmemory_policy_enum[] = &#123;<br>    &#123;<span class="hljs-string">"volatile-lru"</span>, MAXMEMORY_VOLATILE_LRU&#125;,<br>    &#123;<span class="hljs-string">"volatile-lfu"</span>, MAXMEMORY_VOLATILE_LFU&#125;,<br>    &#123;<span class="hljs-string">"volatile-random"</span>,MAXMEMORY_VOLATILE_RANDOM&#125;,<br>    &#123;<span class="hljs-string">"volatile-ttl"</span>,MAXMEMORY_VOLATILE_TTL&#125;,<br>    &#123;<span class="hljs-string">"allkeys-lru"</span>,MAXMEMORY_ALLKEYS_LRU&#125;,<br>    &#123;<span class="hljs-string">"allkeys-lfu"</span>,MAXMEMORY_ALLKEYS_LFU&#125;,<br>    &#123;<span class="hljs-string">"allkeys-random"</span>,MAXMEMORY_ALLKEYS_RANDOM&#125;,<br>    &#123;<span class="hljs-string">"noeviction"</span>,MAXMEMORY_NO_EVICTION&#125;,<br>    &#123;<span class="hljs-literal">NULL</span>, <span class="hljs-number">0</span>&#125;<br>&#125;;<br></code></pre></td></tr></table></figure>
+
+<p>你可以使用 <code>config get maxmemory-policy</code> 命令来查看当前 Redis 的内存淘汰策略。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">&gt; config get maxmemory-policy<br>maxmemory-policy<br>noeviction<br></code></pre></td></tr></table></figure>
+
+<p>可以通过<code>config set maxmemory-policy 内存淘汰策略</code> 命令修改内存淘汰策略，立即生效，但这种方式重启 Redis 之后就失效了。修改 <code>redis.conf</code> 中的 <code>maxmemory-policy</code> 参数不会因为重启而失效，不过，需要重启之后修改才能生效。</p>
+<figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs properties"><span class="hljs-meta">maxmemory-policy</span> <span class="hljs-string">noeviction</span><br></code></pre></td></tr></table></figure>
+
+<p>关于淘汰策略的详细说明可以参考 Redis 官方文档：<a href="https://redis.io/docs/reference/eviction/" target="_blank" rel="noopener">https://redis.io/docs/reference/eviction/</a>。</p>
+<h3 id="Redis-内存淘汰机制-MySQL-里有-2000w-数据，Redis-中只存-20w-的数据，如何保证-Redis-中的数据都是热点数据"><a href="#Redis-内存淘汰机制-MySQL-里有-2000w-数据，Redis-中只存-20w-的数据，如何保证-Redis-中的数据都是热点数据" class="headerlink" title="Redis 内存淘汰机制(MySQL 里有 2000w 数据，Redis 中只存 20w 的数据，如何保证 Redis 中的数据都是热点数据)"></a>Redis 内存淘汰机制(MySQL 里有 2000w 数据，Redis 中只存 20w 的数据，如何保证 Redis 中的数据都是热点数据)</h3><p>思路：首先计算出 20w 数据所需的内存空间，设置最大内存，然后选择合适的内存淘汰策略。</p>
+<ol>
+<li>保证 Redis 存储 20w 的数据：1 个中文占 2 个字节，假如1条数据有 100 个中文，则 1 条数据占 200 字节，<code>200000 * 200B = 400000000B（大概等于38M）</code> 所以要保证能存 20w 数据，Redis 至少需要 38M 的内存。</li>
+<li>保留热点数据：对于保留 Redis 热点数据来说，我们可以使用 Redis 的内存淘汰策略来实现，可以使用 allkeys-lru 淘汰策略，该淘汰策略是从 Redis 的数据中挑选最近最少使用的数据删除，这样频繁被访问的数据就可以保留下来了。</li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E9%9D%A2%E8%AF%95/" class="print-no-link">#面试</a>
+      
+        <a href="/tags/Redis/" class="print-no-link">#Redis</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>01-Redis 内存管理</div>
+      <div>https://flepeng.github.io/interview-41-数据库-41-Redis-01-Redis-内存管理/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2020年8月8日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

@@ -1,0 +1,1008 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="官网保平安：https:&#x2F;&#x2F;redis.io&#x2F;  Sentinel Cluster（&gt;&#x3D;3.0版本）Redis 是单线程的，如何提高多核 CPU 的利用率？可以在同一个服务器部署多个 Redis 的实例，并把他们当作不同的服务器来使用，在某些时候，无论如何一个服务器是不够的，所以如果你想使用多个 CPU，你可以考虑一下分片（shard）。也就是集群。 分布式 Redis 是前期做">
+<meta property="og:type" content="article">
+<meta property="og:title" content="02-Redis 部署模式03集群（重要）">
+<meta property="og:url" content="https://flepeng.github.io/interview-41-%E6%95%B0%E6%8D%AE%E5%BA%93-41-Redis-02-Redis-%E9%83%A8%E7%BD%B2%E6%A8%A1%E5%BC%8F03%E9%9B%86%E7%BE%A4%EF%BC%88%E9%87%8D%E8%A6%81%EF%BC%89/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="官网保平安：https:&#x2F;&#x2F;redis.io&#x2F;  Sentinel Cluster（&gt;&#x3D;3.0版本）Redis 是单线程的，如何提高多核 CPU 的利用率？可以在同一个服务器部署多个 Redis 的实例，并把他们当作不同的服务器来使用，在某些时候，无论如何一个服务器是不够的，所以如果你想使用多个 CPU，你可以考虑一下分片（shard）。也就是集群。 分布式 Redis 是前期做">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/interview/redis/f682fc80-930c-4e35-978b-496b856d790b.png">
+<meta property="og:image" content="https://flepeng.github.io/img/interview/redis/bd28bbbd-0ed4-46e6-ba94-aba9c730934d.png">
+<meta property="og:image" content="https://flepeng.github.io/img/interview/redis/1667553571-cbe6ae72184ac8d95edbf9f2dca22383.png">
+<meta property="og:image" content="https://flepeng.github.io/img/interview/redis/de254bdb-ab83-44f1-aff5-f5267f19a444.png">
+<meta property="og:image" content="https://flepeng.github.io/img/interview/redis/bef6547a-7325-4cdc-8fa5-b3db66826be2.png">
+<meta property="og:image" content="https://flepeng.github.io/img/interview/redis/7fefb5f3-1978-432b-9a6b-3e1608d033df.png">
+<meta property="og:image" content="https://flepeng.github.io/img/interview/redis/06f32493-52dc-4c53-8522-fb98e72da782.png">
+<meta property="og:image" content="https://flepeng.github.io/img/interview/redis/redis-cluster-3-find-hash-slot.png">
+<meta property="og:image" content="https://flepeng.github.io/img/interview/redis/image-20221017215237019.png">
+<meta property="og:image" content="https://flepeng.github.io/img/interview/redis/cb3b3001-6cd6-4bfc-b46e-16feb5258b6c.png">
+<meta property="og:image" content="https://flepeng.github.io/img/interview/redis/ca358827-2d14-40cd-ab6a-64ec1ea21428.png">
+<meta property="article:published_time" content="2020-08-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.489Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="面试">
+<meta property="article:tag" content="Redis">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/interview/redis/f682fc80-930c-4e35-978b-496b856d790b.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>02-Redis 部署模式03集群（重要） - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="02-Redis 部署模式03集群（重要）"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2020-08-08 00:00" pubdate>
+          2020年8月8日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          59 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">02-Redis 部署模式03集群（重要）</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <blockquote>
+<p>官网保平安：<a href="https://redis.io/" target="_blank" rel="noopener">https://redis.io/</a></p>
+</blockquote>
+<h1 id="Sentinel-Cluster（-gt-x3D-3-0版本）"><a href="#Sentinel-Cluster（-gt-x3D-3-0版本）" class="headerlink" title="Sentinel Cluster（&gt;&#x3D;3.0版本）"></a>Sentinel Cluster（&gt;&#x3D;3.0版本）</h1><h2 id="Redis-是单线程的，如何提高多核-CPU-的利用率？"><a href="#Redis-是单线程的，如何提高多核-CPU-的利用率？" class="headerlink" title="Redis 是单线程的，如何提高多核 CPU 的利用率？"></a>Redis 是单线程的，如何提高多核 CPU 的利用率？</h2><p>可以在同一个服务器部署多个 Redis 的实例，并把他们当作不同的服务器来使用，在某些时候，无论如何一个服务器是不够的，所以如果你想使用多个 CPU，你可以考虑一下分片（shard）。也就是集群。</p>
+<h2 id="分布式-Redis-是前期做还是后期规模上来了再做好？为什么"><a href="#分布式-Redis-是前期做还是后期规模上来了再做好？为什么" class="headerlink" title="分布式 Redis 是前期做还是后期规模上来了再做好？为什么"></a>分布式 Redis 是前期做还是后期规模上来了再做好？为什么</h2><p>既然 Redis 是如此的轻量（单实例只使用 1M 内存），为防止以后的扩容，最好的办法就是一开始就启动较多实例。即便你只有一台服务器，你也可以一开始就让 Redis 以分布式的方式运行，使用分区，在同一台服务器上启动多个实例。</p>
+<p>一开始就多设置几个 Redis 实例，例如 32 或者 64 个实例，对大多数用户来说这操作起来可能比较麻烦，但是从长久来看做这点牺牲是值得的。</p>
+<p>这样的话，当你的数据不断增长，需要更多的 Redis 服务器时，你需要做的就是仅仅将 Redis 实例从一台服务迁移到另外一台服务器而已（而不用考虑重新分区的问题）。一旦你添加了另一台服务器，你需要将你一半的 Redis 实例从第一台机器迁移到第二台机器。</p>
+<h2 id="为什么需要-Redis-Cluster？"><a href="#为什么需要-Redis-Cluster？" class="headerlink" title="为什么需要 Redis Cluster？"></a>为什么需要 Redis Cluster？</h2><p>高并发场景下，使用 Redis 主要会遇到的两个问题：</p>
+<ol>
+<li><strong>缓存的数据量太大：</strong> 实际缓存的数据量可以达到几十 G，甚至是成百上千 G；</li>
+<li><strong>并发量要求太大：</strong> 虽然 Redis 号称单机可以支持 10w 并发，但实际项目中，不可靠因素太多，就比如一些复杂的写&#x2F;读操作就可能会让这个并发量大打折扣。而且，就算真的可以实际支持 10w 并发，达到瓶颈了，可能也没办法满足系统的实际需求。</li>
+</ol>
+<p>主从复制 和 哨兵 这两种方案本质都是通过增加 master 的副本数量的方式来提高 Redis 服务的整体可用性和读吞吐量，都不支持横向扩展来缓解写压力以及解决缓存数据量过大的问题。</p>
+<p><img src="/img/interview/redis/f682fc80-930c-4e35-978b-496b856d790b.png" srcset="/img/loading.gif" lazyload alt="img"></p>
+<p>对于这两种方案来说，如果写压力太大或者缓存数据量太大的话，我们可以考虑提高服务器硬件的配置。不过，提高硬件配置成本太高，无法动态扩容缩容，局限性太大。从本质上来说，靠堆硬件配置的方式并没有实质性地解决问题，依然无法满足高并发场景下分布式缓存的要求。</p>
+<p>通常情况下，更建议使用 <strong>Redis 切片集群</strong> 这种方案。</p>
+<p>简单来说，<strong>Redis 切片集群</strong> 就是部署多台 Redis 主节点（master），这些节点之间平等，并没有主从之说，同时对外提供读&#x2F;写服务。缓存的数据库相对均匀地分布在这些 Redis 实例上，客户端的请求通过路由规则转发到目标 master 上。</p>
+<p><img src="/img/interview/redis/bd28bbbd-0ed4-46e6-ba94-aba9c730934d.png" srcset="/img/loading.gif" lazyload alt="img"></p>
+<p><strong>Redis 切片集群对于横向扩展非常友好，只需要增加 Redis 节点到集群中即可。</strong></p>
+<p>在 Redis 3.0 之前，我们通常使用的是 <a href="https://github.com/twitter/twemproxy" target="_blank" rel="noopener">Twemproxy</a>、<a href="https://github.com/CodisLabs/codis" target="_blank" rel="noopener">Codis</a> 这类开源分片集群方案。Twemproxy、Codis 就相当于是上面的 Proxy 层，负责维护路由规则，实现负载均衡。</p>
+<p><img src="/img/interview/redis/1667553571-cbe6ae72184ac8d95edbf9f2dca22383.png" srcset="/img/loading.gif" lazyload></p>
+<p>不过，Twemproxy、Codis 虽然未被淘汰，但官方已经没有继续维护了。</p>
+<p><img src="/img/interview/redis/de254bdb-ab83-44f1-aff5-f5267f19a444.png" srcset="/img/loading.gif" lazyload alt="img"></p>
+<p>到了 Redis 3.0 的时候，Redis 官方推出了分片集群解决方案 <a href="https://redis.io/topics/cluster-tutorial" target="_blank" rel="noopener">Redis Cluster</a> 。经过多个版本的持续完善，Redis Cluster 成为 Redis 切片集群的首选方案，满足绝大部分高并发业务场景需求。</p>
+<p>Redis Cluster 通过 <strong>分片（Sharding）</strong> 来进行数据管理，提供 <strong>主从复制（Master-Slave Replication）</strong>、<strong>故障转移（Failover）</strong> 等开箱即用的功能，可以非常方便地帮助我们解决 Redis 大数据量缓存以及 Redis 服务高可用的问题。</p>
+<p>Redis Cluster 这种方案可以很方便地进行 <strong>横向拓展（Scale Out）</strong>，内置了开箱即用的解决方案。当 Redis Cluster 的处理能力达到瓶颈无法满足系统要求的时候，直接动态添加 Redis 节点到集群中即可。根据官方文档中的介绍，Redis Cluster 支持扩展到 1000 个节点。反之，当 Redis Cluster 的处理能力远远满足系统要求，同样可以动态删除集群中 Redis 节点，节省资源。</p>
+<p><img src="/img/interview/redis/bef6547a-7325-4cdc-8fa5-b3db66826be2.png" srcset="/img/loading.gif" lazyload alt="img"></p>
+<p>可以说，<strong>Redis Cluster 的动态扩容和缩容是其最大的优势</strong>。</p>
+<p>虽说 Redis Cluster 可以扩展到 1000 个节点，但强烈不推荐这样做，应尽量避免集群中的节点过多。这是因为 Redis Cluster 中的各个节点基于 Gossip 协议 来进行通信共享信息，当节点过多时，Gossip 协议的效率会显著下降，通信成本剧增。</p>
+<p>特点：</p>
+<ul>
+<li>无中心架构（不存在哪个节点影响性能瓶颈），没有 proxy 层。</li>
+<li>可扩展性，可线性扩展到 1000 个节点，节点可动态添加或删除。</li>
+<li>数据按照 slot 存储分布在多个节点，节点间数据共享，可动态调整数据分布。</li>
+<li>高可用性，部分节点不可用时，集群仍可用。通过增加 slave 做备份数据副本。</li>
+<li>实现故障自动 failover（内置了 Sentinel 机制，无需单独部署 Sentinel 集群），节点之间通过 gossip 协议交换状态信息，用投票机制完成 slave 到 master 的角色提升。</li>
+</ul>
+<h3 id="有什么缺点"><a href="#有什么缺点" class="headerlink" title="有什么缺点"></a>有什么缺点</h3><ul>
+<li><p>不能使用涉及多个 key 的操作。</p>
+<ul>
+<li>不能对两个集合求交集，因为他们可能被存储到不同的 Redis 实例（实际上这种情况也有办法，但是不能直接使用交集指令）。</li>
+<li>不能同时操作多个 key，如使用 mset、mget 目前只支持具有相同 slot 值的 Key 执行批量操作。<ul>
+<li>对于映射为不同 slot 值的 Key 由于 Keys 不支持跨 slot 查询，所以执行 mset、mget、sunion 等操作支持不友好。</li>
+</ul>
+</li>
+<li>Key 事务操作支持有限，只支持多 key 在同一节点上的事务操作，当多个 Key 分布于不同的节点上时无法使用事务功能。</li>
+<li>Key 作为数据分区的最小粒度，不能将一个很大的键值对象如 hash、list 等映射到不同的节点。</li>
+</ul>
+</li>
+<li><p>分区使用的粒度是 key，不能使用一个非常长的排序 key 存储一个数据集。</p>
+</li>
+<li><p>当使用分区的时候，数据处理会非常复杂，例如为了备份你必须从不同的 Redis 实例和主机同时收集 RDB&#x2F;AOF 文件。</p>
+</li>
+<li><p>分区时动态扩容或缩容可能非常复杂。Redis 集群在运行时增加或者删除 Redis 节点，能做到最大程度对用户透明地数据再平衡，但其他一些客户端分区或者代理分区方法则不支持这种特性。有一种预分片的技术也可以较好的解决这个问题。</p>
+</li>
+<li><p>Client 实现复杂，驱动要求实现 Smart Client，缓存 slots mapping 信息并及时更新，提高了开发难度，客户端的不成熟影响业务的稳定性。目前仅 JedisCluster 相对成熟，异常处理部分还不完善，比如常见的“max redirect exception”。</p>
+</li>
+<li><p>节点会因为某些原因发生阻塞（阻塞时间大于 clutser-node-timeout），被判断下线，这种 failover 是没有必要的。</p>
+</li>
+<li><p>数据通过异步复制，不保证数据的强一致性。 </p>
+</li>
+<li><p>多个业务使用同一套集群时，无法根据统计区分冷热数据，资源隔离性较差，容易出现相互影响的情况。</p>
+</li>
+<li><p>slave 在集群中充当“冷备”，不能缓解读压力，当然可以通过 SDK 的合理设计来提高 slave 资源的利用率。</p>
+</li>
+<li><p>不支持多数据库空间，单机下的 Redis 可以支持到 16 个数据库，集群模式下只能使用1个数据库空间，即db 0。</p>
+</li>
+<li><p>复制结构只支持一层，slave 只能复制 master，不支持嵌套树状复制结构。</p>
+</li>
+<li><p>避免产生 hot-key，导致主库节点成为系统的短板。</p>
+</li>
+<li><p>避免产生 big-key，导致网卡撑爆、慢查询等。</p>
+</li>
+<li><p>重试时间应该大于 cluster-node-time 时间。</p>
+</li>
+<li><p>Redis Cluster 不建议使用 pipeline 和 multi-keys 操作，减少 max redirect 产生的场景。</p>
+</li>
+</ul>
+<h2 id="一个最基本的-Redis-Cluster-架构是怎样的？"><a href="#一个最基本的-Redis-Cluster-架构是怎样的？" class="headerlink" title="一个最基本的 Redis Cluster 架构是怎样的？"></a>一个最基本的 Redis Cluster 架构是怎样的？</h2><p>为了保证高可用，Redis Cluster 至少需要 6 个节点以上（3 主 3 从）。其中 master 提供读写操作，slave 作为备用节点，不提供请求，只作为故障转移使用。</p>
+<ul>
+<li><p>如果 master 只有一个 slave 的话，master 宕机之后就直接使用这个 slave 替代 master 继续提供服务。<br><img src="/img/interview/redis/7fefb5f3-1978-432b-9a6b-3e1608d033df.png" srcset="/img/loading.gif" lazyload alt="img"></p>
+</li>
+<li><p>如果 master 有多个 slave 的话，Redis Cluster 中的其他节点会从这个 master 的所有 slave 中选出一个替代 master 继续提供服务。Redis Cluster 总是希望数据最完整的 slave 被提升为新的 master。</p>
+</li>
+</ul>
+<p>Redis Cluster 至少要保证宕机的 master 有一个 slave 可用。</p>
+<p>如果宕机的 master 无 slave 的话，为了保障集群的完整性，保证所有的哈希槽都指派给了可用的 master，整个集群将不可用。这种情况下，还是想让集群保持可用的话，可以将 cluster-require-full-coverage 这个参数设置成 no，cluster-require-full-coverage 表示需要 16384 个 slot 都正常被分配的时候 Redis Cluster 才可以对外提供服务。</p>
+<p>方案说明</p>
+<ol>
+<li>通过哈希的方式，将数据分片，每个节点均分存储一定哈希槽区间的数据，默认分配了 16384 个槽位。</li>
+<li>每份数据分片会存储在多个互为主从的多节点上。</li>
+<li>数据写入先写 master，再同步到 slave(支持配置为阻塞同步)。</li>
+<li>同一分片多个节点间的数据不保持一致性。</li>
+<li>读取数据时，当客户端操作的 key 没有分配在该节点上时，Redis 会返回转向指令，指向正确的节点。</li>
+<li>扩容时需要把旧节点的数据迁移一部分到新节点。</li>
+</ol>
+<p>在 Redis cluster 架构下，每个 Redis 要放开两个端口号，比如一个是 6379，另外一个就是加 1w 的端口号，比如 16379。</p>
+<p>16379 端口号是用来进行节点间通信的，采用 gossip 协议，用来进行故障检测、配置更新、故障转移授权。</p>
+<h2 id="Redis-Cluster-是如何分片的？"><a href="#Redis-Cluster-是如何分片的？" class="headerlink" title="Redis Cluster 是如何分片的？"></a>Redis Cluster 是如何分片的？</h2><blockquote>
+<p>类似的问题：</p>
+<ul>
+<li>Redis Cluster 中的数据是如何分布的？</li>
+<li>如何确定给定 key 的应该分布到哪个哈希槽中？</li>
+</ul>
+</blockquote>
+<p>Redis Cluster 采用的是 哈希槽分区，每一个键值对都属于一个 hash slot（哈希槽）。Redis Cluster 通常有 16384 个哈希槽。</p>
+<p>当需要在 Redis 集群中放置一个 key-value 时，计算 <code>CRC16(key) mod 16384</code> 的值，到的值即是 key 对应的哈希槽，然后将 key 放到对应的桶中。</p>
+<ul>
+<li>创建并初始化 Redis Cluster 的时候，Redis 会自动平均分配这 16384 个哈希槽到各个节点，不需要我们手动分配。</li>
+<li>如果想自己调整的话，Redis Cluster 也内置了相关的命令比如<code> ADDSLOTS、ADDSLOTSRANGE</code>。</li>
+</ul>
+<p>假设集群有 3 个 Redis 节点组成，每个节点负责整个集群的一部分数据，哈希槽可能是这样分配的（这里只是演示，实际效果可能会有差异）：</p>
+<ul>
+<li>Node1：【0 - 5500】 的 hash slots</li>
+<li>Node2：【5501 - 11000】 的 hash slots</li>
+<li>Node3：【11001 - 16383】 的 hash slots</li>
+</ul>
+<p>在任意一个 master 节点上执行 <code>CLUSTER SLOTS</code> 命令即可返回哈希槽和节点的映射关系：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs bash">127.0.0.1:7000&gt;&gt; CLUSTER SLOTS<br><span class="hljs-comment"># 哈希槽的范围</span><br>1) 1) (<span class="hljs-built_in">integer</span>) 0<br>   2) (<span class="hljs-built_in">integer</span>) 5500<br>   <span class="hljs-comment"># master 的 ip 和端口号</span><br>   3) 1) <span class="hljs-string">"127.0.0.1"</span><br>      2) (<span class="hljs-built_in">integer</span>) 7002<br>   <span class="hljs-comment"># slave 的 ip 和端口号</span><br>   4) 1) <span class="hljs-string">"127.0.0.1"</span><br>      2) (<span class="hljs-built_in">integer</span>) 8002<br>2) 1) (<span class="hljs-built_in">integer</span>) 11001<br>   2) (<span class="hljs-built_in">integer</span>) 16383<br>   3) 1) <span class="hljs-string">"127.0.0.1"</span><br>      2) (<span class="hljs-built_in">integer</span>) 7000<br>   4) 1) <span class="hljs-string">"127.0.0.1"</span><br>      2) (<span class="hljs-built_in">integer</span>) 8000<br>3) 1) (<span class="hljs-built_in">integer</span>) 5501<br>   2) (<span class="hljs-built_in">integer</span>) 11000<br>   3) 1) <span class="hljs-string">"127.0.0.1"</span><br>      2) (<span class="hljs-built_in">integer</span>) 7001<br>   4) 1) <span class="hljs-string">"127.0.0.1"</span><br>      2) (<span class="hljs-built_in">integer</span>) 8001<br></code></pre></td></tr></table></figure>
+
+<p>客户端连接 Redis Cluster 中任意一个 master 节点即可访问 Redis Cluster 的数据，当客户端发送命令请求的时候，需要先根据 key 通过上面的计算公示找到的对应的哈希槽，然后再查询哈希槽和节点的映射关系，即可找到目标节点。</p>
+<p><img src="/img/interview/redis/06f32493-52dc-4c53-8522-fb98e72da782.png" srcset="/img/loading.gif" lazyload alt="img"></p>
+<p>如果哈希槽确实是当前节点负责，那就直接响应客户端的请求返回结果，如果不由当前节点负责，就会返回 -MOVED 重定向错误，告知客户端当前哈希槽是由哪个节点负责，客户端向目标节点发送请求并更新缓存的哈希槽分配信息。</p>
+<p><img src="/img/interview/redis/redis-cluster-3-find-hash-slot.png" srcset="/img/loading.gif" lazyload alt="img"></p>
+<p>这个时候你可能就会疑问：<strong>为什么还会存在找错节点的情况呢？根据公式计算难道还会出错？</strong></p>
+<p>这是因为 Redis Cluster 内部可能会重新分配哈希槽比如扩容缩容的时候（后文中有介绍到 Redis Cluster 的扩容和缩容问题），这就可能会导致客户端缓存的哈希槽分配信息会有误。</p>
+<p>从上面的介绍中，我们可以简单总结出 Redis Cluster 哈希槽分区机制的优点：<strong>解耦了数据和节点之间的关系，提升了集群的横向扩展性和容错性。</strong></p>
+<h2 id="为什么-Redis-Cluster-的哈希槽是-16384-个"><a href="#为什么-Redis-Cluster-的哈希槽是-16384-个" class="headerlink" title="为什么 Redis Cluster 的哈希槽是 16384 个?"></a>为什么 Redis Cluster 的哈希槽是 16384 个?</h2><p>CRC16 算法产生的校验码有 16 位，理论上可以产生 65536（2^16，0 ~ 65535）个值。为什么 Redis Cluster 的哈希槽选择的是 16384（2^14）个呢？</p>
+<p>2015 年的时候，在 Redis 项目的 issues 区，已经有人提了类似的问题，地址：<a href="https://github.com/redis/redis/issues/2576%E3%80%82Redis" target="_blank" rel="noopener">https://github.com/redis/redis/issues/2576。Redis</a> 作者 antirez 巨佬本人专门对这个问题进行了回复。</p>
+<p><img src="/img/interview/redis/image-20221017215237019.png" srcset="/img/loading.gif" lazyload alt="image-20221017215237019"></p>
+<p>antirez 认为哈希槽是 16384（2 的 14 次方） 个的原因是：</p>
+<ul>
+<li>正常的心跳包会携带一个节点的完整配置，它会以幂等的方式更新旧的配置，这意味着心跳包会附带当前节点的负责的哈希槽的信息。假设哈希槽采用 16384 ,则占空间 2k(16384&#x2F;8)。假设哈希槽采用 65536，则占空间 8k(65536&#x2F;8)，这是令人难以接受的内存占用。</li>
+<li>由于其他设计上的权衡，Redis Cluster 不太可能扩展到超过 1000 个主节点。</li>
+</ul>
+<p>也就是说，65536 个固然可以确保每个主节点有足够的哈希槽，但其占用的空间太大。而且，Redis Cluster 的主节点通常不会扩展太多，16384 个哈希槽完全足够用了。</p>
+<p><code>cluster.h </code>文件中定义了消息结构<code> clusterMsg</code>（源码地址：<a href="https://github.com/redis/redis/blob/7.0/src/cluster.h%EF%BC%89" target="_blank" rel="noopener">https://github.com/redis/redis/blob/7.0/src/cluster.h）</a> ：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">typedef</span> <span class="hljs-class"><span class="hljs-keyword">struct</span> &#123;</span><br>    <span class="hljs-comment">// 省略部分字段</span><br>    <span class="hljs-comment">// ......</span><br>    <span class="hljs-comment">// 本节点负责的哈希槽信息,16384/8 个 char 数组，一共为16384bit</span><br>    <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">char</span> myslots[CLUSTER_SLOTS/<span class="hljs-number">8</span>];<br>    <span class="hljs-comment">// 集群的状态</span><br>    <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">char</span> state;<br>    <span class="hljs-comment">// 消息的内容</span><br>    <span class="hljs-keyword">union</span> clusterMsgData data;<br>&#125; clusterMsg;<br></code></pre></td></tr></table></figure>
+
+<p><code>myslots </code>字段用于存储哈希槽信息， 属于无符号类型的 char 数组，数组长度为 16384&#x2F;8 &#x3D; 2048。C 语言中的 char 只占用一个字节，而 Java 语言中 char 占用两个字节，小伙伴们不要搞混了。</p>
+<p>这里实际就是通过 bitmap 这种数据结构维护的哈希槽信息，每一个 bit 代表一个哈希槽，每个 bit 只能存储 0&#x2F;1 。如果该位为 1，表示这个哈希槽是属于这个节点。</p>
+<p><img src="/img/interview/redis/cb3b3001-6cd6-4bfc-b46e-16feb5258b6c.png" srcset="/img/loading.gif" lazyload alt="img"></p>
+<p>消息传输过程中，会对 myslots 进行压缩，bitmap 的填充率越低，压缩率越高。bitmap 的填充率的值是 <strong>哈希槽总数&#x2F;节点数</strong> ，如果哈希槽总数太大的话，bitmap 的填充率的值也会比较大。</p>
+<p>最后，总结一下 Redis Cluster 的哈希槽的数量选择 16384 而不是 65536 的主要原因：</p>
+<ul>
+<li>哈希槽太大会导致心跳包太大，消耗太多带宽；</li>
+<li>哈希槽总数越少，对存储哈希槽信息的 bitmap 压缩效果越好；</li>
+<li>Redis Cluster 的主节点通常不会扩展太多，16384 个哈希槽已经足够用了。</li>
+</ul>
+<p>Redis Cluster 如何重新分配哈希槽？</p>
+<p>如果你想自己手动调整的话，Redis Cluster 也内置了相关的命令：</p>
+<ul>
+<li>CLUSTER ADDSLOTS slot [slot …] : 把一组 hash slots 分配给接收命令的节点，时间复杂度为 O(N)，其中 N 是 hash slot 的总数；</li>
+<li>CLUSTER ADDSLOTSRANGE start-slot end-slot [start-slot end-slot …] （Redis 7.0 后新加的命令）： 把指定范围的 hash slots 分配给接收命令的节点，类似于 ADDSLOTS 命令，时间复杂度为 O(N) 其中 N 是起始 hash slot 和结束 hash slot 之间的 hash slot 的总数。</li>
+<li>CLUSTER DELSLOTS slot [slot …] : 从接收命令的节点中删除一组 hash slots；</li>
+<li>CLUSTER FLUSHSLOTS ：移除接受命令的节点中的所有 hash slot；</li>
+<li>CLUSTER SETSLOT slot MIGRATING node-id： 迁移接受命令的节点的指定 hash slot 到目标节点（node_id 指定）中；</li>
+<li>CLUSTER SETSLOT slot IMPORTING node-id： 将目标节点（node_id 指定）中的指定 hash slot 迁移到接受命令的节点中；</li>
+<li>……</li>
+</ul>
+<p>简单演示一下:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 将 slot 1 2 3 4 5 分配给节点</span><br>&gt; CLUSTER ADDSLOTS 1 2 3 4 5<br>OK<br><span class="hljs-comment"># 可以使用 ADDSLOTSRANGE 命令完成一样的效果</span><br>&gt; CLUSTER ADDSLOTSRANGE 1 5<br>OK<br><span class="hljs-comment"># 从接收命令的节点中删除 hash slot 1000 1001 1002</span><br>&gt; CLUSTER DELSLOTS 1000 1001 1002<br><span class="hljs-comment"># 迁移接受命令的节点的 hash slot 1005 到 node_id(一长串字符串)对应的节点中</span><br>&gt; CLUSTER SETSLOT 1005 MIGRATING node_id(一长串字符串)<br><span class="hljs-comment"># 将node_id(一长串字符串)对应的节点中的 hash slot 1005 迁移到接受命令的节点中</span><br>&gt; CLUSTER SETSLOT 1005 IMPORTING 92fd7c2a7b7b8933d1019e72a852f621f6b4faff<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="Redis-Cluster-中的节点是怎么进行通信的？"><a href="#Redis-Cluster-中的节点是怎么进行通信的？" class="headerlink" title="Redis Cluster 中的节点是怎么进行通信的？"></a>Redis Cluster 中的节点是怎么进行通信的？</h2><p>Redis Cluster 是一个典型的分布式系统，分布式系统中的各个节点需要互相通信。既然要相互通信就要遵循一致的通信协议，</p>
+<p>Redis Cluster 采用 <strong>Gossip 协议</strong>，每个 Redis 节点都维护了一份集群的状态信息。不同的节点如果出现了元数据的变更之后不断地将元数据发送给其他节点让其他节点进行数据变更。</p>
+<p>Redis Cluster 的节点之间会相互发送多种 Gossip 消息：</p>
+<ul>
+<li>MEET：在 Redis Cluster 中的某个 Redis 节点上执行 CLUSTER MEET ip port 命令，可以向指定的 Redis 节点发送一条 MEET 信息，用于将其添加进 Redis Cluster 成为新的 Redis 节点。</li>
+<li>PING&#x2F;PONG：Redis Cluster 中的节点都会定时地向其他节点发送 PING 消息，来交换各个节点状态信息，检查各个节点状态，包括在线状态、疑似下线状态 PFAIL 和已下线状态 FAIL。</li>
+<li>FAIL：Redis Cluster 中的节点 A 发现 B 节点 PFAIL ，并且在下线报告的有效期限内集群中半数以上的节点将 B 节点标记为 PFAIL，节点 A 就会向集群广播一条 FAIL 消息，通知其他节点将故障节点 B 标记为 FAIL 。</li>
+</ul>
+<p>优缺点</p>
+<ul>
+<li>好处：元数据的更新比较分散，不是集中在一个地方，更新请求会陆陆续续，打到所有节点上去更新，有一定的延时，降低了压力;</li>
+<li>缺点：元数据更新有延时，可能导致集群的一些操作会有一些滞后。</li>
+</ul>
+<h3 id="以下为扩展"><a href="#以下为扩展" class="headerlink" title="以下为扩展"></a>以下为扩展</h3><p><code>cluster.h</code> 文件中定义了所有的消息类型（源码地址：<a href="https://github.com/redis/redis/blob/7.0/src/cluster.h%EF%BC%89%E3%80%82Redis" target="_blank" rel="noopener">https://github.com/redis/redis/blob/7.0/src/cluster.h）。Redis</a> 3.0 版本的时候只有 9 种消息类型，到了 7.0 版本的时候已经有 11 种消息类型了。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// 注意，PING 、 PONG 和 MEET 实际上是同一种消息。</span><br><span class="hljs-comment">// PONG 是对 PING 的回复，它的实际格式也为 PING 消息，</span><br><span class="hljs-comment">// 而 MEET 则是一种特殊的 PING 消息，用于强制消息的接收者将消息的发送者添加到集群中（如果节点尚未在节点列表中的话）</span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> CLUSTERMSG_TYPE_PING 0          <span class="hljs-comment">/* Ping 消息 */</span></span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> CLUSTERMSG_TYPE_PONG 1          <span class="hljs-comment">/* Pong 用于回复Ping */</span></span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> CLUSTERMSG_TYPE_MEET 2          <span class="hljs-comment">/* Meet 请求将某个节点添加到集群中 */</span></span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> CLUSTERMSG_TYPE_FAIL 3          <span class="hljs-comment">/* Fail 将某个节点标记为 FAIL */</span></span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> CLUSTERMSG_TYPE_PUBLISH 4       <span class="hljs-comment">/* 通过发布与订阅功能广播消息 */</span></span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> CLUSTERMSG_TYPE_FAILOVER_AUTH_REQUEST 5 <span class="hljs-comment">/* 请求进行故障转移操作，要求消息的接收者通过投票来支持消息的发送者 */</span></span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> CLUSTERMSG_TYPE_FAILOVER_AUTH_ACK 6     <span class="hljs-comment">/* 消息的接收者同意向消息的发送者投票 */</span></span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> CLUSTERMSG_TYPE_UPDATE 7        <span class="hljs-comment">/* slots 已经发生变化，消息发送者要求消息接收者进行相应的更新 */</span></span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> CLUSTERMSG_TYPE_MFSTART 8       <span class="hljs-comment">/* 为了进行手动故障转移，暂停各个客户端 */</span></span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> CLUSTERMSG_TYPE_MODULE 9        <span class="hljs-comment">/* 模块集群API消息 */</span></span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> CLUSTERMSG_TYPE_PUBLISHSHARD 10 <span class="hljs-comment">/* 通过发布与订阅功能广播分片消息 */</span></span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> CLUSTERMSG_TYPE_COUNT 11        <span class="hljs-comment">/* 消息总数 */</span></span><br></code></pre></td></tr></table></figure>
+
+<p><code>cluster.h</code> 文件中定义了消息结构 <code>clusterMsg</code>（源码地址：<a href="https://github.com/redis/redis/blob/7.0/src/cluster.h%EF%BC%89" target="_blank" rel="noopener">https://github.com/redis/redis/blob/7.0/src/cluster.h）</a> ：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">typedef</span> <span class="hljs-class"><span class="hljs-keyword">struct</span> &#123;</span><br>    <span class="hljs-keyword">char</span> sig[<span class="hljs-number">4</span>];        <span class="hljs-comment">/* 标志位，"RCmb" (Redis Cluster message bus). */</span><br>    <span class="hljs-keyword">uint32_t</span> totlen;    <span class="hljs-comment">/* 消息总长度 */</span><br>    <span class="hljs-keyword">uint16_t</span> ver;       <span class="hljs-comment">/* 消息协议版本 */</span><br>    <span class="hljs-keyword">uint16_t</span> port;      <span class="hljs-comment">/* 端口 */</span><br>    <span class="hljs-keyword">uint16_t</span> type;      <span class="hljs-comment">/* 消息类型 */</span><br>    <span class="hljs-keyword">char</span> sender[CLUSTER_NAMELEN];  <span class="hljs-comment">/* 消息发送节点的名字（ID） */</span><br>    <span class="hljs-comment">// 本节点负责的哈希槽信息,16384/8 个 char 数组，一共为16384bit</span><br>    <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">char</span> myslots[CLUSTER_SLOTS/<span class="hljs-number">8</span>];<br>    <span class="hljs-comment">// 如果消息发送者是一个从节点，那么这里记录的是消息发送者正在复制的主节点的名字</span><br>    <span class="hljs-comment">// 如果消息发送者是一个主节点，那么这里记录的是 REDIS_NODE_NULL_NAME</span><br>    <span class="hljs-comment">// （一个 40 字节长，值全为 0 的字节数组）</span><br>    <span class="hljs-keyword">char</span> slaveof[CLUSTER_NAMELEN];<br>    <span class="hljs-comment">// 省略部分属性</span><br>    <span class="hljs-comment">// ......</span><br>    <span class="hljs-comment">// 集群的状态</span><br>    <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">char</span> state;<br>    <span class="hljs-comment">// 消息的内容</span><br>    <span class="hljs-keyword">union</span> clusterMsgData data;<br>&#125; clusterMsg;<br></code></pre></td></tr></table></figure>
+
+<p><code>clusterMsgData </code>是一个联合体(union）,可以为 PING，MEET，PONG 、FAIL 等消息类型。当消息为 PING、MEET 和 PONG 类型时，都是 ping 字段是被赋值的，这也就解释了为什么我们上面说 PING 、 PONG 和 MEET 实际上是同一种消息。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">union</span> clusterMsgData &#123;<br>    <span class="hljs-comment">/* PING, MEET and PONG */</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> &#123;</span><br>        <span class="hljs-comment">/* Array of N clusterMsgDataGossip structures */</span><br>        clusterMsgDataGossip gossip[<span class="hljs-number">1</span>];<br>    &#125; ping;<br><br>    <span class="hljs-comment">/* FAIL */</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> &#123;</span><br>        clusterMsgDataFail about;<br>    &#125; fail;<br><br>    <span class="hljs-comment">/* PUBLISH */</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> &#123;</span><br>        clusterMsgDataPublish msg;<br>    &#125; publish;<br><br>    <span class="hljs-comment">/* UPDATE */</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> &#123;</span><br>        clusterMsgDataUpdate nodecfg;<br>    &#125; update;<br><br>    <span class="hljs-comment">/* MODULE */</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> &#123;</span><br>        clusterMsgModule msg;<br>    &#125; <span class="hljs-keyword">module</span>;<br>&#125;;<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="缩容扩容"><a href="#缩容扩容" class="headerlink" title="缩容扩容"></a>缩容扩容</h2><h3 id="一个简单的-Redis-Cluster-扩容的例子"><a href="#一个简单的-Redis-Cluster-扩容的例子" class="headerlink" title="一个简单的 Redis Cluster 扩容的例子"></a>一个简单的 Redis Cluster 扩容的例子</h3><figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs angelscript"># 假设你已经有一个运行的 Redis Cluster，并且你想要添加一个新节点<br> <br># 在新节点上安装并运行Redis<br>wget http:<span class="hljs-comment">//download.redis.io/releases/redis-6.2.6.tar.gz</span><br>tar xzf redis<span class="hljs-number">-6.2</span><span class="hljs-number">.6</span>.tar.gz<br>cd redis<span class="hljs-number">-6.2</span><span class="hljs-number">.6</span><br>make<br>src/redis-server --cluster-enabled yes --port <span class="hljs-number">6380</span> --cluster-config-file nodes<span class="hljs-number">-6380.</span>conf --cluster-node-timeout <span class="hljs-number">5000</span> --appendonly yes --appendfilename appendonly<span class="hljs-number">-6380.</span>aof --dbfilename dump<span class="hljs-number">-6380.</span>rdb --logfile <span class="hljs-number">6380.</span>log<br> <br># 将新节点添加到集群<br>redis-cli --cluster add-node <span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6380</span> <span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span><br> <br># 重新分配 slots<br>redis-cli --cluster reshard <span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6380</span><br> <br># 将数据迁移到新节点<br>redis-cli --cluster rebalance <span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6380</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>缩容时，你需要先将要移除的节点数据迁移到其他节点，然后再将其移除。<ul>
+<li>这个过程可以通过 <code>redis-cli --cluster reshard</code> 和 <code>redis-cli --cluster forget</code> 命令来完成。</li>
+</ul>
+</li>
+</ul>
+<p>请注意，实际的 Redis Cluster 扩容和缩容操作可能涉及到数据迁移和重分配，这些操作会耗费一定的时间，在此期间，集群仍然能够提供服务，但可能会影响性能。在执行这类操作前，请确保已经做好了充分的备份和测试。</p>
+<h3 id="Redis-Cluster-扩容缩容期间可以提供服务吗？"><a href="#Redis-Cluster-扩容缩容期间可以提供服务吗？" class="headerlink" title="Redis Cluster 扩容缩容期间可以提供服务吗？"></a>Redis Cluster 扩容缩容期间可以提供服务吗？</h3><blockquote>
+<p>类似的问题：</p>
+<ul>
+<li>如果客户端访问的 key 所属的槽正在迁移怎么办？</li>
+<li>如何确定给定 key 的应该分布到哪个哈希槽中？</li>
+</ul>
+</blockquote>
+<p><strong>Redis Cluster 扩容和缩容本质是进行重新分片，动态迁移哈希槽。</strong></p>
+<p>为了保证 Redis Cluster 在扩容和缩容期间依然能够对外正常提供服务，Redis Cluster 提供了重定向机制，两种不同的类型：</p>
+<ul>
+<li>ASK 重定向</li>
+<li>MOVED 重定向</li>
+</ul>
+<p>从客户端的角度来看，ASK 重定向是下面这样的：</p>
+<ol>
+<li>客户端发送请求命令，如果请求的 key 对应的哈希槽还在当前节点的话，就直接响应客户端的请求。</li>
+<li>如果客户端请求的 key 对应的哈希槽当前正在迁移至新的节点，就会返回 -ASK 重定向错误，告知客户端要将请求发送到哈希槽被迁移到的目标节点。</li>
+<li>客户端收到 -ASK 重定向错误后，将会临时（一次性）重定向，自动向目标节点发送一条 <a href="https://redis.io/commands/asking/" target="_blank" rel="noopener">ASKING</a> 命令。也就是说，接收到 ASKING 命令的节点会强制执行一次请求，下次再来需要重新提前发送 ASKING 命令。</li>
+<li>客户端发送真正的请求命令。</li>
+<li>ASK 重定向并不会同步更新客户端缓存的哈希槽分配信息，也就是说，客户端对正在迁移的相同哈希槽的请求依然会发送到原节点而不是目标节点。</li>
+</ol>
+<p><img src="/img/interview/redis/ca358827-2d14-40cd-ab6a-64ec1ea21428.png" srcset="/img/loading.gif" lazyload alt="img"></p>
+<p>如果客户端请求的 key 对应的哈希槽应该迁移完成的话，就会返回 -MOVED 重定向错误，告知客户端当前哈希槽是由哪个节点负责，客户端向目标节点发送请求并更新缓存的哈希槽分配信息。</p>
+<h2 id="Redis-cluster-的高可用与主备切换原理"><a href="#Redis-cluster-的高可用与主备切换原理" class="headerlink" title="Redis cluster 的高可用与主备切换原理"></a>Redis cluster 的高可用与主备切换原理</h2><p>Redis Cluster 相当于是内置了 Sentinel 机制，Redis Cluster 内部的各个 Redis 节点通过 Gossip 协议互相探测健康状态，在故障时可以自动切换。</p>
+<p>Redis cluster 的高可用的原理，跟哨兵是类似的。</p>
+<h2 id="集群方案比较"><a href="#集群方案比较" class="headerlink" title="集群方案比较"></a>集群方案比较</h2><ol>
+<li><p>Twemproxy：Twemproxy 是 Twtter 开源的一个 Redis 和 Memcache 代理服务器，主要用于管理 Redis 和 Memcached 集群，减少与 Cache 服务器直接连接的数量。他的后端是多台 Redis 或 memcached 所以也可以被称为分布式中间件。<br>使用时在本需要连接 Redis 的地方改为连接 twemproxy，它会以一个代理的身份接收请求并使用一致性 hash 算法，将请求转接到具体 Redis，将结果再返回 Twemproxy。<br>作用：</p>
+<ul>
+<li>通过代理的方式减少缓存服务器的连接数。</li>
+<li>自动在多台缓存服务器间共享数据。</li>
+<li>通过配置的方式禁用失败的结点。</li>
+<li>运行在多个实例上，客户端可以连接到首个可用的代理服务器。</li>
+<li>支持请求的流式与批处理，因而能够降低来回的消耗。<br>缺点：</li>
+<li>Twemproxy 自身单端口实例的压力；</li>
+<li>使用一致性 hash 后，Redis 节点数量改变的时候相应的计算值也会改变，数据无法自动移动到新的节点。</li>
+</ul>
+</li>
+<li><p>Codis：豌豆荚技术团队研发的一个分布式 Redis 解决方案。<br>对于上层的应用来说,连接到 Codis-Proxy(Redis代理服务)和连接原生的 Redis-Server 没有明显的区别, 上层应用可以像使用单机的 Redis 一样使用, Codis 底层会处理请求的转发, 不停机的数据迁移等工作，所有后边的一切事情, 对于前面的客户端来说是透明的, 可以简单的认为后边连接的是一个内存无限大的 Redis 服务。<br>基本和 twemproxy 一致的效果，但它支持在节点数量改变情况下，旧节点数据可恢复到新 hash 节点。</p>
+</li>
+<li><p>Redis cluster3.0：官方提供的集群方案，特点在于他的分布式算法不是一致性 hash，而是 hash 槽的概念，以及自身支持节点设置 slave。</p>
+</li>
+</ol>
+<h2 id="生产环境中的-Redis-是怎么部署的"><a href="#生产环境中的-Redis-是怎么部署的" class="headerlink" title="生产环境中的 Redis 是怎么部署的"></a>生产环境中的 Redis 是怎么部署的</h2><p>使用 Redis cluster 部署。10 台机器，5 台机器部署了 Redis 主实例，另外 5 台机器部署了 Redis 的从实例，每个主实例挂了一个从实例，5 个节点对外提供读写服务，每个节点的读写高峰 QPS 可能可以达到每秒 5 万，5 台机器最多是 25 万读写请求&#x2F;s。</p>
+<p>机器是什么配置？32G 内存+ 8 核 CPU + 1T 磁盘，但是分配给 Redis 进程的是 10G 内存，一般线上生产环境，Redis 的内存尽量不要超过 10G，超过 10G 可能会有问题。</p>
+<p>5 台机器对外提供读写，一共有 50G 内存。</p>
+<p>因为每个主实例都挂了一个从实例，所以是高可用的，任何一个主实例宕机，都会自动故障迁移，Redis 从实例会自动变成主实例继续提供读写服务。</p>
+<p>你往内存里写的是什么数据？每条数据的大小是多少？商品数据，每条数据是 10kb。100 条数据是 1mb，10 万条数据是 1g。常驻内存的是 200 万条商品数据，占用内存是 20g，仅仅不到总内存的 50%。目前高峰期每秒就是 3500 左右的请求量。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
+<li>Redis Cluster 官方规范：<a href="https://redis.io/docs/reference/cluster-spec/" target="_blank" rel="noopener">https://redis.io/docs/reference/cluster-spec/</a></li>
+<li>Redis Cluster 官方教程：<a href="https://redis.io/topics/cluster-tutorial" target="_blank" rel="noopener">https://redis.io/topics/cluster-tutorial</a></li>
+<li>Redis Cluster 官方公开 PDF 讲义：<a href="https://redis.io/presentation/Redis_Cluster.pdf" target="_blank" rel="noopener">https://redis.io/presentation/Redis_Cluster.pdf</a></li>
+<li>Redis 集群详述：<a href="https://juejin.cn/post/7016865316240097287" target="_blank" rel="noopener">https://juejin.cn/post/7016865316240097287</a></li>
+<li>Redis 专题：了解 Redis 集群，这篇就够了：<a href="https://juejin.cn/post/6949832776224866340" target="_blank" rel="noopener">https://juejin.cn/post/6949832776224866340</a></li>
+<li>Redis Notes - Cluster mode：<a href="https://www.stevenchang.tw/blog/2020/12/08/redis-notes-cluster-mode" target="_blank" rel="noopener">https://www.stevenchang.tw/blog/2020/12/08/redis-notes-cluster-mode</a></li>
+<li>带有详细注释的 Redis 3.0 代码（开源项目）：<a href="https://github.com/huangz1990/redis-3.0-annotated" target="_blank" rel="noopener">https://github.com/huangz1990/redis-3.0-annotated</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E9%9D%A2%E8%AF%95/" class="print-no-link">#面试</a>
+      
+        <a href="/tags/Redis/" class="print-no-link">#Redis</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>02-Redis 部署模式03集群（重要）</div>
+      <div>https://flepeng.github.io/interview-41-数据库-41-Redis-02-Redis-部署模式03集群（重要）/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2020年8月8日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

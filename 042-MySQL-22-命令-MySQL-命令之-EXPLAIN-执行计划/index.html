@@ -1,0 +1,923 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="https:&#x2F;&#x2F;dev.mysql.com&#x2F;doc&#x2F;refman&#x2F;5.7&#x2F;en&#x2F;explain-output.html  什么是执行计划？执行计划 是指一条 SQL 语句在经过 MySQL 查询优化器 的优化会后，具体的执行方式。 执行计划通常用于 SQL 性能分析、优化等场景。通过 EXPLAIN 的结果，可以了解到如数据表的查询顺序、数据查询操作的操作类型、哪些索引可以 被命中、哪些索引 实">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL 命令之 EXPLAIN 执行计划">
+<meta property="og:url" content="https://flepeng.github.io/042-MySQL-22-%E5%91%BD%E4%BB%A4-MySQL-%E5%91%BD%E4%BB%A4%E4%B9%8B-EXPLAIN-%E6%89%A7%E8%A1%8C%E8%AE%A1%E5%88%92/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="https:&#x2F;&#x2F;dev.mysql.com&#x2F;doc&#x2F;refman&#x2F;5.7&#x2F;en&#x2F;explain-output.html  什么是执行计划？执行计划 是指一条 SQL 语句在经过 MySQL 查询优化器 的优化会后，具体的执行方式。 执行计划通常用于 SQL 性能分析、优化等场景。通过 EXPLAIN 的结果，可以了解到如数据表的查询顺序、数据查询操作的操作类型、哪些索引可以 被命中、哪些索引 实">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-03-05T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.358Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="MySQL">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>MySQL 命令之 EXPLAIN 执行计划 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="MySQL 命令之 EXPLAIN 执行计划"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-03-06 00:00" pubdate>
+          2021年3月6日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          28 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">MySQL 命令之 EXPLAIN 执行计划</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <blockquote>
+<p><a href="https://dev.mysql.com/doc/refman/5.7/en/explain-output.html" target="_blank" rel="noopener">https://dev.mysql.com/doc/refman/5.7/en/explain-output.html</a></p>
+</blockquote>
+<h2 id="什么是执行计划？"><a href="#什么是执行计划？" class="headerlink" title="什么是执行计划？"></a>什么是执行计划？</h2><p><strong>执行计划</strong> 是指一条 SQL 语句在经过 <strong>MySQL 查询优化器</strong> 的优化会后，具体的执行方式。</p>
+<p>执行计划通常用于 SQL 性能分析、优化等场景。通过 <code>EXPLAIN</code> 的结果，可以了解到如数据表的查询顺序、数据查询操作的操作类型、哪些索引可以 被命中、哪些索引 实际会命中、每个数据表有多少行记录被查询等信息。</p>
+<h2 id="如何获取执行计划？"><a href="#如何获取执行计划？" class="headerlink" title="如何获取执行计划？"></a>如何获取执行计划？</h2><p>MySQL 为我们提供了 <code>EXPLAIN</code> 命令，来获取执行计划的相关信息。</p>
+<p>需要注意的是，<code>EXPLAIN</code> 语句并不会真的去执行相关的语句，而是通过查询优化器对语句进行分析，找出最优的查询方案，并显示对应的信息。</p>
+<p><code>EXPLAIN</code> 执行计划支持 <code>SELECT</code>、<code>DELETE</code>、<code>INSERT</code>、<code>REPLACE</code> 以及 <code>UPDATE</code> 语句。我们一般多用于分析 <code>SELECT</code> 查询语句，使用起来非常简单，语法如下：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">EXPLAIN</span> + <span class="hljs-keyword">SELECT</span> 查询语句；<br></code></pre></td></tr></table></figure>
+
+<p>示例</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs sql">mysql&gt; EXPLAIN SELECT * FROM (SELECT nid,name FROM tb1 WHERE nid &lt; 10) AS B;<br>+<span class="hljs-comment">----+-------------+------------+-------+---------------+---------+---------+------+------+-------------+</span><br>| id | select_type | table      | type  | possible_keys | key     | key_len | ref  | rows | Extra       |<br>+<span class="hljs-comment">----+-------------+------------+-------+---------------+---------+---------+------+------+-------------+</span><br>|  1 | PRIMARY     |            | ALL   | NULL          | NULL    | NULL    | NULL |    9 | NULL        |<br>|  2 | DERIVED     | tb1        | range | PRIMARY       | PRIMARY | 8       | NULL |    9 | Using WHERE |<br>+<span class="hljs-comment">----+-------------+------------+-------+---------------+---------+---------+------+------+-------------+</span><br></code></pre></td></tr></table></figure>
+
+<p>可以看到，执行计划结果中共有 12 列，各列代表的含义总结如下表：</p>
+<table>
+<thead>
+<tr>
+<th><strong>列名</strong></th>
+<th><strong>含义</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>id</td>
+<td>SELECT 查询的序列标识符</td>
+</tr>
+<tr>
+<td>select_type</td>
+<td>SELECT 关键字对应的查询类型</td>
+</tr>
+<tr>
+<td>table</td>
+<td>用到的表名</td>
+</tr>
+<tr>
+<td>partitions</td>
+<td>匹配的分区，对于未分区的表，值为 NULL</td>
+</tr>
+<tr>
+<td>type</td>
+<td>表的访问方法</td>
+</tr>
+<tr>
+<td>possible_keys</td>
+<td>可能用到的索引</td>
+</tr>
+<tr>
+<td>key</td>
+<td>实际用到的索引</td>
+</tr>
+<tr>
+<td>key_len</td>
+<td>所选索引的长度</td>
+</tr>
+<tr>
+<td>ref</td>
+<td>当使用索引等值查询时，与索引作比较的列或常量</td>
+</tr>
+<tr>
+<td>rows</td>
+<td>预计要读取的行数</td>
+</tr>
+<tr>
+<td>filtered</td>
+<td>按表条件过滤后，留存的记录数的百分比</td>
+</tr>
+<tr>
+<td>Extra</td>
+<td>附加信息</td>
+</tr>
+</tbody></table>
+<h2 id="如何分析-EXPLAIN-结果？"><a href="#如何分析-EXPLAIN-结果？" class="headerlink" title="如何分析 EXPLAIN 结果？"></a>如何分析 EXPLAIN 结果？</h2><p>为了分析 <code>EXPLAIN</code> 语句的执行结果，我们需要搞懂执行计划中的重要字段。</p>
+<h3 id="id"><a href="#id" class="headerlink" title="id"></a>id</h3><p>查询顺序标识符，每个 SELECT 都会自动分配一个唯一的标识符。</p>
+<p>列数字越大越先执行，如果数字一样大，那么就从上往下依次执行，id 为 null 的就表示这是一个结果集，不需要使用它来进行查询，例如使用 UNION 连接可能为 null</p>
+<h3 id="select-type-查询类型"><a href="#select-type-查询类型" class="headerlink" title="select_type 查询类型"></a>select_type 查询类型</h3><ul>
+<li>SIMPLE：表示不需要 UNION 操作或者不包含子查询的简单 SELECT 查询。有连接查询时，外层的查询为 SIMPLE，且只有一个</li>
+<li>PRIMARY：一个需要 UNION 操作或者含有子查询的 SELECT，位于最外层的单位查询的 select_type 即为 PRIMARY。且只有一个</li>
+<li>UNION：UNION 连接的两个 SELECT 查询，第一个查询是 dervied 派生表，除了第一个表外，第二个以后的表 select_type 都是UNION</li>
+<li>DEPENDENT UNION：与 UNION 一样，出现在 UNION 或 UNION ALL 语句中，但是这个查询要受到外部查询的影响</li>
+<li>UNION RESULT：包含 UNION 的结果集，在 UNION 和 UNION ALL 语句中,因为它不需要参与查询，所以 id 字段为 null</li>
+<li>SUBQUERY：除了 FROM 字句中包含的子查询外，其他地方出现的子查询都可能是 SUBQUERY</li>
+<li>DEPENDENT SUBQUERY：与 DEPENDENT UNION 类似，表示这个 SUBQUERY 的查询要受到外部表查询的影响</li>
+<li>DERIVED：FROM 字句中出现的子查询，也叫做派生表，其他数据库中可能叫做内联视图或嵌套 SELECT</li>
+</ul>
+<h3 id="table"><a href="#table" class="headerlink" title="table"></a>table</h3><p>显示的查询表名，如果查询使用了别名，那么这里显示的是别名，如果不涉及对数据表的操作，那么这显示为 null，也可能是以下列出的值：</p>
+<ul>
+<li><code>&lt;unionM,N&gt;</code> ：表示这个是临时表，本行引用了 id 为 M 和 N 的行的 UNION 结果；</li>
+<li><code>&lt;derivedN&gt;</code> ：表示这个是临时表，本行引用了 id 为 N 的表所产生的的派生表结果。派生表有可能产生自 FROM 语句中的子查询。</li>
+<li><code>&lt;subqueryN&gt;</code>：表示这个是临时表，本行引用了 id 为 N 的表所产生的的物化子查询结果。</li>
+</ul>
+<h3 id="type"><a href="#type" class="headerlink" title="type"></a>type</h3><p>依次从好到差：<code>system &gt; const &gt; eq_ref &gt; ref &gt; fulltext &gt; ref_or_null &gt; index_merge &gt; unique_subquery &gt; index_subquery &gt; range &gt; index &gt; ALL</code>，除了 all 之外，其他的 type 都可以使用到索引，除了 index_merge 之外，其他的 type 只可以用到一个索引</p>
+<ul>
+<li><p>system：表中只有一行数据或者是空表，且只能用于 MyISAM 和 MEMORY 表。如果是 InnoDB 引擎表，type 列在这个情况通常都是 all 或者 index，这是 const 联接类型的一个特例。<br><code>SELECT * FROM (SELECT nid FROM tb1 WHERE nid = 1) AS A;</code></p>
+</li>
+<li><p>const：使用唯一索引或者主键，返回记录一定是 1 行记录的等值 WHERE 条件时，通常 type 是const。其他数据库也叫做唯一索引扫描。<br><code>SELECT nid FROM tb1 WHERE nid = 2;</code></p>
+</li>
+<li><p>eq_ref：出现在要连接过个表的查询计划中，驱动表只返回一行数据，且这行数据是第二个表的主键或者唯一索引，且必须为 not null，唯一索引和主键是多列时，只有所有的列都用作比较时才会出现 eq_ref。<br><code>SELECT tb2.nid,tb1.name FROM tb2 left join tb1 on tb2.nid = tb1.nid;</code></p>
+</li>
+<li><p>ref：使用普通索引作为查询条件，查询结果可能找到多个符合条件的行。<br>此类型通常出现在多表的 join 查询, 针对于非唯一或非主键索引, 或者是使用了 最左前缀 规则索引的查询。不像 eq_ref 那样要求连接顺序，也没有主键和唯一索引的要求，只要使用相等条件检索时就可能出现，常见与辅助索引的等值查找。或者多列主键、唯一索引中，使用第一个列之外的列作为等值查找也会出现，总之，返回数据不唯一的等值查找就可能出现。</p>
+</li>
+<li><p>fulltext：全文索引检索，要注意，全文索引的优先级很高，若全文索引和普通索引同时存在时，MySQL 不管代价，优先选择使用全文索引</p>
+</li>
+<li><p>ref_or_null：与 ref 方法类似，只是增加了 null 值的比较。实际用的不多。</p>
+</li>
+<li><p>unique_subquery：用于 WHERE 中的 IN 形式子查询，子查询返回不重复值唯一值</p>
+</li>
+<li><p>index_subquery：用于 IN 形式子查询使用到了辅助索引或者in常数列表，子查询可能返回重复值，可以使用索引将子查询去重。</p>
+</li>
+<li><p>range：对索引列进行范围查询，执行计划中的 key 列表示哪个索引被使用了。这个类型通常出现在 &#x3D;, &lt;&gt;, &gt;, &gt;&#x3D;, &lt;, &lt;&#x3D;, IS NULL, &lt;&#x3D;&gt;, BETWEEN, IN() 操作中当 type 是 range 时, 那么 EXPLAIN 输出的 ref 字段为 NULL, 并且 key_len 字段是此次查询中使用到的索引的最长的那个。</p>
+</li>
+<li><p>index_merge：表示查询使用了两个以上的索引，最后取交集或者并集，常见 and ，or 的条件使用了不同的索引，官方排序这个在 ref_or_null 之后，但是实际上由于要读取所个索引，性能可能大部分时间都不如 range</p>
+</li>
+<li><p>index：表示全索引扫描(full index scan), 和 ALL 类型类似, 只不过 ALL 类型是全表扫描, 而 index 类型则仅仅扫描所有的索引, 而不扫描数据。index 类型通常出现在: 所要查询的数据直接在索引树中就可以获取到, 而不需要扫描数据。 当是这种情况时, Extra 字段 会显示 Using index。比如, 我们查询的 name 字段恰好是一个索引, 因此我们直接从索引中获取数据就可以满足查询的需求了, 而不需要查询表中的数据。 因此这样的情况下, type 的值是 index, 并且 Extra 的值是 Using index。</p>
+</li>
+<li><p>all：这个就是全表扫描数据文件，然后再在 server 层进行过滤返回符合要求的记录。这个类型的查询是性能最差的查询之一，最不建议使用</p>
+</li>
+<li></li>
+</ul>
+<h3 id="possible-keys"><a href="#possible-keys" class="headerlink" title="possible_keys"></a>possible_keys</h3><p>possible_keys 列表示 MySQL 执行查询时可能用到的索引。如果这一列为 NULL ，则表示没有可能用到的索引；这种情况下，需要检查 WHERE 语句中所使用的的列，看是否可以通过给这些列中某个或多个添加索引的方法来提高查询性能。</p>
+<h3 id="key（重要）"><a href="#key（重要）" class="headerlink" title="key（重要）"></a>key（重要）</h3><p>key 列表示 MySQL 实际使用到的索引。如果为 NULL，则表示未用到索引。select_type 为 index_merge 时，这里可能出现两个以上的索引，其他的 select_type 这里只会出现一个</p>
+<h3 id="key-len"><a href="#key-len" class="headerlink" title="key_len"></a>key_len</h3><p>key_len 列表示 MySQL 实际使用的索引的最大长度；当使用到联合索引时，有可能是多个列的长度和。在满足需求的前提下越短越好。如果 key 列显示 NULL ，则 key_len 列也显示 NULL 。</p>
+<p>注意，MySQL 的 ICP 特性使用到的索引不会计入其中。另外，key_len 只计算 WHERE 条件用到的索引长度，而排序和分组就算用到了索引，也不会计算到 key_len 中。</p>
+<h3 id="ref"><a href="#ref" class="headerlink" title="ref"></a>ref</h3><p>如果是使用的常数等值查询，这里会显示 const，如果是连接查询，被驱动表的执行计划这里会显示驱动表的关联字段，如果是条件使用了表达式或者函数，或者条件列发生了内部隐式转换，这里可能显示为func</p>
+<h3 id="rows"><a href="#rows" class="headerlink" title="rows"></a>rows</h3><p>MySQL 估计为了找到所需的行而要读取的行数，只是预估值，数值越小越好。</p>
+<h3 id="extra（重要）"><a href="#extra（重要）" class="headerlink" title="extra（重要）"></a>extra（重要）</h3><p>这列包含了 MySQL 解析查询的额外信息，通过这些信息，可以更准确的理解 MySQL 到底是如何执行查询的。常见的值如下：</p>
+<ul>
+<li>distinct：在 SELECT 部分使用了 distinc 关键字</li>
+<li>no tables used：不带 FROM 字句的查询或者 From dual 查询</li>
+<li>using filesort：排序时无法使用到索引时，就会出现这个。常见于 order by 和 group by 语句中</li>
+<li>using index：查询时不需要回表查询，直接通过覆盖索引就可以获取查询的数据。</li>
+<li>using join buffer（block nested loop），using join buffer（batched key accss）：5.6.x之后的版本优化关联查询的BNL，BKA特性。主要是减少内表的循环数量以及比较顺序地扫描查询。</li>
+<li>using intersect：表示使用and的各个索引的条件时，该信息表示是从处理结果获取交集</li>
+<li>using UNION：表示使用or连接各个使用索引的条件时，该信息表示从处理结果获取并集</li>
+<li>using sort_UNION 和 using sort_intersection：与前面两个对应的类似，只是他们是出现在用 and 和 or 查询信息量大时，先查询主键，然后进行排序合并后，才能读取记录并返回。</li>
+<li>using temporary：表示使用了临时表存储中间结果。临时表可以是内存临时表和磁盘临时表，执行计划中看不出来，需要查看status变量，used_tmp_table，used_tmp_disk_table才能看出来。</li>
+<li>using WHERE：表示存储引擎返回的记录并不是所有的都满足查询条件，需要在 server 层进行过滤。查询条件中分为限制条件和检查条件，5.6之前，存储引擎只能根据限制条件扫描数据并返回，然后server层根据检查条件进行过滤再返回真正符合查询的数据。5.6.x之后支持ICP特性，可以把检查条件也下推到存储引擎层，不符合检查条件和限制条件的数据，直接不读取，这样就大大减少了存储引擎扫描的记录数量。extra 列显示 using index condition。mysql 服务器将在存储引擎检索行后再进行过滤，许多 WHERE 条件里涉及索引中的列，当（并且如果）它读取索引时，就能被存储引擎检验，因此不是所有带 WHERE 子句的查询都会显示“Using WHERE”。有时“Using WHERE”的出现就是一个暗示：查询可受益于不同的索引。</li>
+<li>firstmatch(tb_name)：5.6.x开始引入的优化子查询的新特性之一，常见于 WHERE 字句含有 IN() 类型的子查询。如果内表的数据量比较大，就可能出现这个</li>
+<li>loosescan(m..n)：5.6.x之后引入的优化子查询的新特性之一，在 IN() 类型的子查询中，子查询返回的可能有重复记录时，就可能出现这个</li>
+</ul>
+<p>常见的值如下：</p>
+<ul>
+<li><strong>Using filesort</strong>：在排序时使用了外部的索引排序，没有用到表内索引进行排序。</li>
+<li><strong>Using temporary</strong>：MySQL 需要创建临时表来存储查询的结果，常见于 ORDER BY 和 GROUP BY。</li>
+<li><strong>Using index</strong>：表明查询使用了覆盖索引，不用回表，查询效率非常高。</li>
+<li><strong>Using index condition</strong>：表示查询优化器选择使用了索引条件下推这个特性。</li>
+<li><strong>Using where</strong>：表明查询使用了 WHERE 子句进行条件过滤。一般在没有使用到索引的时候会出现。</li>
+<li>**Using join buffer (Block Nested Loop)**：连表查询的方式，表示当被驱动表的没有使用索引的时候，MySQL 会先将驱动表读出来放到 join buffer 中，再遍历被驱动表与驱动表进行查询。</li>
+</ul>
+<p>这里提醒下，当 Extra 列包含 Using filesort 或 Using temporary 时，MySQL 的性能可能会存在问题，需要尽可能避免。</p>
+<h3 id="filtered"><a href="#filtered" class="headerlink" title="filtered"></a>filtered</h3><p>使用 explain extended 时会出现这个列，5.7之后的版本默认就有这个字段，不需要使用 explain extended 了。这个字段表示存储引擎返回的数据在 server 层过滤后，剩下多少满足查询的记录数量的比例，注意是百分比，不是具体记录数。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/MySQL/" class="category-chain-item">MySQL</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/MySQL/" class="print-no-link">#MySQL</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>MySQL 命令之 EXPLAIN 执行计划</div>
+      <div>https://flepeng.github.io/042-MySQL-22-命令-MySQL-命令之-EXPLAIN-执行计划/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年3月6日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/042-MySQL-22-%E5%91%BD%E4%BB%A4-MySQL-%E5%91%BD%E4%BB%A4%E4%B9%8B-%E5%AF%BC%E5%85%A5%E5%AF%BC%E5%87%BA-mysqldump/" title="MySQL 命令之 导入导出 mysqldump">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">MySQL 命令之 导入导出 mysqldump</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/042-MySQL-22-%E5%91%BD%E4%BB%A4-MySQL-%E5%91%BD%E4%BB%A4%E4%B9%8B%E6%9F%A5%E7%9C%8B%E5%92%8C%E8%AE%BE%E7%BD%AE%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%85%8D%E7%BD%AE%E5%92%8C%E7%8A%B6%E6%80%81/" title="MySQL 命令之查看和设置服务器配置和状态">
+                        <span class="hidden-mobile">MySQL 命令之查看和设置服务器配置和状态</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

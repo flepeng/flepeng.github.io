@@ -1,0 +1,849 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="[object Object]">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="runtime标准库runtime包提供和go运行时环境的互操作，如控制goroutine的函数。 它也包括用于reflect包的低层次类型信息。 1. 环境变量 环境变量GOGC设置最初的垃圾收集目标百分比。当新申请的数据和前次垃圾收集剩下的存活数据的比率达到该百分比时，就会触发垃圾收集。默认GOGC&#x3D;100。设置GOGC&#x3D;off 会完全关闭垃圾收集。runtime&#x2F;debu">
+<meta property="og:type" content="article">
+<meta property="og:title" content="15.runtime标准库">
+<meta property="og:url" content="https://flepeng.github.io/pages/2d84e9/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="runtime标准库runtime包提供和go运行时环境的互操作，如控制goroutine的函数。 它也包括用于reflect包的低层次类型信息。 1. 环境变量 环境变量GOGC设置最初的垃圾收集目标百分比。当新申请的数据和前次垃圾收集剩下的存活数据的比率达到该百分比时，就会触发垃圾收集。默认GOGC&#x3D;100。设置GOGC&#x3D;off 会完全关闭垃圾收集。runtime&#x2F;debu">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-01-22T12:49:23.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.279Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>15.runtime标准库 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="15.runtime标准库"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-01-22 20:49" pubdate>
+          2023年1月22日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          13 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">15.runtime标准库</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="runtime标准库"><a href="#runtime标准库" class="headerlink" title="runtime标准库"></a>runtime标准库</h1><p>runtime包提供和go运行时环境的互操作，如控制goroutine的函数。</p>
+<p>它也包括用于reflect包的低层次类型信息。</p>
+<h2 id="1-环境变量"><a href="#1-环境变量" class="headerlink" title="1. 环境变量"></a>1. 环境变量</h2><ul>
+<li><p>环境变量<code>GOGC</code>设置最初的垃圾收集目标百分比。当新申请的数据和前次垃圾收集剩下的存活数据的比率达到该百分比时，就会触发垃圾收集。默认GOGC&#x3D;100。设置GOGC&#x3D;off 会完全关闭垃圾收集。<code>runtime/debug包的SetGCPercent</code>函数允许在运行时修改该百分比。</p>
+</li>
+<li><p>环境变量<code>GODEBUG</code>控制运行时的debug输出。GODEBUG的值是逗号分隔的name&#x3D;val对。支持的name如下：</p>
+<ul>
+<li><p>allocfreetrace</p>
+<p>设置其为1，会导致每次分配都会记录每一个对象的分配、释放及其堆栈踪迹。</p>
+</li>
+<li><p>efence</p>
+<p>设置其为1，会导致分配器运行模式为：每个对象申请在独立的页和地址，且永不循环利用</p>
+</li>
+<li><p>gctrace</p>
+<p>设置其为1，会导致每次垃圾回收器触发一行日志，包含内存回收的概要信息和暂停的时间。设置其为2，会写入同样的概述，但会重复收集。</p>
+</li>
+<li><p>gcdead</p>
+<p>设置其为1，会导致垃圾收集器摧毁任何它认为已经死掉的执行堆栈</p>
+</li>
+<li><p>schedtrace</p>
+<p>设置其为X，会导致调度程序每隔X毫秒输出单行信息到标准错误输出</p>
+</li>
+<li><p>scheddetail</p>
+<p>设置schedtrace为X并设置其为1，会导致调度程序每隔X毫秒输出详细的多行信息，描述调度、进程、线程和go程的状态</p>
+</li>
+</ul>
+</li>
+<li><p>环境变量<code>GOMAXPROCS</code>限制可以同时运行用户层次的go代码的操作系统进程数。没有对代表go代码的、可以在系统调用中阻塞的go程数的限制；那些阻塞的goroutine不与GOMAXPROCS限制冲突。本包的GOMAXPROCS函数可以查询和修改该限制。</p>
+</li>
+<li><p>环境变量<code>GOTRACEBACK</code>控制当go程序因为不能恢复的panic或不期望的运行时情况失败时的输出。失败的程序默认会打印所有现存go程的堆栈踪迹（省略运行时系统中的函数），然后以状态码2退出。如果GOTRACEBACK为0，会完全忽略所有go程的堆栈踪迹。如果GOTRACEBACK为1，会采用默认行为。如果GOTRACEBACK为2，会打印所有现存go程包括运行时函数的堆栈踪迹。如果GOTRACEBACK为crash，会打印所有现存go程包括运行时函数的堆栈踪迹，并且如果可能会采用操作系统特定的方式崩溃，而不是退出。例如，在Unix系统里，程序会释放SIGABRT信号以触发核心信息转储。</p>
+</li>
+<li><p>环境变量<code>GOARCH</code>、<code>GOOS</code>、<code>GOPATH</code>和<code>GOROOT</code>构成完整的go环境变量集合。它们影响go程序的构建, GOARCH、GOOS和GOROOT在编译时被记录并可用本包的常量和函数获取，但它们不会影响运行时环境</p>
+</li>
+</ul>
+<p>gctrace 每一行打印的日志格式如下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs go">gc &#123;<span class="hljs-number">0</span>&#125; @&#123;<span class="hljs-number">1</span>&#125;s &#123;<span class="hljs-number">2</span>&#125;%: &#123;<span class="hljs-number">3</span>&#125;+...+&#123;<span class="hljs-number">4</span>&#125; ms clock, &#123;<span class="hljs-number">5</span>&#125;+...+&#123;<span class="hljs-number">6</span>&#125; ms cpu, &#123;<span class="hljs-number">7</span>&#125;-&gt;&#123;<span class="hljs-number">8</span>&#125;-&gt;&#123;<span class="hljs-number">9</span>&#125; MB, &#123;<span class="hljs-number">10</span>&#125; MB goal, &#123;<span class="hljs-number">11</span>&#125; P<br></code></pre></td></tr></table></figure>
+
+<p>每一个变量的具体定义：</p>
+<ul>
+<li>{0}: gc 运行次数</li>
+<li>{1}: 程序已运行的时间</li>
+<li>{2}: gc 占用的 CPU 百分比</li>
+<li>{3}: 执行时间，包括程序延迟和资源等待</li>
+<li>{4}: 也是执行时间, 一般看这个</li>
+<li>{5}: CPU clock</li>
+<li>{6}: CPU clock</li>
+<li>{7}: GC 启动前的堆内存</li>
+<li>{8}: GC 运行后的堆内存</li>
+<li>{9}: 当前堆内存</li>
+<li>{10}: GC 目标</li>
+<li>{11}: 进程数</li>
+</ul>
+<p>下面是一块存在内存泄露的代码段：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br><br><span class="hljs-keyword">import</span> (<br>    <span class="hljs-string">"os"</span><br>    <span class="hljs-string">"os/signal"</span><br>)<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>    <span class="hljs-keyword">go</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;<br>        m := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[<span class="hljs-keyword">int</span>]<span class="hljs-keyword">int</span>)<br>        <span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; ; i++ &#123;<br>            m[i] = i<br>        &#125;<br>    &#125;()<br><br>    sig := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> os.Signal, <span class="hljs-number">1</span>)<br>    signal.Notify(sig)<br>    &lt;-sig<br><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>执行 <code>GODEBUG=gctrace=1 go run main.go</code>, 查看运行时的内存情况：</p>
+<p>可以看到程序在运行过程中， 每次 GC，堆内存都在不断增大， 这是一个很明显的内存泄露场景。</p>
+<h2 id="2-runtime-Gosched"><a href="#2-runtime-Gosched" class="headerlink" title="2. runtime.Gosched"></a>2. runtime.Gosched</h2><p>让出CPU时间片，重新等待安排任务</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br> <br><span class="hljs-keyword">import</span> (<br>    <span class="hljs-string">"fmt"</span><br>    <span class="hljs-string">"runtime"</span><br>)<br> <br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>    <span class="hljs-keyword">go</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(s <span class="hljs-keyword">string</span>)</span></span> &#123;<br>        <span class="hljs-keyword">for</span> i :=<span class="hljs-number">0</span>; i &lt; <span class="hljs-number">2</span>; i++ &#123;<br>            fmt.Println(s)<br>            runtime.Gosched()  <span class="hljs-comment">// 让出CPU时间片，重新等带安排任务</span><br>        &#125;<br>    &#125;(<span class="hljs-string">"world"</span>)<br> <br>    <span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">2</span>; i++ &#123;<br>        fmt.Println(<span class="hljs-string">"hello"</span>)<br>        runtime.Gosched()  <span class="hljs-comment">// 让出CPU时间片，重新等待安排任务</span><br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="3-runtime-Goexit"><a href="#3-runtime-Goexit" class="headerlink" title="3. runtime.Goexit"></a>3. runtime.Goexit</h2><p>退出当前协程</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br> <br><span class="hljs-keyword">import</span> (<br>    <span class="hljs-string">"fmt"</span><br>    <span class="hljs-string">"runtime"</span><br>    <span class="hljs-string">"sync"</span><br>)<br> <br><span class="hljs-keyword">var</span> wg sync.WaitGroup<br> <br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>    wg.Add(<span class="hljs-number">1</span>)<br>    <span class="hljs-keyword">go</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;<br>        <span class="hljs-keyword">defer</span> wg.Done()<br>        <span class="hljs-keyword">defer</span> fmt.Println(<span class="hljs-string">"A.defer"</span>)<br>        <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;<br>            <span class="hljs-keyword">defer</span> fmt.Println(<span class="hljs-string">"B.defer"</span>)<br>            <span class="hljs-comment">// 结束协程</span><br>            runtime.Goexit()<br>            <span class="hljs-keyword">defer</span> fmt.Println(<span class="hljs-string">"C.defer"</span>)<br>            fmt.Println(<span class="hljs-string">"B"</span>)<br>        &#125;()<br>        fmt.Println(<span class="hljs-string">"A"</span>)<br>    &#125;()<br> <br>    wg.Wait()  <span class="hljs-comment">// 主goroutine等待子goroutine结束，主在结束</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="4-runtime-GOMAXPROCS"><a href="#4-runtime-GOMAXPROCS" class="headerlink" title="4. runtime.GOMAXPROCS"></a>4. runtime.GOMAXPROCS</h2><p>Go运行时调度器使用<code>runtime.GOMAXPROCS</code>参数来确定需要使用多少个os线程来同时执行go代码,<br>默认值是机器上的CPU核心数量，例如一个8核心的机器上，调度器会把go代码同时调度到8个os线程上</p>
+<p>go语言中可以通过<code>runtime.GOMAXPROCS()</code>函数来设置当前程序并发时占用的CPU逻辑核心数<br>go1.5版本之前默认使用的是单核心执行，1.5之后默认使用全部的cpu逻辑核心数</p>
+<p>我们可以通过将任务分配到不同的CPU逻辑核心上，从而实现并行的效果 :</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br> <br><span class="hljs-keyword">import</span> (<br>    <span class="hljs-string">"fmt"</span><br>    <span class="hljs-string">"runtime"</span><br>    <span class="hljs-string">"sync"</span><br>    <span class="hljs-string">"time"</span><br>)<br> <br><span class="hljs-keyword">var</span> wg sync.WaitGroup<br> <br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">a</span><span class="hljs-params">()</span></span> &#123;<br>    <span class="hljs-keyword">defer</span> wg.Done()<br>    <span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">100000000</span>; i++ &#123;<br>        <span class="hljs-comment">//fmt.Println("A", i)</span><br>    &#125;<br>&#125;<br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">b</span><span class="hljs-params">()</span></span> &#123;<br>    <span class="hljs-keyword">defer</span> wg.Done()<br>    <span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">100000000</span>; i++ &#123;<br>        <span class="hljs-comment">//fmt.Println("B", i)</span><br>    &#125;<br>&#125;<br> <br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>    startTime := time.Now()<br>    <span class="hljs-comment">//runtime.GOMAXPROCS(1)  // 设置go运行时(runtime)的os线程数</span><br>    <span class="hljs-comment">// runtime.GOMAXPROCS设置为1os线程数时执行时间要比4os线程数用时更长</span><br>    runtime.GOMAXPROCS(<span class="hljs-number">4</span>)  <span class="hljs-comment">// 设置go运行时(runtime)的os线程数</span><br>    wg.Add(<span class="hljs-number">1</span>)<br>    <span class="hljs-keyword">go</span> a()<br>    wg.Add(<span class="hljs-number">1</span>)<br>    <span class="hljs-keyword">go</span> b()<br>    wg.Add(<span class="hljs-number">1</span>)<br>    <span class="hljs-keyword">go</span> a()<br>    wg.Add(<span class="hljs-number">1</span>)<br>    <span class="hljs-keyword">go</span> b()<br> <br>    wg.Wait()<br>    fmt.Println(time.Now().Sub(startTime))<br> <br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="5-runtime-NumCPU"><a href="#5-runtime-NumCPU" class="headerlink" title="5. runtime.NumCPU"></a>5. runtime.NumCPU</h2><p>返回当前系统的 CPU 核数量</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br> <br><span class="hljs-keyword">import</span> (<br>  <span class="hljs-string">"fmt"</span><br>  <span class="hljs-string">"runtime"</span><br>)<br> <br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>  fmt.Println(<span class="hljs-string">"cpus:"</span>, runtime.NumCPU())<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="6-runtime-GOOS"><a href="#6-runtime-GOOS" class="headerlink" title="6. runtime.GOOS"></a>6. runtime.GOOS</h2><p>目标操作系统</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br> <br><span class="hljs-keyword">import</span> (<br>  <span class="hljs-string">"fmt"</span><br>  <span class="hljs-string">"runtime"</span><br>)<br> <br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>  fmt.Println(<span class="hljs-string">"archive:"</span>, runtime.GOOS)<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/go/" class="category-chain-item">go</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/go/go%E6%A0%87%E5%87%86%E5%BA%93/" class="category-chain-item">go标准库</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>15.runtime标准库</div>
+      <div>https://flepeng.github.io/pages/2d84e9/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>[object Object]</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年1月22日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/pages/7f231c/" title="14.flag标准库">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">14.flag标准库</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/pages/8615da/" title="09.bufio标准库">
+                        <span class="hidden-mobile">09.bufio标准库</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

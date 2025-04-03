@@ -1,0 +1,894 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Redis 单线程Redis 单线程指的是 接收客户端请求-&gt;解析请求 -&gt;进行数据读写等操作-&gt;发送数据给客户端 这个过程是由一个线程（主线程）来完成的。简单来说，Redis 中只有网络请求模块和数据操作模块是单线程的，而其他的如持久化存储模块、集群支撑模块等是多线程的。这也是我们说 Redis 是单线程的原因。 Redis 在启动的时候，是会启动一些后台线程（BIO）的：">
+<meta property="og:type" content="article">
+<meta property="og:title" content="04-Redis 单线程 or 多线程">
+<meta property="og:url" content="https://flepeng.github.io/042-Redis-41-%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5-04-Redis-%E5%8D%95%E7%BA%BF%E7%A8%8B-or-%E5%A4%9A%E7%BA%BF%E7%A8%8B/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="Redis 单线程Redis 单线程指的是 接收客户端请求-&gt;解析请求 -&gt;进行数据读写等操作-&gt;发送数据给客户端 这个过程是由一个线程（主线程）来完成的。简单来说，Redis 中只有网络请求模块和数据操作模块是单线程的，而其他的如持久化存储模块、集群支撑模块等是多线程的。这也是我们说 Redis 是单线程的原因。 Redis 在启动的时候，是会启动一些后台线程（BIO）的：">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/redis/04/1706148210-400d71197bbe56af44051b7a02ec62a3.jpg">
+<meta property="og:image" content="https://flepeng.github.io/img/redis/04/1706148210-7442e9a82e256d69f52e2d1b1efb6054.png">
+<meta property="og:image" content="https://flepeng.github.io/img/network/io/1667354482-36b4f5bfdfbbcf02844ce7a487bd04da.png">
+<meta property="og:image" content="https://flepeng.github.io/img/redis/04/1706149364-d7852d80989edd407e7c71a78b1a524e.jpg">
+<meta property="og:image" content="https://flepeng.github.io/img/redis/04/1706149364-bd7b41cf2e5c7f1446f0e3bc0eba0138.jpg">
+<meta property="og:image" content="https://flepeng.github.io/img/redis/04/1706148210-c5fcb1cb498ee887f87102c1bf9dd7fa.png">
+<meta property="og:image" content="https://flepeng.github.io/img/redis/04/1706148210-f5c882e17958749aaf1674e48234d541.png">
+<meta property="og:image" content="https://flepeng.github.io/img/redis/04/1706149364-44e06526f92392f853550621a1a57358.jpg">
+<meta property="article:published_time" content="2020-12-31T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.365Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Redis">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/redis/04/1706148210-400d71197bbe56af44051b7a02ec62a3.jpg">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>04-Redis 单线程 or 多线程 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="04-Redis 单线程 or 多线程"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-01-01 00:00" pubdate>
+          2021年1月1日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          34 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">04-Redis 单线程 or 多线程</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="Redis-单线程"><a href="#Redis-单线程" class="headerlink" title="Redis 单线程"></a>Redis 单线程</h2><p>Redis 单线程指的是 <code>接收客户端请求-&gt;解析请求 -&gt;进行数据读写等操作-&gt;发送数据给客户端</code> 这个过程是由一个线程（主线程）来完成的。简单来说，Redis 中只有网络请求模块和数据操作模块是单线程的，而其他的如持久化存储模块、集群支撑模块等是多线程的。这也是我们说 Redis 是单线程的原因。</p>
+<p>Redis 在启动的时候，是会<strong>启动一些后台线程</strong>（BIO）的：</p>
+<ul>
+<li><strong>Redis 在 2.6 版本</strong>，会启动 2 个后台线程，分别处理关闭文件、AOF 刷盘这两个任务。</li>
+<li><strong>Redis 在 4.0 版本之后</strong>，新增了一个新的后台线程，用来异步释放 Redis 内存，也就是 lazyfree 线程。例如执行 <code>unlink key/flushdb async/flushall async</code> 等命令，会把这些删除操作交给后台线程来执行，好处是不会导致 Redis 主线程卡顿。因此，当我们要删除一个大 key 的时候，不要使用 del 命令删除，因为 del 是在主线程处理的，这样会导致 Redis 主线程卡顿，因此我们应该使用 unlink 命令来异步删除大key。</li>
+</ul>
+<p>之所以 Redis 为 <strong>关闭文件、AOF 刷盘、释放内存</strong> 这些任务创建单独的线程来处理，是因为这些任务的操作都是很耗时的，如果把这些任务都放在主线程来处理，那么 Redis 主线程就很容易发生阻塞，这样就无法处理后续的请求了。</p>
+<p>后台线程相当于一个消费者，生产者把耗时任务丢到任务队列中，消费者（BIO）不停轮询这个队列，拿出任务就去执行对应的方法即可。</p>
+<p><img src="/img/redis/04/1706148210-400d71197bbe56af44051b7a02ec62a3.jpg" srcset="/img/loading.gif" lazyload></p>
+<p>关闭文件、AOF 刷盘、释放内存这三个任务都有各自的任务队列：</p>
+<ul>
+<li><code>BIO_CLOSE_FILE</code> 关闭文件任务队列：当队列有任务后，后台线程会调用 <code>close(fd)</code>，将文件关闭。</li>
+<li><code>BIO_AOF_FSYNC</code> AOF刷盘任务队列：当 AOF 日志配置成 everysec 选项后，主线程会把 AOF 写日志操作封装成一个任务，也放到队列中。当发现队列有任务后，后台线程会调用 <code>fsync(fd)</code>，将 AOF 文件刷盘。</li>
+<li><code>BIO_LAZY_FREE</code> lazy free 任务队列：当队列有任务后，后台线程会 <code>free(obj) 释放对象 / free(dict) 删除数据库所有对象 / free(skiplist) 释放跳表对象</code>。</li>
+</ul>
+<h2 id="Redis-6-0-之前为什么使用单线程"><a href="#Redis-6-0-之前为什么使用单线程" class="headerlink" title="Redis 6.0 之前为什么使用单线程"></a>Redis 6.0 之前为什么使用单线程</h2><h3 id="官方解释"><a href="#官方解释" class="headerlink" title="官方解释"></a>官方解释</h3><p>先看一下 Redis 官方给出的<a href="https://redis.io/topics/faq" target="_blank" rel="noopener">FAQ</a>。</p>
+<p><img src="/img/redis/04/1706148210-7442e9a82e256d69f52e2d1b1efb6054.png" srcset="/img/loading.gif" lazyload></p>
+<p>核心意思是：<strong>CPU 并不是制约 Redis 性能表现的瓶颈所在</strong>，更多情况下是受到 内存大小 和 网络I&#x2F;O 的限制，所以 Redis 核心网络模型使用单线程并没有什么问题，如果你想要使用服务的多核 CPU，可以在一台服务器上启动多个节点或者采用分片集群的方式。</p>
+<h3 id="个人理解"><a href="#个人理解" class="headerlink" title="个人理解"></a>个人理解</h3><h4 id="多线程适用场景"><a href="#多线程适用场景" class="headerlink" title="多线程适用场景"></a>多线程适用场景</h4><p>一个计算机程序在执行的过程中，主要需要进行两种操作分别是 读写操作 和 计算 操作。其中读写操作主要涉及到的是 I&#x2F;O操作，包括 网络I&#x2F;O 和 磁盘I&#x2F;O。计算操作主要涉及到 CPU。</p>
+<p><strong>多线程的目的，就是通过并发的方式来提升 I&#x2F;O利用率 和 CPU利用率。</strong> 那么，Redis 需不需要通过多线程的方式来提升提升 I&#x2F;O利用率 和 CPU利用率 呢？</p>
+<ul>
+<li><p>首先，可以肯定的是 Redis 不需要提升 CPU利用率。因为 <strong>Redis的操作基本都是基于内存的，CPU 资源根本就不是 Redis 的性能瓶颈。所以，通过多线程来提升 Redis 的 CPU利用率 这一点是没必要的。</strong></p>
+</li>
+<li><p>那么，是否有必要使用多线程来提升 Redis 的 I&#x2F;O利用率 呢？Redis 确实是一个 I&#x2F;O 操作密集的框架，他的数据操作过程中，会有大量的 网络I&#x2F;O 和 磁盘I&#x2F;O 的发生。要想提升 Redis 的性能，是一定要提升 Redis 的 I&#x2F;O利用率 的，这一点毋庸置疑。<br><strong>提升I&#x2F;O利用率，可以采用多线程 和 I&#x2F;O 多路复用。</strong></p>
+</li>
+</ul>
+<h4 id="多线程的弊端"><a href="#多线程的弊端" class="headerlink" title="多线程的弊端"></a>多线程的弊端</h4><blockquote>
+<p>线程安全：是编程中的术语，指某个函数、函数库在并发环境中被调用时，能够正确地处理多个线程之间的共享变量，使程序功能正确完成。</p>
+</blockquote>
+<p>所有支持多线程的编程语言或者框架，都要面对一个问题，就是如何解决多线程编程带来的共享资源并发控制问题。</p>
+<p><strong>虽然，多线程可以帮助我们提升 CPU 和 I&#x2F;O 的利用率，但是多线程也带来了并发读写的一系列问题，如增加了系统复杂度、同时可能存在线程切换、甚至加锁解锁、死锁造成的性能损耗。</strong></p>
+<blockquote>
+<p>一次CPU上下文的切换大概在 1500ns 左右。从内存中读取 1MB 的连续数据，耗时大约为 250us， 假设 1MB 的数据由多个线程读取了 1000 次，那么就有1000次时间上下文的切换，那么就有 <code>1500ns * 1000 = 1500us</code>，单线程的读完1MB数据才250us ,但是上下文切换就用了1500us了</p>
+</blockquote>
+<p>所以，在提升 I&#x2F;O利用率 这个方面上，Redis 先选择了 <strong>I&#x2F;O 多路复用</strong>。</p>
+<h3 id="Redis-的多路复用"><a href="#Redis-的多路复用" class="headerlink" title="Redis 的多路复用"></a>Redis 的多路复用</h3><p>参考：<a href="https://blog.csdn.net/fenglepeng/article/details/104722638" target="_blank" rel="noopener">IO模型</a></p>
+<p><strong>Linux 多路复用技术，就是多个进程的 I&#x2F;O 可以注册到同一个管道上，这个管道会统一和内核进行交互。当管道中的某一个请求需要的数据准备好之后，进程再把对应的数据拷贝到用户空间中。</strong></p>
+<p><img src="/img/network/io/1667354482-36b4f5bfdfbbcf02844ce7a487bd04da.png" srcset="/img/loading.gif" lazyload></p>
+<p>简单来说，就是通过一个线程来处理多个 I&#x2F;O 流。Linux 提供了三种 I&#x2F;O 多路复用实现 <code>select、poll、epoll</code> ， 他们功能类似，但具体细节各有不同。</p>
+<p><strong>Redis 的 I&#x2F;O多路复用 程序的所有功能都是通过包装 操作系统的 I&#x2F;O多路复用函数库 来实现的</strong>。每个 I&#x2F;O多路复用 函数库在 Redis 源码中都有对应的一个单独的文件。</p>
+<p><img src="/img/redis/04/1706149364-d7852d80989edd407e7c71a78b1a524e.jpg" srcset="/img/loading.gif" lazyload></p>
+<p>Redis 内部使用文件事件处理器 <code>file event handler</code>，这个文件事件处理器是单线程的，所以 redis 才叫做单线程的模型。</p>
+<p>文件事件处理器的结构包含 4 个部分：多个 socket，I&#x2F;O 多路复用程序，文件事件分派器，事件处理器（连接应答处理器、命令请求处理器、命令回复处理器）。</p>
+<p>多个 socket 可能会并发产生不同的操作，每个操作对应不同的文件事件，但是 I&#x2F;O 多路复用程序会同时监听多个 socket，将 socket 产生的事件放入队列中排队，事件分派器每次从队列中取出一个事件，把该事件交给对应的事件处理器进行处理。</p>
+<p><img src="/img/redis/04/1706149364-bd7b41cf2e5c7f1446f0e3bc0eba0138.jpg" srcset="/img/loading.gif" lazyload></p>
+<p>一旦有请求到达，就会交给 Redis 线程处理，这就实现了一个 Redis 线程处理多个 I&#x2F;O 流的效果。</p>
+<p>所以，Redis 选择使用 I&#x2F;O多路复用 来提升 I&#x2F;O利用率。</p>
+<h2 id="Redis-单线程模式具体是怎样的？"><a href="#Redis-单线程模式具体是怎样的？" class="headerlink" title="Redis 单线程模式具体是怎样的？"></a>Redis 单线程模式具体是怎样的？</h2><p>Redis 6.0 版本之前的单线模式如下图：</p>
+<p><img src="/img/redis/04/1706148210-c5fcb1cb498ee887f87102c1bf9dd7fa.png" srcset="/img/loading.gif" lazyload></p>
+<p>图中的蓝色部分是一个事件循环，是由主线程负责的，可以看到网络 I&#x2F;O 和命令处理都是单线程。以利用了 <code>epoll</code> 的 I&#x2F;O 多路复用为例。Redis 初始化的时候，会做下面这几件事情：</p>
+<ul>
+<li>首先，调用 <code>epoll_create()</code> 创建一个 <code>epoll</code> 对象和调用 <code>socket()</code> 创建一个服务端 <code>socket</code>。</li>
+<li>然后，调用 <code>bind()</code> 绑定端口和调用 <code>listen()</code> 监听该 <code>socket</code>。</li>
+<li>然后，将调用 <code>epoll_ctl()</code> 将 <code>listen socket</code> 加入到 <code>epoll</code>，同时注册「连接事件」处理函数。</li>
+</ul>
+<p>初始化完后，主线程就进入到一个<strong>事件循环函数</strong>，主要会做以下事情：</p>
+<ul>
+<li>首先，先调用<strong>处理发送队列函数</strong>，看是发送队列里是否有任务，如果有发送任务，则通过 <code>write()</code> 函数将客户端发送缓存区里的数据发送出去，如果这一轮数据没有发送完，就会注册写事件处理函数，等待 <code>epoll_wait()</code> 发现可写后再处理 。</li>
+<li>接着，调用 <code>epoll_wait()</code> 函数等待事件的到来：<ul>
+<li>如果是<strong>连接事件</strong>到来，则会调用<strong>连接事件处理函数</strong>，该函数会做这些事情：<code>调用 accpet 获取已连接的 socket -&gt; 调用 epoll_ctl 将已连接的 socket 加入到 epoll -&gt; 注册「读事件」处理函数</code>；</li>
+<li>如果是<strong>读事件</strong>到来，则会调用<strong>读事件处理函数</strong>，该函数会做这些事情：<code>调用 read 获取客户端发送的数据 -&gt; 解析命令 -&gt; 处理命令 -&gt; 将客户端对象添加到发送队列 -&gt; 将执行结果写到发送缓存区等待发送</code>；</li>
+<li>如果是<strong>写事件</strong>到来，则会调用<strong>写事件处理函数</strong>，该函数会做这些事情：<code>通过 write 函数将客户端发送缓存区里的数据发送出去，如果这一轮数据没有发送完，就会继续注册写事件处理函数，等待 epoll_wait() 发现可写后再处理</code>。</li>
+</ul>
+</li>
+</ul>
+<p>以上就是 Redis 单线模式的工作方式，如果你想看源码解析，可以参考这一篇：<a href="https://mp.weixin.qq.com/s/oeOfsgF-9IOoT5eQt5ieyw" target="_blank" rel="noopener">为什么单线程的 Redis 如何做到每秒数万 QPS</a></p>
+<h2 id="Redis-采用单线程为什么还这么快？"><a href="#Redis-采用单线程为什么还这么快？" class="headerlink" title="Redis 采用单线程为什么还这么快？"></a>Redis 采用单线程为什么还这么快？</h2><p>官方使用基准测试的结果是，<strong>单线程的 Redis 吞吐量可以达到 10W&#x2F;每秒</strong>，如下图所示：</p>
+<p><img src="/img/redis/04/1706148210-f5c882e17958749aaf1674e48234d541.png" srcset="/img/loading.gif" lazyload></p>
+<p>之所以 Redis 采用单线程（网络 I&#x2F;O 和执行命令）那么快，有如下几个原因：</p>
+<ul>
+<li>Redis 的大部分操作<strong>都在内存中完成</strong>，并且采用了高效的数据结构，因此 Redis 瓶颈可能是机器的内存或者网络带宽，而并非 CPU，既然 CPU 不是瓶颈，那么自然就采用单线程的解决方案了；</li>
+<li>Redis 采用单线程模型可以<strong>避免了多线程之间的竞争</strong>，省去了多线程切换带来的时间和性能上的开销，而且也不会导致死锁问题。</li>
+<li>Redis 采用了 <strong>I&#x2F;O 多路复用机制</strong> 处理客户端 Socket 请求，I&#x2F;O 多路复用机制是指一个线程处理多个 I&#x2F;O 流，就是我们经常听到的 select&#x2F;epoll 机制。简单来说，在 Redis 只运行单线程的情况下，该机制允许内核中，同时存在多个监听 Socket 和已连接 Socket。内核会一直监听这些 Socket 上的连接请求或数据请求。一旦有请求到达，就会交给 Redis 线程处理，这就实现了一个 Redis 线程处理多个 I&#x2F;O 流的效果。</li>
+<li>数据结构简单，对数据操作也简单，如哈希表、跳表都有很高的性能。</li>
+</ul>
+<h2 id="Redis-6-0-之后为什么引入了多线程？"><a href="#Redis-6-0-之后为什么引入了多线程？" class="headerlink" title="Redis 6.0 之后为什么引入了多线程？"></a>Redis 6.0 之后为什么引入了多线程？</h2><p>2020年5月份，Redis 正式推出了 6.0 版本，这个版本中有很多重要的新特性，其中多线程特性引起了广泛关注。</p>
+<p>需要注意的是：<strong>Redis 6.0 中的多线程，是指 采用了多个 I&#x2F;O 线程来处理网络请求，而数据的读写命令仍然是单线程处理的。</strong></p>
+<p><strong>那我们就会问 Redis 不是号称单线程也有很高的性能么？不是说多路复用技术已经大大的提升了 I&#x2F;O利用率 了么，为啥还要多线程？</strong></p>
+<p>我猜是因为对 Redis 有着更高的要求，毕竟 开发商 也要想尽办法提升性能，来满足市场。根据测算，Redis 将所有数据放在内存中，内存的响应时长大约为 100 纳秒，对于小数据包，Redis 服务器可以处理 80,000 到 100,000 QPS，这么高的对于 80% 的公司来说，单线程的 Redis 已经足够使用了。</p>
+<p>但随着越来越复杂的业务场景，有些公司动不动就上亿的交易量，因此需要更大的 QPS。为了提升 QPS，很多公司的做法是部署 Redis 集群，并且尽可能提升 Redis 机器数。但是这种做法的资源消耗是巨大的。</p>
+<p>而经过分析，限制 Redis 的瓶颈出现在 网络I&#x2F;O 的处理上，虽然之前采用了多路复用技术，但是采用多线程能进一步提升效率。<strong>多路复用的I&#x2F;O模型本质上仍然是同步阻塞型I&#x2F;O模型</strong>。下面是 I&#x2F;O多路复用 中 select 函数的处理过程：</p>
+<p><img src="/img/redis/04/1706149364-44e06526f92392f853550621a1a57358.jpg" srcset="/img/loading.gif" lazyload></p>
+<p>从上图我们可以看到，在 I&#x2F;O多路复用 模型中，在处理网络请求时，共有两个阶段：</p>
+<ul>
+<li>调用 select（其他函数同理）的过程，这个过程对于 <code>poll/select</code> 这两种 Linux 的实现来说，如果并发量很高，此处会成为瓶颈。</li>
+<li>把数据从内核空间复制到用户空间这个过程。如果并发量很高，也会消耗大量的资源，从而影响 Redis 整体的效率。</li>
+</ul>
+<p>现在很多服务器都是多 CPU 的，但是 Redis 因为使用了单线程，在一次数据操作的过程中，有很多 CPU 时间片耗费在 网络I&#x2F;O 的同步处理上，从而没有充分的发挥出多核的优势。</p>
+<p><strong>如果能采用多线程，使得网络处理的请求并发进行，就可以大大的提升性能。多线程除了可以减少由于网络 I&#x2F;O 等待造成的影响，还可以充分利用 CPU 的多核优势。</strong></p>
+<p>所以，Redis 6.0 采用多个 I&#x2F;O 线程来处理网络请求，网络请求的解析可以由其他线程完成，然后把解析后的请求交由主线程进行实际的内存读写。提升网络请求处理的并行度，进而提升整体性能。</p>
+<p>但是，Redis 的多 I&#x2F;O 线程只是用来处理网络请求的，对于读写命令，Redis 仍然使用单线程来处理。</p>
+<p><strong>那么，在引入多线程之后，如何解决并发带来的线程安全问题呢？</strong></p>
+<p>这就是为什么多次提到的 <strong>Redis 6.0 的多线程只用来处理网络请求，而数据的读写还是单线程</strong> 的原因。</p>
+<p>Redis 官方表示，<strong>Redis 6.0 版本引入的多线程 I&#x2F;O 特性对性能提升至少是一倍以上</strong>。</p>
+<p>Redis 6.0 版本支持的 I&#x2F;O 多线程特性，默认情况下 I&#x2F;O 多线程只针对发送响应数据（write client socket），并不会以多线程的方式处理读请求（read client socket）。要想开启多线程处理客户端读请求，就需要把 Redis.conf 配置文件中的 <code>io-threads-do-reads</code> 配置项设为 yes。</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs lua"><span class="hljs-built_in">io</span>-threads-<span class="hljs-keyword">do</span>-reads yes         //读请求也使用<span class="hljs-built_in">io</span>多线程<br></code></pre></td></tr></table></figure>
+
+<p>同时， Redis.conf 配置文件中提供了 I&#x2F;O 多线程个数的配置项。</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">io-threads <span class="hljs-number">4</span>                    <span class="hljs-comment">// io-threads N，表示启用 N-1 个 I/O 多线程（主线程也算一个 I/O 线程）</span><br></code></pre></td></tr></table></figure>
+
+<p>关于线程数的设置，官方的建议是如果为 4 核的 CPU，建议线程数设置为 2 或 3，如果为 8 核 CPU 建议线程数设置为 6，线程数一定要小于机器核数，线程数并不是越大越好。</p>
+<p>因此，Redis 6.0 版本之后，默认情况下 Redis 在启动的时候会 <strong>额外创建 6 个线程</strong>（_这里的线程数不包括主线程_）：</p>
+<ul>
+<li><code>Redis-server</code>：Redis的主线程，主要负责执行命令；</li>
+<li><code>bio_close_file、bio_aof_fsync、bio_lazy_free</code>：三个后台线程，分别异步处理关闭文件任务、AOF刷盘任务、释放内存任务；</li>
+<li><code>io_thd_1、io_thd_2、io_thd_3</code>：三个 I&#x2F;O 线程，<code>io-threads</code> 默认是 4 ，所以会启动 3（4-1）个 I&#x2F;O 多线程，用来分担 Redis 网络 I&#x2F;O 的压力。</li>
+</ul>
+<h1 id="Referenct"><a href="#Referenct" class="headerlink" title="Referenct"></a>Referenct</h1><ul>
+<li><a href="https://xiaolincoding.com/redis/base/redis_interview.html#redis-%E7%BA%BF%E7%A8%8B%E6%A8%A1%E5%9E%8B" target="_blank" rel="noopener">https://xiaolincoding.com/redis/base/redis_interview.html#redis-%E7%BA%BF%E7%A8%8B%E6%A8%A1%E5%9E%8B</a></li>
+<li><a href="https://www.cnblogs.com/hollischuang/p/14535826.html" target="_blank" rel="noopener">https://www.cnblogs.com/hollischuang/p/14535826.html</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Redis/" class="category-chain-item">Redis</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Redis/" class="print-no-link">#Redis</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>04-Redis 单线程 or 多线程</div>
+      <div>https://flepeng.github.io/042-Redis-41-核心概念-04-Redis-单线程-or-多线程/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年1月1日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/042-Redis-41-%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5-04-Redis-%E4%BA%8B%E5%8A%A1/" title="04-Redis 事务">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">04-Redis 事务</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/042-Redis-41-%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5-05-Redis-%E5%A4%9A%E6%9C%BA%E4%B9%8B2-%E5%93%A8%E5%85%B5-%E8%84%91%E8%A3%82/" title="05-Redis 多机之2 - 哨兵 脑裂">
+                        <span class="hidden-mobile">05-Redis 多机之2 - 哨兵 脑裂</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

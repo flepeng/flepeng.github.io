@@ -1,0 +1,877 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="出现背景从数据生命周期来分析：  At-Rest：一般会把数据存放在硬盘、闪存或其他的存储设备中。保护 At-Rest 状态的数据有很多方法，比如对文件加密后再存放或者对存储设备加密。  In-Transit：是指通过公网或私网把数据从一个地方传输到其他地方，用户可以在传输之前对文件加密或者采用安全的传输协议保证数据在传输中的安全，比如 HTTPS、SSL、TLS、FTPS 等。  In-Use：">
+<meta property="og:type" content="article">
+<meta property="og:title" content="01-TEE 简介">
+<meta property="og:url" content="https://flepeng.github.io/081-%E6%95%B0%E6%8D%AE%E5%AE%89%E5%85%A8-TEE-01-TEE-%E7%AE%80%E4%BB%8B/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="出现背景从数据生命周期来分析：  At-Rest：一般会把数据存放在硬盘、闪存或其他的存储设备中。保护 At-Rest 状态的数据有很多方法，比如对文件加密后再存放或者对存储设备加密。  In-Transit：是指通过公网或私网把数据从一个地方传输到其他地方，用户可以在传输之前对文件加密或者采用安全的传输协议保证数据在传输中的安全，比如 HTTPS、SSL、TLS、FTPS 等。  In-Use：">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/tee/00/1741849354-1313ea68f80eab51aeabc860cde3148b.png">
+<meta property="og:image" content="https://flepeng.github.io/img/tee/00/1741849354-428c9c8e371b0e51014cc4d35b2cef36.png">
+<meta property="og:image" content="https://flepeng.github.io/img/tee/00/1741849354-16eabd2b5322c06e6ee69f1342517dc8.png">
+<meta property="og:image" content="https://flepeng.github.io/img/tee/00/1741849354-f4c3643c076c59e7c99a2ed73f4b42b0.png">
+<meta property="article:published_time" content="2023-04-13T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.412Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="数据安全">
+<meta property="article:tag" content="隐私计算">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/tee/00/1741849354-1313ea68f80eab51aeabc860cde3148b.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>01-TEE 简介 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="01-TEE 简介"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-04-14 00:00" pubdate>
+          2023年4月14日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          23 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">01-TEE 简介</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="出现背景"><a href="#出现背景" class="headerlink" title="出现背景"></a>出现背景</h1><p>从数据生命周期来分析：</p>
+<ul>
+<li><p>At-Rest：一般会把数据存放在硬盘、闪存或其他的存储设备中。保护 At-Rest 状态的数据有很多方法，比如对文件加密后再存放或者对存储设备加密。</p>
+</li>
+<li><p>In-Transit：是指通过公网或私网把数据从一个地方传输到其他地方，用户可以在传输之前对文件加密或者采用安全的传输协议保证数据在传输中的安全，比如 HTTPS、SSL、TLS、FTPS 等。</p>
+</li>
+<li><p>In-Use：是指正在使用的数据。即便数据在传输过程中是被加密的，但只有把数据解密后才能进行计算和使用。<br>一般程序在运行时，其大部分信息（包括程序代码，中间变量的值）都需要放到内存里。而传统的内存是有办法被扫描并修改的：例如各种游戏修改器。因为程序代码也是要放到内存里的，所以甚至代码也可以被更改。<br>也就意味着，如果数据在使用时没有被保护的话，仍然有数据泄露和被篡改的风险。</p>
+</li>
+</ul>
+<h2 id="富执行环境（Rich-Execution-Environment，REE"><a href="#富执行环境（Rich-Execution-Environment，REE" class="headerlink" title="富执行环境（Rich Execution Environment，REE)"></a>富执行环境（Rich Execution Environment，REE)</h2><p><img src="/img/tee/00/1741849354-1313ea68f80eab51aeabc860cde3148b.png" srcset="/img/loading.gif" lazyload></p>
+<p>REE 通常就是指运行着 Android、IOS、Linux 等系统的智能设备，其特点是操作系统提供系统安全性：  </p>
+<ul>
+<li><p>应用隔离，各个应用程序只能访问自己的数据</p>
+</li>
+<li><p>权限管理，普通用户和应用程序对系统数据的访问受限</p>
+</li>
+<li><p>通用，功能丰富，但应用程序和操作系统均有可能引入漏洞</p>
+</li>
+<li><p>开放，可扩展</p>
+</li>
+</ul>
+<p>但这样的系统，由于 OS 代码极其庞大和复杂，存在系统漏洞也是难免。一个系统发布之后，经常会收到系统安全补丁，就是因为系统过于复杂，很难进行全面的安全检验和认证。</p>
+<p>此外，这些系统还有一个很大的漏洞，那就是系统中的特权用户（比如 Android、Linux 系统的 root）。特权用户拥有所有数据的访问权，这就意味着如果黑客攻击系统获得特权用户权限，那整个系统就毫无秘密可言。目前的攻击手段一般是通过应用程序的漏洞，获取特权用户权限，进而控制整个系统。</p>
+<h2 id="虚拟化技术实现隔离"><a href="#虚拟化技术实现隔离" class="headerlink" title="虚拟化技术实现隔离"></a>虚拟化技术实现隔离</h2><p>虚拟化技术是指在同一台计算机上通过 hypervisor 虚拟出多个包括完整虚拟机系统镜像，每个虚拟机拥有独立的操作系统和硬件资源。</p>
+<p><img src="/img/tee/00/1741849354-428c9c8e371b0e51014cc4d35b2cef36.png" srcset="/img/loading.gif" lazyload></p>
+<p>从图中可以看到，这种虚拟方案依然是基于软件的隔离，缺乏硬件安全性。整个系统的安全突破口在于 Hypervisor。Hypervisor 可以访问所有 OS 的数据，进而可以访问所有 App 的数据，恶意软件可通过控制 hypervisor 窃取各种密钥。当然这种架构最大的问题还在于系统资源消耗大，一般用在服务器上。  </p>
+<h2 id="安全元件（Secure-Element，SE）实现安全平台"><a href="#安全元件（Secure-Element，SE）实现安全平台" class="headerlink" title="安全元件（Secure Element，SE）实现安全平台"></a>安全元件（Secure Element，SE）实现安全平台</h2><p>SE 通常以芯片或 SD 卡等形式提供。为防止外部恶意解析攻击，保护数据安全，在芯片中具有加密&#x2F;解密逻辑电路。</p>
+<p><img src="/img/tee/00/1741849354-16eabd2b5322c06e6ee69f1342517dc8.png" srcset="/img/loading.gif" lazyload></p>
+<p>SE 具备极强的安全等级，但对外提供的接口和功能极其有限。首先 CPU 性能极低，无法处理大量数据，其次 SE 与智能设备通常采用非常缓慢的串口连接。SE 的应用场景有限，主要关注于保护内部密钥，一般用于对安全要求很高的场景。  </p>
+<h2 id="可信执行环境（Trusted-Execution-Environment，TEE）"><a href="#可信执行环境（Trusted-Execution-Environment，TEE）" class="headerlink" title="可信执行环境（Trusted Execution Environment，TEE）"></a>可信执行环境（Trusted Execution Environment，TEE）</h2><p>为了给移动设备提供一个安全的运行环境， ARM 从 ARMv6 的架构开始引入了 TrustZone。TrustZone 将  CPU 的工作状态分为了正常世界状态（Normal World Status, NWS）和安全世界状态（Secure World Status, SWS）。</p>
+<p>支持 TrustZone 技术的芯片提供了对外围硬件资源的硬件级别的保护和安全隔离。当 CPU 处于正常世界状态时，任何应用都无法访问安全硬件设备，也无法访问属于安全世界状态下的内存、缓存（Cache）以及其他外围安全硬件设备。</p>
+<p>有了两个世界的划分，我们就可以将前面的 REE 和 SE 的模式结合起来。一般的操作系统（如Linux、Android、Windows等）以及应用运行在正常世界状态中，提供丰富的系统资源，即为 REE 。</p>
+<p>而将 SE 实现的安全功能放到安全世界中，但并不需要增加额外的硬件，而是通过可信任的操作系统以及上层的可信应用（Trusted Application, TA）实现。可信任的操作系统以及上层的可信应用（Trusted Application, TA）运行于安全世界状态，也就是可信执行环境（TEE）。</p>
+<p><img src="/img/tee/00/1741849354-f4c3643c076c59e7c99a2ed73f4b42b0.png" srcset="/img/loading.gif" lazyload></p>
+<p>需要指出的是，根据 GlobalPlatform 组织的抽象和标准化，TEE 与具体的技术实现无关，并不和 ARM 的 TrustZone 绑定。  </p>
+<p>可信执行环境带来的有点显而易见：</p>
+<ol>
+<li><p>解决了安全元件（SE）的性能问题，因为 TEE 运行在智能设备的 CPU 上，并且在安全世界状态下，独占 CPU， 充分使用CPU的全部性能。</p>
+</li>
+<li><p>受硬件机制保护，TEE 隔离于 REE，REE 只能通过特定的入口与 TEE 通信。这样处于正常世界状态中的 Linux 即使被 root 也无法访问安全世界状态中的任何资源，包括操作安全设备、访问安全内存数据、获取缓存数据等。这很像一个保险箱，不管保险箱的外在环境是否安全，其内部的物件都有足够的安全性。</p>
+</li>
+<li><p>TEE 中可以同时运行多个 Trusted Application（TA），相对于完全元件（SE）只提供单一功能，通用性比较好。</p>
+</li>
+<li><p>快速通信机制， TEE 可以访问 REE 的内存，反之则不行。</p>
+</li>
+</ol>
+<p>在真实环境中，可以将用户的敏感数据保存到 TEE 中，并由可信应用（TrustedApplication, TA）使用重要算法和处理逻辑来完成对数据的处理。当需要使用用户的敏感数据做身份验证时，则通过在 REE 侧定义具体的请求编号（IDentity, ID）从 TEE 侧获取验证结果。验证的整个过程中用户的敏感数据始终处于 TEE 中， REE 侧无法查看到任何 TEE 中的数据。对于 REE 而言， TEE 中的 TA 相当于一个黑盒，只会接受有限且提前定义好的合法调用，而至于这些合法调用到底是什么作用，会使用哪些数据，做哪些操作在 REE 侧是无法知晓的。如果在 REE 侧发送的调用请求是非法请求， TEE 内的 TA 是不会有任何的响应或是仅返回错误代码，并不会暴露任何数据给 REE 侧。</p>
+<p>TEE 提供介于普通 REE 和 SE 之间的安全性的框架。某些小额的支付、DRM、企业 VPN 等，所需要的安全保护强度并不高，还不需要一个单独的 SE 来保护，但是又不能直接放在 REE 中，因为后者的开放性使其很容易被攻击。所以对于这类应用， TEE 则提供了合适的保护强度，并且平衡了成本和易开发性。</p>
+<h1 id="TEE-的技术特点"><a href="#TEE-的技术特点" class="headerlink" title="TEE 的技术特点"></a>TEE 的技术特点</h1><p>2009 年 OMTP（OpenMobile Terminal Platform）组织在《OMTP Advanced Trusted Environment OMTP TR1 V11》中明确定义TEE的相关概念和规范，定义 TEE 为 <code>一组软硬件组件，可以为应用程序提供必要的设施</code>，相关实现需要支持两种安全级别中的一种：</p>
+<blockquote>
+<p><a href="https://www.gsma.com/newsroom/wp-content/uploads/2012/03/omtpadvancedtrustedenvironmentomtptr1v11.pdf" target="_blank" rel="noopener">https://www.gsma.com/newsroom/wp-content/uploads/2012/03/omtpadvancedtrustedenvironmentomtptr1v11.pdf</a></p>
+</blockquote>
+<ol>
+<li><p>安全界别（Profile 1）目标要求可以抵御软件级别的攻击。</p>
+</li>
+<li><p>安全界别（Profile 2）目标要求可以同时抵御软件和硬件攻击。</p>
+</li>
+</ol>
+<p>针对TEE的相关概念及规范定义，各家软、硬件厂商结合自己的基础架构形态具体实现各不相同。虽然在技术实现上存在差异性，但是仍可抽象出TEE的共同技术特点。具体而言，TEE存在以下技术特点：</p>
+<ol>
+<li><p>隔离性：X86架构的隔离机制从Intel 80286处理器开始，Intel提出了CPU的两种运行模式，并且逐步衍生出后来的不同的特权界别，再后来提出了安全区域更小的SGX机制实现可信执行环境TEE。同样的，ARM架构通过TrustZone技术实现了相关软硬件的隔离性，实现安全世界与非安全世界的隔离。TEE通过隔离的执行环境，提供一个执行空间，该空间有更强的安全性，比安全芯片功能更丰富，提供其代码和数据的机密性和完整性保护。</p>
+</li>
+<li><p>软硬协同性：虽然标准定义可以通过软件方式或硬件方式实现TEE，但实际生产场景下，行业内更多通过软硬结合的方式进行安全性的保障与支持。</p>
+</li>
+<li><p>富表达性：TEE与单纯的安全芯片或纯软件的密码学隐私保护方案相比支持的上层业务表达性更强，由于只需要定义好业务层面隐私区域和非隐私区域的逻辑划分，而不会对定义隐私区域内的算法逻辑的语言有可计算性方面的限制（图灵完备的）。同时由于TEE已经提供了”安全黑盒“，安全区域内数据无需进行密态运算，从而支持更多的算子及复杂算法。</p>
+</li>
+</ol>
+<h1 id="TEE的优劣势"><a href="#TEE的优劣势" class="headerlink" title="TEE的优劣势"></a>TEE的优劣势</h1><h2 id="TEE的优势"><a href="#TEE的优势" class="headerlink" title="TEE的优势"></a>TEE的优势</h2><ol>
+<li><p>可信区域内可支持多层次、高复杂度的算法逻辑实现。 </p>
+</li>
+<li><p>运算效率高，相较于明文计算仅有3-4倍损耗，相比MPC及联邦学习100+倍的运算损耗具有一定的优势。</p>
+</li>
+<li><p>能够应对恶意攻击模型下的攻击手段，通过可信度量的方式保证TEE的运行逻辑的可信及可度量性。</p>
+</li>
+</ol>
+<h2 id="TEE的劣势"><a href="#TEE的劣势" class="headerlink" title="TEE的劣势"></a>TEE的劣势</h2><ol>
+<li><p>方案实现依赖底层硬件架构。</p>
+</li>
+<li><p>更新升级需要同步进行软硬件升级。</p>
+</li>
+<li><p>不同厂商的TEE技术互联互通方面有待加强形成更统一的生产级行业标准与事实标准。</p>
+</li>
+</ol>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ul>
+<li><a href="https://blog.csdn.net/mogoweb/article/details/116310904" target="_blank" rel="noopener">https://blog.csdn.net/mogoweb/article/details/116310904</a></li>
+<li><a href="https://github.com/supermarkli/NOTE/blob/2bcbbaa2b53ac357f95eea9dc6b9ed77985c7f0f/TEE/TEE%E6%95%B4%E7%90%86.md" target="_blank" rel="noopener">https://github.com/supermarkli/NOTE/blob/2bcbbaa2b53ac357f95eea9dc6b9ed77985c7f0f/TEE/TEE%E6%95%B4%E7%90%86.md</a></li>
+<li><a href="https://mp.weixin.qq.com/s?__biz=MzkwNjE4ODkxNg==&mid=2247484257&idx=1&sn=5c65705cba40e98241f5dece78af0e20" target="_blank" rel="noopener">https://mp.weixin.qq.com/s?__biz=MzkwNjE4ODkxNg%3D%3D&amp;mid=2247484257&amp;idx=1&amp;sn=5c65705cba40e98241f5dece78af0e20</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%AE%89%E5%85%A8/" class="category-chain-item">数据安全</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%AE%89%E5%85%A8/%E9%9A%90%E7%A7%81%E8%AE%A1%E7%AE%97/" class="category-chain-item">隐私计算</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E6%95%B0%E6%8D%AE%E5%AE%89%E5%85%A8/" class="print-no-link">#数据安全</a>
+      
+        <a href="/tags/%E9%9A%90%E7%A7%81%E8%AE%A1%E7%AE%97/" class="print-no-link">#隐私计算</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>01-TEE 简介</div>
+      <div>https://flepeng.github.io/081-数据安全-TEE-01-TEE-简介/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年4月14日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/081-%E6%95%B0%E6%8D%AE%E5%AE%89%E5%85%A8-TEE-01-TEE-%E5%8F%91%E5%B1%95%E5%8E%86%E5%8F%B2/" title="01-TEE 发展历史">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">01-TEE 发展历史</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/081-%E6%95%B0%E6%8D%AE%E5%AE%89%E5%85%A8-TEE-02-TEE-SGX-%E5%86%85%E9%83%A8%E7%BB%84%E4%BB%B6/" title="02-TEE SGX 内部组件">
+                        <span class="hidden-mobile">02-TEE SGX 内部组件</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

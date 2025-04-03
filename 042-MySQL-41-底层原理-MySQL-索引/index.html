@@ -1,0 +1,1086 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="备注：我们往 MySQL 插入的数据最终都是存在页中的。在 InnoDB 的设计中，页与页之间是通过一个双向链表连接起来。 1、为什么需要索引一般的应用系统，读写比例在10:1左右，而且插入操作和一般的更新操作很少出现性能问题，在生产环境中，我们遇到最多的，也是最容易出问题的，还是一些复杂的查询操作，因此对查询语句的优化显然是重中之重。说起加速查询，就不得不提到 索引 了。 如果没有索引，我们在查">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL 索引">
+<meta property="og:url" content="https://flepeng.github.io/042-MySQL-41-%E5%BA%95%E5%B1%82%E5%8E%9F%E7%90%86-MySQL-%E7%B4%A2%E5%BC%95/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="备注：我们往 MySQL 插入的数据最终都是存在页中的。在 InnoDB 的设计中，页与页之间是通过一个双向链表连接起来。 1、为什么需要索引一般的应用系统，读写比例在10:1左右，而且插入操作和一般的更新操作很少出现性能问题，在生产环境中，我们遇到最多的，也是最容易出问题的，还是一些复杂的查询操作，因此对查询语句的优化显然是重中之重。说起加速查询，就不得不提到 索引 了。 如果没有索引，我们在查">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/03/57673940fbc94526979f5fb7b99902e0.png">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/03/98d9051544cfd035a4610f35edee0f8c.png">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/03/434f4ebdca4914d1ef4c2ee3a3b7a320.png">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/03/d69a90220888c1e7363d820d5aaed8a7.png">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/03/968dd2f1e229fdcaeb8d779aec2a46af.png">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/03/1669366913-73d405b0ebea40da6be8d424584fb605.png">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/03/1669366913-c066c9bc1cae2a0d0c1bd52a19994669.png">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/03/1669366913-66025bdc747ae670a606e23001fc39cd.png">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/03/1669366913-f9f07150c198246577938eba0364dd62.png">
+<meta property="og:image" content="https://flepeng.github.io/img/mysql/03/1669366913-d8f3fa527ad042476db441caf67a58c7.png">
+<meta property="article:published_time" content="2020-08-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.360Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="MySQL">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/mysql/03/57673940fbc94526979f5fb7b99902e0.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>MySQL 索引 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="MySQL 索引"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2020-08-08 00:00" pubdate>
+          2020年8月8日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          11k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          91 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">MySQL 索引</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>备注：我们往 MySQL 插入的数据最终都是存在页中的。在 InnoDB 的设计中，页与页之间是通过一个<strong>双向链表</strong>连接起来。</p>
+<h1 id="1、为什么需要索引"><a href="#1、为什么需要索引" class="headerlink" title="1、为什么需要索引"></a>1、为什么需要索引</h1><p>一般的应用系统，读写比例在10:1左右，而且插入操作和一般的更新操作很少出现性能问题，在生产环境中，我们遇到最多的，也是最容易出问题的，还是一些复杂的查询操作，因此对查询语句的优化显然是重中之重。说起加速查询，就不得不提到 索引 了。</p>
+<p>如果没有索引，我们在查找、修改、删除数据的时候，需要把全部的数据加载到内存中进行遍历，然后找到对应的数据进行操作，可想而知，这样效率很低，那有没有提升效率的方法呢，当然有，使用索引。</p>
+<h1 id="2、什么是索引"><a href="#2、什么是索引" class="headerlink" title="2、什么是索引"></a>2、什么是索引</h1><p>类似于字典中的目录，查找字典内容时可以根据目录查找到数据的存放位置，然后直接获取即可。</p>
+<p>MySQL官方对索引定义：<strong>是存储引擎用于快速查找记录的一种数据结构。需要额外开辟空间和数据维护工作。</strong></p>
+<p>索引是物理数据页存储，在数据文件中（InnoDB，ibd文件），利用数据页(page)存储。</p>
+<h2 id="索引的优缺点"><a href="#索引的优缺点" class="headerlink" title="索引的优缺点"></a>索引的优缺点</h2><p>优点：</p>
+<ol>
+<li>类似大学图书馆建书目索引，索引可以提高数据检索的效率，降低数据库的IO成本，这也是创建索引最主要的原因。</li>
+<li>通过创建唯一索引，可以保证数据库表中每一行数据的唯一性。</li>
+<li>在使用分组和排序子句进行数据查询时，可以显著减少查询中分组和排序的时间，降低CPU的消耗。</li>
+</ol>
+<p>缺点：</p>
+<ol>
+<li>创建索引和维护索引要耗费时间，并且随着数据量的增加，所耗费的时间也会增加。</li>
+<li>索引需要占磁盘空间，除了数据表占数据空间之外，每一个索引还要占一定的物理空间，存储在磁盘上，如果有大量的索引，索引文件可能比数据文件更快达到最大文件尺寸。</li>
+<li>虽然索引大大提高了查询速度，同时却会降低更新表的速度。当对表中的数据进行增加、删除和修改的时候，索引也要动态地维护，这样就降低了数据的维护速度。</li>
+</ol>
+<h2 id="不同的存储引擎支持的索引类型"><a href="#不同的存储引擎支持的索引类型" class="headerlink" title="不同的存储引擎支持的索引类型"></a>不同的存储引擎支持的索引类型</h2><ul>
+<li>InnoDB 支持事务，支持行级别锁定，支持 B-tree、Full-text 等索引，不支持 Hash 索引；</li>
+<li>MyISAM 不支持事务，支持表级别锁定，支持 B-tree、Full-text 等索引，不支持 Hash 索引；</li>
+<li>Memory 不支持事务，支持表级别锁定，支持 B-tree、Hash 等索引，不支持 Full-text 索引；</li>
+<li>NDB 支持事务，支持行级别锁定，支持 Hash 索引，不支持 B-tree、Full-text 等索引；</li>
+<li>Archive 不支持事务，支持表级别锁定，不支持 B-tree、Hash、Full-text 等索引；</li>
+</ul>
+<h1 id="3、Hash-索引"><a href="#3、Hash-索引" class="headerlink" title="3、Hash 索引"></a>3、Hash 索引</h1><p>Hash索引底层是由 Hash 表来实现的，Hash 表是根据键值 <code>&lt;key,value&gt;</code> 存储数据的结构，。也就是说，它通过把关键码值映射到表中一个位置来访问记录，以加快查找的速度。</p>
+<p>哈希表 是 <code>数组 + 链表</code> 的形式，通过哈希函数计算每个节点数据中键所对应的哈希桶位置，如果出现哈希冲突，可以使用拉链法来解决。</p>
+<p><img src="/img/mysql/03/57673940fbc94526979f5fb7b99902e0.png" srcset="/img/loading.gif" lazyload></p>
+<p>Hash索引可以方便的提供等值查询，但是对于范围查询就需要全表扫描了。</p>
+<p>Hash索引在 MySQL 中Hash结构主要应用在 Memory 原生的 Hash索引、InnoDB 自适应哈希索引。</p>
+<h2 id="Memory-原生的-Hash-索引"><a href="#Memory-原生的-Hash-索引" class="headerlink" title="Memory 原生的 Hash 索引"></a>Memory 原生的 Hash 索引</h2><p>MySQL 中的存储引擎只有 Memory 和 NDB 支持哈希索引，其中 Memory 默认使用哈希索引。</p>
+<p>NDB 存储引擎是 MYSQL 的集群存储引擎。对于这个存储引擎，MySQL 服务器实际上变成了一个其他进程的集群客户端。</p>
+<p>Memory 存储引擎使用存在于内存中的内容来创建表。每个 Memory 表只实际对应一个磁盘文件，格式是 <code>.frm</code> 。Memory 类型的表访问非常的快，因为它的数据是放在内存中的，并且默认使用 HASH 索引，但是一旦服务关闭，表中的数据就会丢失掉。</p>
+<p>Memory 类型的存储引擎主要用于那些内容变化不频繁的代码表，或者作为统计操作的中间结果表，便于高效地对中间结果进行分析并得到最终的统计结果。对存储引擎为 Memory 的表进行更新操作要谨慎，因为数据并没有实际写入到磁盘中，所以一定要对下次重新启动服务后如何获得这些修改后的数据有所考虑。</p>
+<p>①、优点</p>
+<ul>
+<li>Hash 索引结构的特殊性，其检索效率非常高，索引的检索可以一次定位，不像 B-Tree 索引需要从根节点到枝节点，最后才能访问到页节点这样多次的 IO 访问，所以 Hash 索引的查询效率要远高于 B-Tree 索引。</li>
+<li>使用的场景：一些读操作密集的表建议使用 hash 索引，因为 hash 索引的查找速度是很快的。但是也有一些局限。</li>
+</ul>
+<p>②、缺点</p>
+<ol>
+<li>hash索引只包含哈希码和行指针，不能使用索引的值避免读取行，也就是要回表，不能像覆盖索引那样避免回表。</li>
+<li>hash索引不能进行排序以及范围查找，只支持 &#x3D; 、in 、&lt;&#x3D;&gt;的比较，因为它们不会按照顺序保存行数据。</li>
+<li>有可能产生hash碰撞，那么就必须要访问链表的每一个行指针，然后逐行进行比较得出正确数据。</li>
+<li>因为hash算法是基于等值计算的，不支持部分键匹配，例如有个组合索引a_b，那么此时即使我们的where子句中使用到了a，也不会使用索引，like 等范围查找同理。</li>
+</ol>
+<p>③、内存表与临时表区别</p>
+<p>临时表和内存表比较像，但是这两个概念可是完全不同的。</p>
+<ul>
+<li>内存表：指的是使用 Memory 引擎的表，建表语法是 <code>CREATE TABLE … engine=memory</code>。这种表的数据都保存在内存里，系统重启的时候会被清空，但是表结构还在。除了这两个特性看上去比较“奇怪”外，从其他的特征上看，它就是一个正常的表。</li>
+<li>临时表：可以使用各种引擎类型。如果是使用 InnoDB 引擎或者 MyISAM 引擎的临时表，写数据的时候是写到磁盘上的。当然，临时表也可以使用 Memory 引擎。</li>
+</ul>
+<h2 id="InnoDB-自适应哈希索引"><a href="#InnoDB-自适应哈希索引" class="headerlink" title="InnoDB 自适应哈希索引"></a>InnoDB 自适应哈希索引</h2><p>从以上可以知道，哈希表查找最优情况下是查找一次。而 InnoDB 使用的是 B+Tree，最优情况下的查找次数根据层数决定。因此为了提高查询效率，InnoDB 便允许使用 <code>自适应哈希</code> 来提高性能。</p>
+<p>与其说这是一种索引不如称其为是一种 <code>机制</code>。自适应哈希索引的由来就是：<code>当 InnoDB 注意到一些索引值被频繁的访问时，内部会在 B+Tree 索引的顶端为其创建哈希索引，保存在内存之中，使其具有快速哈希查找的特性，这个过程是它自动完成的。</code></p>
+<p>可以通过参数 <code>innodb_adaptive_hash_index</code> 来决定是否开启。默认是打开的。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs sql">mysql&gt; SHOW variables like "innodb_adaptive_hash_index";<br>+<span class="hljs-comment">----------------------------+-------+</span><br>| Variable_name              | Value |<br>+<span class="hljs-comment">----------------------------+-------+</span><br>| innodb_adaptive_hash_index | ON    |<br>+<span class="hljs-comment">----------------------------+-------+</span><br>1 row in <span class="hljs-keyword">set</span> (<span class="hljs-number">0.16</span> sec)<br></code></pre></td></tr></table></figure>
+
+<p>存储引擎会自动对个索引页上的查询进行监控，如果能够通过使用自适应哈希索引来提高查询效率，其便会自动创建自适应哈希索引，不需要开发人员或运维人员进行任何设置操作。</p>
+<p><code>自适应哈希索引是对 InnoDB 的缓冲池的 B+Tree 页进行创建，不是对整张表创建，因此速度很快。</code></p>
+<p>可以通过查看 InndoDB 的 <code>status</code> 命令来查看自适应哈希索引的使用情况。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br></pre></td><td class="code"><pre><code class="hljs sql">mysql&gt; SHOW engine innodb status;<br>+<span class="hljs-comment">--------+------+---------+</span><br>| Type   | Name | Status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <br>+<span class="hljs-comment">--------+------+---------+</span><br>| InnoDB |      |      <br>=====================================<br>2022-12-13 15:06:03 0x62f0 INNODB MONITOR OUTPUT<br>=====================================<br>Per second averages calculated from the last 6 seconds<br><span class="hljs-comment">-----------------</span><br>BACKGROUND THREAD<br><span class="hljs-comment">-----------------</span><br>srv_master_thread loops: 191 srv_active, 0 srv_shutdown, 708026 srv_idle<br>srv_master_thread log <span class="hljs-keyword">flush</span> <span class="hljs-keyword">and</span> writes: <span class="hljs-number">708217</span><br><span class="hljs-comment">----------</span><br>SEMAPHORES<br><span class="hljs-comment">----------</span><br>OS <span class="hljs-keyword">WAIT</span> <span class="hljs-built_in">ARRAY</span> INFO: reservation <span class="hljs-keyword">count</span> <span class="hljs-number">4025</span><br>OS <span class="hljs-keyword">WAIT</span> <span class="hljs-built_in">ARRAY</span> INFO: signal <span class="hljs-keyword">count</span> <span class="hljs-number">4057</span><br>RW-<span class="hljs-keyword">shared</span> spins <span class="hljs-number">0</span>, rounds <span class="hljs-number">40132</span>, OS waits <span class="hljs-number">3309</span><br>RW-excl spins <span class="hljs-number">0</span>, rounds <span class="hljs-number">4589</span>, OS waits <span class="hljs-number">141</span><br>RW-sx spins <span class="hljs-number">54</span>, rounds <span class="hljs-number">1573</span>, OS waits <span class="hljs-number">50</span><br>Spin rounds per <span class="hljs-keyword">wait</span>: <span class="hljs-number">40132.00</span> RW-<span class="hljs-keyword">shared</span>, <span class="hljs-number">4589.00</span> RW-excl, <span class="hljs-number">29.13</span> RW-sx<br><span class="hljs-comment">------------</span><br>TRANSACTIONS<br><span class="hljs-comment">------------</span><br>Trx <span class="hljs-keyword">id</span> counter <span class="hljs-number">3233592</span><br><span class="hljs-keyword">Purge</span> done <span class="hljs-keyword">for</span> trx<span class="hljs-string">'s n:o &lt; 3233410 undo n:o &lt; 0 state: running but idle</span><br><span class="hljs-string">History list length 90</span><br><span class="hljs-string">LIST OF TRANSACTIONS FOR EACH SESSION:</span><br><span class="hljs-string">---TRANSACTION 283413858068272, not started</span><br><span class="hljs-string">0 lock struct(s), heap size 1136, 0 row lock(s)</span><br><span class="hljs-string">--------</span><br><span class="hljs-string">FILE I/O</span><br><span class="hljs-string">--------</span><br><span class="hljs-string">I/O thread 0 state: wait Windows aio (insert buffer thread)</span><br><span class="hljs-string">I/O thread 1 state: wait Windows aio (log thread)</span><br><span class="hljs-string">I/O thread 2 state: wait Windows aio (read thread)</span><br><span class="hljs-string">I/O thread 3 state: wait Windows aio (read thread)</span><br><span class="hljs-string">I/O thread 4 state: wait Windows aio (read thread)</span><br><span class="hljs-string">I/O thread 5 state: wait Windows aio (read thread)</span><br><span class="hljs-string">I/O thread 6 state: wait Windows aio (write thread)</span><br><span class="hljs-string">I/O thread 7 state: wait Windows aio (write thread)</span><br><span class="hljs-string">I/O thread 8 state: wait Windows aio (write thread)</span><br><span class="hljs-string">I/O thread 9 state: wait Windows aio (write thread)</span><br><span class="hljs-string">Pending normal aio reads: [0, 0, 0, 0] , aio writes: [0, 0, 0, 0] ,</span><br><span class="hljs-string"> ibuf aio reads:, log i/o'</span>s:, <span class="hljs-keyword">sync</span> i/o<span class="hljs-string">'s:</span><br><span class="hljs-string">Pending flushes (fsync) log: 0; buffer pool: 0</span><br><span class="hljs-string">198289 OS file reads, 27374 OS file writes, 1469 OS fsyncs</span><br><span class="hljs-string">0.00 reads/s, 0 avg bytes/read, 0.00 writes/s, 0.00 fsyncs/s</span><br><span class="hljs-string">-------------------------------------</span><br><span class="hljs-string">INSERT BUFFER AND ADAPTIVE HASH INDEX</span><br><span class="hljs-string">-------------------------------------</span><br><span class="hljs-string">Ibuf: size 1, free list len 552, seg size 554, 552 merges</span><br><span class="hljs-string">merged operations:</span><br><span class="hljs-string"> insert 13450, delete mark 1, delete 0</span><br><span class="hljs-string">discarded operations:</span><br><span class="hljs-string"> insert 0, delete mark 0, delete 0</span><br><span class="hljs-string">Hash table size 17393, node heap has 1 buffer(s)</span><br><span class="hljs-string">Hash table size 17393, node heap has 18 buffer(s)</span><br><span class="hljs-string">Hash table size 17393, node heap has 1 buffer(s)</span><br><span class="hljs-string">Hash table size 17393, node heap has 189 buffer(s)</span><br><span class="hljs-string">Hash table size 17393, node heap has 2 buffer(s)</span><br><span class="hljs-string">Hash table size 17393, node heap has 1 buffer(s)</span><br><span class="hljs-string">Hash table size 17393, node heap has 0 buffer(s)</span><br><span class="hljs-string">Hash table size 17393, node heap has 1 buffer(s)</span><br><span class="hljs-string">0.00 hash searches/s, 0.00 non-hash searches/s</span><br><span class="hljs-string">LOG</span><br><span class="hljs-string">Log sequence number 30110810223</span><br><span class="hljs-string">Log flushed up to   30110810223</span><br><span class="hljs-string">Pages flushed up to 30110810223</span><br><span class="hljs-string">Last checkpoint at  30110810214</span><br><span class="hljs-string">0 pending log flushes, 0 pending chkp writes</span><br><span class="hljs-string">509 log i/o'</span>s done, <span class="hljs-number">0.00</span> <span class="hljs-keyword">log</span> i/o<span class="hljs-string">'s/second</span><br><span class="hljs-string">----------------------</span><br><span class="hljs-string">BUFFER POOL AND MEMORY</span><br><span class="hljs-string">----------------------</span><br><span class="hljs-string">Total large memory allocated 68648960</span><br><span class="hljs-string">Dictionary memory allocated 685290</span><br><span class="hljs-string">Buffer pool size   4096</span><br><span class="hljs-string">Free buffers       1024</span><br><span class="hljs-string">Database pages     2859</span><br><span class="hljs-string">Old database pages 1035</span><br><span class="hljs-string">Modified db pages  0</span><br><span class="hljs-string">Pending reads      0</span><br><span class="hljs-string">Pending writes: LRU 0, flush list 0, single page 0</span><br><span class="hljs-string">Pages made young 53454, not young 2806497</span><br><span class="hljs-string">0.00 youngs/s, 0.00 non-youngs/s</span><br><span class="hljs-string">Pages read 197570, CREATEd 18349, written 25879</span><br><span class="hljs-string">0.00 reads/s, 0.00 CREATEs/s, 0.00 writes/s</span><br><span class="hljs-string">No buffer pool page gets since the last printout</span><br><span class="hljs-string">Pages read ahead 0.00/s, evicted without access 0.00/s, Random read ahead 0.00/s</span><br><span class="hljs-string">LRU len: 2859, unzip_LRU len: 0</span><br><span class="hljs-string">I/O sum[0]:cur[0], unzip sum[0]:cur[0]</span><br><span class="hljs-string">--------------</span><br><span class="hljs-string">ROW OPERATIONS</span><br><span class="hljs-string">--------------</span><br><span class="hljs-string">0 queries inside InnoDB, 0 queries in queue</span><br><span class="hljs-string">0 read views open inside InnoDB</span><br><span class="hljs-string">Process ID=1864, Main thread ID=1912, state: sleeping</span><br><span class="hljs-string">Number of rows inserted 505838, updated 2, deleted 0, read 6824874</span><br><span class="hljs-string">0.00 inserts/s, 0.00 updates/s, 0.00 deletes/s, 0.00 reads/s</span><br><span class="hljs-string">----------------------------</span><br><span class="hljs-string">END OF INNODB MONITOR OUTPUT</span><br><span class="hljs-string">============================</span><br><span class="hljs-string"> |</span><br><span class="hljs-string">+--------+------+---------+</span><br><span class="hljs-string">1 row in set (0.17 sec)</span><br></code></pre></td></tr></table></figure>
+
+<p>可以看到自适应哈希索引大小，每秒的使用情况。注意从哈希表的特性来看，自适应哈希索引只能用于等值查询，范围或者大小是不允许的。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-comment">-- 等值查询</span><br><span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> xx <span class="hljs-keyword">WHERE</span> <span class="hljs-keyword">name</span> = <span class="hljs-string">"xxx"</span>;<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="Hash-与-B-Tree-索引的优缺点"><a href="#Hash-与-B-Tree-索引的优缺点" class="headerlink" title="Hash 与 B+Tree 索引的优缺点"></a>Hash 与 B+Tree 索引的优缺点</h2><ul>
+<li>hash 类型的索引：查询单条快，范围查询慢。</li>
+<li>B+Tree 类型的索引：层数越多，数据量指数级增长（我们就用它，因为 InnoDB 默认支持它）。</li>
+</ul>
+<h1 id="4、B-Tree-MySQL-索引的实现"><a href="#4、B-Tree-MySQL-索引的实现" class="headerlink" title="4、B+Tree MySQL 索引的实现"></a>4、B+Tree MySQL 索引的实现</h1><p>在MySQL中，索引是在存储引擎层实现的，不同存储引擎对索引的实现方式是不同的，下面我们探讨一下 MyISAM 和 InnoDB 两个存储引擎的索引实现方式。</p>
+<h2 id="MyISAM-索引实现"><a href="#MyISAM-索引实现" class="headerlink" title="MyISAM 索引实现"></a>MyISAM 索引实现</h2><p>MyISAM 使用 B+Tree 作为索引结构，叶节点的data域存放的是数据记录的地址，MyISAM 索引的原理图如下：  </p>
+<p><img src="/img/mysql/03/98d9051544cfd035a4610f35edee0f8c.png" srcset="/img/loading.gif" lazyload></p>
+<p>这里假设表一共有三列，假设我们以 Col1 为主键，则上图是一个 MyISAM 表的主索引（Primary key）示意。可以看出 MyISAM 的索引文件仅仅保存数据记录的地址。</p>
+<p>在 MyISAM 中，主键索引和辅助索引（Secondary key）在结构上没有任何区别，只是主键索引要求key是唯一的，而辅助索引的key可以重复。</p>
+<p>如果我们在 Col2 上建立一个辅助索引，则此索引的结构如下图所示。同样也是一颗 B+Tree ，data域保存数据记录的地址。</p>
+<p><img src="/img/mysql/03/434f4ebdca4914d1ef4c2ee3a3b7a320.png" srcset="/img/loading.gif" lazyload></p>
+<p>MyISAM 中索引检索的算法为：首先按照 B+Tree 搜索算法搜索索引，如果指定的 Key 存在，则取出其data域的值，然后以data域的值为地址，读取相应数据记录。</p>
+<h2 id="InnoDB-索引实现"><a href="#InnoDB-索引实现" class="headerlink" title="InnoDB 索引实现"></a>InnoDB 索引实现</h2><p>InnoDB 也使用 B+Tree 作为索引结构，但具体实现方式却与 MyISAM 不同。</p>
+<p>第一个与 MyISAM 索引的不同是：MyISAM 索引文件和数据文件是分离的，索引文件仅保存数据记录的地址。而在 InnoDB 中，表数据文件本身就是按 B+Tree 组织的一个索引结构，这棵树的叶节点data域保存了完整的数据记录。<strong>这个索引的key是数据表的主键，因此 InnoDB 表数据文件本身就是主索引</strong>。</p>
+<p>下图是 InnoD B主索引（同时也是数据文件）的示意图，可以看到叶节点包含了完整的数据记录。这种索引又叫做聚集索引（下面会详细讲）。</p>
+<p>因为 InnoDB 的数据文件本身要按主键聚集，所以 InnoDB 要求表必须有主键（MyISAM 可以没有），<strong>如果没有显式指定，则 MySQL 系统会自动选择一个可以唯一标识数据记录的列作为主键，如果不存在这种列，则 MySQL 自动为 InnoDB 表生成一个隐含字段作为主键，这个字段长度为6个字节，类型为长整形</strong>。</p>
+<p><img src="/img/mysql/03/d69a90220888c1e7363d820d5aaed8a7.png" srcset="/img/loading.gif" lazyload></p>
+<p>第二个与 MyISAM 索引的不同是：InnoDB 的辅助索引data域存储相应记录主键的值而不是地址。换句话说，InnoDB 的所有辅助索引都引用主键作为data域。下图为定义在 Col3 上的一个辅助索引。</p>
+<p>这里以英文字符的ASCII码作为比较准则。聚集索引这种实现方式使得按主键的搜索十分高效，但是辅助索引搜索需要检索两遍索引：首先检索辅助索引获得主键，然后用主键到主索引中检索获得记录。</p>
+<p><img src="/img/mysql/03/968dd2f1e229fdcaeb8d779aec2a46af.png" srcset="/img/loading.gif" lazyload></p>
+<p>了解不同存储引擎的索引实现方式对于正确使用和优化索引都非常有帮助，例如知道了 InnoDB 的索引实现后，就很容易明白为什么不建议使用过长的字段作为主键，因为所有辅助索引都引用主索引，过长的主索引会令辅助索引变得过大。再例如，用非单调的字段作为主键在 InnoDB 中不是个好主意，因为 InnoDB 数据文件本身是一颗 B+Tree，非单调的主键会造成在插入新记录时数据文件为了维持 B+Tree 的特性而频繁的分裂调整，十分低效，而使用自增字段作为主键则是一个很好的选择。</p>
+<h3 id="InnoDB-主键索引的-B-Tree-高度为多高呢"><a href="#InnoDB-主键索引的-B-Tree-高度为多高呢" class="headerlink" title="InnoDB 主键索引的 B+Tree 高度为多高呢?"></a>InnoDB 主键索引的 B+Tree 高度为多高呢?</h3><p>我们知道 InnoDB存储引擎最小储存单元是 <code>页</code>，一页大小就是 <code>16k</code>。 B+Tree 叶子存的是数据，内部节点存的是 键值+指针。索引组织表通过非叶子节点的二分查找法以及指针确定数据在哪个页中，进而再去数据页中找到需要的数据；</p>
+<p>现在有这么一张表：主键bigint类型，长度为8Byte(int类型，一个int就是32位，4Byte)，而指针大小是固定的在InnoDB源码中设置为6Byte  </p>
+<p>那么一页所能存放的主键个数是 <code>(8+6)B × n = 16 × 1024B</code>， 得出 <code>n</code> 约等于 1170。因为 B+Tree 的所有数据都存放在叶子节点上，所以叶子节点的占用内存比根节点多的，假设一行记录的数据大小为1k，那么单个叶子节点可以存 <code>16</code> 条记录；</p>
+<ul>
+<li>如果树的高度是2，那么所存储的数据最多有：<code>1170 × 16 = 18720</code></li>
+<li>如果树的高度是3，那么所存储的数据最多有：<code>1170 × 1170 × 16 = 21902400</code>，2千多万</li>
+<li>如果树的高度是4，那么所存储的数据最多有：<code>1170 × 1170 × 16 = 25625808000</code>，约25亿6千万</li>
+</ul>
+<p><strong>所以 B+Tree 高度一般为1-3层，已经满足千万级别的数据存储。</strong></p>
+<h2 id="总结一下"><a href="#总结一下" class="headerlink" title="总结一下"></a>总结一下</h2><p>MyISAM 和 InnoDB 使用的都是 B+Tree 索引，不同的是，InnoDB 的数据同时和主键索引存放在一起，而 MyISAM 的数据是存储在页中，InnoDB 其他索引的数据指向的是主键索引的值，而 MyISAM 所有索引指向的是数据的地址。</p>
+<h1 id="5、B-Tree-索引中的聚集索引与辅助索引"><a href="#5、B-Tree-索引中的聚集索引与辅助索引" class="headerlink" title="5、B+Tree 索引中的聚集索引与辅助索引"></a>5、B+Tree 索引中的聚集索引与辅助索引</h1><p>数据库中的 B+Tree 索引可以分为聚集索引（clustered index）和辅助索引（secondary index）:</p>
+<ul>
+<li>MyISAM：所有的索引都是非聚集索引。</li>
+<li>InnoDB：主键索引是聚集索引，其他索引都是非聚集索引。</li>
+</ul>
+<h2 id="聚集索引"><a href="#聚集索引" class="headerlink" title="聚集索引"></a>聚集索引</h2><p>聚集索引也叫聚簇索引。</p>
+<p>InnoDB 存储引擎表是<strong>索引组织表</strong>，即表中数据按照主键顺序存放。<strong>聚集索引（clustered index）就是按照每张表的主键构造一棵 B+Tree ，同时叶子结点存放的即为整张表的行记录数据，也将聚集索引的叶子结点称为数据页</strong>。</p>
+<p>聚集索引的这个特性决定了索引组织表中数据也是索引的一部分。同 B+Tree 数据结构一样，每个数据页都通过一个双向链表来进行链接。</p>
+<p>由于实际的数据页只能按照一棵 B+Tree 进行排序，因此每张表只能拥有一个聚集索引。在多数情况下，查询优化器倾向于采用聚集索引。因为聚集索引能够在 B+Tree 索引的叶子节点上直接找到数据。此外由于定义了数据的逻辑顺序，聚集索引能够特别快地访问针对范围值的查询。</p>
+<p><img src="/img/mysql/03/1669366913-73d405b0ebea40da6be8d424584fb605.png" srcset="/img/loading.gif" lazyload></p>
+<p>聚集索引的好处：</p>
+<ul>
+<li><strong>查询速度非常快</strong>：它对主键的排序查找和范围查找速度非常快，叶子节点的数据就是用户所要查询的数据。如用户需要查找一张表，查询最后的10位用户信息，由于 B+Tree 索引是双向链表，所以用户可以快速找到最后一个数据页，并取出10条记录。</li>
+<li><strong>对排序查找和范围查找优化</strong>：范围查询（range query），即如果要查找主键某一范围内的数据，通过叶子节点的上层中间节点就可以得到页的范围，之后直接读取数据页即可。</li>
+</ul>
+<p><strong>缺点</strong>：</p>
+<ul>
+<li><strong>依赖于有序的数据</strong>：因为 B+树是多路平衡树，如果索引的数据不是有序的，那么就需要在插入时排序，如果数据是整型还好，否则类似于字符串或 UUID 这种又长又难比较的数据，插入或查找的速度肯定比较慢。</li>
+<li><strong>更新代价大</strong>：如果对索引列的数据被修改时，那么对应的索引也将会被修改，而且聚簇索引的叶子节点还存放着数据，修改代价肯定是较大的，所以对于主键索引来说，主键一般都是不可被修改的。</li>
+</ul>
+<p><strong>在 InnoDB 中，MySQL 是这样选择聚集索引的：</strong></p>
+<ul>
+<li>如果表中定义了 PRIMARY KEY，那么 InnoDB 就会使用它作为聚集索引；</li>
+<li>如果没有定义 PRIMARY KEY，InnoDB 会选择第一个有 NOT NULL 约束的唯一索引作为 PRIMARY KEY，然后 InnoDB 会使用它作为聚集索引；</li>
+<li>如果表中没有定义 PRIMARY KEY 或者合适的唯一索引。InnoDB 内部会在含有行ID值的合成列生成隐藏的聚集索引。这些行使用 InnoDB 赋予这些表的ID进行排序。行ID是6个字节的字段，且作为新行单一地自增。因此，根据行ID排序的行数据在物理上是根据插入的顺序进行排序。</li>
+</ul>
+<h3 id="回表查询"><a href="#回表查询" class="headerlink" title="回表查询"></a>回表查询</h3><p>InnoDB 索引有聚集索引和辅助索引。聚集索引的叶子节点存储行记录，InnoDB 必须要有，且只有一个。辅助索引的叶子节点存储的是索引字段值和主键值，如果通过辅助索引无法直接定位行记录，通常情况下，需要扫码两遍索引树。先通过辅助索引定位主键值，然后再通过聚集索引定位行记录，这就叫做<strong>回表查询</strong>，它的性能比扫一遍索引树低。</p>
+<p>总结：通过索引查询主键值，然后再去聚集索引查询记录信息</p>
+<h2 id="辅助索引"><a href="#辅助索引" class="headerlink" title="辅助索引"></a>辅助索引</h2><p>表中<strong>除了聚集索引外其他索引都是辅助索引（Secondary Index，也称为非聚集索引）</strong>。</p>
+<p>与聚集索引的区别是：辅助索引的叶子节点不包含行记录的全部数据。叶子节点除了包含键值以外，每个叶子节点中的索引行中还包含一个书签（bookmark）。该书签用来告诉 InnoDB 去哪里可以找到与索引相对应的行数据。</p>
+<p>由于 InnoDB 是索引组织表，<strong>因此 InnoDB 的辅助索引的书签就是相应行数据的聚集索引键</strong>。如下图</p>
+<p><img src="/img/mysql/03/1669366913-c066c9bc1cae2a0d0c1bd52a19994669.png" srcset="/img/loading.gif" lazyload></p>
+<p>辅助索引的存在并不影响数据在聚集索引中的组织，因此每张表上可以有多个辅助索引，但只能有一个聚集索引。</p>
+<p>当通过辅助索引来寻找数据时，InnoDB 会遍历辅助索引并通过叶子级别的指针获得<strong>指向主键索引的主键</strong>，然后再通过主键索引来找到一个完整的行记录。</p>
+<p>举例来说，如果在一棵高度为3的辅助索引树种查找数据，那需要对这个辅助索引树遍历3次找到指定主键，如果聚集索引树的高度同样为3，那么还需要对聚集索引树进行3次查找，最终找到一个完整的行数据所在的页，因此一共需要6次逻辑IO访问才能得到最终的一个数据页。</p>
+<p><img src="/img/mysql/03/1669366913-66025bdc747ae670a606e23001fc39cd.png" srcset="/img/loading.gif" lazyload></p>
+<p>而 MyISAM 不是索引组织表，<strong>因此 MyISAM 存储引擎的辅助索引的书签就是相应行数据的实际地址。</strong></p>
+<h4 id="非聚簇索引一定回表查询吗-覆盖索引"><a href="#非聚簇索引一定回表查询吗-覆盖索引" class="headerlink" title="非聚簇索引一定回表查询吗(覆盖索引)?"></a>非聚簇索引一定回表查询吗(覆盖索引)?</h4><p><strong>非聚簇索引不一定回表查询。</strong></p>
+<p>试想一种情况，用户准备使用 SQL 查询用户名，而用户名字段正好建立了索引。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">SELECT</span> <span class="hljs-keyword">name</span> <span class="hljs-keyword">FROM</span> <span class="hljs-keyword">table</span> <span class="hljs-keyword">WHERE</span> <span class="hljs-keyword">name</span>=<span class="hljs-string">'guang19'</span>;<br></code></pre></td></tr></table></figure>
+
+<p>那么这个索引的 key 本身就是 name，查到对应的 name 直接返回就行了，无需回表查询。</p>
+<p>即使是 MYISAM 也是这样，虽然 MYISAM 的主键索引确实需要回表，因为它的主键索引的叶子节点存放的是指针。但是！<strong>如果 SQL 查的就是主键呢?</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">SELECT</span> <span class="hljs-keyword">id</span> <span class="hljs-keyword">FROM</span> <span class="hljs-keyword">table</span> <span class="hljs-keyword">WHERE</span> <span class="hljs-keyword">id</span>=<span class="hljs-number">1</span>;<br></code></pre></td></tr></table></figure>
+
+<p>主键索引本身的 key 就是主键，查到返回就行了。这种情况就称之为覆盖索引了。</p>
+<h2 id="聚集索引和非聚集索引的联系与区别"><a href="#聚集索引和非聚集索引的联系与区别" class="headerlink" title="聚集索引和非聚集索引的联系与区别"></a>聚集索引和非聚集索引的联系与区别</h2><p>相同点：不管是聚集索引还是辅助索引，其内部都是 B+Tree 的形式，即高度是平衡的，叶子结点存放着所有的数据。</p>
+<p>聚集索引：</p>
+<ol>
+<li>纪录的索引顺序与主键顺序相同，因此更适合 BETWEEN…AND 和 ORDER BY 操作。 </li>
+<li>叶子结点直接对应数据，从中间级的索引页的索引行直接对应数据页。</li>
+<li>每张表只能创建一个聚集索引。</li>
+</ol>
+<p>非聚集索引：</p>
+<ol>
+<li>索引顺序和物理顺序无关。</li>
+<li>叶子结点不直接指向数据页。</li>
+<li>每张表可以有多个非聚集索引，需要更多磁盘和内容。</li>
+</ol>
+<h1 id="6、索引的常见分类"><a href="#6、索引的常见分类" class="headerlink" title="6、索引的常见分类"></a>6、索引的常见分类</h1><p>MySQL 中常见索引有：</p>
+<ul>
+<li>普通索引：普通索引是最基本的索引，它没有任何限制，值可以为空。仅加速查询。</li>
+<li>唯一索引：唯一索引与普通索引类似，不同：索引列的值必须唯一，允许有空值。如果是组合索引，则列值得组合必须唯一。加速查询 + 列值唯一（可以有null）。</li>
+<li>主键索引：加速查询 + 列值唯一 + 表中只有一个（不可以有null）。</li>
+<li>组合索引：多列值组成一个索引，专门用于组合搜索，其效率大于索引合并。</li>
+<li>全文索引：主要用来查找文本中的关键字，而不是直接与索引中的值相比较。fulltext索引跟其它索引大不相同，它更像是一个搜索引擎，而不是简单的 WHERE 语句的参数匹配。</li>
+</ul>
+<p>索引分单列索引和组合索引：</p>
+<ul>
+<li>单列索引，即一个索引只包含单个列，一个表可以有多个单列索引，但这不是组合索引。</li>
+<li>组合索引(也叫复合索引、联合索引)，即一个索引包含多个列。</li>
+</ul>
+<h2 id="1、普通索引"><a href="#1、普通索引" class="headerlink" title="1、普通索引"></a>1、普通索引</h2><p>普通索引仅有一个功能：加速查询</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-comment"># 创建表时创建索引</span><br><span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">TABLE</span> 表名(<br>    nid <span class="hljs-built_in">int</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">null</span> auto_increment primary <span class="hljs-keyword">key</span>,<br>    <span class="hljs-keyword">name</span> <span class="hljs-built_in">varchar</span>(<span class="hljs-number">32</span>) <span class="hljs-keyword">not</span> <span class="hljs-literal">null</span>,<br>    extra <span class="hljs-built_in">text</span>,<br>    <span class="hljs-keyword">index</span> 索引名 (<span class="hljs-keyword">name</span>)<br>)<br><span class="hljs-comment"># 创建索引</span><br><span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">INDEX</span> 索引名 <span class="hljs-keyword">ON</span> 表名(column_name)<br> <br><span class="hljs-comment"># 删除索引</span><br><span class="hljs-keyword">DROP</span> 索引名 <span class="hljs-keyword">ON</span> 表名;<br> <br><span class="hljs-comment"># 查看索引</span><br><span class="hljs-keyword">SHOW</span> <span class="hljs-keyword">INDEX</span> <span class="hljs-keyword">FROM</span> 表名;<br> <br><span class="hljs-comment"># 注意：对于创建索引时如果是 BLOB 和 TEXT 类型，必须指定length。</span><br><span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">INDEX</span> 索引名 <span class="hljs-keyword">ON</span> 表名(extra(<span class="hljs-number">32</span>));<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="2、唯一索引"><a href="#2、唯一索引" class="headerlink" title="2、唯一索引"></a>2、唯一索引</h2><p>唯一索引有两个功能：加速查询 和 唯一约束（可含null）</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-comment"># 创建表时创建索引</span><br><span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">TABLE</span> 表名(<br>    nid <span class="hljs-built_in">int</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">null</span> auto_increment primary <span class="hljs-keyword">key</span>,<br>    <span class="hljs-keyword">name</span> <span class="hljs-built_in">varchar</span>(<span class="hljs-number">32</span>) <span class="hljs-keyword">not</span> <span class="hljs-literal">null</span>,<br>    <span class="hljs-keyword">unique</span> 索引名 (<span class="hljs-keyword">name</span>)<br>)<br> <br><span class="hljs-comment"># 创建索引</span><br><span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">UNIQUE</span> <span class="hljs-keyword">INDEX</span> 索引名 <span class="hljs-keyword">ON</span> 表名(列名)<br> <br><span class="hljs-comment"># 删除索引</span><br><span class="hljs-keyword">DROP</span> <span class="hljs-keyword">UNIQUE</span> <span class="hljs-keyword">INDEX</span> 索引名 <span class="hljs-keyword">ON</span> 表名<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="3、主键索引"><a href="#3、主键索引" class="headerlink" title="3、主键索引"></a>3、主键索引</h2><p>主键有两个功能：加速查询 和 唯一约束（不可含null）</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-comment"># 创建表时创建索引</span><br><span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">TABLE</span> 表名(<br>    nid <span class="hljs-built_in">int</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">null</span> auto_increment primary <span class="hljs-keyword">key</span>,<br>    <span class="hljs-keyword">name</span> <span class="hljs-built_in">varchar</span>(<span class="hljs-number">32</span>) <span class="hljs-keyword">not</span> <span class="hljs-literal">null</span>,<br>    <span class="hljs-keyword">index</span> 索引名 (<span class="hljs-keyword">name</span>)<br>)<br><span class="hljs-comment"># 或者</span><br><span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">TABLE</span> 表名(<br>    nid <span class="hljs-built_in">int</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">null</span> auto_increment,<br>    <span class="hljs-keyword">name</span> <span class="hljs-built_in">varchar</span>(<span class="hljs-number">32</span>) <span class="hljs-keyword">not</span> <span class="hljs-literal">null</span>,<br>    primary <span class="hljs-keyword">key</span>(ni1),<br>    <span class="hljs-keyword">index</span> 索引名 (<span class="hljs-keyword">name</span>)<br>)<br> <br><span class="hljs-comment"># 创建索引</span><br><span class="hljs-keyword">ALTER</span> <span class="hljs-keyword">TABLE</span> 表名 <span class="hljs-keyword">add</span> primary <span class="hljs-keyword">key</span>(列名);<br> <br><span class="hljs-comment"># 删除索引</span><br><span class="hljs-keyword">ALTER</span> <span class="hljs-keyword">TABLE</span> 表名 <span class="hljs-keyword">DROP</span> primary <span class="hljs-keyword">key</span>;<br><span class="hljs-keyword">ALTER</span> <span class="hljs-keyword">TABLE</span> 表名 <span class="hljs-keyword">modify</span> 列名 <span class="hljs-built_in">int</span>, <span class="hljs-keyword">DROP</span> primary <span class="hljs-keyword">key</span>;<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="4、组合索引-也叫复合索引、联合索引-，即一个索引包含多个列"><a href="#4、组合索引-也叫复合索引、联合索引-，即一个索引包含多个列" class="headerlink" title="4、组合索引(也叫复合索引、联合索引)，即一个索引包含多个列"></a>4、组合索引(也叫复合索引、联合索引)，即一个索引包含多个列</h2><p>组合索引是将n个列组合成一个索引，其应用场景为：频繁的同时使用n列来进行查询，如：<code>WHERE n1=lp AND n2=666</code>。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">TABLE</span> 表名(<br>    nid <span class="hljs-built_in">int</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">null</span> auto_increment primary <span class="hljs-keyword">key</span>,<br>    <span class="hljs-keyword">name</span> <span class="hljs-built_in">varchar</span>(<span class="hljs-number">32</span>) <span class="hljs-keyword">not</span> <span class="hljs-literal">null</span>,<br>    email <span class="hljs-built_in">varchar</span>(<span class="hljs-number">64</span>) <span class="hljs-keyword">not</span> <span class="hljs-literal">null</span>,<br>    extra <span class="hljs-built_in">text</span><br>)<br><span class="hljs-comment"># 创建索引</span><br><span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">INDEX</span> 索引名 <span class="hljs-keyword">ON</span> 表名(<span class="hljs-keyword">name</span>,email);<br> <br><span class="hljs-comment"># 如上创建组合索引之后，查询：</span><br>name AND email <span class="hljs-comment">-- 使用索引</span><br>name           <span class="hljs-comment">-- 使用索引</span><br>email          <span class="hljs-comment">-- 不使用索引</span><br> <br><span class="hljs-comment"># 注意：对于同时搜索n个条件时，组合索引的性能好于多个单一索引合并。</span><br></code></pre></td></tr></table></figure>
+
+<p>那么何时需要使用联合索引呢？在讨论这个问题之前，先来看一下联合索引内部的结果。从本质上来说，联合索引就是一棵 B+Tree，不同的是联合索引的键值得数量不是1，而是&gt;&#x3D;2。接着来讨论两个整型列组成的联合索引，假定两个键值得名称分别为a、b如图</p>
+<p><img src="/img/mysql/03/1669366913-f9f07150c198246577938eba0364dd62.png" srcset="/img/loading.gif" lazyload></p>
+<p>可以看到这与我们之前看到的单个键的 B+Tree 并没有什么不同，键值都是排序的，通过叶子结点可以逻辑上顺序地读出所有数据，就上面的例子来说，即（1,1），（1,2），（2,1），（2,4），（3,1），（3,2），数据按（a,b）的顺序进行了存放。</p>
+<p>因此，对于查询 <code>SELECT * FROM TABLE WHERE a=xxx AND b=xxx</code>, 显然是可以使用(a,b) 这个联合索引的，对于单个列a的查询 <code>SELECT * FROM TABLE WHERE a=xxx</code>，也是可以使用（a,b）这个索引的。</p>
+<p>但对于b列的查询 <code>SELECT * FROM TABLE WHERE b=xxx</code>，则不可以使用（a,b） 索引，其实不难发现原因，叶子节点上b的值为1、2、1、4、1、2显然不是排序的，因此对于b列的查询使用不到(a,b) 索引。</p>
+<p><strong>联合索引的好处是在第一个键相同的情况下，已经对第二个键进行了排序处理</strong>，例如在很多情况下应用程序都需要查询某个用户的购物情况，并按照时间进行排序，最后取出最近三次的购买记录，这时使用联合索引可以帮我们避免多一次的排序操作，因为索引本身在叶子节点已经排序了，如下</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-comment">#===========准备表==============</span><br><span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">TABLE</span> buy_log(<br>    userid <span class="hljs-built_in">int</span> <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">null</span>,<br>    buy_date <span class="hljs-built_in">date</span><br>);<br> <br><span class="hljs-keyword">INSERT</span> <span class="hljs-keyword">INTO</span> buy_log <span class="hljs-keyword">VALUES</span><br>(<span class="hljs-number">1</span>,<span class="hljs-string">'2009-01-01'</span>),<br>(<span class="hljs-number">2</span>,<span class="hljs-string">'2009-01-01'</span>),<br>(<span class="hljs-number">3</span>,<span class="hljs-string">'2009-01-01'</span>),<br>(<span class="hljs-number">1</span>,<span class="hljs-string">'2009-02-01'</span>),<br>(<span class="hljs-number">3</span>,<span class="hljs-string">'2009-02-01'</span>),<br>(<span class="hljs-number">1</span>,<span class="hljs-string">'2009-03-01'</span>),<br>(<span class="hljs-number">1</span>,<span class="hljs-string">'2009-04-01'</span>);<br> <br><span class="hljs-keyword">ALTER</span> <span class="hljs-keyword">TABLE</span> buy_log <span class="hljs-keyword">ADD</span> <span class="hljs-keyword">KEY</span>(userid);<br><span class="hljs-keyword">ALTER</span> <span class="hljs-keyword">TABLE</span> buy_log <span class="hljs-keyword">ADD</span> <span class="hljs-keyword">KEY</span>(userid,buy_date);<br> <br><span class="hljs-comment">#===========验证==============</span><br>mysql&gt; SHOW CREATE TABLE buy_log;<br>| buy_log | <span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">TABLE</span> <span class="hljs-string">`buy_log`</span> (<br>  <span class="hljs-string">`userid`</span> <span class="hljs-built_in">int</span>(<span class="hljs-number">10</span>) <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">NOT</span> <span class="hljs-literal">NULL</span>,<br>  <span class="hljs-string">`buy_date`</span> <span class="hljs-built_in">date</span> <span class="hljs-keyword">DEFAULT</span> <span class="hljs-literal">NULL</span>,<br>  <span class="hljs-keyword">KEY</span> <span class="hljs-string">`userid`</span> (<span class="hljs-string">`userid`</span>),<br>  <span class="hljs-keyword">KEY</span> <span class="hljs-string">`userid_2`</span> (<span class="hljs-string">`userid`</span>,<span class="hljs-string">`buy_date`</span>)<br>) <span class="hljs-keyword">ENGINE</span>=<span class="hljs-keyword">InnoDB</span> <span class="hljs-keyword">DEFAULT</span> <span class="hljs-keyword">CHARSET</span>=utf8 |<br> <br><span class="hljs-comment"># 可以看到 possible_keys 在这里有两个索引可以用，分别是单个索引 userid 与联合索引 userid_2，但是优化器最终选择了使用的 key 是 userid 因为该索引的叶子节点包含单个键值，因为理论上一个页能存放的记录应该更多</span><br>mysql&gt; <span class="hljs-keyword">EXPLAIN</span> <span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> buy_log <span class="hljs-keyword">WHERE</span> userid=<span class="hljs-number">2</span>;<br>+<span class="hljs-comment">----+-------------+---------+------+-----------------+--------+---------+-------+------+-------+</span><br>| id | select_type | table   | type | possible_keys   | key    | key_len | ref   | rows | Extra |<br>+<span class="hljs-comment">----+-------------+---------+------+-----------------+--------+---------+-------+------+-------+</span><br>|  1 | SIMPLE      | buy_log | ref  | userid,userid_2 | userid | 4       | const |    1 |       |<br>+<span class="hljs-comment">----+-------------+---------+------+-----------------+--------+---------+-------+------+-------+</span><br>1 row in <span class="hljs-keyword">set</span> (<span class="hljs-number">0.00</span> sec)<br> <br><span class="hljs-comment"># 接着假定要取出 userid 为1的最近3次的购买记录，用的就是联合索引 userid_2 了，因为在这个索引中，在 userid=1 的情况下，buy_date 都已经排序好了</span><br>mysql&gt; <span class="hljs-keyword">EXPLAIN</span> <span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> buy_log <span class="hljs-keyword">WHERE</span> userid=<span class="hljs-number">1</span> <span class="hljs-keyword">ORDER</span> <span class="hljs-keyword">BY</span> buy_date <span class="hljs-keyword">DESC</span> <span class="hljs-keyword">LIMIT</span> <span class="hljs-number">3</span>;<br>+<span class="hljs-comment">--+-----------+-------+----+---------------+--------+-------+-----+----+------------------------+</span><br>|id|select_type|table  |type|possible_keys  | key    |key_len|ref  |rows| Extra                  |<br>+<span class="hljs-comment">--+-----------+-------+----+---------------+--------+-------+-----+----+------------------------+</span><br>| 1|SIMPLE     |buy_log|ref |userid,userid_2|userid_2| 4     |const|  4 |Using where; Using index|<br>+<span class="hljs-comment">--+-----------+-------+----+---------------+--------+-------+-----+----+------------------------+</span><br>1 row in <span class="hljs-keyword">set</span> (<span class="hljs-number">0.00</span> sec)<br> <br><span class="hljs-comment"># ps：如果 Extra 的排序显示是Using filesort，则意味着在查出数据后需要二次排序(如下查询语句，没有先用 where userid=3 先定位范围，于是即便命中索引也没用，需要二次排序)</span><br>mysql&gt; <span class="hljs-keyword">EXPLAIN</span> <span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> buy_log <span class="hljs-keyword">ORDER</span> <span class="hljs-keyword">BY</span> buy_date <span class="hljs-keyword">DESC</span> <span class="hljs-keyword">LIMIT</span> <span class="hljs-number">3</span>;<br>+<span class="hljs-comment">--+-----------+-------+-----+-------------+--------+-------+----+----+---------------------------+</span><br>|id|select_type| table |type |possible_keys|key     |key_len|ref |rows|Extra                      |<br>+<span class="hljs-comment">--+-----------+-------+-----+-------------+--------+-------+----+----+---------------------------+</span><br>| 1|SIMPLE     |buy_log|index| NULL        |userid_2| 8     |NULL|  7 |Using index; Using filesort|<br>+<span class="hljs-comment">--+-----------+-------+-----+-------------+--------+-------+----+----+---------------------------+</span><br> <br> <br><span class="hljs-comment"># 对于联合索引（a,b）,下述语句可以直接使用该索引，无需二次排序</span><br><span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> <span class="hljs-keyword">TABLE</span> <span class="hljs-keyword">WHERE</span> a=xxx <span class="hljs-keyword">ORDER</span> <span class="hljs-keyword">BY</span> b;<br> <br><span class="hljs-comment"># 假设表 tb1 有字段 (id int, a int, b int, c int, d varchar)，有联合索引(a,b,c)，主键索引id，唯一索引d，记录110条</span><br><span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> tb1 <span class="hljs-keyword">WHERE</span> a=xxx;                 <span class="hljs-comment">-- 可以使用索引</span><br><span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> tb1 <span class="hljs-keyword">WHERE</span> a=xxx <span class="hljs-keyword">ORDER</span> <span class="hljs-keyword">BY</span> b;     <span class="hljs-comment">-- 可以使用索引</span><br><span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> tb1 <span class="hljs-keyword">WHERE</span> a=xxx <span class="hljs-keyword">AND</span> b=xxx <span class="hljs-keyword">ORDER</span> <span class="hljs-keyword">BY</span> c;   <span class="hljs-comment">-- 可以使用索引</span><br><span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> tb1 <span class="hljs-keyword">WHERE</span> a=xxx <span class="hljs-keyword">AND</span> c=xxx <span class="hljs-keyword">AND</span> b=xxx;    <span class="hljs-comment">-- 可以使用索引</span><br><br><span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> tb1 <span class="hljs-keyword">WHERE</span> c=xxx <span class="hljs-keyword">AND</span> b=xxx;      <span class="hljs-comment">-- 不能使用索引，因为索引的第一个值是 a,在使用索引树进行查找的没事，没有办法利用 a 进行比较，所以不知道找哪一个子树，所以没有办法利用索引。</span><br><br><span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> tb1 <span class="hljs-keyword">WHERE</span> a=xxx <span class="hljs-keyword">AND</span> c=xxx;      <span class="hljs-comment">-- 可以使用索引，但是需要回表，5.6之前，只利用索引a，把找到的符合索引a的数据，全部进行回表读取，然后再判断并返回满足条件的数据，5.6之后，直接会找到满足条件的对应的主键记录，然后再回表，用到了一个叫做索引下推的东西：直接使用组合索引判断符合查询条件的数据，然后再回表取数据</span><br><span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> tb1 <span class="hljs-keyword">WHERE</span> a&gt;xxx <span class="hljs-keyword">AND</span> b=xxx;      <span class="hljs-comment">-- 同上，5.6 之前，只能利用索引a，范围索引会导致等值索引失效，5.6 之后，直接会找到满足条件的对应的主键记录，然后再回表，也是用了一个叫做索引下推的东西。</span><br><br><br><span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> tb1 <span class="hljs-keyword">WHERE</span> a=xxx <span class="hljs-keyword">ORDER</span> <span class="hljs-keyword">BY</span> c;     <span class="hljs-comment">-- 可以利用索引，但是不能通过索引直接得到结果，还需要自己执行一次 filesort 操作</span><br><br><span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> tb1 <span class="hljs-keyword">WHERE</span> a&gt;<span class="hljs-number">1</span>;                  <span class="hljs-comment">-- 不能使用索引，因为范围太大，需要回表次数太多，还不如直接把主键索引的数据加载到内存中再排序效率高。</span><br><span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> tb1 <span class="hljs-keyword">order</span> a,b,c;                <span class="hljs-comment">-- 不能使用索引，因为范围太大，需要回表次数太多，还不如直接把主键索引的数据加载到内存中再排序效率高。</span><br><span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> tb1 <span class="hljs-keyword">WHERE</span> a&gt;<span class="hljs-number">100</span>;                <span class="hljs-comment">-- 可以使用索引，因为符合条件的记录较少，回表次数较少，所以写 WHERE 条件的时候，尽量把条件写的更精确。</span><br><span class="hljs-keyword">SELECT</span> a <span class="hljs-keyword">FROM</span> tb1 <span class="hljs-keyword">WHERE</span> a&gt;<span class="hljs-number">1</span>;                  <span class="hljs-comment">-- 可以使用索引，因为索引中包含a字段，不需要回表，但是查询返回的数据的结果是 按照 a字段 排序的结果，不是按照 主键 排序的结果。</span><br><span class="hljs-keyword">SELECT</span> a,<span class="hljs-keyword">id</span> <span class="hljs-keyword">FROM</span> tb1 <span class="hljs-keyword">WHERE</span> a&gt;<span class="hljs-number">1</span>;               <span class="hljs-comment">-- 可以使用索引，因为索引中包含a字段，而且包含id字段，不需要回表，但是查询返回的数据的结果是 按照 a字段 排序的结果，不是按照 主键 排序的结果。</span><br><br><span class="hljs-comment"># 类型不一样</span><br><span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> tb1 <span class="hljs-keyword">WHERE</span> a=<span class="hljs-number">1</span>                   <span class="hljs-comment">-- 可以使用索引</span><br><span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> tb1 <span class="hljs-keyword">WHERE</span> a=<span class="hljs-string">'1'</span>                 <span class="hljs-comment">-- 可以使用索引，会先将 '1' 转化为 1</span><br><span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> tb1 <span class="hljs-keyword">WHERE</span> d=<span class="hljs-string">'1'</span>                 <span class="hljs-comment">-- 可以使用索引</span><br><span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> tb1 <span class="hljs-keyword">WHERE</span> d=<span class="hljs-number">1</span>                   <span class="hljs-comment">-- 不可以使用索引</span><br><br><span class="hljs-comment"># 注：mysql 在查找时会自动进行类型转化</span><br><span class="hljs-comment">#   如果字段类型为数字，WHERE 条件判断类型为字符，mysql 会自动将判断的条件转化成数字，如 a='1' 会转化成 a=1，a='t' 会转化成 a=0，所以会用索引。转化规则如下：    </span><br><span class="hljs-comment">#       1.  字符开头的一律为 0。</span><br><span class="hljs-comment">#       2.  数字开头的，直接截取到第一个不是字符的位置。</span><br><span class="hljs-comment">#   如果字段类型为字符，WHERE 条件判断类型为数字，mysql 会自动将字段转化为数字，然后再判断，如 d='1' 会转化成 d=1，因为要转化，所以不会用索引。</span><br></code></pre></td></tr></table></figure>
+
+
+<h1 id="7、索引的又一种分类"><a href="#7、索引的又一种分类" class="headerlink" title="7、索引的又一种分类"></a>7、索引的又一种分类</h1><ul>
+<li>索引合并：使用多个单列索引组合搜索。</li>
+<li>覆盖索引：SELECT 的数据列只用从索引中就能够取得，不必读取数据行，换句话说查询列要被所建的索引覆盖。</li>
+</ul>
+<p>上述两种索引类型不是创建的索引类型，是sql执行时的采用的类型。</p>
+<h2 id="1、覆盖索引（covering-index，或称索引覆盖）"><a href="#1、覆盖索引（covering-index，或称索引覆盖）" class="headerlink" title="1、覆盖索引（covering index，或称索引覆盖）"></a>1、覆盖索引（covering index，或称索引覆盖）</h2><p><strong>InnoDB 存储引擎支持覆盖索引，即从辅助索引中就可以得到查询记录，而不需要查询聚集索引中的记录。</strong></p>
+<p>使用覆盖索引的一个好处是：辅助索引不包含整行记录的所有信息，故其大小要远小于聚集索引，因此可以减少大量的IO操作。</p>
+<p>注意：覆盖索引技术最早是在 InnoDB Plugin 中完成并实现，这意味着对于 InnoDB 版本小于1.0的，或者 MySQL 5.0 以下的，InnoDB 存储引擎不支持覆盖索引特性。</p>
+<p>对于 InnoDB 的辅助索引而言，由于其包含了主键信息，因此其叶子节点存放的数据为（primary key1，priamey key2，…, key1，key2，…）。例如</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-comment"># id字段有索引，name字段没有索引，该sql命中了索引，但未覆盖，需要去聚集索引中再查找详细信息。</span><br><span class="hljs-keyword">SELECT</span> age <span class="hljs-keyword">FROM</span> s1 <span class="hljs-keyword">WHERE</span> <span class="hljs-keyword">id</span>=<span class="hljs-number">123</span> <span class="hljs-keyword">AND</span> <span class="hljs-keyword">name</span> = <span class="hljs-string">'egon'</span>; <br> <br> <br><span class="hljs-comment"># 最好的情况是，索引字段覆盖了所有，那全程通过索引来加速查询以及获取结果就ok了，在辅助索引中就找到了全部信息，Using index 代表覆盖索引</span><br><span class="hljs-keyword">EXPLAIN</span> <span class="hljs-keyword">SELECT</span> <span class="hljs-keyword">id</span> <span class="hljs-keyword">FROM</span> s1 <span class="hljs-keyword">WHERE</span> <span class="hljs-keyword">id</span>=<span class="hljs-number">1000</span>; <br>+<span class="hljs-comment">--+-----------+-----+----------+----+-------------+------+-------+-------+------+----------+-----+</span><br>|id|select_type|table|partitions|type|possible_keys| key  |key_len| ref |rows|filtered| Extra     |<br>+<span class="hljs-comment">--+-----------+-----+----------+----+--------------------+-------+-------+------+----------+-----+</span><br>| 1| SIMPLE    | s1  | NULL     | ref| idx_id      |idx_id|  4    |const| 1  | 100.00 |Using index|<br>+<span class="hljs-comment">--+-----------+-----+----------+----+-------------+------+-------+-----+----+--------+-----------+</span><br>1 row in <span class="hljs-keyword">set</span>, <span class="hljs-number">1</span> <span class="hljs-keyword">warning</span> (<span class="hljs-number">0.03</span> sec)<br></code></pre></td></tr></table></figure>
+
+<p><strong>覆盖索引的另外一个好处是对某些统计问题而言的。</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs sql">mysql&gt; EXPLAIN SELECT COUNT(*) FROM buy_log;<br>+<span class="hljs-comment">--+-----------+-------+-----+-------------+------+-------+----+----+-----------+</span><br>|id|select_type|table  | type|possible_keys|key   |key_len|ref |rows|Extra      |<br>+<span class="hljs-comment">--+-----------+-------+-----+-------------+------+-------+----+----+-----------+</span><br>| 1| SIMPLE    |buy_log|index| NULL        |userid| 4     |NULL|  7 |Using index|<br>+<span class="hljs-comment">--+-----------+-------+-----+-------------+------+-------+----+----+-----------+</span><br>1 row in <span class="hljs-keyword">set</span> (<span class="hljs-number">0.00</span> sec)<br></code></pre></td></tr></table></figure>
+
+<p>InnoDB 并不一定选择查询 聚集索引 来进行统计。由于 buy_log 表有辅助索引，而辅助索引远小于聚集索引，选择辅助索引可以减少IO操作，故优化器的选择如上 key 为 userid 辅助索引。</p>
+<p>对于（a,b）形式的联合索引，一般是不可以选择b中所谓的查询条件。但如果是统计操作，并且是覆盖索引，则优化器还是会选择使用该索引，如下</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-comment"># 联合索引userid_2（userid,buy_date）,一般情况，我们按照buy_date是无法使用该索引的，但特殊情况下：查询语句是统计操作，且是覆盖索引，则按照buy_date当做查询条件时，也可以使用该联合索引</span><br>mysql&gt; EXPLAIN SELECT COUNT(*) FROM buy_log WHERE buy_date &gt;= '2011-01-01' AND buy_date &lt; '2011-02-01';<br>+<span class="hljs-comment">--+-----------+-------+-----+-------------+--------+-------+----+----+------------------------+</span><br>|id|select_type| table |type |possible_keys| key    |key_len|ref |rows|Extra                   |<br>+<span class="hljs-comment">--+-----------+-------+-----+-------------+--------+-------+----+----+------------------------+</span><br>| 1| SIMPLE    |buy_log|index| NULL        |userid_2| 8     |NULL|  7 |Using where; Using index|<br>+<span class="hljs-comment">--+-----------+-------+-----+-------------+--------+-------+----+----+------------------------+</span><br>1 row in <span class="hljs-keyword">set</span> (<span class="hljs-number">0.00</span> sec)<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="2、索引合并"><a href="#2、索引合并" class="headerlink" title="2、索引合并"></a>2、索引合并</h2><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs sql">mysql&gt; EXPLAIN SELECT COUNT(email) FROM index_t WHERE id=1000000 OR email='eva100000@oldboy';<br>+<span class="hljs-comment">--+-----------+------+--------------+--------------------------------+---------------+--------+-----+----+-----------------------------------------+</span><br>| id | select_type| table | type        | possible_keys                  | key           | key_len| ref|rows | Extra                                                           |<br>+<span class="hljs-comment">--+-----------+------+--------------+--------------------------------+---------------+--------+-----+----+-----------------------------------------+</span><br>|  1 | SIMPLE     |index_t| index_merge | PRIMARY,email,ind_id,ind_email | PRIMARY,email | 4,51   |NULL|  2  |Using union(PRIMARY,email); Using where |<br>+<span class="hljs-comment">--+-----------+------+--------------+--------------------------------+---------------+--------+-----+----+-----------------------------------------+</span><br>1 row in <span class="hljs-keyword">set</span> (<span class="hljs-number">0.01</span> sec)<br></code></pre></td></tr></table></figure>
+
+
+<h1 id="8、AND-x2F-OR"><a href="#8、AND-x2F-OR" class="headerlink" title="8、AND&#x2F;OR"></a>8、AND&#x2F;OR</h1><h2 id="AND-x2F-OR-的逻辑"><a href="#AND-x2F-OR-的逻辑" class="headerlink" title="AND&#x2F;OR 的逻辑"></a>AND&#x2F;OR 的逻辑</h2><ul>
+<li>条件1 AND 条件2：所有条件都成立才算成立，但凡要有一个条件不成立则最终结果不成立。</li>
+<li>条件1 OR  条件2：只要有一个条件成立则最终结果就成立。</li>
+</ul>
+<h2 id="AND-的工作原理"><a href="#AND-的工作原理" class="headerlink" title="AND 的工作原理"></a>AND 的工作原理</h2><p>条件：<code>a = 10 AND b = &#39;xxx&#39; AND c &gt; 3 AND d =4</code></p>
+<p>索引：联合索引(d,a,b,c)</p>
+<p>工作原理：对于连续多个 AND，MySQL 会按照联合索引的顺序，即按照 <code>d—&gt;a-&gt;b-&gt;c</code> 的顺序查找。</p>
+<h2 id="OR-的工作原理"><a href="#OR-的工作原理" class="headerlink" title="OR 的工作原理"></a>OR 的工作原理</h2><p>条件：<code>a = 10 OR b = &#39;xxx&#39; OR c &gt; 3 OR d =4</code></p>
+<p>索引：联合索引(d,a,b,c)</p>
+<p>工作原理：对于连续多个OR，MySQL 会按照条件的顺序，从左到右依次判断，即 <code>a-&gt;b-&gt;c-&gt;d</code></p>
+<h2 id="AND-与-OR-优先级"><a href="#AND-与-OR-优先级" class="headerlink" title="AND 与 OR 优先级"></a>AND 与 OR 优先级</h2><p>在where中可以包含任意数目的 AND 和 OR 操作符，在没有任何其他符号的时候，例如括号，SQL 会首先执行 AND 条件，然后才执行 OR 语句，如：</p>
+<p><code>SELECT * FROM TABLE FROM id=1 OR id=2 AND price&gt;=10;</code> 这条语句默认执行的是 <code>id=2</code> 并且 <code>price&gt;=10</code> 的，或者是 <code>id=1</code>。</p>
+<p>如果加上括号：</p>
+<p><code>SELECT * FROM TABLE FROM (id=1 OR id=2) AND price&gt;=10;</code> 则这条语句执行的是 <code>id=1</code> 或 <code>id=2</code> 并且 <code>price&gt;=10</code>。</p>
+<h2 id="AND-和-OR-利用索引"><a href="#AND-和-OR-利用索引" class="headerlink" title="AND 和 OR 利用索引"></a>AND 和 OR 利用索引</h2><ul>
+<li>WHERE 语句里面如果带有 OR 条件, MyISAM 表能用到索引，InnoDB 不行。</li>
+<li>必须所有的 OR 条件都必须是独立索引。</li>
+</ul>
+<h1 id="9、正确使用索引"><a href="#9、正确使用索引" class="headerlink" title="9、正确使用索引"></a>9、正确使用索引</h1><p>由于 InnoDB 是索引组织表，所以在查找时肯定会走索引，所以主键索引不在讨论范围，本次讨论的主要是辅助索引。</p>
+<p>另外，对于覆盖索引，查找到消息之后，不需要回表，所以如果有对应的索引，也一定会用到，所以也不在讨论范围。</p>
+<p>表中共 80000 条数据。我们在添加索引时，必须遵循以下问题：</p>
+<h2 id="1、范围问题，或者说条件不明确，条件中出现这些符号或关键字：-gt-、-gt-、-lt-、-lt-、-、BETWEEN-AND-、LIKE"><a href="#1、范围问题，或者说条件不明确，条件中出现这些符号或关键字：-gt-、-gt-、-lt-、-lt-、-、BETWEEN-AND-、LIKE" class="headerlink" title="1、范围问题，或者说条件不明确，条件中出现这些符号或关键字：&gt;、&gt;=、&lt;、&lt;=、!= 、BETWEEN...AND...、LIKE"></a>1、范围问题，或者说条件不明确，条件中出现这些符号或关键字：<code>&gt;、&gt;=、&lt;、&lt;=、!= 、BETWEEN...AND...、LIKE</code></h2><p><strong>当范围很大的时候，不利用索引，当范围很小的时候，会利用索引</strong></p>
+<p><strong>大于号、小于号</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-comment">-- 范围很大时，全表扫描，全表扫描比利用索引还快</span><br>MariaDB [lp]&gt; EXPLAIN SELECT * FROM t WHERE f&gt;10000;<br>+<span class="hljs-comment">------+-------------+-------+------+---------------+------+---------+------+-------+-------------+</span><br>| id   | select_type | table | type | possible_keys | key  | key_len | ref  | rows  | Extra       |<br>+<span class="hljs-comment">------+-------------+-------+------+---------------+------+---------+------+-------+-------------+</span><br>|    1 | SIMPLE      | t     | ALL  | weiyi_f       | NULL | NULL    | NULL | 80503 | Using where |<br>+<span class="hljs-comment">------+-------------+-------+------+---------------+------+---------+------+-------+-------------+</span><br>1 row in <span class="hljs-keyword">set</span> (<span class="hljs-number">0.00</span> sec)<br><br><span class="hljs-comment">-- 范围不大时，会利用索引，然后回表获取数据</span><br>MariaDB [lp]&gt; <span class="hljs-keyword">EXPLAIN</span> <span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> t <span class="hljs-keyword">WHERE</span> f&gt;<span class="hljs-number">70000</span>;<br>+<span class="hljs-comment">------+-------------+-------+-------+---------------+---------+---------+------+------+-----------------------+</span><br>| id   | select_type | table | type  | possible_keys | key     | key_len | ref  | rows | Extra                 |<br>+<span class="hljs-comment">------+-------------+-------+-------+---------------+---------+---------+------+------+-----------------------+</span><br>|    1 | SIMPLE      | t     | range | weiyi_f       | weiyi_f | 5       | NULL | 9998 | Using index condition |<br>+<span class="hljs-comment">------+-------------+-------+-------+---------------+---------+---------+------+------+-----------------------+</span><br>1 row in <span class="hljs-keyword">set</span> (<span class="hljs-number">0.01</span> sec)<br></code></pre></td></tr></table></figure>
+
+<p><strong>不等于</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-comment">-- 不等于，范围很大，全表扫描比利用索引还快</span><br>MariaDB [lp]&gt; EXPLAIN SELECT * FROM t WHERE f!=70000;<br>+<span class="hljs-comment">------+-------------+-------+------+---------------+------+---------+------+-------+-------------+</span><br>| id   | select_type | table | type | possible_keys | key  | key_len | ref  | rows  | Extra       |<br>+<span class="hljs-comment">------+-------------+-------+------+---------------+------+---------+------+-------+-------------+</span><br>|    1 | SIMPLE      | t     | ALL  | weiyi_f       | NULL | NULL    | NULL | 80503 | Using where |<br>+<span class="hljs-comment">------+-------------+-------+------+---------------+------+---------+------+-------+-------------+</span><br></code></pre></td></tr></table></figure>
+
+<p><strong>BETWEEN…AND…</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-comment">-- 范围不大时，会利用索引，然后回表获取数据</span><br>MariaDB [lp]&gt; EXPLAIN SELECT * FROM t WHERE f BETWEEN 10 AND 100;<br>+<span class="hljs-comment">------+-------------+-------+-------+---------------+---------+---------+------+------+-----------------------+</span><br>| id   | select_type | table | type  | possible_keys | key     | key_len | ref  | rows | Extra                 |<br>+<span class="hljs-comment">------+-------------+-------+-------+---------------+---------+---------+------+------+-----------------------+</span><br>|    1 | SIMPLE      | t     | range | weiyi_f       | weiyi_f | 5       | NULL |   91 | Using index condition |<br>+<span class="hljs-comment">------+-------------+-------+-------+---------------+---------+---------+------+------+-----------------------+</span><br>1 row in <span class="hljs-keyword">set</span> (<span class="hljs-number">0.00</span> sec)<br><br><span class="hljs-comment">-- 范围很大时，全表扫描，全表扫描比利用索引还快</span><br>MariaDB [lp]&gt; <span class="hljs-keyword">EXPLAIN</span> <span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> t <span class="hljs-keyword">WHERE</span> f <span class="hljs-keyword">BETWEEN</span> <span class="hljs-number">10</span> <span class="hljs-keyword">AND</span> <span class="hljs-number">40000</span>;<br>+<span class="hljs-comment">------+-------------+-------+------+---------------+------+---------+------+-------+-------------+</span><br>| id   | select_type | table | type | possible_keys | key  | key_len | ref  | rows  | Extra       |<br>+<span class="hljs-comment">------+-------------+-------+------+---------------+------+---------+------+-------+-------------+</span><br>|    1 | SIMPLE      | t     | ALL  | weiyi_f       | NULL | NULL    | NULL | 80503 | Using where |<br>+<span class="hljs-comment">------+-------------+-------+------+---------------+------+---------+------+-------+-------------+</span><br>1 row in <span class="hljs-keyword">set</span> (<span class="hljs-number">0.00</span> sec)<br></code></pre></td></tr></table></figure>
+
+<p><strong>like</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-comment">-- % 在后面可以利用索引。</span><br>MariaDB [lp]&gt; EXPLAIN SELECT * FROM t WHERE d like 'd%';<br>+<span class="hljs-comment">------+-------------+-------+-------+---------------+---------+---------+------+------+-----------------------+</span><br>| id   | select_type | table | type  | possible_keys | key     | key_len | ref  | rows | Extra                 |<br>+<span class="hljs-comment">------+-------------+-------+-------+---------------+---------+---------+------+------+-----------------------+</span><br>|    1 | SIMPLE      | t     | range | weiyi_d       | weiyi_d | 768     | NULL | 4950 | Using index condition |<br>+<span class="hljs-comment">------+-------------+-------+-------+---------------+---------+---------+------+------+-----------------------+</span><br>1 row in <span class="hljs-keyword">set</span> (<span class="hljs-number">0.00</span> sec)<br><br><span class="hljs-comment">-- % 在前面不可以利用索引。</span><br>MariaDB [lp]&gt; <span class="hljs-keyword">EXPLAIN</span> <span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> t <span class="hljs-keyword">WHERE</span> d <span class="hljs-keyword">like</span> <span class="hljs-string">'%d'</span>;<br>+<span class="hljs-comment">------+-------------+-------+------+---------------+------+---------+------+-------+-------------+</span><br>| id   | select_type | table | type | possible_keys | key  | key_len | ref  | rows  | Extra       |<br>+<span class="hljs-comment">------+-------------+-------+------+---------------+------+---------+------+-------+-------------+</span><br>|    1 | SIMPLE      | t     | ALL  | NULL          | NULL | NULL    | NULL | 79752 | Using where |<br>+<span class="hljs-comment">------+-------------+-------+------+---------------+------+---------+------+-------+-------------+</span><br>1 row in <span class="hljs-keyword">set</span> (<span class="hljs-number">0.00</span> sec)<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="2-索引列不能在条件中参与计算，保持列“干净”"><a href="#2-索引列不能在条件中参与计算，保持列“干净”" class="headerlink" title="2 索引列不能在条件中参与计算，保持列“干净”"></a>2 索引列不能在条件中参与计算，保持列“干净”</h2><p>比如 <code>reverse(d)=&#39;55cf62&#39;</code> 就不能使用到索引，原因很简单， B+Tree 中存的都是数据表中的字段值，但进行检索时，需要把所有元素都应用函数才能比较，显然成本太大。所以语句应该写成 <code>d=&#39;26fc55&#39;</code></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs sql">MariaDB [lp]&gt; EXPLAIN SELECT * FROM t WHERE reverse(d)='55cf62';<br>+<span class="hljs-comment">------+-------------+-------+------+---------------+------+---------+------+-------+-------------+</span><br>| id   | select_type | table | type | possible_keys | key  | key_len | ref  | rows  | Extra       |<br>+<span class="hljs-comment">------+-------------+-------+------+---------------+------+---------+------+-------+-------------+</span><br>|    1 | SIMPLE      | t     | ALL  | NULL          | NULL | NULL    | NULL | 79752 | Using where |<br>+<span class="hljs-comment">------+-------------+-------+------+---------------+------+---------+------+-------+-------------+</span><br>1 row in <span class="hljs-keyword">set</span> (<span class="hljs-number">0.00</span> sec)<br><br>MariaDB [lp]&gt; <span class="hljs-keyword">EXPLAIN</span> <span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> t <span class="hljs-keyword">WHERE</span> d=<span class="hljs-string">'26fc55'</span>;<br>+<span class="hljs-comment">------+-------------+-------+------+---------------+---------+---------+-------+------+-----------------------+</span><br>| id   | select_type | table | type | possible_keys | key     | key_len | ref   | rows | Extra                 |<br>+<span class="hljs-comment">------+-------------+-------+------+---------------+---------+---------+-------+------+-----------------------+</span><br>|    1 | SIMPLE      | t     | ref  | weiyi_d       | weiyi_d | 768     | const |    1 | Using index condition |<br>+<span class="hljs-comment">------+-------------+-------+------+---------------+---------+---------+-------+------+-----------------------+</span><br>1 row in <span class="hljs-keyword">set</span> (<span class="hljs-number">0.00</span> sec)<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="3、类型不一致"><a href="#3、类型不一致" class="headerlink" title="3、类型不一致"></a>3、类型不一致</h2><ul>
+<li><p>列是字符串类型，传入条件是必须用引号引起来，否则不能利用索引。</p>
+</li>
+<li><p>列是 int 类型的可以利用索引，MySQL 会自动把字符串转化为数字。</p>
+</li>
+</ul>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-comment">-- d 的类型为字符串，利用不到索引。</span><br>MariaDB [lp]&gt; EXPLAIN SELECT * FROM t WHERE d=22;<br>+<span class="hljs-comment">------+-------------+-------+------+---------------+------+---------+------+-------+-------------+</span><br>| id   | select_type | table | type | possible_keys | key  | key_len | ref  | rows  | Extra       |<br>+<span class="hljs-comment">------+-------------+-------+------+---------------+------+---------+------+-------+-------------+</span><br>|    1 | SIMPLE      | t     | ALL  | weiyi_d       | NULL | NULL    | NULL | 79752 | Using where |<br>+<span class="hljs-comment">------+-------------+-------+------+---------------+------+---------+------+-------+-------------+</span><br>1 row in <span class="hljs-keyword">set</span> (<span class="hljs-number">0.00</span> sec)<br><br><span class="hljs-comment">-- a 的类型为 int</span><br>MariaDB [lp]&gt; <span class="hljs-keyword">EXPLAIN</span> <span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> t <span class="hljs-keyword">WHERE</span> a=<span class="hljs-number">22</span>;<br>+<span class="hljs-comment">------+-------------+-------+------+---------------+----------+---------+-------+------+-------+</span><br>| id   | select_type | table | type | possible_keys | key      | key_len | ref   | rows | Extra |<br>+<span class="hljs-comment">------+-------------+-------+------+---------------+----------+---------+-------+------+-------+</span><br>|    1 | SIMPLE      | t     | ref  | zuhe_abc      | zuhe_abc | 5       | const |    1 |       |<br>+<span class="hljs-comment">------+-------------+-------+------+---------------+----------+---------+-------+------+-------+</span><br>1 row in <span class="hljs-keyword">set</span> (<span class="hljs-number">0.00</span> sec)<br><br>MariaDB [lp]&gt; <span class="hljs-keyword">EXPLAIN</span> <span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> t <span class="hljs-keyword">WHERE</span> a=<span class="hljs-string">'22'</span>;<br>+<span class="hljs-comment">------+-------------+-------+------+---------------+----------+---------+-------+------+-------+</span><br>| id   | select_type | table | type | possible_keys | key      | key_len | ref   | rows | Extra |<br>+<span class="hljs-comment">------+-------------+-------+------+---------------+----------+---------+-------+------+-------+</span><br>|    1 | SIMPLE      | t     | ref  | zuhe_abc      | zuhe_abc | 5       | const |    1 |       |<br>+<span class="hljs-comment">------+-------------+-------+------+---------------+----------+---------+-------+------+-------+</span><br></code></pre></td></tr></table></figure>
+
+
+<h2 id="4、排序条件为索引，则-SELECT-字段必须也是索引字段，否则无法命中"><a href="#4、排序条件为索引，则-SELECT-字段必须也是索引字段，否则无法命中" class="headerlink" title="4、排序条件为索引，则 SELECT 字段必须也是索引字段，否则无法命中"></a>4、排序条件为索引，则 SELECT 字段必须也是索引字段，否则无法命中</h2><p>当根据索引排序时候，SELECT 查询的字段如果不只是索引，则速度仍然很慢，因为需要回表，不如直接在内存中排序。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs sql">MariaDB [lp]&gt; EXPLAIN SELECT * FROM t ORDER BY a;<br>+<span class="hljs-comment">------+-------------+-------+------+---------------+------+---------+------+-------+----------------+</span><br>| id   | select_type | table | type | possible_keys | key  | key_len | ref  | rows  | Extra          |<br>+<span class="hljs-comment">------+-------------+-------+------+---------------+------+---------+------+-------+----------------+</span><br>|    1 | SIMPLE      | t     | ALL  | NULL          | NULL | NULL    | NULL | 79752 | Using filesort |<br>+<span class="hljs-comment">------+-------------+-------+------+---------------+------+---------+------+-------+----------------+</span><br>1 row in <span class="hljs-keyword">set</span> (<span class="hljs-number">0.00</span> sec)<br><br>MariaDB [lp]&gt; <span class="hljs-keyword">EXPLAIN</span> <span class="hljs-keyword">SELECT</span> a <span class="hljs-keyword">FROM</span> t <span class="hljs-keyword">ORDER</span> <span class="hljs-keyword">BY</span> a;<br>+<span class="hljs-comment">------+-------------+-------+-------+---------------+----------+---------+------+-------+-------------+</span><br>| id   | select_type | table | type  | possible_keys | key      | key_len | ref  | rows  | Extra       |<br>+<span class="hljs-comment">------+-------------+-------+-------+---------------+----------+---------+------+-------+-------------+</span><br>|    1 | SIMPLE      | t     | index | NULL          | zuhe_abc | 15      | NULL | 79752 | Using index |<br>+<span class="hljs-comment">------+-------------+-------+-------+---------------+----------+---------+------+-------+-------------+</span><br>1 row in <span class="hljs-keyword">set</span> (<span class="hljs-number">0.00</span> sec)<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="5、最左前缀匹配原则，非常重要的原则"><a href="#5、最左前缀匹配原则，非常重要的原则" class="headerlink" title="5、最左前缀匹配原则，非常重要的原则"></a>5、最左前缀匹配原则，非常重要的原则</h2><p>对于组合索引 MySQL 会一直向右匹配直到遇到范围查询(<code>&gt;、&lt;、BETWEEN、LIKE</code>)就停止匹配(指的是范围大了，有索引速度也慢)</p>
+<p>比如 <code>a=1 AND b=2 AND c&gt;3 AND d=4</code> 如果建立(a,b,c,d)顺序的索引，d是用不到索引的，如果建立(a,b,d,c)的索引则都可以用到，a,b,d的顺序可以任意调整。</p>
+<p><img src="/img/mysql/03/1669366913-d8f3fa527ad042476db441caf67a58c7.png" srcset="/img/loading.gif" lazyload></p>
+<h1 id="10、其他注意事项"><a href="#10、其他注意事项" class="headerlink" title="10、其他注意事项"></a>10、其他注意事项</h1><ul>
+<li><p>避免使用<code>select *</code></p>
+</li>
+<li><p>使用 <code>COUNT(*)</code></p>
+</li>
+<li><p>创建表时尽量使用 char 代替 varchar</p>
+</li>
+<li><p>表的字段顺序固定长度的字段优先</p>
+</li>
+<li><p>组合索引代替多个单列索引（由于mysql中每次只能使用一个索引，所以经常使用多个条件查询时更适合使用组合索引）</p>
+</li>
+<li><p>尽量使用短索引</p>
+</li>
+<li><p>使用连接（JOIN）来代替子查询(Sub-Queries)</p>
+</li>
+<li><p>连表时注意条件类型需一致</p>
+</li>
+<li><p>优先为搜索条件的字段创建索引，比如 <code>SELECT * FROM s1 WHERE id = 333;</code> 就需要为id加上索引。</p>
+</li>
+<li><p>在表中已经有大量数据的情况下，建索引会很慢，且占用硬盘空间，建完后查询速度加快，比如 <code>CREATE INDEX idx ON s1(id);</code> 会扫描表中所有的数据，然后以id为数据项，创建索引结构，存放于硬盘的表中。建完以后，再查询就会很快了。</p>
+</li>
+<li><p>InnoDB 表的索引会存放于 s1.ibd 文件中，而 MySAM 表的索引则会有单独的索引文件 table1.MYI。</p>
+</li>
+<li><p>MySAM 索引文件和数据文件是分离的，索引文件仅保存数据记录的地址。而在 InnoDB 中，表数据文件本身就是按照 B+Tree 组织的一个索引结构，这棵树的叶节点data域保存了完整的数据记录。这个索引的key是数据表的主键，因此 InnoDB 表数据文件本身就是主索引。</p>
+</li>
+<li><p>尽量选择区分度高的列作为索引。区分度的公式是<code>COUNT(distinct col)/COUNT(*)</code>，表示字段不重复的比例，比例越大我们扫描的记录数越少，唯一键的区分度是1，而一些状态、性别字段可能在大数据面前区分度就是0，那可能有人会问，这个比例有什么经验值吗？使用场景不同，这个值也很难确定，一般需要join的字段我们都要求是0.1以上，即平均1条扫描10条记录<br>回忆 B+Tree 的结构，查询的速度与树的高度成反比，要想将树的高低控制的很低，需要保证：在某一层内数据项均是按照从左到右，从小到大的顺序依次排开，即 <code>左1&lt;左2&lt;左3&lt;...</code><br>而对于区分度低的字段，无法找到大小关系，因为值都是相等的，毫无疑问，还想要用 B+Tree 存放这些等值的数据，只能增加树的高度，字段的区分度越低，则树的高度越高。极端的情况，索引字段的值都一样，那么 B+Tree 几乎成了一根棍</p>
+</li>
+</ul>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ul>
+<li><a href="https://blog.csdn.net/weixin_38754349/article/details/123650107" target="_blank" rel="noopener">https://blog.csdn.net/weixin_38754349/article/details/123650107</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/MySQL/" class="category-chain-item">MySQL</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/MySQL/" class="print-no-link">#MySQL</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>MySQL 索引</div>
+      <div>https://flepeng.github.io/042-MySQL-41-底层原理-MySQL-索引/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2020年8月8日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/042-MySQL-41-%E5%BA%95%E5%B1%82%E5%8E%9F%E7%90%86-MySQL-%E6%97%A5%E5%BF%97%E4%B9%8B-redo-log/" title="MySQL 日志之 redo log">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">MySQL 日志之 redo log</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/042-MySQL-41-%E5%BA%95%E5%B1%82%E5%8E%9F%E7%90%86-MySQL-%E7%B4%A2%E5%BC%95%E4%B8%8B%E6%8E%A8/" title="MySQL 索引下推">
+                        <span class="hidden-mobile">MySQL 索引下推</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

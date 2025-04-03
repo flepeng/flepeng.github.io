@@ -1,0 +1,810 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="https:&#x2F;&#x2F;blog.csdn.net&#x2F;fenglepeng&#x2F;article&#x2F;details&#x2F;100539847https:&#x2F;&#x2F;blog.csdn.net&#x2F;fenglepeng&#x2F;article&#x2F;details&#x2F;100541603  scrapy 框架中各组件的工作流程？ 生成初始的 Requests 来爬取第一个 URLS，并且标识一个回调函数。第一个请求定义在 start_requests">
+<meta property="og:type" content="article">
+<meta property="og:title" content="02-Python 爬虫">
+<meta property="og:url" content="https://flepeng.github.io/interview-20-%E5%BC%80%E5%8F%91%E8%AF%AD%E8%A8%80%E7%B1%BB-21-Python-02-Python-%E7%88%AC%E8%99%AB/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="https:&#x2F;&#x2F;blog.csdn.net&#x2F;fenglepeng&#x2F;article&#x2F;details&#x2F;100539847https:&#x2F;&#x2F;blog.csdn.net&#x2F;fenglepeng&#x2F;article&#x2F;details&#x2F;100541603  scrapy 框架中各组件的工作流程？ 生成初始的 Requests 来爬取第一个 URLS，并且标识一个回调函数。第一个请求定义在 start_requests">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-08-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.485Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="面试">
+<meta property="article:tag" content="Python">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>02-Python 爬虫 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="02-Python 爬虫"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2020-08-08 00:00" pubdate>
+          2020年8月8日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.6k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          14 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">02-Python 爬虫</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <blockquote>
+<p><a href="https://blog.csdn.net/fenglepeng/article/details/100539847" target="_blank" rel="noopener">https://blog.csdn.net/fenglepeng/article/details/100539847</a><br><a href="https://blog.csdn.net/fenglepeng/article/details/100541603" target="_blank" rel="noopener">https://blog.csdn.net/fenglepeng/article/details/100541603</a></p>
+</blockquote>
+<h3 id="scrapy-框架中各组件的工作流程？"><a href="#scrapy-框架中各组件的工作流程？" class="headerlink" title="scrapy 框架中各组件的工作流程？"></a>scrapy 框架中各组件的工作流程？</h3><ol>
+<li><p>生成初始的 Requests 来爬取第一个 URLS，并且标识一个回调函数。第一个请求定义在 <code>start_requests()</code> 方法内默认从 <code>start_urls</code> 列表中获得 url 地址来生成 <code>Request</code> 请求，默认的回调函数是 <code>parse</code> 方法。回调函数在下载完成返回response时自动触发</p>
+</li>
+<li><p>在回调函数中，解析 response 并且返回值，返回值可以4种：</p>
+<ol>
+<li>包含解析数据的字典</li>
+<li>Item对象</li>
+<li>新的Request对象（新的Requests也需要指定一个回调函数）</li>
+<li>或者是可迭代对象（包含Items或Request）</li>
+</ol>
+</li>
+<li><p>在回调函数中解析页面内容，通常使用 Scrapy 自带的 Selectors，但很明显你也可以使用 Beutifulsoup，lxml 或其他你爱用的。</p>
+</li>
+<li><p>最后，针对返回的 Items 对象将会被持久化到数据库，通过 Item Pipeline 组件存到数据库，或者导出到不同的文件（通过 Feed exports）</p>
+</li>
+</ol>
+<h3 id="在-scrapy-框架中如何设置代理（两种方法）？"><a href="#在-scrapy-框架中如何设置代理（两种方法）？" class="headerlink" title="在 scrapy 框架中如何设置代理（两种方法）？"></a>在 scrapy 框架中如何设置代理（两种方法）？</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 方式一：内置添加代理功能</span><br><span class="hljs-comment"># -*- coding: utf-8 -*-</span><br><span class="hljs-keyword">import</span> os<br><span class="hljs-keyword">import</span> scrapy<br><span class="hljs-keyword">from</span> scrapy.http <span class="hljs-keyword">import</span> Request<br> <br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">ChoutiSpider</span><span class="hljs-params">(scrapy.Spider)</span>:</span><br>    name = <span class="hljs-string">'chouti'</span><br>    allowed_domains = [<span class="hljs-string">'chouti.com'</span>]<br>    start_urls = [<span class="hljs-string">'https://dig.chouti.com/'</span>]<br> <br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">start_requests</span><span class="hljs-params">(self)</span>:</span><br>        os.environ[<span class="hljs-string">'HTTP_PROXY'</span>] = <span class="hljs-string">"http://192.168.11.11"</span><br> <br>        <span class="hljs-keyword">for</span> url <span class="hljs-keyword">in</span> self.start_urls:<br>            <span class="hljs-keyword">yield</span> Request(url=url,callback=self.parse)<br> <br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">parse</span><span class="hljs-params">(self, response)</span>:</span><br>        print(response)<br> <br><span class="hljs-comment"># 方式二：自定义下载中间件</span><br><span class="hljs-keyword">import</span> random<br><span class="hljs-keyword">import</span> base64<br><span class="hljs-keyword">import</span> six<br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">to_bytes</span><span class="hljs-params">(text, encoding=None, errors=<span class="hljs-string">'strict'</span>)</span>:</span><br>    <span class="hljs-string">"""Return the binary representation of `text`. If `text`</span><br><span class="hljs-string">    is already a bytes object, return it as-is."""</span><br>    <span class="hljs-keyword">if</span> isinstance(text, bytes):<br>        <span class="hljs-keyword">return</span> text<br>    <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> isinstance(text, six.string_types):<br>        <span class="hljs-keyword">raise</span> TypeError(<span class="hljs-string">'to_bytes must receive a unicode, str or bytes '</span><br>                        <span class="hljs-string">'object, got %s'</span> % type(text).__name__)<br>    <span class="hljs-keyword">if</span> encoding <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:<br>        encoding = <span class="hljs-string">'utf-8'</span><br>    <span class="hljs-keyword">return</span> text.encode(encoding, errors)<br><br><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyProxyDownloaderMiddleware</span><span class="hljs-params">(object)</span>:</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">process_request</span><span class="hljs-params">(self, request, spider)</span>:</span><br>        proxy_list = [<br>            &#123;<span class="hljs-string">'ip_port'</span>: <span class="hljs-string">'111.11.228.75:80'</span>, <span class="hljs-string">'user_pass'</span>: <span class="hljs-string">'xxx:123'</span>&#125;,<br>            &#123;<span class="hljs-string">'ip_port'</span>: <span class="hljs-string">'120.198.243.22:80'</span>, <span class="hljs-string">'user_pass'</span>: <span class="hljs-string">''</span>&#125;,<br>            &#123;<span class="hljs-string">'ip_port'</span>: <span class="hljs-string">'111.8.60.9:8123'</span>, <span class="hljs-string">'user_pass'</span>: <span class="hljs-string">''</span>&#125;,<br>            &#123;<span class="hljs-string">'ip_port'</span>: <span class="hljs-string">'101.71.27.120:80'</span>, <span class="hljs-string">'user_pass'</span>: <span class="hljs-string">''</span>&#125;,<br>            &#123;<span class="hljs-string">'ip_port'</span>: <span class="hljs-string">'122.96.59.104:80'</span>, <span class="hljs-string">'user_pass'</span>: <span class="hljs-string">''</span>&#125;,<br>            &#123;<span class="hljs-string">'ip_port'</span>: <span class="hljs-string">'122.224.249.122:8088'</span>, <span class="hljs-string">'user_pass'</span>: <span class="hljs-string">''</span>&#125;,<br>        ]<br>        proxy = random.choice(proxy_list)<br>        <span class="hljs-keyword">if</span> proxy[<span class="hljs-string">'user_pass'</span>] <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>            request.meta[<span class="hljs-string">'proxy'</span>] = to_bytes(<span class="hljs-string">"http://%s"</span> % proxy[<span class="hljs-string">'ip_port'</span>])<br>            encoded_user_pass = base64.encodestring(to_bytes(proxy[<span class="hljs-string">'user_pass'</span>]))<br>            request.headers[<span class="hljs-string">'Proxy-Authorization'</span>] = to_bytes(<span class="hljs-string">'Basic '</span> + encoded_user_pass)<br>        <span class="hljs-keyword">else</span>:<br>            request.meta[<span class="hljs-string">'proxy'</span>] = to_bytes(<span class="hljs-string">"http://%s"</span> % proxy[<span class="hljs-string">'ip_port'</span>])<br><br><br><span class="hljs-comment">#配置：</span><br>    DOWNLOADER_MIDDLEWARES = &#123;<br>       <span class="hljs-comment"># 'xiaohan.middlewares.MyProxyDownloaderMiddleware': 543,</span><br>    &#125;<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="scrapy-框架中如何实现大文件的下载？"><a href="#scrapy-框架中如何实现大文件的下载？" class="headerlink" title="scrapy 框架中如何实现大文件的下载？"></a>scrapy 框架中如何实现大文件的下载？</h3><figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs ruby">from twisted.web.client import Agent, getPage, ResponseDone, PotentialDataLoss<br>from twisted.internet import defer, reactor, protocol<br>from twisted.web._newclient import Response<br>from io import BytesIO<br> <br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">_ResponseReader</span>(<span class="hljs-title">protocol</span>.<span class="hljs-title">Protocol</span>):</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span><span class="hljs-params">(<span class="hljs-keyword">self</span>, finished, txresponse, file_name)</span></span><span class="hljs-symbol">:</span><br>        <span class="hljs-keyword">self</span>._finished = finished<br>        <span class="hljs-keyword">self</span>._txresponse = txresponse<br>        <span class="hljs-keyword">self</span>._bytes_received = <span class="hljs-number">0</span><br>        <span class="hljs-keyword">self</span>.f = open(file_name, mode=<span class="hljs-string">'wb'</span>)<br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">dataReceived</span><span class="hljs-params">(<span class="hljs-keyword">self</span>, bodyBytes)</span></span><span class="hljs-symbol">:</span><br>        <span class="hljs-keyword">self</span>._bytes_received += len(bodyBytes)<br>        <span class="hljs-comment"># 一点一点的下载</span><br>        <span class="hljs-keyword">self</span>.f.write(bodyBytes)<br>        <span class="hljs-keyword">self</span>.f.flush()<br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">connectionLost</span><span class="hljs-params">(<span class="hljs-keyword">self</span>, reason)</span></span><span class="hljs-symbol">:</span><br>        <span class="hljs-keyword">if</span> <span class="hljs-keyword">self</span>._finished.<span class="hljs-symbol">called:</span><br>            <span class="hljs-keyword">return</span><br>        <span class="hljs-keyword">if</span> reason.check(ResponseDone)<span class="hljs-symbol">:</span><br>            <span class="hljs-comment"># 下载完成</span><br>            <span class="hljs-keyword">self</span>._finished.callback((<span class="hljs-keyword">self</span>._txresponse, <span class="hljs-string">'success'</span>))<br>        elif reason.check(PotentialDataLoss)<span class="hljs-symbol">:</span><br>            <span class="hljs-comment"># 下载部分</span><br>            <span class="hljs-keyword">self</span>._finished.callback((<span class="hljs-keyword">self</span>._txresponse, <span class="hljs-string">'partial'</span>))<br>        <span class="hljs-symbol">else:</span><br>            <span class="hljs-comment"># 下载异常</span><br>            <span class="hljs-keyword">self</span>._finished.errback(reason)<br>        <span class="hljs-keyword">self</span>.f.close()<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="scrapy-中如何实现限速？"><a href="#scrapy-中如何实现限速？" class="headerlink" title="scrapy 中如何实现限速？"></a>scrapy 中如何实现限速？</h3><p><a href="http://scrapy-chs.readthedocs.io/zh_CN/1.0/topics/autothrottle.html" target="_blank" rel="noopener">http://scrapy-chs.readthedocs.io/zh_CN/1.0/topics/autothrottle.html</a></p>
+<h3 id="scrapy-中如何实现暂停爬虫？"><a href="#scrapy-中如何实现暂停爬虫？" class="headerlink" title="scrapy 中如何实现暂停爬虫？"></a>scrapy 中如何实现暂停爬虫？</h3><p><a href="https://scrapy-chs.readthedocs.io/zh_CN/1.0/topics/jobs.html?highlight=item" target="_blank" rel="noopener">https://scrapy-chs.readthedocs.io/zh_CN/1.0/topics/jobs.html?highlight=item</a></p>
+<p>有些情况下，例如爬取大的站点，我们希望能暂停爬取，之后再恢复运行。Scrapy通过如下工具支持这个功能:</p>
+<ul>
+<li>一个把调度请求保存在磁盘的调度器</li>
+<li>一个把访问请求保存在磁盘的副本过滤器[duplicates filter]</li>
+<li>一个能持续保持爬虫状态(键&#x2F;值对)的扩展</li>
+</ul>
+<p>Job 路径</p>
+<p>要启用持久化支持，你只需要通过 JOBDIR 设置 job directory 选项。<br>这个路径将会存储所有的请求数据来保持一个单独任务的状态(例如：一次spider爬取(a spider run))。<br>必须要注意的是，这个目录不允许被不同的spider 共享，甚至是同一个 spider 的不同 jobs&#x2F;runs 也不行。<br>也就是说，这个目录就是存储一个单独 job 的状态信息。</p>
+<h3 id="scrapy-中如何进行自定制命令"><a href="#scrapy-中如何进行自定制命令" class="headerlink" title="scrapy 中如何进行自定制命令"></a>scrapy 中如何进行自定制命令</h3><figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs ruby"><span class="hljs-comment"># 在spiders同级创建任意目录，如：commands</span><br><span class="hljs-comment"># 在其中创建'crawlall.py'文件（此处文件名就是自定义的命令）</span><br>from scrapy.commands import ScrapyCommand<br>    from scrapy.utils.project import get_project_settings<br>    <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Command</span>(<span class="hljs-title">ScrapyCommand</span>):</span><br>        requires_project = True<br>        <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">syntax</span><span class="hljs-params">(<span class="hljs-keyword">self</span>)</span></span><span class="hljs-symbol">:</span><br>            <span class="hljs-keyword">return</span> <span class="hljs-string">'[options]'</span><br>        <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">short_desc</span><span class="hljs-params">(<span class="hljs-keyword">self</span>)</span></span><span class="hljs-symbol">:</span><br>            <span class="hljs-keyword">return</span> <span class="hljs-string">'Runs all of the spiders'</span><br>        <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">run</span><span class="hljs-params">(<span class="hljs-keyword">self</span>, args, opts)</span></span><span class="hljs-symbol">:</span><br>            spider_list = <span class="hljs-keyword">self</span>.crawler_process.spiders.list()<br>            <span class="hljs-keyword">for</span> name <span class="hljs-keyword">in</span> <span class="hljs-symbol">spider_list:</span><br>                <span class="hljs-keyword">self</span>.crawler_process.crawl(name, **opts.__dict_<span class="hljs-number">_</span>)<br>            <span class="hljs-keyword">self</span>.crawler_process.start()<br><span class="hljs-comment"># 在'settings.py'中添加配置'COMMANDS_MODULE = '项目名称.目录名称''</span><br><span class="hljs-comment"># 在项目目录执行命令：'scrapy crawlall'</span><br></code></pre></td></tr></table></figure>
+
+
+<h3 id="scrapy-中如何实现的记录爬虫的深度？"><a href="#scrapy-中如何实现的记录爬虫的深度？" class="headerlink" title="scrapy 中如何实现的记录爬虫的深度？"></a>scrapy 中如何实现的记录爬虫的深度？</h3><p>DepthMiddleware 是一个用于追踪每个Request在被爬取的网站的深度的中间件。其可以用来限制爬取深度的最大深度或类似的事情。<br>DepthMiddleware 可以通过下列设置进行配置(更多内容请参考设置文档):</p>
+<ul>
+<li>‘DEPTH_LIMIT’:爬取所允许的最大深度，如果为0，则没有限制。</li>
+<li>‘DEPTH_STATS’:是否收集爬取状态。</li>
+<li>‘DEPTH_PRIORITY’:是否根据其深度对requet安排优先</li>
+</ul>
+<h3 id="scrapy-中的-pipelines-工作原理？"><a href="#scrapy-中的-pipelines-工作原理？" class="headerlink" title="scrapy 中的 pipelines 工作原理？"></a>scrapy 中的 pipelines 工作原理？</h3><p>Scrapy 提供了 pipeline 模块来执行保存数据的操作。<br>在创建的 Scrapy 项目中自动创建了一个 pipeline.py 文件，同时创建了一个默认的 Pipeline 类。<br>我们可以根据需要自定义 Pipeline 类，然后在 settings.py 文件中进行配置即可</p>
+<h3 id="scrapy-的-pipelines-如何丢弃一个-item-对象？"><a href="#scrapy-的-pipelines-如何丢弃一个-item-对象？" class="headerlink" title="scrapy 的 pipelines 如何丢弃一个 item 对象？"></a>scrapy 的 pipelines 如何丢弃一个 item 对象？</h3><p>通过 <code>raise DropItem()</code> 方法</p>
+<h3 id="简述-scrapy-中爬虫中间件和下载中间件的作用？"><a href="#简述-scrapy-中爬虫中间件和下载中间件的作用？" class="headerlink" title="简述 scrapy 中爬虫中间件和下载中间件的作用？"></a>简述 scrapy 中爬虫中间件和下载中间件的作用？</h3><blockquote>
+<p><a href="https://blog.csdn.net/fenglepeng/article/details/100541603" target="_blank" rel="noopener">https://blog.csdn.net/fenglepeng/article/details/100541603</a></p>
+</blockquote>
+<h3 id="scrapy-redis-组件的作用？"><a href="#scrapy-redis-组件的作用？" class="headerlink" title="scrapy-redis 组件的作用？"></a>scrapy-redis 组件的作用？</h3><p>实现了分布式爬虫，url去重、调度器、数据持久化</p>
+<ul>
+<li>‘scheduler’调度器</li>
+<li>‘dupefilter’URL去重规则（被调度器使用）</li>
+<li>‘pipeline’数据持久化</li>
+</ul>
+<h3 id="scrapy-redis-组件中如何实现的任务的去重？"><a href="#scrapy-redis-组件中如何实现的任务的去重？" class="headerlink" title="scrapy-redis 组件中如何实现的任务的去重？"></a>scrapy-redis 组件中如何实现的任务的去重？</h3><ol>
+<li><p>内部进行配置，连接 Redis  </p>
+</li>
+<li><p>去重规则通过 Redis 的集合完成，集合的 Key 为：<code>key = defaults.DUPEFILTER_KEY % {&#39;timestamp&#39;: int(time.time())}</code><br>默认配置：<code>DUPEFILTER_KEY = &#39;dupefilter:%(timestamp)s&#39;</code></p>
+</li>
+<li><p>去重规则中将url转换成唯一标示，然后在 Redis 中检查是否已经在集合中存在</p>
+<figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs reasonml">from scrapy.utils import request<br>from scrapy.http import Request<br>req = <span class="hljs-constructor">Request(<span class="hljs-params">url</span>='<span class="hljs-params">http</span>:<span class="hljs-operator">/</span><span class="hljs-operator">/</span><span class="hljs-params">www</span>.<span class="hljs-params">cnblogs</span>.<span class="hljs-params">com</span><span class="hljs-operator">/</span><span class="hljs-params">wupeiqi</span>.<span class="hljs-params">html</span>')</span><br>result = request.request<span class="hljs-constructor">_fingerprint(<span class="hljs-params">req</span>)</span><br>print(result)  # <span class="hljs-number">8</span>ea4fd67887449313ccc12e5b6b92510cc53675c<br></code></pre></td></tr></table></figure></li>
+</ol>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># scrapy和scrapy-redis的去重规则（源码）</span><br><span class="hljs-comment"># 1. scrapy中去重规则是如何实现？</span><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">RFPDupeFilter</span><span class="hljs-params">(BaseDupeFilter)</span>:</span><br>    <span class="hljs-string">"""Request Fingerprint duplicates filter"""</span><br> <br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span><span class="hljs-params">(self, path=None, debug=False)</span>:</span><br>        self.fingerprints = set()<br><br><span class="hljs-meta">    @classmethod</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">from_settings</span><span class="hljs-params">(cls, settings)</span>:</span><br>        debug = settings.getbool(<span class="hljs-string">'DUPEFILTER_DEBUG'</span>)<br>        <span class="hljs-keyword">return</span> cls(job_dir(settings), debug)<br> <br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">request_seen</span><span class="hljs-params">(self, request)</span>:</span><br>        <span class="hljs-comment"># 将request对象转换成唯一标识。</span><br>        fp = self.request_fingerprint(request)<br>        <span class="hljs-comment"># 判断在集合中是否存在，如果存在则返回True，表示已经访问过。</span><br>        <span class="hljs-keyword">if</span> fp <span class="hljs-keyword">in</span> self.fingerprints:<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">True</span><br>        <span class="hljs-comment"># 之前未访问过，将url添加到访问记录中。</span><br>        self.fingerprints.add(fp)<br> <br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">request_fingerprint</span><span class="hljs-params">(self, request)</span>:</span><br>        <span class="hljs-keyword">return</span> request_fingerprint(request)<br> <br><br><span class="hljs-comment"># 2. scrapy-redis中去重规则是如何实现？</span><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">RFPDupeFilter</span><span class="hljs-params">(BaseDupeFilter)</span>:</span><br>    <span class="hljs-string">"""Redis-based request duplicates filter.</span><br><span class="hljs-string"> </span><br><span class="hljs-string">    This class can also be used with default Scrapy's scheduler.</span><br><span class="hljs-string"> </span><br><span class="hljs-string">    """</span><br> <br>    logger = logger<br> <br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span><span class="hljs-params">(self, server, key, debug=False)</span>:</span><br>        <br>        <span class="hljs-comment"># self.server = redis连接</span><br>        self.server = server<br>        <span class="hljs-comment"># self.key = dupefilter:123912873234</span><br>        self.key = key<br>        <br> <br><span class="hljs-meta">    @classmethod</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">from_settings</span><span class="hljs-params">(cls, settings)</span>:</span><br>        <br>        <span class="hljs-comment"># 读取配置，连接redis</span><br>        server = get_redis_from_settings(settings)<br> <br>        <span class="hljs-comment">#  key = dupefilter:123912873234</span><br>        key = defaults.DUPEFILTER_KEY % &#123;<span class="hljs-string">'timestamp'</span>: int(time.time())&#125;<br>        debug = settings.getbool(<span class="hljs-string">'DUPEFILTER_DEBUG'</span>)<br>        <span class="hljs-keyword">return</span> cls(server, key=key, debug=debug)<br> <br><span class="hljs-meta">    @classmethod</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">from_crawler</span><span class="hljs-params">(cls, crawler)</span>:</span><br>        <br>        <span class="hljs-keyword">return</span> cls.from_settings(crawler.settings)<br> <br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">request_seen</span><span class="hljs-params">(self, request)</span>:</span><br>        <br>        fp = self.request_fingerprint(request)<br>        <span class="hljs-comment"># This returns the number of values added, zero if already exists.</span><br>        <span class="hljs-comment"># self.server=redis连接</span><br>        <span class="hljs-comment"># 添加到redis集合中：1，添加工程；0，已经存在</span><br>        added = self.server.sadd(self.key, fp)<br>        <span class="hljs-keyword">return</span> added == <span class="hljs-number">0</span><br> <br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">request_fingerprint</span><span class="hljs-params">(self, request)</span>:</span><br>        <br>        <span class="hljs-keyword">return</span> request_fingerprint(request)<br> <br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">close</span><span class="hljs-params">(self, reason=<span class="hljs-string">''</span>)</span>:</span><br>        <br>        self.clear()<br> <br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">clear</span><span class="hljs-params">(self)</span>:</span><br>        <span class="hljs-string">"""Clears fingerprints data."""</span><br>        self.server.delete(self.key)<br></code></pre></td></tr></table></figure>
+
+<p>scrapy-redis 的调度器如何实现任务的深度优先和广度优先？</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E9%9D%A2%E8%AF%95/" class="print-no-link">#面试</a>
+      
+        <a href="/tags/Python/" class="print-no-link">#Python</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>02-Python 爬虫</div>
+      <div>https://flepeng.github.io/interview-20-开发语言类-21-Python-02-Python-爬虫/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2020年8月8日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

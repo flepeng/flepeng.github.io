@@ -1,0 +1,906 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="官网保平安：https:&#x2F;&#x2F;redis.io&#x2F;  为什么需要分布式锁在分布式应用进行逻辑处理时经常会遇到并发问题。比如一个操作要修改用户的状态，修改状态需要先读出用户的状态，在内存里进行修改，改完了再存回去。如果在执行这个操作同时，另一个进程也操作了这个状态，就会出现并发问题，因为读取和保存状态这两个操作不是原子的。 这个时候就要使用到分布式锁来限制程序的并发执行（zookeeper 和 Red">
+<meta property="og:type" content="article">
+<meta property="og:title" content="01-Redis 分布式锁（重要）">
+<meta property="og:url" content="https://flepeng.github.io/interview-41-%E6%95%B0%E6%8D%AE%E5%BA%93-41-Redis-01-Redis-%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%EF%BC%88%E9%87%8D%E8%A6%81%EF%BC%89/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="官网保平安：https:&#x2F;&#x2F;redis.io&#x2F;  为什么需要分布式锁在分布式应用进行逻辑处理时经常会遇到并发问题。比如一个操作要修改用户的状态，修改状态需要先读出用户的状态，在内存里进行修改，改完了再存回去。如果在执行这个操作同时，另一个进程也操作了这个状态，就会出现并发问题，因为读取和保存状态这两个操作不是原子的。 这个时候就要使用到分布式锁来限制程序的并发执行（zookeeper 和 Red">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-08-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.488Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="面试">
+<meta property="article:tag" content="Redis">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>01-Redis 分布式锁（重要） - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="01-Redis 分布式锁（重要）"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2020-08-08 00:00" pubdate>
+          2020年8月8日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          5.2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          43 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">01-Redis 分布式锁（重要）</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <blockquote>
+<p>官网保平安：<a href="https://redis.io/" target="_blank" rel="noopener">https://redis.io/</a></p>
+</blockquote>
+<h2 id="为什么需要分布式锁"><a href="#为什么需要分布式锁" class="headerlink" title="为什么需要分布式锁"></a>为什么需要分布式锁</h2><p>在分布式应用进行逻辑处理时经常会遇到并发问题。比如一个操作要修改用户的状态，修改状态需要先读出用户的状态，在内存里进行修改，改完了再存回去。如果在执行这个操作同时，另一个进程也操作了这个状态，就会出现并发问题，因为读取和保存状态这两个操作不是原子的。</p>
+<p>这个时候就要使用到分布式锁来限制程序的并发执行（zookeeper 和 Redis 都可以实现分布式锁）。<strong>一般来说，生产环境可用的分布式锁需要满足以下几点：</strong></p>
+<ul>
+<li>互斥性：互斥是锁的基本特征，同一时刻只能有一个线程持有锁，执行临界操作。</li>
+<li>超时释放：超时释放是锁的另一个必备特性，可以对比 MySQL InnoDB 引擎中的 <code>innodb_lock_wait_timeout</code> 配置，通过超时释放，防止不必要的线程等待和资源浪费。</li>
+<li>可重入性：在分布式环境下，同一个节点上的同一个线程如果获取了锁之后，再次请求还是可以成功（<strong>Redis 再次获取会失败</strong>）。</li>
+</ul>
+<p>所谓 Redis 的并发竞争 Key 的问题也就是多个系统同时对一个 key 进行操作，但是最后执行的顺序和我们期望的顺序不同，这样也就导致了结果的不同！最后转化为分布式锁问题。（如果不存在 Redis 的并发竞争 Key 问题，不要使用分布式锁，这样会影响性能）</p>
+<h2 id="Redis-分布式锁"><a href="#Redis-分布式锁" class="headerlink" title="Redis 分布式锁"></a>Redis 分布式锁</h2><h3 id="Redis-实现分布式锁-★★★"><a href="#Redis-实现分布式锁-★★★" class="headerlink" title="Redis 实现分布式锁 ★★★"></a>Redis 实现分布式锁 ★★★</h3><p><strong>Redis 分布式锁本质就是在 Redis 里面占一个坑，当别的进程也要来占坑时，发现已经被占领了，就只能等待再尝试。</strong></p>
+<p><strong>Redis 使用 <code>SETNX(Set If Not Exists)</code> 实现分布式锁。</strong></p>
+<ul>
+<li>语法：<code>SETNX key value</code>，</li>
+<li>作用：只在键 key 不存在的情况下，将键 key 的值设置为 value，若键 key 存在，则 <code>SETNX</code> 不做任何动作，并且<strong>返回 0</strong>。</li>
+</ul>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">redis&gt; SETNX job <span class="hljs-literal">true</span>     # 获得锁成功，返回<span class="hljs-number">1</span><br>(<span class="hljs-built_in">int</span>eger) <span class="hljs-number">1</span><br>redis&gt; SETNX lock <span class="hljs-literal">true</span>    # 获得锁成功，返回<span class="hljs-number">1</span><br>(<span class="hljs-built_in">int</span>eger) <span class="hljs-number">1</span><br>redis&gt; SETNX job <span class="hljs-string">"code"</span>   # 尝试覆盖 job ，失败返回<span class="hljs-number">0</span><br>(<span class="hljs-built_in">int</span>eger) <span class="hljs-number">0</span><br>redis&gt; EXPIRE lock <span class="hljs-number">5</span>      # 设置<span class="hljs-number">5</span>秒的过期时间<br>(<span class="hljs-built_in">int</span>eger) <span class="hljs-number">1</span><br># 做你自己的事情<br>redis&gt; DEL lock           # 释放锁<br>(<span class="hljs-built_in">int</span>eger) <span class="hljs-number">1</span><br></code></pre></td></tr></table></figure>
+
+
+<h3 id="SETNX-问题一：一直持有-★★★"><a href="#SETNX-问题一：一直持有-★★★" class="headerlink" title="SETNX 问题一：一直持有 ★★★"></a>SETNX 问题一：一直持有 ★★★</h3><p><code>SETNX</code> 有一个致命问题，就是某个线程在获取锁之后由于某些异常（如宕机）而不能正常的执行解锁操作，那么这个锁就永远释放不掉了。</p>
+<p>解决办法：为这个锁加上一个超时时间 <code>SET key value EX seconds</code>。</p>
+<p>注：Redis 2.8 之后才能使用。</p>
+<h3 id="SETNX-问题二：如果在-SETNX-之后执行-EXPIRE-之前进程意外-crash-或者要重启维护了，怎么样？-★★★"><a href="#SETNX-问题二：如果在-SETNX-之后执行-EXPIRE-之前进程意外-crash-或者要重启维护了，怎么样？-★★★" class="headerlink" title="SETNX 问题二：如果在 SETNX 之后执行 EXPIRE 之前进程意外 crash 或者要重启维护了，怎么样？ ★★★"></a>SETNX 问题二：如果在 SETNX 之后执行 EXPIRE 之前进程意外 crash 或者要重启维护了，怎么样？ ★★★</h3><p>有两种方案：</p>
+<ul>
+<li><p>方案一：<code>SET</code> 指令有非常复杂的参数，可以把 <code>SET NX</code> 和 <code>EXPIRE</code> 合成一条指令：<code>SET key val NX EX max-lock-time</code></p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs angelscript"># 给lock设置了过期时间为<span class="hljs-number">60000</span>毫秒(也可以用ex <span class="hljs-number">6000</span>,单位就变成了秒)，当用 NX 再次赋值，则返回 nil,不能重入操作<br><span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span>&gt; <span class="hljs-keyword">set</span> lock <span class="hljs-literal">true</span> NX px <span class="hljs-number">60000</span><br>OK<br><span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span>&gt; <span class="hljs-keyword">set</span> lock <span class="hljs-literal">true</span> NX px <span class="hljs-number">6000</span><br>(nil)<br><span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span>&gt; <span class="hljs-keyword">get</span> lock<br><span class="hljs-string">"true"</span><br><span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span>&gt; ttl lock<br>(<span class="hljs-built_in">int</span>eger) <span class="hljs-number">43</span><br># 时间过期后再次 <span class="hljs-keyword">get</span>，返回 nil，表明 key 为 lock 的锁已经释放<br><span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span>&gt; <span class="hljs-keyword">get</span> lock<br>(nil)<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>方案二：将过期的时间写入到 lock 中 <code>SETNX lock &lt;current Unix time + lock timeout&gt;</code>。获得锁的判断条件跟之前一样， 如果返回了 1 的话，表示获得了锁，可以进行下一步的操作。</p>
+<ul>
+<li><p>判断过期条件</p>
+<p>正常情况下，操作完成之后，仍旧执行 DEL 操作将当前锁释放。那么如果当前程序发生了错误退出了，当前锁没有正常释放，其他的进程如何获得锁呢。</p>
+<p>假设上一个进程加锁之后异常退出，没有释放锁。当前的进程想要加锁，在调用 SETNX 的时候发现加锁失败，然后需要调用 GET 命令获得当前锁的值，即上一个进程写入的过期时间。 </p>
+<p>如果获得的过期时间未到，那么当前进程继续等待；</p>
+<p>如果锁的过期时间已经到了，很大的概率上一个获得锁的进程已经发生了错误，因为我们这个过期时间一般会设置的比正常的运行时间要长。在这种情况下，当前进程可以重新写入这个锁并进行后续的操作。</p>
+</li>
+<li><p>解决竞争条件</p>
+<p>但是这样又带来一个新的问题：假设有 P1 和 P2 两个进程同时想获得锁，他们都检测到了当前的锁已经过期了，他们可以写入，他们调用 SET 命令写入都会成功，那么如果决定到底是哪个进程获得了锁呢。</p>
+<p>所以在这边重新写入的时候不能简单的调用 SET 命令，还有另一个命令可以考虑： GETSET。GETSET 命令在设置值的同时，会将设置之前的值返回。</p>
+<p>仍旧考虑刚才的情形，P1 和 P2 同时在竞争锁，发现锁的时间 T 已经过期了，然后他们同时调用 GETSET 命令设置新的锁。假设 P1 先设置成功时间 T1，那么调用 GETSET 得到的值就是 T；P2 调用 GETSET 虽然将锁的时间设置成了 T2，但是他得到的值是 T1。</p>
+<p>通过判断 GETSET 返回的值，就能判断自己是否获得了锁。如果返回的值仍然是一个 <strong>过期的时间</strong>，那么说明正确的加锁了；否则的话，说明正好有别的进程已经设置了锁，当前进程只是更新了一下锁而已，就继续等待。</p>
+<p>可能会说这边有一个小问题，P1 设置的锁的过期时间被 P2 更改了。考虑到产生这种竞态条件的时候肯定时间间隔是非常小的，即使重新设置了过期时间，这种很短的时间修改在大多数情况下都可以忽略不计。</p>
+<figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs reasonml"><span class="hljs-keyword">while</span> <span class="hljs-number">1</span>:<br>    lock = redis.<span class="hljs-constructor">SETNX(<span class="hljs-params">key</span>, <span class="hljs-params">time</span>.<span class="hljs-params">now</span>()</span> + timeout)<br>    <span class="hljs-keyword">if</span> lock<span class="hljs-operator"> == </span><span class="hljs-number">1</span>:<br>        <span class="hljs-comment">// 获得锁</span><br>        break<br>    lock_ts = redis.<span class="hljs-constructor">GET(<span class="hljs-params">key</span>)</span><br>    <span class="hljs-keyword">if</span> (lock_ts &lt; time.now<span class="hljs-literal">()</span>)<span class="hljs-operator"> &amp;&amp; </span>(redis.<span class="hljs-constructor">GETSET(<span class="hljs-params">key</span>, <span class="hljs-params">time</span>.<span class="hljs-params">now</span>()</span> + timeout) &lt; time.now<span class="hljs-literal">()</span>):<br>        <span class="hljs-comment">// 锁已经过期，用GETSET重新写锁</span><br>        <span class="hljs-comment">// 返回的原来的时间仍旧过期，说明加锁成功</span><br>        break<br>    <span class="hljs-keyword">else</span>:<br>        sleep<br>        <br>.... <span class="hljs-keyword">do</span> something ...<br><br><span class="hljs-comment">// 完成之后释放锁</span><br>redis.<span class="hljs-constructor">DEL(<span class="hljs-params">key</span>)</span><br></code></pre></td></tr></table></figure></li>
+</ul>
+</li>
+</ul>
+<h3 id="SETNX-问题三：程序运行时间超过过期时间，key-已被释放，此时再释放是释放的其它线程已经获取到的锁。"><a href="#SETNX-问题三：程序运行时间超过过期时间，key-已被释放，此时再释放是释放的其它线程已经获取到的锁。" class="headerlink" title="SETNX 问题三：程序运行时间超过过期时间，key 已被释放，此时再释放是释放的其它线程已经获取到的锁。"></a>SETNX 问题三：程序运行时间超过过期时间，key 已被释放，此时再释放是释放的其它线程已经获取到的锁。</h3><p>方案看上去很完美，但实际上还是会有问题：某 线程A 获取了锁并且设置了过期时间为 10s，然后在执行业务逻辑的时候耗费了 15s，此时 线程A 获取的锁早已被 Redis 的过期机制自动释放了，而且锁可能已经被其它线程获取到了。当 线程A 执行完业务逻辑准备解锁（<code>DEL key</code>）的时候，有可能删除掉的是其它线程已经获取到的锁。</p>
+<p>解决方案：<strong>最好在解锁时判断锁是否是自己的。</strong></p>
+<ol>
+<li>在设置 key 的时候将 value 设置为一个唯一值 <code>uniqueValue</code>（可以是随机值、UUID、或者机器号+线程号的组合、签名等）。</li>
+<li>解锁时，也就是删除 key 时，先判断一下 key 对应的 value 是否等于先前设置的值，如果相等才能删除 key。</li>
+</ol>
+<p>这里我们一眼就可以看出问题来：<code>GET</code> 和 <code>DEL</code> 是两个分开的操作，在 <code>GET</code> 执行之后且在 <code>DEL</code> 执行之前的间隙是可能会发生异常的。</p>
+<p>如果我们只要保证解锁的代码是原子性的就能解决问题了。</p>
+<p>这里我们引入了一种新的方式，就是 <strong>Lua脚本</strong>，示例如下：</p>
+<figure class="highlight sas"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs sas"><span class="hljs-meta">if</span> redis.<span class="hljs-meta">call</span>(<span class="hljs-string">"get"</span>,KEYS[1]) == ARGV[1] <span class="hljs-meta">then</span>    # ARGV[1]表示设置<span class="hljs-meta">key</span>时指定的唯一值。<br>    <span class="hljs-meta">return</span> redis.<span class="hljs-meta">call</span>(<span class="hljs-string">"del"</span>,KEYS[1])<br><span class="hljs-meta">else</span><br>    <span class="hljs-meta">return</span> 0<br><span class="hljs-meta">end</span><br></code></pre></td></tr></table></figure>
+
+<p>由于 Lua 脚本的原子性，在 Redis 执行该脚本的过程中，其他客户端的命令都需要等待该 Lua 脚本执行完才能执行。</p>
+<blockquote>
+<p>在 Redis 中执行 Lua 的原子性是指：整个 Lua 脚本在执行期间，会被当作一个整体，不会被其他客户端的命令打断。</p>
+</blockquote>
+<h3 id="SETNX-问题三：程序运行时间超过过期时间，key-已被释放，其他程序获得锁。"><a href="#SETNX-问题三：程序运行时间超过过期时间，key-已被释放，其他程序获得锁。" class="headerlink" title="SETNX 问题三：程序运行时间超过过期时间，key 已被释放，其他程序获得锁。"></a>SETNX 问题三：程序运行时间超过过期时间，key 已被释放，其他程序获得锁。</h3><p>为了防止多个线程同时执行业务代码，需要确保过期时间大于业务执行时间。</p>
+<p>增加一个 boolean 类型的属性 <code>isOpenExpirationRenewal</code>，用来标识是否开启定时刷新过期时间。</p>
+<p>在增加一个 <code>scheduleExpirationRenewal</code> 方法用于开启刷新过期时间的线程。</p>
+<p>加锁代码在获取锁成功后将 <code>isOpenExpirationRenewal</code> 置为 true，并且调用 <code>scheduleExpirationRenewal</code> 方法，开启刷新过期时间的线程。</p>
+<p>解锁代码增加一行代码，将 <code>isOpenExpirationRenewal</code> 属性置为 false，停止刷新过期时间的线程轮询。</p>
+<h4 id="Redisson-实现"><a href="#Redisson-实现" class="headerlink" title="Redisson 实现"></a>Redisson 实现</h4><p>Redission 是 JAVA 的一个库。</p>
+<p>获取锁成功就会开启一个定时任务，定时任务会定期检查去续期。</p>
+<p>该定时调度每次调用的时间差是 <code>internalLockLeaseTime/3</code>，也就 10 秒。</p>
+<p>默认情况下，加锁的时间是 30 秒。如果加锁的业务没有执行完，那么到 <code>30-10 = 20</code> 秒的时候，就会进行一次续期，把锁重置成 30 秒。</p>
+<h3 id="RedLock-算法"><a href="#RedLock-算法" class="headerlink" title="RedLock 算法"></a>RedLock 算法</h3><p>在集群中，主节点挂掉时，从节点会取而代之，客户端上却并没有明显感知。</p>
+<p>假设第一个客户端在主节点中申请成功了一把锁，但是这把锁还没有来得及同步到从节点，主节点突然挂掉了。然后从节点变成了主节点，这个新的节点内部没有这个锁，所以当另一个客户端过来请求加锁时，立即就批准了。这样就会导致系统中同样一把锁被两个客户端同时持有，不安全性由此产生。</p>
+<p><strong>Redlock 算法就是为了解决这个问题</strong></p>
+<p>使用 Redlock，需要提供多个 <code>Redis</code> 实例，这些实例之前相互独立没有主从关系。同很多分布式算法一样，Redlock 也使用大多数机制。</p>
+<p>加锁时，它会向过半节点发送 <code>setnx</code> 指令，只要过半节点 <code>setnx</code> 成功，那就认为加锁成功。释放锁时，需要向所有节点发送 <code>del</code> 指令。不过 Redlock 算法还需要考虑出错重试、时钟漂移等很多细节问题，同时因为 Redlock 需要向多个节点进行读写，意味着相比单实例 Redis 性能会下降一些。</p>
+<p>Redlock 算法是在单 Redis 节点基础上引入的高可用模式，Redlock 基于 N 个完全独立的 Redis 节点，一般是大于 3 的奇数个（通常情况下 N 可以设置为 5），可以基本保证集群内各个节点不会同时宕机。</p>
+<p>假设当前集群有 5 个节点，运行 Redlock 算法的客户端依次执行下面各个步骤，来完成获取锁的操作：</p>
+<ul>
+<li>客户端记录当前系统时间，以毫秒为单位；</li>
+<li>依次尝试从 5 个 Redis 实例中，使用相同的 key 获取锁，当向 Redis 请求获取锁时，客户端应该设置一个网络连接和响应超时时间，超时时间应该小于锁的失效时间，避免因为网络故障出现的问题；</li>
+<li>客户端使用当前时间减去开始获取锁时间就得到了获取锁使用的时间，当且仅当从半数以上的 Redis 节点获取到锁，并且当使用的时间小于锁失效时间时，锁才算获取成功；</li>
+<li>如果获取到了锁，key 的真正有效时间等于有效时间减去获取锁所使用的时间，减少超时的几率；</li>
+<li>如果获取锁失败，客户端应该在所有的 Redis 实例上进行解锁，即使是上一步操作请求失败的节点，防止因为服务端响应消息丢失，但是实际数据添加成功导致的不一致。</li>
+</ul>
+<p>也就是说，假设锁 30 秒过期，三个节点加锁花了 31 秒，自然是加锁失败了。</p>
+<p>在 Redis 官方推荐的 Java 客户端 <code>Redisson</code> 中，内置了对 <code>RedLock</code> 的实现</p>
+<p><a href="https://redis.io/topics/distlock" target="_blank" rel="noopener">https://redis.io/topics/distlock</a></p>
+<p><a href="https://github.com/redisson/redisson/wiki" target="_blank" rel="noopener">https://github.com/redisson/redisson/wiki</a></p>
+<p><strong>RedLock问题：</strong></p>
+<ol>
+<li><p>失败时重试（脑裂问题）。</p>
+<p>当客户端无法取到锁时，应该在一个随机延迟后重试，防止多个客户端在同时抢夺同一资源的锁（这样会导致脑裂，没有人会取到锁）。同样，客户端取得大部分 Redis 实例锁所花费的时间越短，脑裂出现的概率就会越低（必要的重试），所以，理想情况一下，客户端应该同时（并发地）向所有 Redis 发送 <code>SET</code> 命令。</p>
+<p>需要强调，当客户端从大多数 Redis 实例获取锁失败时，应该尽快地释放（部分）已经成功取到的锁，这样其他的客户端就不必非得等到锁过完”有效时间”才能取到（然而，如果已经存在网络分裂，客户端已经无法和 Redis 实例通信，此时就只能等待 key 的自动释放了，等于被惩罚了）。</p>
+</li>
+<li><p>为什么释放锁，要操作所有节点，对所有节点都释放锁？</p>
+<p>因为当对某一个 Redis 节点加锁时，可能因为网络原因导致加锁“失败”。注意这个“失败”，指的是 Redis 节点实际已经加锁成功了，但是返回的结果因为网络延迟并没有传到加锁的线程，被加锁线程丢弃了，加锁线程误以为没有成功，于是加锁线程去尝试下一个节点了。</p>
+<p>所以释放锁的时候，不管以前有没有加锁成功，都要释放所有节点的锁，以保证清除节点上述图中发生的情况导致残留的锁。</p>
+</li>
+<li><p>RedLock 是一个<strong>严重依赖系统时钟</strong>的分布式系统。</p>
+</li>
+</ol>
+<p>Martin 对 RedLock 的批评：</p>
+<ul>
+<li>对于提升效率的场景下，RedLock 太重。</li>
+<li>对于对正确性要求极高的场景下，RedLock 并不能保证正确性。</li>
+</ul>
+<p>Python 实现 RedLock，需要安装 redlock-py</p>
+<figure class="highlight cs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs cs"><span class="hljs-keyword">from</span> redlock import Redlock<br>dlm = Redlock(<br>    [<span class="hljs-meta"></span><br><span class="hljs-meta">        &#123;<span class="hljs-meta-string">"host"</span>: <span class="hljs-meta-string">"localhost"</span>, <span class="hljs-meta-string">"port"</span>: 6379, <span class="hljs-meta-string">"db"</span>: 0&#125;,</span><br><span class="hljs-meta">        &#123;<span class="hljs-meta-string">"host"</span>: <span class="hljs-meta-string">"localhost"</span>, <span class="hljs-meta-string">"port"</span>: 6379, <span class="hljs-meta-string">"db"</span>: 0&#125;,</span><br><span class="hljs-meta">        &#123;<span class="hljs-meta-string">"host"</span>: <span class="hljs-meta-string">"localhost"</span>, <span class="hljs-meta-string">"port"</span>: 6379, <span class="hljs-meta-string">"db"</span>: 0&#125;,</span><br><span class="hljs-meta">    </span>]<br>)<br><span class="hljs-meta"># 加锁，acquire</span><br>my_lock = dlm.<span class="hljs-keyword">lock</span>(<span class="hljs-string">"my_resource_name"</span>,<span class="hljs-number">10000</span>)<br><span class="hljs-keyword">if</span>  my_lock:<br>    <span class="hljs-meta"># 进行操作</span><br>    <span class="hljs-meta"># 解锁,release</span><br>    dlm.unlock(my_lock)<br><span class="hljs-keyword">else</span>:<br>    print(<span class="hljs-string">'获取锁失败'</span>)<br><span class="hljs-meta"># 通过sever.eval(self.unlock_script)执行一个lua脚本，用来删除加锁时的key</span><br></code></pre></td></tr></table></figure>
+
+
+<h2 id="ZooKeeper-分布式锁"><a href="#ZooKeeper-分布式锁" class="headerlink" title="ZooKeeper 分布式锁"></a>ZooKeeper 分布式锁</h2><p>核心思想：当客户想要获取锁，则创建节点，使用完锁，则删除该节点。</p>
+<ol>
+<li><p>客户端获取锁时，在 lock 节点下创建临时顺序节点。<br>为什么使用临时节点，和 Redis 的过期时间一个道理，就算 ZooKeeper 服务器宕机，临时节点会随着服务器的宕机而消失，避免了死锁的情况。</p>
+</li>
+<li><p>然后获取 lock 下面所有的子节点，客户端获取到所有的子节点之后，如果发现自己创建的子节点序号最小，那么就认为该客户端获取到了锁。使用完锁后，将该节点删除。</p>
+</li>
+<li><p>如果发现自己创建的节点并非 lock 节点下所有子节点中最小的，说明自己还没有获取到锁，此时客户端需要找到比自己小的那个节点，同时对其注册事件监听器，监听删除事件。</p>
+</li>
+<li><p>如果发现比自己小的那个节点被删除，则客户端的 Watcher 会受到相应通知，此时再判断自己创建的节点是否是 lock 子节点中序号最小的，如果是则获取到了锁，如果不是则重复以上步骤继续获取到比自己小的一个节点并注册监听。</p>
+</li>
+</ol>
+<p><strong>ZooKeeper 介绍</strong></p>
+<p>百度百科是这么介绍 ZooKeeper 的：ZooKeeper 是一个分布式的，开放源码的分布式应用程序协调服务，是 Google 的 Chubby 一个开源的实现，是 Hadoop 和 Hbase 的重要组件。</p>
+<p>对于初认的人，可以理解成 ZooKeeper 就像是我们的电脑文件系统，我们可以在 d 盘中创建文件夹 a，并且可以继续在文件夹 a 中创建文件夹 a1，a2。</p>
+<p>那我们的文件系统有什么特点？？那就是同一个目录下文件名称不能重复，同样 ZooKeeper 也是这样的。在 ZooKeeper 所有的节点，也就是文件夹称作 Znode，而且这个 Znode 节点是可以存储数据的。</p>
+<p>我们可以通过 <code>create/zkjjj nice</code> 来创建一个节点，这个命令就表示，在根目录下创建一个 zkjjj 的节点，值是 nice。这里的值，没什么意义。</p>
+<p><strong>ZooKeeper 可以创建4种类型的节点</strong>，分别是：</p>
+<ol>
+<li><p>持久性节点。持久性节点表示只要你创建了这个节点，那不管你 ZooKeeper 的客户端是否断开连接，ZooKeeper 的服务端都会记录这个节点。</p>
+</li>
+<li><p>持久性顺序节点。顺序性节点是指，在创建节点的时候，ZooKeeper 会自动给节点编号比如 0000001，0000002 这种的。</p>
+</li>
+<li><p>临时性节点。临时性节点和持久性借点刚好相反，<strong>一旦 ZooKeeper 客户端断开了连接，那 ZooKeeper 服务端就不再保存这个节点</strong></p>
+</li>
+<li><p>临时性顺序节点。顺序性节点是指，在创建节点的时候，ZooKeeper 会自动给节点编号比如 0000001，0000002 这种的。</p>
+</li>
+</ol>
+<p>我们可能需要注意到一点，就是惊群效应：举一个很简单的例子，当你往一群鸽子中间扔一块食物，虽然最终只有一个鸽子抢到食物，但所有鸽子都会被惊动来争夺，没有抢到..</p>
+<p>就是当 服务器1 节点有变化，会通知其余的 99 个服务器，但是最终只有 1 个服务器会创建成功，这样 98 还是需要等待监听，那么为了处理这种情况，就需要用到临时顺序性节点。</p>
+<p>大致意思就是，之前是所有 99 个服务器都监听一个节点，现在就是每一个服务器监听自己前面的一个节点。</p>
+<p>假设 100 个服务器同时发来请求，这个时候会在 <code>/zkjjj</code> 节点下创建 100 个临时顺序性节点 <code>/zkjjj/000000001、/zkjjj/000000002 ... /zkjjj/000000100</code> 这个编号就等于是已经给他们设置了获取锁的先后顺序了。</p>
+<p>当 001 节点处理完毕，删除节点后，002 收到通知，去获取锁，开始执行，执行完毕，删除节点，通知 003 以此类推。</p>
+<blockquote>
+<p>参考：<a href="https://blog.csdn.net/whirlwind526/article/details/124162916" target="_blank" rel="noopener">https://blog.csdn.net/whirlwind526/article/details/124162916</a><br><a href="https://it.sohu.com/a/579943276_411876" target="_blank" rel="noopener">https://it.sohu.com/a/579943276_411876</a></p>
+</blockquote>
+<h2 id="zookeeper-和-Redis-分布式锁的区别"><a href="#zookeeper-和-Redis-分布式锁的区别" class="headerlink" title="zookeeper 和 Redis 分布式锁的区别"></a>zookeeper 和 Redis 分布式锁的区别</h2><ul>
+<li>实现方式的不同，Redis 实现为去插入一条占位数据，而 ZooKeeper 实现为去注册一个临时节点。</li>
+<li>遇到宕机情况时，Redis 需要等到过期时间到了后自动释放锁，而 ZooKeeper 因为是临时节点，在宕机时候已经是删除了节点去释放锁。</li>
+<li>Redis 在没抢占到锁的情况下一般会去自旋获取锁，比较浪费性能，而 ZooKeeper 是通过注册监听器的方式获取锁，性能而言优于 Redis。</li>
+<li>Redis 的设计定位决定了它的数据并不是强一致性的，在某些极端情况下，可能会出现问题。锁的模型不够健壮。即便使用 RedLock 算法来实现，在某些复杂场景下，也无法保证其实现 100% 没有问题。<br>使用 Redis 实现分布式锁在很多企业中非常常见，而且大部分情况下都不会遇到所谓的“极端复杂场景”，所以使用 Redis 作为分布式锁也不失为一种好的方案，最重要的一点是 Redis 的性能很高，可以支撑高并发的获取、释放锁操作。</li>
+<li>zookeeper 天生设计定位就是分布式协调，强一致性。锁的模型健壮、简单易用、适合做分布式锁。</li>
+</ul>
+<h2 id="处理死锁"><a href="#处理死锁" class="headerlink" title="处理死锁"></a>处理死锁</h2><ul>
+<li>通过 Redis 中 <code>expire()</code> 给锁设定最大持有时间，如果超过，则 Redis 来帮我们释放锁。</li>
+<li>使用 <code>setnx key 当前系统时间+锁持有的时间</code> 和 <code>getset key 当前系统时间+锁持有的时间</code> 组合的命令就可以实现。</li>
+</ul>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="http://zrrd.net.cn/1059.html" target="_blank" rel="noopener">http://zrrd.net.cn/1059.html</a></li>
+<li><a href="https://www.lanmper.cn/redis/t9567" target="_blank" rel="noopener">https://www.lanmper.cn/redis/t9567</a></li>
+<li><a href="https://it.sohu.com/a/579943276_411876" target="_blank" rel="noopener">https://it.sohu.com/a/579943276_411876</a></li>
+<li><a href="https://blog.csdn.net/harleylau/article/details/85856774" target="_blank" rel="noopener">https://blog.csdn.net/harleylau/article/details/85856774</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E9%9D%A2%E8%AF%95/" class="print-no-link">#面试</a>
+      
+        <a href="/tags/Redis/" class="print-no-link">#Redis</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>01-Redis 分布式锁（重要）</div>
+      <div>https://flepeng.github.io/interview-41-数据库-41-Redis-01-Redis-分布式锁（重要）/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2020年8月8日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

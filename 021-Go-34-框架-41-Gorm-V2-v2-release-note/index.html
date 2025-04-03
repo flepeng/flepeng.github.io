@@ -1,0 +1,975 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Go">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="GORM 2.0 完全从零开始，引入了一些不兼容的 API 变更和许多改进 摘要  性能改进 代码模块化 Context，批量插入，预编译模式，DryRun 模式，Join 预加载，Find To Map，Create From Map，FindInBatches 支持 支持嵌套事务，SavePoint，Rollback To SavePoint SQL 生成器，命名参数，分组条件，Upsert，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="v2_release_note">
+<meta property="og:url" content="https://flepeng.github.io/021-Go-34-%E6%A1%86%E6%9E%B6-41-Gorm-V2-v2-release-note/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="GORM 2.0 完全从零开始，引入了一些不兼容的 API 变更和许多改进 摘要  性能改进 代码模块化 Context，批量插入，预编译模式，DryRun 模式，Join 预加载，Find To Map，Create From Map，FindInBatches 支持 支持嵌套事务，SavePoint，Rollback To SavePoint SQL 生成器，命名参数，分组条件，Upsert，">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2024-12-03T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.286Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Go">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>v2_release_note - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="v2_release_note"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-12-04 00:00" pubdate>
+          2024年12月4日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          39 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">v2_release_note</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>GORM 2.0 完全从零开始，引入了一些不兼容的 API 变更和许多改进</p>
+<p><strong>摘要</strong></p>
+<ul>
+<li>性能改进</li>
+<li>代码模块化</li>
+<li>Context，批量插入，预编译模式，DryRun 模式，Join 预加载，Find To Map，Create From Map，FindInBatches 支持</li>
+<li>支持嵌套事务，SavePoint，Rollback To SavePoint</li>
+<li>SQL 生成器，命名参数，分组条件，Upsert，锁， 支持 Optimizer&#x2F;Index&#x2F;Comment Hint，子查询改进，使用SQL表达式、Context Valuer 进行 CRUD</li>
+<li>完整的自引用支持，连接表改进，批量数据的关联模式</li>
+<li>允许跟踪创建&#x2F;更新时间的多个字段，UNIX (毫秒&#x2F;纳秒) 支持</li>
+<li>支持字段权限：只读、只写、只创建、只更新、忽略</li>
+<li>新的插件系统，为多个数据库提供了官方插件，读写分离，prometheus 集成…</li>
+<li>全新的 Hook API：带插件的统一接口</li>
+<li>新迁移器：允许为关系创建数据库外键，更智能的自动迁移，支持约束以及检查器，支持增强索引</li>
+<li>全新的 Logger：支持 context、改进可扩展性</li>
+<li>统一命名策略：表名、字段名、连接表名、外键、检查器、索引名称规则</li>
+<li>更好的自定义类型支持（例如： JSON）</li>
+</ul>
+<h2 id="如何升级"><a href="#如何升级" class="headerlink" title="如何升级"></a>如何升级</h2><ul>
+<li>GORM 的开发已经迁移至 <a href="https://github.com/go-gorm" target="_blank" rel="noopener">github.com&#x2F;go-gorm</a>，import 路径也修改为 <code>gorm.io/gorm</code> ，对于以前的项目，您可以继续使用 <code>github.com/jinzhu/gorm</code> <a href="https://v1.gorm.io/" target="_blank" rel="noopener">GORM V1 Document</a></li>
+<li>数据库驱动被拆分为独立的项目，例如：<a href="https://github.com/go-gorm/sqlite" target="_blank" rel="noopener">github.com&#x2F;go-gorm&#x2F;sqlite</a>，且它的 import 路径也变更为 <code>gorm.io/driver/sqlite</code></li>
+</ul>
+<h3 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">go</span> get gorm.io/gorm<br><span class="hljs-comment">// **注意** GORM `v2.0.0` 发布的 git tag 是 `v1.20.0`</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="快速开始"><a href="#快速开始" class="headerlink" title="快速开始"></a>快速开始</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">import</span> (<br>  <span class="hljs-string">"gorm.io/gorm"</span><br>  <span class="hljs-string">"gorm.io/driver/sqlite"</span><br>)<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">init</span><span class="hljs-params">()</span></span> &#123;<br>  db, err := gorm.Open(sqlite.Open(<span class="hljs-string">"gorm.db"</span>), &amp;gorm.Config&#123;&#125;)<br><br>  <span class="hljs-comment">// 大部分 CRUD API 都是兼容的</span><br>  db.AutoMigrate(&amp;Product&#123;&#125;)<br>  db.Create(&amp;user)<br>  db.First(&amp;user, <span class="hljs-number">1</span>)<br>  db.Model(&amp;user).Update(<span class="hljs-string">"Age"</span>, <span class="hljs-number">18</span>)<br>  db.Model(&amp;user).Omit(<span class="hljs-string">"Role"</span>).Updates(<span class="hljs-keyword">map</span>[<span class="hljs-keyword">string</span>]<span class="hljs-keyword">interface</span>&#123;&#125;&#123;<span class="hljs-string">"Name"</span>: <span class="hljs-string">"jinzhu"</span>, <span class="hljs-string">"Role"</span>: <span class="hljs-string">"admin"</span>&#125;)<br>  db.Delete(&amp;user)<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="主要特性"><a href="#主要特性" class="headerlink" title="主要特性"></a>主要特性</h2><p>此发布说明仅涵盖了 GORM V2 中的重大更改，作为快速参考</p>
+<h4 id="Context-支持"><a href="#Context-支持" class="headerlink" title="Context 支持"></a>Context 支持</h4><ul>
+<li>数据库操作通过 <code>WithContext</code> 方法支持 <code>Context</code></li>
+<li>Logger 也支持用于追踪的 context</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs go">db.WithContext(ctx).Find(&amp;users)<br></code></pre></td></tr></table></figure>
+
+<h4 id="批量插入"><a href="#批量插入" class="headerlink" title="批量插入"></a>批量插入</h4><p>要有效地插入大量记录，可以将一个 slice 传递给 <code>Create</code> 方法。 将切片数据传递给 Create 方法，GORM 将生成一个单一的 SQL 语句来插入所有数据，并回填主键的值，钩子方法也会被调用。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">var</span> users = []User&#123;&#123;Name: <span class="hljs-string">"jinzhu1"</span>&#125;, &#123;Name: <span class="hljs-string">"jinzhu2"</span>&#125;, &#123;Name: <span class="hljs-string">"jinzhu3"</span>&#125;&#125;<br>db.Create(&amp;users)<br><br><span class="hljs-keyword">for</span> _, user := <span class="hljs-keyword">range</span> users &#123;<br>  user.ID <span class="hljs-comment">// 1,2,3</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>使用 <code>CreateInBatches</code> 创建时，你还可以指定创建的数量，例如：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">var</span> 用户 = []User&#123;name: <span class="hljs-string">"jinzhu_1"</span>&#125;, ...., &#123;Name: <span class="hljs-string">"jinzhu_10000"</span>&#125;&#125;<br><br><span class="hljs-comment">// 数量为 100</span><br>db.CreateInBatches(用户, <span class="hljs-number">100</span>)<br></code></pre></td></tr></table></figure>
+
+<h4 id="预编译模式"><a href="#预编译模式" class="headerlink" title="预编译模式"></a>预编译模式</h4><p>预编译模式会预编译 Sql 执行语句，以加速后续执行速度</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// 全局模式，所有的操作都会创建并缓存预编译语句，以加速后续执行速度</span><br>db, err := gorm.Open(sqlite.Open(<span class="hljs-string">"gorm.db"</span>), &amp;gorm.Config&#123;PrepareStmt: <span class="hljs-literal">true</span>&#125;)<br><br><span class="hljs-comment">// 会话模式，当前会话中的操作会创建并缓存预编译语句</span><br>tx := db.Session(&amp;Session&#123;PrepareStmt: <span class="hljs-literal">true</span>&#125;)<br>tx.First(&amp;user, <span class="hljs-number">1</span>)<br>tx.Find(&amp;users)<br>tx.Model(&amp;user).Update(<span class="hljs-string">"Age"</span>, <span class="hljs-number">18</span>)<br></code></pre></td></tr></table></figure>
+
+<h4 id="DryRun-模式"><a href="#DryRun-模式" class="headerlink" title="DryRun 模式"></a>DryRun 模式</h4><p>DryRun 模式会生成但不执行 SQL，可以用于检查、测试生成的 SQL</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs go">stmt := db.Session(&amp;Session&#123;DryRun: <span class="hljs-literal">true</span>&#125;).Find(&amp;user, <span class="hljs-number">1</span>).Statement<br>stmt.SQL.String() <span class="hljs-comment">//=&gt; SELECT * FROM `users` WHERE `id` = $1 // PostgreSQL</span><br>stmt.SQL.String() <span class="hljs-comment">//=&gt; SELECT * FROM `users` WHERE `id` = ?  // MySQL</span><br>stmt.Vars         <span class="hljs-comment">//=&gt; []interface&#123;&#125;&#123;1&#125;</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="Joins-预加载"><a href="#Joins-预加载" class="headerlink" title="Joins 预加载"></a>Joins 预加载</h4><p>使用 INNER JOIN 预加载关联，并处理 null 数据避免 scan 失败</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs go">db.Joins(<span class="hljs-string">"Company"</span>).Joins(<span class="hljs-string">"Manager"</span>).Joins(<span class="hljs-string">"Account"</span>).Find(&amp;users, <span class="hljs-string">"users.id IN ?"</span>, []<span class="hljs-keyword">int</span>&#123;<span class="hljs-number">1</span>,<span class="hljs-number">2</span>&#125;)<br></code></pre></td></tr></table></figure>
+
+<h4 id="Find-To-Map"><a href="#Find-To-Map" class="headerlink" title="Find To Map"></a>Find To Map</h4><p>Scan 结果到 <code>map[string]interface{}</code> 或 <code>[]map[string]interface{}</code></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">var</span> result <span class="hljs-keyword">map</span>[<span class="hljs-keyword">string</span>]<span class="hljs-keyword">interface</span>&#123;&#125;<br>db.Model(&amp;User&#123;&#125;).First(&amp;result, <span class="hljs-string">"id = ?"</span>, <span class="hljs-number">1</span>)<br></code></pre></td></tr></table></figure>
+
+<h4 id="Create-From-Map"><a href="#Create-From-Map" class="headerlink" title="Create From Map"></a>Create From Map</h4><p>根据 <code>map[string]interface{}</code> 或 <code>[]map[string]interface{}</code> Create</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs go">db.Model(&amp;User&#123;&#125;).Create(<span class="hljs-keyword">map</span>[<span class="hljs-keyword">string</span>]<span class="hljs-keyword">interface</span>&#123;&#125;&#123;<span class="hljs-string">"Name"</span>: <span class="hljs-string">"jinzhu"</span>, <span class="hljs-string">"Age"</span>: <span class="hljs-number">18</span>&#125;)<br><br>datas := []<span class="hljs-keyword">map</span>[<span class="hljs-keyword">string</span>]<span class="hljs-keyword">interface</span>&#123;&#125;&#123;<br>  &#123;<span class="hljs-string">"Name"</span>: <span class="hljs-string">"jinzhu_1"</span>, <span class="hljs-string">"Age"</span>: <span class="hljs-number">19</span>&#125;,<br>  &#123;<span class="hljs-string">"name"</span>: <span class="hljs-string">"jinzhu_2"</span>, <span class="hljs-string">"Age"</span>: <span class="hljs-number">20</span>&#125;,<br>&#125;<br><br>db.Model(&amp;User&#123;&#125;).Create(datas)<br></code></pre></td></tr></table></figure>
+
+<h4 id="FindInBatches"><a href="#FindInBatches" class="headerlink" title="FindInBatches"></a>FindInBatches</h4><p>用于批量查询并处理记录</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs go">result := db.Where(<span class="hljs-string">"age&gt;?"</span>, <span class="hljs-number">13</span>).FindInBatches(&amp;results, <span class="hljs-number">100</span>, <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(tx *gorm.DB, batch <span class="hljs-keyword">int</span>)</span> <span class="hljs-title">error</span></span> &#123;<br>  <span class="hljs-comment">// 批量处理</span><br>  <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>&#125;)<br></code></pre></td></tr></table></figure>
+
+<h4 id="嵌套事务"><a href="#嵌套事务" class="headerlink" title="嵌套事务"></a>嵌套事务</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs go">db.Transaction(<span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(tx *gorm.DB)</span> <span class="hljs-title">error</span></span> &#123;<br>  tx.Create(&amp;user1)<br><br>  tx.Transaction(<span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(tx2 *gorm.DB)</span> <span class="hljs-title">error</span></span> &#123;<br>    tx.Create(&amp;user2)<br>    <span class="hljs-keyword">return</span> errors.New(<span class="hljs-string">"rollback user2"</span>) <span class="hljs-comment">// rollback user2</span><br>  &#125;)<br><br>  tx.Transaction(<span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(tx2 *gorm.DB)</span> <span class="hljs-title">error</span></span> &#123;<br>    tx.Create(&amp;user3)<br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>  &#125;)<br><br>  <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span> <span class="hljs-comment">// commit user1 and user3</span><br>&#125;)<br></code></pre></td></tr></table></figure>
+
+<h4 id="SavePoint，RollbackTo"><a href="#SavePoint，RollbackTo" class="headerlink" title="SavePoint，RollbackTo"></a>SavePoint，RollbackTo</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs go">tx := db.Begin()<br>tx.Create(&amp;user1)<br><br>tx.SavePoint(<span class="hljs-string">"sp1"</span>)<br>tx.Create(&amp;user2)<br>tx.RollbackTo(<span class="hljs-string">"sp1"</span>) <span class="hljs-comment">// rollback user2</span><br><br>tx.Commit() <span class="hljs-comment">// commit user1</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="命名参数"><a href="#命名参数" class="headerlink" title="命名参数"></a>命名参数</h4><p>GORM 支持使用 <code>sql.NamedArg</code>，<code>map[string]interface{}</code> 作为命名参数</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs go">db.Where(<span class="hljs-string">"name1 = @name OR name2 = @name"</span>, sql.Named(<span class="hljs-string">"name"</span>, <span class="hljs-string">"jinzhu"</span>)).Find(&amp;user)<br><span class="hljs-comment">// SELECT * FROM `users` WHERE name1 = "jinzhu" OR name2 = "jinzhu"</span><br><br>db.Where(<span class="hljs-string">"name1 = @name OR name2 = @name"</span>, <span class="hljs-keyword">map</span>[<span class="hljs-keyword">string</span>]<span class="hljs-keyword">interface</span>&#123;&#125;&#123;<span class="hljs-string">"name"</span>: <span class="hljs-string">"jinzhu2"</span>&#125;).First(&amp;result3)<br><span class="hljs-comment">// SELECT * FROM `users` WHERE name1 = "jinzhu2" OR name2 = "jinzhu2" ORDER BY `users`.`id` LIMIT 1</span><br><br>db.Raw(<br>  <span class="hljs-string">"SELECT * FROM users WHERE name1 = @name OR name2 = @name2 OR name3 = @name"</span>,<br>  sql.Named(<span class="hljs-string">"name"</span>, <span class="hljs-string">"jinzhu1"</span>), sql.Named(<span class="hljs-string">"name2"</span>, <span class="hljs-string">"jinzhu2"</span>),<br>).Find(&amp;user)<br><span class="hljs-comment">// SELECT * FROM users WHERE name1 = "jinzhu1" OR name2 = "jinzhu2" OR name3 = "jinzhu1"</span><br><br>db.Exec(<br>  <span class="hljs-string">"UPDATE users SET name1 = @name, name2 = @name2, name3 = @name"</span>,<br>  <span class="hljs-keyword">map</span>[<span class="hljs-keyword">string</span>]<span class="hljs-keyword">interface</span>&#123;&#125;&#123;<span class="hljs-string">"name"</span>: <span class="hljs-string">"jinzhu"</span>, <span class="hljs-string">"name2"</span>: <span class="hljs-string">"jinzhu2"</span>&#125;,<br>)<br><span class="hljs-comment">// UPDATE users SET name1 = "jinzhu", name2 = "jinzhu2", name3 = "jinzhu"</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="分组条件"><a href="#分组条件" class="headerlink" title="分组条件"></a>分组条件</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs go">db.Where(<br>  db.Where(<span class="hljs-string">"pizza = ?"</span>, <span class="hljs-string">"pepperoni"</span>).Where(db.Where(<span class="hljs-string">"size = ?"</span>, <span class="hljs-string">"small"</span>).Or(<span class="hljs-string">"size = ?"</span>, <span class="hljs-string">"medium"</span>)),<br>).Or(<br>  db.Where(<span class="hljs-string">"pizza = ?"</span>, <span class="hljs-string">"hawaiian"</span>).Where(<span class="hljs-string">"size = ?"</span>, <span class="hljs-string">"xlarge"</span>),<br>).Find(&amp;pizzas)<br><br><span class="hljs-comment">// SELECT * FROM pizzas WHERE (pizza = 'pepperoni' AND (size = 'small' OR size = 'medium')) OR (pizza = 'hawaiian' AND size = 'xlarge')</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="子查询"><a href="#子查询" class="headerlink" title="子查询"></a>子查询</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// Where 子查询</span><br>db.Where(<span class="hljs-string">"amount &gt; (?)"</span>, db.Table(<span class="hljs-string">"orders"</span>).Select(<span class="hljs-string">"AVG(amount)"</span>)).Find(&amp;orders)<br><br><span class="hljs-comment">// From 子查询</span><br>db.Table(<span class="hljs-string">"(?) as u"</span>, db.Model(&amp;User&#123;&#125;).Select(<span class="hljs-string">"name"</span>, <span class="hljs-string">"age"</span>)).Where(<span class="hljs-string">"age = ?"</span>, <span class="hljs-number">18</span>&#125;).Find(&amp;User&#123;&#125;)<br><span class="hljs-comment">// SELECT * FROM (SELECT `name`,`age` FROM `users`) as u WHERE age = 18</span><br><br><span class="hljs-comment">// Update 子查询</span><br>db.Model(&amp;user).Update(<br>  <span class="hljs-string">"price"</span>, db.Model(&amp;Company&#123;&#125;).Select(<span class="hljs-string">"name"</span>).Where(<span class="hljs-string">"companies.id = users.company_id"</span>),<br>)<br></code></pre></td></tr></table></figure>
+
+<h4 id="Upsert"><a href="#Upsert" class="headerlink" title="Upsert"></a>Upsert</h4><p><code>clause.OnConflict</code> 为不同的数据库（SQLite，MySQL，PostgreSQL，SQL Server）提供了兼容的 Upsert 支持</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">import</span> <span class="hljs-string">"gorm.io/gorm/clause"</span><br><br>db.Clauses(clause.OnConflict&#123;DoNothing: <span class="hljs-literal">true</span>&#125;).Create(&amp;users)<br><br>db.Clauses(clause.OnConflict&#123;<br>  Columns:   []clause.Column&#123;&#123;Name: <span class="hljs-string">"id"</span>&#125;&#125;,<br>  DoUpdates: clause.Assignments(<span class="hljs-keyword">map</span>[<span class="hljs-keyword">string</span>]<span class="hljs-keyword">interface</span>&#123;&#125;&#123;<span class="hljs-string">"name"</span>: <span class="hljs-string">"jinzhu"</span>, <span class="hljs-string">"age"</span>: <span class="hljs-number">18</span>&#125;),<br>&#125;).Create(&amp;users)<br><span class="hljs-comment">// MERGE INTO "users" USING *** WHEN NOT MATCHED THEN INSERT *** WHEN MATCHED THEN UPDATE SET ***; SQL Server</span><br><span class="hljs-comment">// INSERT INTO `users` *** ON DUPLICATE KEY UPDATE name="jinzhu", age=18; MySQL</span><br><br>db.Clauses(clause.OnConflict&#123;<br>  Columns:   []clause.Column&#123;&#123;Name: <span class="hljs-string">"id"</span>&#125;&#125;,<br>  DoUpdates: clause.AssignmentColumns([]<span class="hljs-keyword">string</span>&#123;<span class="hljs-string">"name"</span>, <span class="hljs-string">"age"</span>&#125;),<br>&#125;).Create(&amp;users)<br><span class="hljs-comment">// MERGE INTO "users" USING *** WHEN NOT MATCHED THEN INSERT *** WHEN MATCHED THEN UPDATE SET "name"="excluded"."name"; SQL Server</span><br><span class="hljs-comment">// INSERT INTO "users" *** ON CONFLICT ("id") DO UPDATE SET "name"="excluded"."name", "age"="excluded"."age"; PostgreSQL</span><br><span class="hljs-comment">// INSERT INTO `users` *** ON DUPLICATE KEY UPDATE `name`=VALUES(name),`age=VALUES(age); MySQL</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="Locking"><a href="#Locking" class="headerlink" title="Locking"></a>Locking</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs go">db.Clauses(clause.Locking&#123;Strength: <span class="hljs-string">"UPDATE"</span>&#125;).Find(&amp;users)<br><span class="hljs-comment">// SELECT * FROM `users` FOR UPDATE</span><br><br>db.Clauses(clause.Locking&#123;<br>  Strength: <span class="hljs-string">"SHARE"</span>,<br>  Table: clause.Table&#123;Name: clause.CurrentTable&#125;,<br>&#125;).Find(&amp;users)<br><span class="hljs-comment">// SELECT * FROM `users` FOR SHARE OF `users`</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="Optimizer-x2F-Index-x2F-Comment-Hint"><a href="#Optimizer-x2F-Index-x2F-Comment-Hint" class="headerlink" title="Optimizer&#x2F;Index&#x2F;Comment Hint"></a>Optimizer&#x2F;Index&#x2F;Comment Hint</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">import</span> <span class="hljs-string">"gorm.io/hints"</span><br><br><span class="hljs-comment">// Optimizer Hints</span><br>db.Clauses(hints.New(<span class="hljs-string">"hint"</span>)).Find(&amp;User&#123;&#125;)<br><span class="hljs-comment">// SELECT * /*+ hint */ FROM `users`</span><br><br><span class="hljs-comment">// Index Hints</span><br>db.Clauses(hints.UseIndex(<span class="hljs-string">"idx_user_name"</span>)).Find(&amp;User&#123;&#125;)<br><span class="hljs-comment">// SELECT * FROM `users` USE INDEX (`idx_user_name`)</span><br><br><span class="hljs-comment">// Comment Hints</span><br>db.Clauses(hints.Comment(<span class="hljs-string">"select"</span>, <span class="hljs-string">"master"</span>)).Find(&amp;User&#123;&#125;)<br><span class="hljs-comment">// SELECT /*master*/ * FROM `users`;</span><br></code></pre></td></tr></table></figure>
+
+<p>查看 <a href="hints.html">Hint</a> 获取详情</p>
+<h4 id="使用-SQL-表达式、Context-Valuer-进行-CRUD"><a href="#使用-SQL-表达式、Context-Valuer-进行-CRUD" class="headerlink" title="使用 SQL 表达式、Context Valuer 进行 CRUD"></a>使用 SQL 表达式、Context Valuer 进行 CRUD</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> Location <span class="hljs-keyword">struct</span> &#123;<br>    X, Y <span class="hljs-keyword">int</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(loc Location)</span> <span class="hljs-title">GormDataType</span><span class="hljs-params">()</span> <span class="hljs-title">string</span></span> &#123;<br>  <span class="hljs-keyword">return</span> <span class="hljs-string">"geometry"</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(loc Location)</span> <span class="hljs-title">GormValue</span><span class="hljs-params">(ctx context.Context, db *gorm.DB)</span> <span class="hljs-title">clause</span>.<span class="hljs-title">Expr</span></span> &#123;<br>  <span class="hljs-keyword">return</span> clause.Expr&#123;<br>    SQL:  <span class="hljs-string">"ST_PointFromText(?)"</span>,<br>    Vars: []<span class="hljs-keyword">interface</span>&#123;&#125;&#123;fmt.Sprintf(<span class="hljs-string">"POINT(%d %d)"</span>, loc.X, loc.Y)&#125;,<br>  &#125;<br>&#125;<br><br>db.Create(&amp;User&#123;<br>  Name:     <span class="hljs-string">"jinzhu"</span>,<br>  Location: Location&#123;X: <span class="hljs-number">100</span>, Y: <span class="hljs-number">100</span>&#125;,<br>&#125;)<br><span class="hljs-comment">// INSERT INTO `users` (`name`,`point`) VALUES ("jinzhu",ST_PointFromText("POINT(100 100)"))</span><br><br>db.Model(&amp;User&#123;ID: <span class="hljs-number">1</span>&#125;).Updates(User&#123;<br>  Name:  <span class="hljs-string">"jinzhu"</span>,<br>  Point: Point&#123;X: <span class="hljs-number">100</span>, Y: <span class="hljs-number">100</span>&#125;,<br>&#125;)<br><span class="hljs-comment">// UPDATE `user_with_points` SET `name`="jinzhu",`point`=ST_PointFromText("POINT(100 100)") WHERE `id` = 1</span><br></code></pre></td></tr></table></figure>
+
+<p>查看 <a href="data_types.html#gorm_valuer_interface">自定义数据类型</a> 获取详情</p>
+<h4 id="字段权限"><a href="#字段权限" class="headerlink" title="字段权限"></a>字段权限</h4><p>支持字段权限，权限级别有：只读、只写、只创建、只更新、忽略</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> User <span class="hljs-keyword">struct</span> &#123;<br>  Name <span class="hljs-keyword">string</span> <span class="hljs-string">`gorm:"&lt;-:create"`</span> <span class="hljs-comment">// 允许读和创建</span><br>  Name <span class="hljs-keyword">string</span> <span class="hljs-string">`gorm:"&lt;-:update"`</span> <span class="hljs-comment">// 允许读和更新</span><br>  Name <span class="hljs-keyword">string</span> <span class="hljs-string">`gorm:"&lt;-"`</span>        <span class="hljs-comment">// 允许读和写（创建和更新）</span><br>  Name <span class="hljs-keyword">string</span> <span class="hljs-string">`gorm:"-&gt;:false;&lt;-:create"`</span> <span class="hljs-comment">// 只创建</span><br>  Name <span class="hljs-keyword">string</span> <span class="hljs-string">`gorm:"-&gt;"`</span> <span class="hljs-comment">// 只读</span><br>  Name <span class="hljs-keyword">string</span> <span class="hljs-string">`gorm:"-"`</span>  <span class="hljs-comment">// 忽略</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h4 id="支持多个字段追踪-create-x2F-update-时间（-time、unix-毫-x2F-纳-秒）"><a href="#支持多个字段追踪-create-x2F-update-时间（-time、unix-毫-x2F-纳-秒）" class="headerlink" title="支持多个字段追踪 create&#x2F;update 时间（ time、unix (毫&#x2F;纳) 秒）"></a>支持多个字段追踪 create&#x2F;update 时间（ time、unix (毫&#x2F;纳) 秒）</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> User <span class="hljs-keyword">struct</span> &#123;<br>  CreatedAt time.Time <span class="hljs-comment">// 在创建时，如果该字段值为零值，则使用当前时间填充</span><br>  UpdatedAt <span class="hljs-keyword">int</span>       <span class="hljs-comment">// 在创建时该字段值为零值或者在更新时，使用当前时间戳的秒数填充</span><br>  Updated   <span class="hljs-keyword">int64</span> <span class="hljs-string">`gorm:"autoUpdateTime:nano"`</span> <span class="hljs-comment">// 使用时间戳的纳秒数填充更新时间</span><br>  Updated2   <span class="hljs-keyword">int64</span> <span class="hljs-string">`gorm:"autoUpdateTime:milli"`</span> <span class="hljs-comment">// 使用时间戳的毫秒数填充更新时间</span><br>  Created   <span class="hljs-keyword">int64</span> <span class="hljs-string">`gorm:"autoCreateTime"`</span>      <span class="hljs-comment">// 使用时间戳的秒数填充创建时间</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h4 id="多数据库，读写分离"><a href="#多数据库，读写分离" class="headerlink" title="多数据库，读写分离"></a>多数据库，读写分离</h4><p>GORM 通过 <code>DB Resolver</code> 插件提供了多数据库，读写分离支持。该插件还支持基于当前 struct 和表自动切换数据库和表，自定义负载均衡逻辑的多 source、replica</p>
+<p>查看 <a href="dbresolver.html">Database Resolver</a> 获取详情</p>
+<h4 id="Prometheus"><a href="#Prometheus" class="headerlink" title="Prometheus"></a>Prometheus</h4><p>GORM 提供了 <code>Prometheus</code> 插件来收集 <code>DBStats</code> 和用户自定义指标</p>
+<p>查看 <a href="prometheus.html">Prometheus</a> 获取详情</p>
+<h4 id="命名策略"><a href="#命名策略" class="headerlink" title="命名策略"></a>命名策略</h4><p>GORM 允许用户通过覆盖默认的<code>命名策略</code>更改默认的命名约定，命名策略被用于构建： <code>TableName</code>、<code>ColumnName</code>、<code>JoinTableName</code>、<code>RelationshipFKName</code>、<code>CheckerName</code>、<code>IndexName</code>。查看 <a href="gorm_config.html">GORM 配置</a> 获取详情</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs go">db, err := gorm.Open(sqlite.Open(<span class="hljs-string">"gorm.db"</span>), &amp;gorm.Config&#123;<br>  NamingStrategy: schema.NamingStrategy&#123;TablePrefix: <span class="hljs-string">"t_"</span>, SingularTable: <span class="hljs-literal">true</span>&#125;,<br>&#125;)<br></code></pre></td></tr></table></figure>
+
+<h4 id="Logger"><a href="#Logger" class="headerlink" title="Logger"></a>Logger</h4><ul>
+<li>Context 支持</li>
+<li>自定义或关闭日志的颜色</li>
+<li>慢 SQL 日志，慢 SQL 默认阈值是 200ms</li>
+<li>优化了 SQL 日志格式，可以更方便的复制到数据库控制台中执行</li>
+</ul>
+<h4 id="事务模式"><a href="#事务模式" class="headerlink" title="事务模式"></a>事务模式</h4><p>默认情况下，GORM 所有的写操作都会在事务中运行，以确保数据的一致性。 如果不需要，您可以在初始化时禁用它来加速写入操作</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs go">db, err := gorm.Open(sqlite.Open(<span class="hljs-string">"gorm.db"</span>), &amp;gorm.Config&#123;<br>  SkipDefaultTransaction: <span class="hljs-literal">true</span>,<br>&#125;)<br></code></pre></td></tr></table></figure>
+
+<h4 id="数据类型（以-JSON-为例）"><a href="#数据类型（以-JSON-为例）" class="headerlink" title="数据类型（以 JSON 为例）"></a>数据类型（以 JSON 为例）</h4><p>GORM 优化了对自定义类型的支持，现在您可以定义一个 struct 来支持所有类型的数据库</p>
+<p>下面以 JSON 为例（支持 SQLite、MySQL、Postgres。参考自：<a href="https://github.com/go-gorm/datatypes/blob/master/json.go" target="_blank" rel="noopener">https://github.com/go-gorm/datatypes/blob/master/json.go</a> ）</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">import</span> <span class="hljs-string">"gorm.io/datatypes"</span><br><br><span class="hljs-keyword">type</span> User <span class="hljs-keyword">struct</span> &#123;<br>  gorm.Model<br>  Name       <span class="hljs-keyword">string</span><br>  Attributes datatypes.JSON<br>&#125;<br><br>db.Create(&amp;User&#123;<br>  Name:       <span class="hljs-string">"jinzhu"</span>,<br>  Attributes: datatypes.JSON([]<span class="hljs-keyword">byte</span>(<span class="hljs-string">`&#123;"name": "jinzhu", "age": 18, "tags": ["tag1", "tag2"], "orgs": &#123;"orga": "orga"&#125;&#125;`</span>)),<br>&#125;<br><br><span class="hljs-comment">// 查询 attributes 中有 role 字段的 user</span><br>db.First(&amp;user, datatypes.JSONQuery(<span class="hljs-string">"attributes"</span>).HasKey(<span class="hljs-string">"role"</span>))<br><span class="hljs-comment">// 查询 attributes 中有 orgs-&gt;orga 字段的 user</span><br>db.First(&amp;user, datatypes.JSONQuery(<span class="hljs-string">"attributes"</span>).HasKey(<span class="hljs-string">"orgs"</span>, <span class="hljs-string">"orga"</span>))<br></code></pre></td></tr></table></figure>
+
+<h4 id="Smart-Select"><a href="#Smart-Select" class="headerlink" title="Smart Select"></a>Smart Select</h4><p>GORM 可以通过 <a href="query.html"><code>Select</code></a> 选择指定的字段，而在 V2 中，通过一个较小的 struct，可以使用 GORM 提供的 smart select 模式</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> User <span class="hljs-keyword">struct</span> &#123;<br>  ID     <span class="hljs-keyword">uint</span><br>  Name   <span class="hljs-keyword">string</span><br>  Age    <span class="hljs-keyword">int</span><br>  Gender <span class="hljs-keyword">string</span><br>  <span class="hljs-comment">// 假设后面还有几百个字段...</span><br>&#125;<br><br><span class="hljs-keyword">type</span> APIUser <span class="hljs-keyword">struct</span> &#123;<br>  ID   <span class="hljs-keyword">uint</span><br>  Name <span class="hljs-keyword">string</span><br>&#125;<br><br><span class="hljs-comment">// 查询时会自动选择 `id`, `name` 字段</span><br>db.Model(&amp;User&#123;&#125;).Limit(<span class="hljs-number">10</span>).Find(&amp;APIUser&#123;&#125;)<br><span class="hljs-comment">// SELECT `id`, `name` FROM `users` LIMIT 10</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="批量关联模式"><a href="#批量关联模式" class="headerlink" title="批量关联模式"></a>批量关联模式</h4><p>关联模式也支持批量处理，例如：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// 查询所有用户的所有角色</span><br>db.Model(&amp;users).Association(<span class="hljs-string">"Role"</span>).Find(&amp;roles)<br><br><span class="hljs-comment">// 将 userA 从所有的 Team 中移除</span><br>db.Model(&amp;users).Association(<span class="hljs-string">"Team"</span>).Delete(&amp;userA)<br><br><span class="hljs-comment">// 获取所有 Team 成员的不重复计数</span><br>db.Model(&amp;users).Association(<span class="hljs-string">"Team"</span>).Count()<br><br><span class="hljs-comment">// 对于 `Append`、`Replace` 的批量处理，参数与数据的长度必须相等，否则会返回错误</span><br><span class="hljs-keyword">var</span> users = []User&#123;user1, user2, user3&#125;<br><span class="hljs-comment">// 例如：我们有 3 个 user，将 userA 添加到 user1 的 Team，将 userB 添加到 user2 的 Team，将 userA、userB、userC 添加到 user3 的 Team</span><br>db.Model(&amp;users).Association(<span class="hljs-string">"Team"</span>).Append(&amp;userA, &amp;userB, &amp;[]User&#123;userA, userB, userC&#125;)<br><span class="hljs-comment">// 将 user1 的 Team 重置为 userA，将 user2的 team 重置为 userB，将 user3 的 team 重置为 userA、userB 和 userC</span><br>db.Model(&amp;users).Association(<span class="hljs-string">"Team"</span>).Replace(&amp;userA, &amp;userB, &amp;[]User&#123;userA, userB, userC&#125;)<br></code></pre></td></tr></table></figure>
+
+<h4 id="删除关联记录"><a href="#删除关联记录" class="headerlink" title="删除关联记录"></a>删除关联记录</h4><p>你可以在删除记录时通过 <code>Select</code> 来删除具有 has one、has many、many2many 关系的记录，例如：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// 删除 user 时，也删除 user 的 account</span><br>db.Select(<span class="hljs-string">"Account"</span>).Delete(&amp;user)<br><br><span class="hljs-comment">// 删除 user 时，也删除 user 的 Orders、CreditCards 记录</span><br>db.Select(<span class="hljs-string">"Orders"</span>, <span class="hljs-string">"CreditCards"</span>).Delete(&amp;user)<br><br><span class="hljs-comment">// 删除 user 时，也删除用户所有 has one/many、many2many 记录</span><br>db.Select(clause.Associations).Delete(&amp;user)<br><br><span class="hljs-comment">// 删除 users 时，也删除 user 们的 account</span><br>db.Select(<span class="hljs-string">"Account"</span>).Delete(&amp;users)<br></code></pre></td></tr></table></figure>
+
+<h2 id="破坏性变更"><a href="#破坏性变更" class="headerlink" title="破坏性变更"></a>破坏性变更</h2><p>我们尽可能的列出破坏性、无法被编译器捕获的变更。如果您发现了任何遗漏的内容，欢迎在 <a href="https://github.com/go-gorm/gorm.io" target="_blank" rel="noopener">这里</a> 创建 issue 或 pr</p>
+<h4 id="Tag"><a href="#Tag" class="headerlink" title="Tag"></a>Tag</h4><ul>
+<li>GORM V2 使用 <code>camelCase</code> 风格的 tag 名。<code>snake_case</code> 风格的 tag 已经失效，例如： <code>auto_increment</code>、<code>unique_index</code>、<code>polymorphic_value</code>、<code>embeded_prefix</code>，查看 <a href="models.html#tags">Model Tag</a> 获取详情</li>
+<li>用于指定外键的 tag 已变更为 <code>foreignKey</code>，<code>references</code>，查看 <a href="associations.html#tags">Association Tag</a> 获取详情</li>
+<li>不支持 <code>sql</code> 标签</li>
+</ul>
+<h4 id="Table-Name"><a href="#Table-Name" class="headerlink" title="Table Name"></a>Table Name</h4><p><code>TableName</code> <em>不再</em> 允许动态表名， 因为 <code>TableName</code> 的返回值会被缓存下来</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(User)</span> <span class="hljs-title">TableName</span><span class="hljs-params">()</span> <span class="hljs-title">string</span></span> &#123;<br>  <span class="hljs-keyword">return</span> <span class="hljs-string">"t_user"</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>动态表名请使用 <code>Scopes</code>，例如：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">UserTable</span><span class="hljs-params">(u *User)</span> <span class="hljs-title">func</span><span class="hljs-params">(*gorm.DB)</span> *<span class="hljs-title">gorm</span>.<span class="hljs-title">DB</span></span> &#123;<br>  <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(db *gorm.DB)</span> *<span class="hljs-title">gorm</span>.<span class="hljs-title">DB</span></span> &#123;<br>    <span class="hljs-keyword">return</span> db.Table(<span class="hljs-string">"user_"</span> + u.Role)<br>  &#125;<br>&#125;<br><br>db.Scopes(UserTable(&amp;user)).Create(&amp;user)<br></code></pre></td></tr></table></figure>
+
+<h4 id="创建和删除表格需要使用-Migrator"><a href="#创建和删除表格需要使用-Migrator" class="headerlink" title="创建和删除表格需要使用 Migrator"></a>创建和删除表格需要使用 Migrator</h4><p>以前创建和删除表格是这样的：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs go">db.CreateTable(&amp;MyTable&#123;&#125;)<br>db.DropTable(&amp;MyTable&#123;&#125;)<br></code></pre></td></tr></table></figure>
+
+<p>现在您需要这样做：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs go">db.Migrator().CreateTable(&amp;MyTable&#123;&#125;)<br>db.Migrator().DropTable(&amp;MyTable&#123;&#125;)<br></code></pre></td></tr></table></figure>
+
+<h4 id="外键"><a href="#外键" class="headerlink" title="外键"></a>外键</h4><p>以前您可以这样添加外键约束：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs go">db.Model(&amp;MyTable&#123;&#125;).AddForeignKey(<span class="hljs-string">"profile_id"</span>, <span class="hljs-string">"profiles(id)"</span>, <span class="hljs-string">"NO ACTION"</span>, <span class="hljs-string">"NO ACTION"</span>)<br></code></pre></td></tr></table></figure>
+
+<p>现在您需要这样添加约束：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs go">db.Migrator().CreateConstraint(&amp;Users&#123;&#125;, <span class="hljs-string">"Profiles"</span>)<br>db.Migrator().CreateConstraint(&amp;Users&#123;&#125;, <span class="hljs-string">"fk_users_profiles"</span>)<br></code></pre></td></tr></table></figure>
+
+<p>对于postgres，GORM 会将其翻译为：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">ALTER</span> <span class="hljs-keyword">TABLE</span> <span class="hljs-string">`Profiles`</span> <span class="hljs-keyword">ADD</span> <span class="hljs-keyword">CONSTRAINT</span> <span class="hljs-string">`fk_users_profiles`</span> FORIEGN <span class="hljs-keyword">KEY</span> (<span class="hljs-string">`useres_id`</span>) REFRENCES <span class="hljs-string">`users`</span>(<span class="hljs-string">`id`</span>))<br></code></pre></td></tr></table></figure>
+
+<h4 id="方法链和协程安全"><a href="#方法链和协程安全" class="headerlink" title="方法链和协程安全"></a>方法链和协程安全</h4><p>为了减少 GC 分配，在使用链式调用时，GORM V2 会共享 <code>Statement</code>，且只在初始化 <code>*gorm.DB</code> 或调用 <code>New Session Method</code> 后创建新的 <code>Statement</code>。想要复用 <code>*gorm.DB</code>，您需要确保该它刚调用过 <code>New Session Method</code>，例如：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs go">db, err := gorm.Open(sqlite.Open(<span class="hljs-string">"test.db"</span>), &amp;gorm.Config&#123;&#125;)<br><br><span class="hljs-comment">// 对于刚初始化的 *gorm.DB 是安全的</span><br><span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">100</span>; i++ &#123;<br>  <span class="hljs-keyword">go</span> db.Where(...).First(&amp;user)<br>&#125;<br><br>tx := db.Where(<span class="hljs-string">"name = ?"</span>, <span class="hljs-string">"jinzhu"</span>)<br><span class="hljs-comment">// 不安全，因为复用了 Statement</span><br><span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">100</span>; i++ &#123;<br>  <span class="hljs-keyword">go</span> tx.Where(...).First(&amp;user)<br>&#125;<br><br>ctxDB := db.WithContext(ctx)<br><span class="hljs-comment">// Safe after a `New Session Method`</span><br><span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">100</span>; i++ &#123;<br>  <span class="hljs-keyword">go</span> ctxDB.Where(...).First(&amp;user)<br>&#125;<br><br>ctxDB := db.Where(<span class="hljs-string">"name = ?"</span>, <span class="hljs-string">"jinzhu"</span>).WithContext(ctx)<br><span class="hljs-comment">// 调用 `New Session Method` 后是安全的</span><br><span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">100</span>; i++ &#123;<br>  <span class="hljs-keyword">go</span> ctxDB.Where(...).First(&amp;user) <span class="hljs-comment">// `name = 'jinzhu'` 会应用至该查询</span><br>&#125;<br><br>tx := db.Where(<span class="hljs-string">"name = ?"</span>, <span class="hljs-string">"jinzhu"</span>).Session(&amp;gorm.Session&#123;&#125;)<br><span class="hljs-comment">// 调用 `New Session Method` 后是安全的</span><br><span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">100</span>; i++ &#123;<br>  <span class="hljs-keyword">go</span> tx.Where(...).First(&amp;user) <span class="hljs-comment">// `name = 'jinzhu'` 会应用至该查询</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>查看 <a href="method_chaining.html">方法链</a> 获取详情</p>
+<h4 id="默认值"><a href="#默认值" class="headerlink" title="默认值"></a>默认值</h4><p>创建记录后，GORM V2 不会自动加载由数据库生成的默认值，查看 <a href="create.html#default_values">默认值</a> 获取详情</p>
+<h4 id="软删除"><a href="#软删除" class="headerlink" title="软删除"></a>软删除</h4><p>在 GORM V1 中，如果 model 中有一个名为 <code>DeletedAt</code> 的字段则自动开启软删除。在V2，您需要在想启用软删除的 model 中使用 <code>gorm.DeletedAt</code>，例如：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> User <span class="hljs-keyword">struct</span> &#123;<br>  ID        <span class="hljs-keyword">uint</span><br>  DeletedAt gorm.DeletedAt<br>&#125;<br><br><span class="hljs-keyword">type</span> User <span class="hljs-keyword">struct</span> &#123;<br>  ID      <span class="hljs-keyword">uint</span><br>  <span class="hljs-comment">// 字段名无要求</span><br>  Deleted gorm.DeletedAt<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<p><strong>注意：</strong> <code>gorm.Model</code> 使用了 <code>gorm.DeletedAt</code>，如果你已经嵌入了它，则不需要做什么修改</p>
+<h4 id="BlockGlobalUpdate"><a href="#BlockGlobalUpdate" class="headerlink" title="BlockGlobalUpdate"></a>BlockGlobalUpdate</h4><p>GORM V2 默认启用了 <code>BlockGlobalUpdate</code> 模式。想要触发全局 update&#x2F;delete，你必须使用一些条件、原生 SQL 或者启用 <code>AllowGlobalUpdate</code> 模式，例如：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs go">db.Where(<span class="hljs-string">"1 = 1"</span>).Delete(&amp;User&#123;&#125;)<br><br>db.Raw(<span class="hljs-string">"delete from users"</span>)<br><br>db.Session(&amp;gorm.Session&#123;AllowGlobalUpdate: <span class="hljs-literal">true</span>&#125;).Delete(&amp;User&#123;&#125;)<br></code></pre></td></tr></table></figure>
+
+<h4 id="ErrRecordNotFound"><a href="#ErrRecordNotFound" class="headerlink" title="ErrRecordNotFound"></a>ErrRecordNotFound</h4><p>GORM V2 只有在你使用 <code>First</code>、<code>Last</code>、<code>Take</code> 这些预期会返回结果的方法查询记录时，才会返回 <code>ErrRecordNotFound</code>，我们还移除了 <code>RecordNotFound</code> 方法，请使用 <code>errors.Is</code> 来检查错误，例如：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs go">err := db.First(&amp;user).Error<br>errors.Is(err, gorm.ErrRecordNotFound)<br></code></pre></td></tr></table></figure>
+
+<h4 id="Hook-方法"><a href="#Hook-方法" class="headerlink" title="Hook 方法"></a>Hook 方法</h4><p>在 V2 中，Before&#x2F;After Create&#x2F;Update&#x2F;Save&#x2F;Find&#x2F;Delete 必须定义为 <code>func(tx *gorm.DB) error</code> 类型的方法，这是类似于插件 callback 的统一接口。如果定义为其它类型，它不会生效，并且会打印一个警告日志，查看 <a href="hooks.html">Hook</a> 获取详情</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(user *User)</span> <span class="hljs-title">BeforeCreate</span><span class="hljs-params">(tx *gorm.DB)</span> <span class="hljs-title">error</span></span> &#123;<br>  <span class="hljs-comment">// 通过 tx.Statement 修改当前操作，例如：</span><br>  tx.Statement.Select(<span class="hljs-string">"Name"</span>, <span class="hljs-string">"Age"</span>)<br>  tx.Statement.AddClause(clause.OnConflict&#123;DoNothing: <span class="hljs-literal">true</span>&#125;)<br><br>  <span class="hljs-comment">// 除了当前子句，基于 tx 的操作会运行在同一个事务中</span><br>  <span class="hljs-keyword">var</span> role Role<br>  err := tx.First(&amp;role, <span class="hljs-string">"name = ?"</span>, user.Role).Error<br>  <span class="hljs-comment">// SELECT * FROM roles WHERE name = "admin"</span><br>  <span class="hljs-keyword">return</span> err<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h4 id="Update-Hook-支持-Changed"><a href="#Update-Hook-支持-Changed" class="headerlink" title="Update Hook 支持 Changed"></a>Update Hook 支持 <code>Changed</code></h4><p>当使用 <code>Update</code>，<code>Updates</code> 更新时，您可以在 <code>BeforeUpdate</code>, <code>BeforeSave</code> Hook 中使用 <code>Changed</code> 方法来检查字段是否有更改</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(user *User)</span> <span class="hljs-title">BeforeUpdate</span><span class="hljs-params">(tx *gorm.DB)</span> <span class="hljs-title">error</span></span> &#123;<br>  <span class="hljs-keyword">if</span> tx.Statement.Changed(<span class="hljs-string">"Name"</span>, <span class="hljs-string">"Admin"</span>) &#123; <span class="hljs-comment">// if Name or Admin changed</span><br>    tx.Statement.SetColumn(<span class="hljs-string">"Age"</span>, <span class="hljs-number">18</span>)<br>  &#125;<br><br>  <span class="hljs-keyword">if</span> tx.Statement.Changed() &#123; <span class="hljs-comment">// 如果任何字段有变动</span><br>    tx.Statement.SetColumn(<span class="hljs-string">"Age"</span>, <span class="hljs-number">18</span>)<br>  &#125;<br>  <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>&#125;<br><br>db.Model(&amp;user).Update(<span class="hljs-string">"Name"</span>, <span class="hljs-string">"Jinzhu"</span>) <span class="hljs-comment">// update field `Name` to `Jinzhu`</span><br>db.Model(&amp;user).Updates(<span class="hljs-keyword">map</span>[<span class="hljs-keyword">string</span>]<span class="hljs-keyword">interface</span>&#123;&#125;&#123;<span class="hljs-string">"name"</span>: <span class="hljs-string">"Jinzhu"</span>, <span class="hljs-string">"admin"</span>: <span class="hljs-literal">false</span>&#125;) <span class="hljs-comment">// update field `Name` to `Jinzhu`, `Admin` to false</span><br>db.Model(&amp;user).Updates(User&#123;Name: <span class="hljs-string">"Jinzhu"</span>, Admin: <span class="hljs-literal">false</span>&#125;) <span class="hljs-comment">// Update none zero fields when using struct as argument, will only update `Name` to `Jinzhu`</span><br><br>db.Model(&amp;user).Select(<span class="hljs-string">"Name"</span>, <span class="hljs-string">"Admin"</span>).Updates(User&#123;Name: <span class="hljs-string">"Jinzhu"</span>&#125;) <span class="hljs-comment">// update selected fields `Name`, `Admin`，`Admin` will be updated to zero value (false)</span><br>db.Model(&amp;user).Select(<span class="hljs-string">"Name"</span>, <span class="hljs-string">"Admin"</span>).Updates(<span class="hljs-keyword">map</span>[<span class="hljs-keyword">string</span>]<span class="hljs-keyword">interface</span>&#123;&#125;&#123;<span class="hljs-string">"Name"</span>: <span class="hljs-string">"Jinzhu"</span>&#125;) <span class="hljs-comment">// update selected fields exists in the map, will only update field `Name` to `Jinzhu`</span><br><br><span class="hljs-comment">// Attention: `Changed` will only check the field value of `Update` / `Updates` equals `Model`'s field value, it returns true if not equal and the field will be saved</span><br>db.Model(&amp;User&#123;ID: <span class="hljs-number">1</span>, Name: <span class="hljs-string">"jinzhu"</span>&#125;).Updates(<span class="hljs-keyword">map</span>[<span class="hljs-keyword">string</span>]<span class="hljs-keyword">interface</span>&#123;<span class="hljs-string">"name"</span>: <span class="hljs-string">"jinzhu2"</span>&#125;) <span class="hljs-comment">// Changed("Name") =&gt; true</span><br>db.Model(&amp;User&#123;ID: <span class="hljs-number">1</span>, Name: <span class="hljs-string">"jinzhu"</span>&#125;).Updates(<span class="hljs-keyword">map</span>[<span class="hljs-keyword">string</span>]<span class="hljs-keyword">interface</span>&#123;<span class="hljs-string">"name"</span>: <span class="hljs-string">"jinzhu"</span>&#125;) <span class="hljs-comment">// Changed("Name") =&gt; false, `Name` not changed</span><br>db.Model(&amp;User&#123;ID: <span class="hljs-number">1</span>, Name: <span class="hljs-string">"jinzhu"</span>&#125;).Select(<span class="hljs-string">"Admin"</span>).Updates(<span class="hljs-keyword">map</span>[<span class="hljs-keyword">string</span>]<span class="hljs-keyword">interface</span>&#123;<span class="hljs-string">"name"</span>: <span class="hljs-string">"jinzhu2"</span>, <span class="hljs-string">"admin"</span>: <span class="hljs-literal">false</span>&#125;) <span class="hljs-comment">// Changed("Name") =&gt; false, `Name` not selected to update</span><br><br>db.Model(&amp;User&#123;ID: <span class="hljs-number">1</span>, Name: <span class="hljs-string">"jinzhu"</span>&#125;).Updates(User&#123;Name: <span class="hljs-string">"jinzhu2"</span>&#125;) <span class="hljs-comment">// Changed("Name") =&gt; true</span><br>db.Model(&amp;User&#123;ID: <span class="hljs-number">1</span>, Name: <span class="hljs-string">"jinzhu"</span>&#125;).Updates(User&#123;Name: <span class="hljs-string">"jinzhu"</span>&#125;)  <span class="hljs-comment">// Changed("Name") =&gt; false, `Name` not changed</span><br>db.Model(&amp;User&#123;ID: <span class="hljs-number">1</span>, Name: <span class="hljs-string">"jinzhu"</span>&#125;).Select(<span class="hljs-string">"Admin"</span>).Updates(User&#123;Name: <span class="hljs-string">"jinzhu2"</span>&#125;) <span class="hljs-comment">// Changed("Name") =&gt; false, `Name` not selected to update</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="插件"><a href="#插件" class="headerlink" title="插件"></a>插件</h4><p>插件 callback 也需要被定义为 <code>func(tx *gorm.DB) error</code> 类型的方法，查看 <a href="write_plugins.html">Write Plugins</a> 获取详情</p>
+<h4 id="使用-struct-更新"><a href="#使用-struct-更新" class="headerlink" title="使用 struct 更新"></a>使用 struct 更新</h4><p>使用 struct 更新时，GORM V2 允许使用 <code>Select</code> 来选择要更新的零值字段，例如：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs go">db.Model(&amp;user).Select(<span class="hljs-string">"Role"</span>, <span class="hljs-string">"Age"</span>).Update(User&#123;Name: <span class="hljs-string">"jinzhu"</span>, Role: <span class="hljs-string">""</span>, Age: <span class="hljs-number">0</span>&#125;)<br></code></pre></td></tr></table></figure>
+
+<h4 id="关联"><a href="#关联" class="headerlink" title="关联"></a>关联</h4><p>GORM V1允许使用一些设置来跳过 create&#x2F;update 关联。在 V2 中，您可以使用 <code>Select</code> 来完成这项工作，例如：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs go">db.Omit(clause.Associations).Create(&amp;user)<br>db.Omit(clause.Associations).Save(&amp;user)<br><br>db.Select(<span class="hljs-string">"Company"</span>).Save(&amp;user)<br></code></pre></td></tr></table></figure>
+
+<p>此外，GORM V2 不再允许通过 <code>Set(&quot;gorm:auto_preload&quot;, true)</code> 进行预加载，你可以将 <code>Preload</code> 和 <code>clause.Associations</code> 配合使用，例如：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// 预加载所有关联</span><br>db.Preload(clause.Associations).Find(&amp;users)<br></code></pre></td></tr></table></figure>
+
+<p>此外，还可以查看字段权限，它可以用来全局跳过 creating&#x2F;updating 关联</p>
+<p>在创建、更新记录时，GORM V2 将使用 upsert 来保存关联记录。不会再保存完整的关联数据，避免受未完成数据的影响，以保护您的数据，例如：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs go">user := User&#123;<br>  Name:            <span class="hljs-string">"jinzhu"</span>,<br>  BillingAddress:  Address&#123;Address1: <span class="hljs-string">"Billing Address - Address 1"</span>&#125;,<br>  ShippingAddress: Address&#123;Address1: <span class="hljs-string">"Shipping Address - Address 1"</span>&#125;,<br>  Emails:          []Email&#123;<br>    &#123;Email: <span class="hljs-string">"jinzhu@example.com"</span>&#125;,<br>    &#123;Email: <span class="hljs-string">"jinzhu-2@example.com"</span>&#125;,<br>  &#125;,<br>  Languages:       []Language&#123;<br>    &#123;Name: <span class="hljs-string">"ZH"</span>&#125;,<br>    &#123;Name: <span class="hljs-string">"EN"</span>&#125;,<br>  &#125;,<br>&#125;<br><br>db.Create(&amp;user)<br><span class="hljs-comment">// BEGIN TRANSACTION;</span><br><span class="hljs-comment">// INSERT INTO "addresses" (address1) VALUES ("Billing Address - Address 1"), ("Shipping Address - Address 1") ON DUPLICATE KEY DO NOTHING;</span><br><span class="hljs-comment">// INSERT INTO "users" (name,billing_address_id,shipping_address_id) VALUES ("jinzhu", 1, 2);</span><br><span class="hljs-comment">// INSERT INTO "emails" (user_id,email) VALUES (111, "jinzhu@example.com"), (111, "jinzhu-2@example.com") ON DUPLICATE KEY DO NOTHING;</span><br><span class="hljs-comment">// INSERT INTO "languages" ("name") VALUES ('ZH'), ('EN') ON DUPLICATE KEY DO NOTHING;</span><br><span class="hljs-comment">// INSERT INTO "user_languages" ("user_id","language_id") VALUES (111, 1), (111, 2) ON DUPLICATE KEY DO NOTHING;</span><br><span class="hljs-comment">// COMMIT;</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="Join-Table"><a href="#Join-Table" class="headerlink" title="Join Table"></a>Join Table</h4><p>在 GORM V2 中，<code>JoinTable</code> 可以是一个带有 <code>软删除</code>、<code>Hook</code> 且定义了其它字段的全功能 model，例如：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> Person <span class="hljs-keyword">struct</span> &#123;<br>  ID        <span class="hljs-keyword">int</span><br>  Name      <span class="hljs-keyword">string</span><br>  Addresses []Address <span class="hljs-string">`gorm:"many2many:person_addresses;"`</span><br>&#125;<br><br><span class="hljs-keyword">type</span> Address <span class="hljs-keyword">struct</span> &#123;<br>  ID   <span class="hljs-keyword">uint</span><br>  Name <span class="hljs-keyword">string</span><br>&#125;<br><br><span class="hljs-keyword">type</span> PersonAddress <span class="hljs-keyword">struct</span> &#123;<br>  PersonID  <span class="hljs-keyword">int</span><br>  AddressID <span class="hljs-keyword">int</span><br>  CreatedAt time.Time<br>  DeletedAt gorm.DeletedAt<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(PersonAddress)</span> <span class="hljs-title">BeforeCreate</span><span class="hljs-params">(db *gorm.DB)</span> <span class="hljs-title">error</span></span> &#123;<br>  <span class="hljs-comment">// ...</span><br>&#125;<br><br><span class="hljs-comment">// PersonAddress 必须定义好所需的外键，否则会报错</span><br>err := db.SetupJoinTable(&amp;Person&#123;&#125;, <span class="hljs-string">"Addresses"</span>, &amp;PersonAddress&#123;&#125;)<br></code></pre></td></tr></table></figure>
+
+<p>然后，您可以使用标准的 GORM 方法来操作连接表的数据，例如：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">var</span> results []PersonAddress<br>db.Where(<span class="hljs-string">"person_id = ?"</span>, person.ID).Find(&amp;results)<br><br>db.Where(<span class="hljs-string">"address_id = ?"</span>, address.ID).Delete(&amp;PersonAddress&#123;&#125;)<br><br>db.Create(&amp;PersonAddress&#123;PersonID: person.ID, AddressID: address.ID&#125;)<br></code></pre></td></tr></table></figure>
+
+<h4 id="Count"><a href="#Count" class="headerlink" title="Count"></a>Count</h4><p>Count 仅支持 <code>*int64</code> 作为参数</p>
+<h4 id="事务"><a href="#事务" class="headerlink" title="事务"></a>事务</h4><p>移除了 <code>RollbackUnlessCommitted</code> 之类的事务方法，建议使用 <code>Transaction</code> 方法包裹事务</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs go">db.Transaction(<span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(tx *gorm.DB)</span> <span class="hljs-title">error</span></span> &#123;<br>  <span class="hljs-comment">// 在事务中执行一些 db 操作（从这里开始，您应该使用 'tx' 而不是 'db'）</span><br>  <span class="hljs-keyword">if</span> err := tx.Create(&amp;Animal&#123;Name: <span class="hljs-string">"Giraffe"</span>&#125;).Error; err != <span class="hljs-literal">nil</span> &#123;<br>    <span class="hljs-comment">// 返回任何错误都会回滚事务</span><br>    <span class="hljs-keyword">return</span> err<br>  &#125;<br><br>  <span class="hljs-keyword">if</span> err := tx.Create(&amp;Animal&#123;Name: <span class="hljs-string">"Lion"</span>&#125;).Error; err != <span class="hljs-literal">nil</span> &#123;<br>    <span class="hljs-keyword">return</span> err<br>  &#125;<br><br>  <span class="hljs-comment">// 返回 nil 提交事务</span><br>  <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>&#125;)<br></code></pre></td></tr></table></figure>
+
+<p>查看 <a href="transactions.html">事务</a> 获取详情</p>
+<h4 id="Migrator"><a href="#Migrator" class="headerlink" title="Migrator"></a>Migrator</h4><ul>
+<li>Migrator 默认会创建数据库外键</li>
+<li>Migrator 更加独立，重命名了很多 API，以便使用统一 API 接口为每个数据库提供更好的支持</li>
+<li>如果大小、精度、是否为空可以更改，则 AutoMigrate 会改变列的类型</li>
+<li>通过 <code>check</code> 标签支持检查器</li>
+<li>增强 <code>index</code> 标签的设置</li>
+</ul>
+<p>查看 <a href="migration.html">Migration</a> 获取详情</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> UserIndex <span class="hljs-keyword">struct</span> &#123;<br>  Name  <span class="hljs-keyword">string</span> <span class="hljs-string">`gorm:"check:named_checker,(name &lt;&gt; 'jinzhu')"`</span><br>  Name2 <span class="hljs-keyword">string</span> <span class="hljs-string">`gorm:"check:(age &gt; 13)"`</span><br>  Name4 <span class="hljs-keyword">string</span> <span class="hljs-string">`gorm:"index"`</span><br>  Name5 <span class="hljs-keyword">string</span> <span class="hljs-string">`gorm:"index:idx_name,unique"`</span><br>  Name6 <span class="hljs-keyword">string</span> <span class="hljs-string">`gorm:"index:,sort:desc,collate:utf8,type:btree,length:10,where:name3 != 'jinzhu'"`</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="Happy-Hacking"><a href="#Happy-Hacking" class="headerlink" title="Happy Hacking!"></a>Happy Hacking!</h2><style>
+li.toc-item { list-style: none; }
+li.toc-item.toc-level-4 { display: none; }
+</style>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Go/" class="category-chain-item">Go</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Go/" class="print-no-link">#Go</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>v2_release_note</div>
+      <div>https://flepeng.github.io/021-Go-34-框架-41-Gorm-V2-v2-release-note/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Go</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年12月4日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/021-Go-34-%E6%A1%86%E6%9E%B6-41-Gorm-V2-transactions/" title="transactions">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">transactions</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/021-Go-34-%E6%A1%86%E6%9E%B6-41-Gorm-V2-write-driver/" title="write_driver">
+                        <span class="hidden-mobile">write_driver</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

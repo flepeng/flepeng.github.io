@@ -1,0 +1,909 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Apache Hive 概述什么是Hive?Apache Hive 是一款建立在 Hadoop 之上的开源数据仓库系统，可以将存储在 Hadoop 文件中的结构化、半结构化数据文件映射为一张数据库表，基于表提供了一种类似SQL的查询模型，称为 Hive查询语言（HQL），用于访问和分析存储在 Hadoop 文件中的大型数据集。 Hive核心是将 HQL转换为MapReduce 程序，然后将程序提交">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hive 基础">
+<meta property="og:url" content="https://flepeng.github.io/045-Hive-00-%E7%AE%80%E4%BB%8B-Hive-%E5%9F%BA%E7%A1%80/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="Apache Hive 概述什么是Hive?Apache Hive 是一款建立在 Hadoop 之上的开源数据仓库系统，可以将存储在 Hadoop 文件中的结构化、半结构化数据文件映射为一张数据库表，基于表提供了一种类似SQL的查询模型，称为 Hive查询语言（HQL），用于访问和分析存储在 Hadoop 文件中的大型数据集。 Hive核心是将 HQL转换为MapReduce 程序，然后将程序提交">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/hive/00/image-20211114160002373.png">
+<meta property="og:image" content="https://flepeng.github.io/img/hive/00/image-20211114160217225.png">
+<meta property="og:image" content="https://flepeng.github.io/img/hive/00/image-20211114160419095.png">
+<meta property="og:image" content="https://flepeng.github.io/img/hive/00/image-20211114160616262.png">
+<meta property="og:image" content="https://flepeng.github.io/img/hive/00/image-20211114160824946.png">
+<meta property="og:image" content="https://flepeng.github.io/img/hive/00/image-20211114160934535.png">
+<meta property="og:image" content="https://flepeng.github.io/img/hive/00/image-20211114161137752.png">
+<meta property="og:image" content="https://flepeng.github.io/img/hive/00/image-20211114161259737.png">
+<meta property="og:image" content="https://flepeng.github.io/img/hive/00/image-20211114161325712.png">
+<meta property="og:image" content="https://flepeng.github.io/img/hive/00/image-20211114161458361.png">
+<meta property="og:image" content="https://flepeng.github.io/img/hive/00/image-20211114161535056.png">
+<meta property="article:published_time" content="2024-12-31T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.405Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Hive">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/hive/00/image-20211114160002373.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>Hive 基础 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Hive 基础"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-01 00:00" pubdate>
+          2025年1月1日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.8k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          16 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Hive 基础</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="Apache-Hive-概述"><a href="#Apache-Hive-概述" class="headerlink" title="Apache Hive 概述"></a>Apache Hive 概述</h2><h3 id="什么是Hive"><a href="#什么是Hive" class="headerlink" title="什么是Hive?"></a>什么是Hive?</h3><p>Apache Hive 是一款建立在 Hadoop 之上的开源数据仓库系统，可以将存储在 Hadoop 文件中的结构化、半结构化数据文件<strong>映射</strong>为一张数据库表，基于表提供了一种类似SQL的查询模型，称为 <code>Hive查询语言（HQL）</code>，用于访问和分析存储在 Hadoop 文件中的大型数据集。</p>
+<p>Hive核心是将 <strong>HQL转换为MapReduce</strong> 程序，然后将程序提交到 Hadoop 群集执行。Hive 由 Facebook 实现并开源。</p>
+<p><img src="/img/hive/00/image-20211114160002373.png" srcset="/img/loading.gif" lazyload alt="image-20211114160002373"></p>
+<h3 id="使用Hive的原因"><a href="#使用Hive的原因" class="headerlink" title="使用Hive的原因?"></a>使用Hive的原因?</h3><p><strong>使用Hadoop MapReduce直接处理数据所面临的问题:</strong> </p>
+<ul>
+<li>人员学习成本太高 需要掌握java语言</li>
+<li>MapReduce实现复杂查询逻辑开发难度太大</li>
+</ul>
+<p><strong>使用Hive处理数据的好处:</strong> </p>
+<ul>
+<li>操作接口采用类 SQL 语法，提供快速开发的能力（简单、容易上手）</li>
+<li>避免直接写 MapReduce，减少开发人员的学习成本</li>
+<li>支持自定义函数，功能扩展很方便</li>
+<li>背靠Hadoop，擅长存储分析海量数据集</li>
+</ul>
+<h3 id="Hive与Hadoop的关系"><a href="#Hive与Hadoop的关系" class="headerlink" title="Hive与Hadoop的关系"></a>Hive与Hadoop的关系</h3><p>从功能来说，数据仓库软件，至少需要具备下述两种能力：</p>
+<ul>
+<li>存储数据的能力</li>
+<li>分析数据的能力</li>
+</ul>
+<p>Hive 作为一款大数据时代的数据仓库软件，当然也具备上述两种能力。只不过 Hive 并不是自己实现了上述两种能力，而是借助 Hadoop。</p>
+<p>Hive 利用 HDFS 存储数据，利用 MapReduce 查询分析数据。Hive 的最大的魅力在于用户专注于编写 HQL，Hive 帮用户转换成为 MapReduce 程序完成对数据的分析。</p>
+<p><img src="/img/hive/00/image-20211114160217225.png" srcset="/img/loading.gif" lazyload alt="image-20211114160217225"></p>
+<h3 id="功能实现关键"><a href="#功能实现关键" class="headerlink" title="功能实现关键"></a>功能实现关键</h3><h4 id="映射信息记录"><a href="#映射信息记录" class="headerlink" title="映射信息记录"></a>映射信息记录</h4><p>映射在数学上称之为一种对应关系，比如 <code>y=x+1</code>，对于每一个 x 的值都有与之对应的 y 的值。在 Hive 中能够写 sql 处理的前提是针对表，而不是针对文件，因此需要将文件和表之间的对应关系描述记录清楚。映射信息专业的叫法称之为元数据信息（元数据是指用来描述数据的数据 metadata）。</p>
+<p><img src="/img/hive/00/image-20211114160419095.png" srcset="/img/loading.gif" lazyload alt="image-20211114160419095"></p>
+<p><strong>元数据信息包括：</strong></p>
+<ul>
+<li>表对应着哪个文件（位置信息）</li>
+<li>表的列对应着文件哪一个字段（顺序信息）</li>
+<li>文件字段之间的分隔符是什么</li>
+</ul>
+<h4 id="Sql语法解析、编译"><a href="#Sql语法解析、编译" class="headerlink" title="Sql语法解析、编译"></a>Sql语法解析、编译</h4><p>用户写完 sql 之后，Hive 需要针对 sql 进行语法校验，并且根据记录的元数据信息解读 sql 背后的含义，制定执行计划。并且把执行计划转换成 MapReduce 程序来执行，把执行的结果封装返回给用户。</p>
+<p><img src="/img/hive/00/image-20211114160616262.png" srcset="/img/loading.gif" lazyload alt="image-20211114160616262"></p>
+<h2 id="Hive架构、组件"><a href="#Hive架构、组件" class="headerlink" title="Hive架构、组件"></a>Hive架构、组件</h2><h3 id="Hive-架构图"><a href="#Hive-架构图" class="headerlink" title="Hive 架构图"></a>Hive 架构图</h3><p><img src="/img/hive/00/image-20211114160824946.png" srcset="/img/loading.gif" lazyload alt="image-20211114160824946"></p>
+<h3 id="Hive-组件"><a href="#Hive-组件" class="headerlink" title="Hive 组件"></a>Hive 组件</h3><p><strong>用户接口</strong>：包括 CLI、JDBC&#x2F;ODBC、WebGUI。其中，CLI(command line interface)为shell命令行；Hive中的Thrift服务器允许外部客户端通过网络与Hive进行交互，类似于JDBC或ODBC协议。WebGUI是通过浏览器访问Hive。</p>
+<p><strong>元数据存储</strong>：通常是存储在关系数据库如 mysql&#x2F;derby中。Hive 中的元数据包括表的名字，表的列和分区及其属性，表的属性（是否为外部表等），表的数据所在目录等。</p>
+<p><strong>Driver 驱动程序</strong>：包括语法解析器、计划编译器、优化器、执行器:完成 HQL 查询语句从词法分析、语法分析、编译、优化以及查询计划的生成。生成的查询计划存储在 HDFS 中，并在随后有执行引擎调用执行。</p>
+<p><strong>执行引擎</strong>：Hive本身并不直接处理数据文件。而是通过执行引擎处理。当下Hive支持MapReduce、Tez、Spark3种执行引擎。</p>
+<h2 id="Hive-数据模型（Data-Model）"><a href="#Hive-数据模型（Data-Model）" class="headerlink" title="Hive 数据模型（Data Model）"></a>Hive 数据模型（Data Model）</h2><p>数据模型：用来描述数据、组织数据和对数据进行操作，是对现实世界数据特征的描述。Hive 的数据模型类似于 RDBMS 库表结构，此外还有自己特有模型。</p>
+<p>Hive 中的数据可以在粒度级别上分为三类：</p>
+<ul>
+<li>Table 表</li>
+<li>Partition 分区</li>
+<li>Bucket 分桶</li>
+</ul>
+<p><img src="/img/hive/00/image-20211114160934535.png" srcset="/img/loading.gif" lazyload alt="image-20211114160934535"></p>
+<h4 id="Databases"><a href="#Databases" class="headerlink" title="Databases"></a>Databases</h4><p>Hive 作为一个数据仓库，在结构上积极向传统数据库看齐，也分数据库（Schema），每个数据库下面有各自的表组成。默认数据库 default。</p>
+<p>Hive 的数据都是存储在 HDFS 上的，默认有一个根目录，在 <code>hive-site.xml</code> 中，由参数 <code>hive.metastore.warehouse.dir</code> 指定。默认值为 <code>/user/hive/warehouse</code>。因此，Hive 中的数据库在 HDFS 上的存储路径为：<code>${hive.metastore.warehouse.dir}/databasename.db</code></p>
+<p>比如，名为 lepeng 的数据库存储路径为：&#x2F;user&#x2F;hive&#x2F;warehouse&#x2F;lepeng.db</p>
+<h4 id="Tables"><a href="#Tables" class="headerlink" title="Tables"></a>Tables</h4><p>Hive 表与关系数据库中的表相同。Hive 中的表所对应的数据是存储在 Hadoop 的文件系统中，而表相关的元数据是存储在 RDBMS 中。在 Hadoop 中，数据通常驻留在 HDFS 中，尽管它可以驻留在任何 Hadoop 文件系统中，包括本地文件系统或 S3。Hive 有两种类型的表：</p>
+<ul>
+<li>Managed Table  内部表、托管表</li>
+<li>External Table 外部表</li>
+</ul>
+<p>创建表时，默是内部表。Hive 中的表的数据在HDFS上的存储路径为：<code>${hive.metastore.warehouse.dir}/databasename.db/tablename</code></p>
+<p>比如 <code>itcast</code> 的数据库下 <code>t_user</code> 表存储路径为：<code>/user/hive/warehouse/itcast.db/t_user</code></p>
+<p><img src="/img/hive/00/image-20211114161137752.png" srcset="/img/loading.gif" lazyload alt="image-20211114161137752"></p>
+<h4 id="Partitions"><a href="#Partitions" class="headerlink" title="Partitions"></a>Partitions</h4><p>Partition 分区是 Hive 的一种优化手段表。<strong>分区是指根据分区列（例如“日期day”）的值将表划分为不同分区</strong>。这样可以更快地对指定分区数据进行查询。分区在存储层面上的表现是:table 表目录下以子文件夹形式存在。一个文件夹表示一个分区。</p>
+<p>子文件命名标准：<strong>分区列&#x3D;分区值</strong></p>
+<p>Hive 还支持分区下继续创建分区，所谓的多重分区。</p>
+<p><img src="/img/hive/00/image-20211114161259737.png" srcset="/img/loading.gif" lazyload alt="image-20211114161259737"></p>
+<h4 id="Buckets"><a href="#Buckets" class="headerlink" title="Buckets"></a>Buckets</h4><p>Bucket 分桶表是 Hive 的一种优化手段表。<strong>分桶是指根据表中字段（例如“编号ID”）的值,经过 hash 计算规则将数据文件划分成指定的若干个小文件</strong>。</p>
+<p><img src="/img/hive/00/image-20211114161325712.png" srcset="/img/loading.gif" lazyload alt="image-20211114161325712"></p>
+<p>分桶规则：<code>hashfunc(ID) % 桶个数</code>，余数相同的分到同一个文件。分桶的好处是可以优化 join 查询和方便抽样查询。Bucket 分桶表在 hdfs 中表现为同一个表目录下数据根据 hash 散列之后变成多个文件。</p>
+<p><img src="/img/hive/00/image-20211114161458361.png" srcset="/img/loading.gif" lazyload alt="image-20211114161458361"></p>
+<p>Hive 虽然具有 RDBMS 数据库的外表，包括数据模型、SQL语法都十分相似，但应用场景却完全不同。Hive 只适合用来做海量数据的离线分析。Hive 的定位是数据仓库，面向分析的 OLAP 系统。因此时刻告诉自己，Hive 不是大型数据库，也不是要取代 MyDQL 承担业务数据处理。</p>
+<p>更直观的对比请看下面这幅图：</p>
+<p><img src="/img/hive/00/image-20211114161535056.png" srcset="/img/loading.gif" lazyload alt="image-20211114161535056"></p>
+<h2 id="Hive-与传统数据库对比"><a href="#Hive-与传统数据库对比" class="headerlink" title="Hive 与传统数据库对比"></a>Hive 与传统数据库对比</h2><p>Hive 虽然与 RDBMS 数据库在数据模型、SQL 语法等方面都十分相似，但应用场景却完全不同。Hive 只适合用来做海量数据的离线分析。Hive 的定位是数据仓库，面向分析的 OLAP 系统。具体的对比如下图所示：</p>
+<table>
+<thead>
+<tr>
+<th>对比项</th>
+<th>Hive</th>
+<th>MySQL</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>查询语言</td>
+<td>Hive QL</td>
+<td>SQL</td>
+</tr>
+<tr>
+<td>数据存储位置</td>
+<td>HDFS</td>
+<td>块设备、本地文件系统</td>
+</tr>
+<tr>
+<td>数据格式</td>
+<td>用户定义</td>
+<td>系统决定</td>
+</tr>
+<tr>
+<td>数据更新</td>
+<td>不支持</td>
+<td>支持</td>
+</tr>
+<tr>
+<td>事务</td>
+<td>不支持</td>
+<td>支持</td>
+</tr>
+<tr>
+<td>执行延迟</td>
+<td>高</td>
+<td>低</td>
+</tr>
+<tr>
+<td>可扩展性</td>
+<td>高</td>
+<td>低</td>
+</tr>
+<tr>
+<td>数据规模</td>
+<td>大</td>
+<td>小</td>
+</tr>
+<tr>
+<td>多表插入</td>
+<td>支持</td>
+<td>不支持</td>
+</tr>
+</tbody></table>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Hive/" class="category-chain-item">Hive</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Hive/" class="print-no-link">#Hive</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Hive 基础</div>
+      <div>https://flepeng.github.io/045-Hive-00-简介-Hive-基础/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月1日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/045-Hive-00-%E7%AE%80%E4%BB%8B-%E6%95%B0%E6%8D%AE%E4%BB%93%E5%BA%93%E5%9F%BA%E7%A1%80/" title="数据仓库基础">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">数据仓库基础</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/021-Go-33-Go-%E7%AC%AC%E4%B8%89%E6%96%B9%E5%8C%85-Go-%E7%AC%AC%E4%B8%89%E6%96%B9%E5%8C%85%E4%B9%8B-go-redis-%E6%93%8D%E4%BD%9C-Redis/" title="Go 第三方包之 go-redis 操作 Redis">
+                        <span class="hidden-mobile">Go 第三方包之 go-redis 操作 Redis</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

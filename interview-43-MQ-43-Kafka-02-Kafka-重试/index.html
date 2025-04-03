@@ -1,0 +1,808 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="官网保平安：https:&#x2F;&#x2F;kafka.apache.org&#x2F;  基础在 Kafka 中，消费者（Consumer）如果没有确认消息（即没有提交Offset），下一次拉取数据的结果将取决于 Offset 的当前值和消费者的配置。以下是几种可能的情况：  自动提交 Offset。如果 Kafka 消费者配置为自动提交 Offset（enable.auto.commit&#x3D;true），则 Kafk">
+<meta property="og:type" content="article">
+<meta property="og:title" content="02-Kafka 重试">
+<meta property="og:url" content="https://flepeng.github.io/interview-43-MQ-43-Kafka-02-Kafka-%E9%87%8D%E8%AF%95/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="官网保平安：https:&#x2F;&#x2F;kafka.apache.org&#x2F;  基础在 Kafka 中，消费者（Consumer）如果没有确认消息（即没有提交Offset），下一次拉取数据的结果将取决于 Offset 的当前值和消费者的配置。以下是几种可能的情况：  自动提交 Offset。如果 Kafka 消费者配置为自动提交 Offset（enable.auto.commit&#x3D;true），则 Kafk">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-08-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.490Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Kafka">
+<meta property="article:tag" content="面试">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>02-Kafka 重试 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="02-Kafka 重试"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2020-08-08 00:00" pubdate>
+          2020年8月8日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          18 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">02-Kafka 重试</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <blockquote>
+<p>  官网保平安：<a href="https://kafka.apache.org/" target="_blank" rel="noopener">https://kafka.apache.org/</a></p>
+</blockquote>
+<h2 id="基础"><a href="#基础" class="headerlink" title="基础"></a>基础</h2><p>在 Kafka 中，消费者（Consumer）如果没有确认消息（即没有提交Offset），下一次拉取数据的结果将取决于 Offset 的当前值和消费者的配置。以下是几种可能的情况：</p>
+<ol>
+<li><p>自动提交 Offset。如果 Kafka 消费者配置为自动提交 Offset（<code>enable.auto.commit=true</code>），则 Kafka 消费者会在满足某些条件时自动提交当前消费到的 Offset。这些条件通常包括调用 <code>poll()</code> 方法处理消息、达到一定的时间间隔（<code>auto.commit.interval.ms</code>）等。然而，如果消费者在消息处理过程中出现异常或崩溃，且这些异常发生在自动提交 Offset 之前，那么已经消费但尚未确认的消息可能会在消费者重启后被重新消费。</p>
+<p>下一次拉取结果：</p>
+<ul>
+<li>在自动提交 Offset 的情况下，如果消费者没有因为异常而中断，那么下一次拉取的数据将是当前 Offset 之后的新数据。</li>
+<li>如果消费者因为异常而中断，并且 Offset 没有正确提交，那么重启后的消费者可能会从上一个自动提交的 Offset 开始重新消费数据，包括之前已经消费但尚未确认的消息。</li>
+</ul>
+</li>
+<li><p>手动提交 Offset。如果 Kafka 消费者配置为手动提交 Offset（<code>enable.auto.commit=false</code>），那么消费者需要在确保消息被正确处理后再显式地调用 API（如<code>commitSync()</code> 或 <code>commitAsync()</code>）来提交 Offset。</p>
+<p>下一次拉取结果：</p>
+<ul>
+<li>在手动提交 Offset 的情况下，如果消费者在消息处理过程中没有提交 Offset 就发生了异常或崩溃，那么重启后的消费者将从上一次成功提交的 Offset 开始消费数据。这意味着，如果消费者在消费消息后没有提交 Offset 就崩溃了，那么这些消息在消费者重启后会被重新消费。</li>
+</ul>
+</li>
+</ol>
+<h2 id="Kafka-重试机制"><a href="#Kafka-重试机制" class="headerlink" title="Kafka 重试机制"></a>Kafka 重试机制</h2><p>在 Kafka 如何保证消息不丢失这里，我们提到了 Kafka 的 消费者 重试机制。</p>
+<p>网上关于 Spring Kafka 的默认重试机制文章很多，但大多都是过时的，和实际运行结果完全不一样。以下是根据 <a href="https://mvnrepository.com/artifact/org.springframework.kafka/spring-kafka/2.9.3" target="_blank" rel="noopener">spring-kafka-2.9.3</a> 源码重新梳理一下。</p>
+<h3 id="消费失败会怎么样？"><a href="#消费失败会怎么样？" class="headerlink" title="消费失败会怎么样？"></a>消费失败会怎么样？</h3><p>在消费过程中，当其中一个消息消费异常时，会不会卡住后续队列消息的消费？这样业务岂不是卡住了？</p>
+<p>生产者代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs Java"><span class="hljs-keyword">for</span> (<span class="hljs-keyword">int</span> i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">10</span>; i++) &#123;<br>   kafkaTemplate.send(KafkaConst.TEST_TOPIC, String.valueOf(i))<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>消费者消代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs Java"><span class="hljs-meta">@KafkaListener</span>(topics = &#123;KafkaConst.TEST_TOPIC&#125;,groupId = <span class="hljs-string">"apple"</span>)<br><span class="hljs-function"><span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title">customer</span><span class="hljs-params">(String message)</span> <span class="hljs-keyword">throws</span> InterruptedException </span>&#123;<br>    log.info(<span class="hljs-string">"kafka customer:&#123;&#125;"</span>,message);<br>    Integer n = Integer.parseInt(message);<br>    <span class="hljs-keyword">if</span> (n%<span class="hljs-number">5</span>==<span class="hljs-number">0</span>)&#123;<br>        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span>  RuntimeException();<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>在默认配置下，当消费异常会进行重试，重试多次后会跳过当前消息，继续进行后续消息的消费，不会一直卡在当前消息。下面是一段消费的日志，可以看出当 <code>test-0@95</code> 重试多次后会被跳过。</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs Java">2023-08-10 12:03:32.918 DEBUG 9700 --- [ntainer#0-0-C-1] o.s.kafka.listener.DefaultErrorHandler   : Skipping seek of: test-0@95<br>2023-08-10 12:03:32.918 TRACE 9700 --- [ntainer#0-0-C-1] o.s.kafka.listener.DefaultErrorHandler   : Seeking: test-0 to: 96<br>2023-08-10 12:03:32.918  INFO 9700 --- [ntainer#0-0-C-1] o.a.k.clients.consumer.KafkaConsumer     : [Consumer clientId=consumer-apple-1, groupId=apple] Seeking to offset 96 for partition test-0<br></code></pre></td></tr></table></figure>
+
+<p>因此，即使某个消息消费异常，Kafka 消费者仍然能够继续消费后续的消息，不会一直卡在当前消息，保证了业务的正常进行。</p>
+<h3 id="默认会重试多少次？★★★"><a href="#默认会重试多少次？★★★" class="headerlink" title="默认会重试多少次？★★★"></a>默认会重试多少次？★★★</h3><p>默认配置下，消费异常会进行重试，重试次数是多少, 重试是否有时间间隔？</p>
+<p>看源码 <code>FailedRecordTracker</code> 类有个 <code>recovered</code> 函数，返回 Boolean 值判断是否要进行重试，下面是这个函数中判断是否重试的逻辑：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Override</span><br><span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">boolean</span> <span class="hljs-title">recovered</span><span class="hljs-params">(ConsumerRecord &lt;&lt; ? , ? &gt; record, Exception exception,</span></span><br><span class="hljs-function"><span class="hljs-params">    @Nullable MessageListenerContainer container,</span></span><br><span class="hljs-function"><span class="hljs-params">    @Nullable Consumer &lt;&lt; ? , ? &gt; consumer)</span> <span class="hljs-keyword">throws</span> InterruptedException </span>&#123;<br><br>    <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.noRetries) &#123;<br>     <span class="hljs-comment">// 不支持重试</span><br>        attemptRecovery(record, exception, <span class="hljs-keyword">null</span>, consumer);<br>        <span class="hljs-keyword">return</span> <span class="hljs-keyword">true</span>;<br>    &#125;<br>    <span class="hljs-comment">// 取已经失败的消费记录集合</span><br>    Map &lt; TopicPartition, FailedRecord &gt; map = <span class="hljs-keyword">this</span>.failures.get();<br>    <span class="hljs-keyword">if</span> (map == <span class="hljs-keyword">null</span>) &#123;<br>        <span class="hljs-keyword">this</span>.failures.set(<span class="hljs-keyword">new</span> HashMap &lt; &gt; ());<br>        map = <span class="hljs-keyword">this</span>.failures.get();<br>    &#125;<br>    <span class="hljs-comment">//  获取消费记录所在的Topic和Partition</span><br>    TopicPartition topicPartition = <span class="hljs-keyword">new</span> TopicPartition(record.topic(), record.partition());<br>    FailedRecord failedRecord = getFailedRecordInstance(record, exception, map, topicPartition);<br>    <span class="hljs-comment">// 通知注册的重试监听器，消息投递失败</span><br>    <span class="hljs-keyword">this</span>.retryListeners.forEach(rl - &gt;<br>        rl.failedDelivery(record, exception, failedRecord.getDeliveryAttempts().get()));<br>        <span class="hljs-comment">// 获取下一次重试的时间间隔</span><br>    <span class="hljs-keyword">long</span> nextBackOff = failedRecord.getBackOffExecution().nextBackOff();<br>    <span class="hljs-keyword">if</span> (nextBackOff != BackOffExecution.STOP) &#123;<br>        <span class="hljs-keyword">this</span>.backOffHandler.onNextBackOff(container, exception, nextBackOff);<br>        <span class="hljs-keyword">return</span> <span class="hljs-keyword">false</span>;<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        attemptRecovery(record, exception, topicPartition, consumer);<br>        map.remove(topicPartition);<br>        <span class="hljs-keyword">if</span> (map.isEmpty()) &#123;<br>            <span class="hljs-keyword">this</span>.failures.remove();<br>        &#125;<br>        <span class="hljs-keyword">return</span> <span class="hljs-keyword">true</span>;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>其中， <code>BackOffExecution.STOP</code> 的值为 -1。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@FunctionalInterface</span><br><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">interface</span> <span class="hljs-title">BackOffExecution</span> </span>&#123;<br>    <span class="hljs-keyword">long</span> STOP = -<span class="hljs-number">1</span>;<br>    <span class="hljs-function"><span class="hljs-keyword">long</span> <span class="hljs-title">nextBackOff</span><span class="hljs-params">()</span></span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><code>nextBackOff</code> 的值调用 <code>BackOff</code> 类的 <code>nextBackOff()</code> 函数。如果当前执行次数大于最大执行次数则返回 <code>STOP</code>，既超过这个最大执行次数后才会停止重试。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs Java"><span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">long</span> <span class="hljs-title">nextBackOff</span><span class="hljs-params">()</span> </span>&#123;<br>  <span class="hljs-keyword">this</span>.currentAttempts++;<br>  <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.currentAttempts &lt;= getMaxAttempts()) &#123;<br>    <span class="hljs-keyword">return</span> getInterval();<br>  &#125;<br>  <span class="hljs-keyword">else</span> &#123;<br>    <span class="hljs-keyword">return</span> STOP;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>那么这个 <code>getMaxAttempts</code> 的值又是多少呢？回到最开始，当执行出错会进入 <code>DefaultErrorHandler</code>。<code>DefaultErrorHandler</code> 默认的构造函数是：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs Java"><span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-title">DefaultErrorHandler</span><span class="hljs-params">()</span> </span>&#123;<br>  <span class="hljs-keyword">this</span>(<span class="hljs-keyword">null</span>, SeekUtils.DEFAULT_BACK_OFF);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><code>SeekUtils.DEFAULT_BACK_OFF</code> 定义的是:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs Java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-keyword">int</span> DEFAULT_MAX_FAILURES = <span class="hljs-number">10</span>;<br><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> FixedBackOff DEFAULT_BACK_OFF = <span class="hljs-keyword">new</span> FixedBackOff(<span class="hljs-number">0</span>, DEFAULT_MAX_FAILURES - <span class="hljs-number">1</span>);<br></code></pre></td></tr></table></figure>
+
+<p><code>DEFAULT_MAX_FAILURES</code> 的值是 10，<code>currentAttempts</code> 从 0 到 9，所以总共会执行 10 次，每次重试的时间间隔为 0。</p>
+<p>最后，简单总结一下：Kafka 消费者在默认配置下会进行最多 10 次 的重试，每次重试的时间间隔为 0，即立即进行重试。如果在 10 次重试后仍然无法成功消费消息，则不再进行重试，消息将被视为消费失败。</p>
+<h3 id="如何自定义重试次数以及时间间隔"><a href="#如何自定义重试次数以及时间间隔" class="headerlink" title="如何自定义重试次数以及时间间隔?"></a>如何自定义重试次数以及时间间隔?</h3><p>从上面的代码可以知道，默认错误处理器的重试次数以及时间间隔是由 <code>FixedBackOff</code> 控制的，<code>FixedBackOff</code> 是 <code>DefaultErrorHandler</code> 初始化时默认的。所以自定义重试次数以及时间间隔，只需要在 <code>DefaultErrorHandler</code> 初始化的时候传入自定义的 <code>FixedBackOff</code> 即可。重新实现一个 <code>KafkaListenerContainerFactory</code> ，调用 <code>setCommonErrorHandler</code> 设置新的自定义的错误处理器就可以实现。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs Java"><span class="hljs-meta">@Bean</span><br><span class="hljs-function"><span class="hljs-keyword">public</span> KafkaListenerContainerFactory <span class="hljs-title">kafkaListenerContainerFactory</span><span class="hljs-params">(ConsumerFactory&lt;String, String&gt; consumerFactory)</span> </span>&#123;<br>    ConcurrentKafkaListenerContainerFactory factory = <span class="hljs-keyword">new</span> ConcurrentKafkaListenerContainerFactory();<br>    <span class="hljs-comment">// 自定义重试时间间隔以及次数</span><br>    FixedBackOff fixedBackOff = <span class="hljs-keyword">new</span> FixedBackOff(<span class="hljs-number">1000</span>, <span class="hljs-number">5</span>);<br>    factory.setCommonErrorHandler(<span class="hljs-keyword">new</span> DefaultErrorHandler(fixedBackOff));<br>    factory.setConsumerFactory(consumerFactory);<br>    <span class="hljs-keyword">return</span> factory;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="如何在重试失败后进行告警"><a href="#如何在重试失败后进行告警" class="headerlink" title="如何在重试失败后进行告警?"></a>如何在重试失败后进行告警?</h3><p>自定义重试失败后逻辑，需要手动实现，以下是一个简单的例子，重写 <code>DefaultErrorHandler</code> 的 <code>handleRemaining</code> 函数，加上自定义的告警等操作。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs Java"><span class="hljs-meta">@Slf</span>4j<br><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">DelErrorHandler</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">DefaultErrorHandler</span> </span>&#123;<br><br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-title">DelErrorHandler</span><span class="hljs-params">(FixedBackOff backOff)</span> </span>&#123;<br>        <span class="hljs-keyword">super</span>(<span class="hljs-keyword">null</span>,backOff);<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">handleRemaining</span><span class="hljs-params">(Exception thrownException, List&lt;ConsumerRecord&lt;?, ?&gt;&gt; records, Consumer&lt;?, ?&gt; consumer, MessageListenerContainer container)</span> </span>&#123;<br>        <span class="hljs-keyword">super</span>.handleRemaining(thrownException, records, consumer, container);<br>        log.info(<span class="hljs-string">"重试多次失败"</span>);<br>        <span class="hljs-comment">// 自定义操作</span><br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><code>DefaultErrorHandler</code> 只是默认的一个错误处理器，Spring Kafka 还提供了 <code>CommonErrorHandler</code> 接口。手动实现 <code>CommonErrorHandler</code> 就可以实现更多的自定义操作，有很高的灵活性。例如根据不同的错误类型，实现不同的重试逻辑以及业务逻辑等。</p>
+<h3 id="重试失败后的数据如何再次处理"><a href="#重试失败后的数据如何再次处理" class="headerlink" title="重试失败后的数据如何再次处理?"></a>重试失败后的数据如何再次处理?</h3><p>当达到最大重试次数后，数据会直接被跳过，继续向后进行。当代码修复后，如何重新消费这些重试失败的数据呢？</p>
+<p><strong>死信队列（Dead Letter Queue，简称 DLQ）</strong> 是消息中间件中的一种特殊队列。它主要用于处理无法被消费者正确处理的消息，通常是因为消息格式错误、处理失败、消费超时等情况导致的消息被”丢弃”或”死亡”的情况。当消息进入队列后，消费者会尝试处理它。如果处理失败，或者超过一定的重试次数仍无法被成功处理，消息可以发送到死信队列中，而不是被永久性地丢弃。在死信队列中，可以进一步分析、处理这些无法正常消费的消息，以便定位问题、修复错误，并采取适当的措施。</p>
+<p><code>@RetryableTopic</code> 是 Spring Kafka 中的一个注解,它用于配置某个 Topic 支持消息重试，更推荐使用这个注解来完成重试。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs Java"><span class="hljs-comment">// 重试 5 次，重试间隔 100 毫秒,最大间隔 1 秒</span><br><span class="hljs-meta">@RetryableTopic</span>(<br>        attempts = <span class="hljs-string">"5"</span>,<br>        backoff = <span class="hljs-meta">@Backoff</span>(delay = <span class="hljs-number">100</span>, maxDelay = <span class="hljs-number">1000</span>)<br>)<br><span class="hljs-meta">@KafkaListener</span>(topics = &#123;KafkaConst.TEST_TOPIC&#125;, groupId = <span class="hljs-string">"apple"</span>)<br><span class="hljs-function"><span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title">customer</span><span class="hljs-params">(String message)</span> </span>&#123;<br>    log.info(<span class="hljs-string">"kafka customer:&#123;&#125;"</span>, message);<br>    Integer n = Integer.parseInt(message);<br>    <span class="hljs-keyword">if</span> (n % <span class="hljs-number">5</span> == <span class="hljs-number">0</span>) &#123;<br>        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> RuntimeException();<br>    &#125;<br>    System.out.println(n);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>当达到最大重试次数后，如果仍然无法成功处理消息，消息会被发送到对应的死信队列中。对于死信队列的处理，既可以用 <code>@DltHandler</code> 处理，也可以使用 <code>@KafkaListener</code> 重新消费。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Kafka/" class="print-no-link">#Kafka</a>
+      
+        <a href="/tags/%E9%9D%A2%E8%AF%95/" class="print-no-link">#面试</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>02-Kafka 重试</div>
+      <div>https://flepeng.github.io/interview-43-MQ-43-Kafka-02-Kafka-重试/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2020年8月8日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

@@ -1,0 +1,859 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="1、原理1.1、概述哨兵模式的 redis 集群有三种角色：sentinel&#x2F;master&#x2F;slave，它们通过 tcp 链接，相互建立联系。 sentinel 作为高可用集群管理者，它的功能主要是：检查故障，发现故障，故障转移。 1.2、故障转移流程 在 redis 集群中，当 sentinel 检测到 master 出现故障，那么 sentinel 需要对集群进行故障转移。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="05-Redis 多机之2 - 哨兵 脑裂">
+<meta property="og:url" content="https://flepeng.github.io/042-Redis-41-%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5-05-Redis-%E5%A4%9A%E6%9C%BA%E4%B9%8B2-%E5%93%A8%E5%85%B5-%E8%84%91%E8%A3%82/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="1、原理1.1、概述哨兵模式的 redis 集群有三种角色：sentinel&#x2F;master&#x2F;slave，它们通过 tcp 链接，相互建立联系。 sentinel 作为高可用集群管理者，它的功能主要是：检查故障，发现故障，故障转移。 1.2、故障转移流程 在 redis 集群中，当 sentinel 检测到 master 出现故障，那么 sentinel 需要对集群进行故障转移。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-12-31T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.365Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Redis">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>05-Redis 多机之2 - 哨兵 脑裂 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="05-Redis 多机之2 - 哨兵 脑裂"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-01-01 00:00" pubdate>
+          2021年1月1日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          13 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">05-Redis 多机之2 - 哨兵 脑裂</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="1、原理"><a href="#1、原理" class="headerlink" title="1、原理"></a>1、原理</h2><h3 id="1-1、概述"><a href="#1-1、概述" class="headerlink" title="1.1、概述"></a>1.1、概述</h3><p>哨兵模式的 redis 集群有三种角色：sentinel&#x2F;master&#x2F;slave，它们通过 tcp 链接，相互建立联系。</p>
+<p>sentinel 作为高可用集群管理者，它的功能主要是：检查故障，发现故障，故障转移。</p>
+<h3 id="1-2、故障转移流程"><a href="#1-2、故障转移流程" class="headerlink" title="1.2、故障转移流程"></a>1.2、故障转移流程</h3><ol>
+<li>在 redis 集群中，当 sentinel 检测到 master 出现故障，那么 sentinel 需要对集群进行故障转移。</li>
+<li>当一个 sentinel 发现 master 下线，它会将下线的 master 确认为<strong>主观下线</strong>。</li>
+<li>当“法定个数”（quorum）sentinel 已经发现该 master 节点下线，那么 sentinel 会将其确认为<strong>客观下线</strong>。</li>
+<li>多个 sentinel 根据一定的逻辑，选举出一个 sentinel 作为 leader，由它去进行故障转移，将原来连接已客观下线 master 最优的一个 slave 提升为新 master 角色。旧 master 如果重新激活，它将被降级为 slave。</li>
+</ol>
+<h3 id="1-3、脑裂场景"><a href="#1-3、脑裂场景" class="headerlink" title="1.3、脑裂场景"></a>1.3、脑裂场景</h3><p>我们看看下面的部署：两个机器，分别部署了 redis 的三个角色。</p>
+<ul>
+<li><p>如果将集群部署在两个机器上（如下图）。</p>
+</li>
+<li><p>sentinel 配置 <code>quorum = 1</code>，也就是一个 sentinel 发现故障，也可以选举自己为 leader，进行故障转移。</p>
+</li>
+<li><p>M：redis 主服务 master </p>
+</li>
+<li><p>R：redis 副本 replication &#x2F; slave</p>
+</li>
+<li><p>S：redis 哨兵 sentinel</p>
+</li>
+<li><p>C：redis 客户端</p>
+</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs text">+----+         +----+<br>| M1 |---------| R1 |<br>| S1 |         | S2 |<br>+----+         +----+<br></code></pre></td></tr></table></figure>
+
+<p>因为某种原因，两个机器断开链接，S2 将同机器的 R1 提升角色为 master，这样集群里，出现了两个 master 同时工作 —— 脑裂出现了。不同的 client 链接到不同的 redis 进行读写，那么两台机器就出现了 redis 数据不一致的现象。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs text">+----+           +------+<br>| M1 |----&#x2F;&#x2F;-----| [M1] |<br>| S1 |           |  S2  |<br>+----+           +------+<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="2、解决方案"><a href="#2、解决方案" class="headerlink" title="2、解决方案"></a>2、解决方案</h2><p>通过合理部署配置 sentinel&#x2F;master，降低脑裂出现概率。</p>
+<h3 id="2-1-sentienl-配置"><a href="#2-1-sentienl-配置" class="headerlink" title="2.1. sentienl 配置"></a>2.1. sentienl 配置</h3><p>合理部署 sentinel 的节点个数，以及配置 sentinel 选举的法定人数。</p>
+<ol>
+<li>sentinel 节点个数最好 &gt;&#x3D; 3。</li>
+<li>sentinel 节点个数最好是基数。</li>
+<li>sentinel 的选举法定人数设置为 ( $frac{n}{2} + 1$ )。</li>
+</ol>
+<ul>
+<li>配置</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># sentinel.conf</span><br><span class="hljs-comment"># sentinel monitor &lt;master-name&gt; &lt;ip&gt; &lt;redis-port&gt; &lt;quorum&gt;</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>quorum</li>
+</ul>
+<p><quorum> 是<code>法定人数</code>。作用：多个 sentinel 进行相互选举，有超过<code>法定人数</code>的 sentinel 选举某个 sentinel 为 leader，那么他就成为 leader， leader 负责故障转移。这个法定人数，可以配置，一般是 sentinel 个数一半以上 ( $ \frac{n}{2} + 1 $ ) 比较合理。如果 sentinel 个数总数为 3，那么最好 quorum &#x3D;&#x3D; 2，这样最接近真实：少数服从多数，不会出现两个票数一样的 leader同时被选上，进行故障转移。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># sentinel.conf</span><br>sentinel monitor mymaster &gt;127.0.0.1 6379 2<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="2-2-master-配置"><a href="#2-2-master-配置" class="headerlink" title="2.2. master 配置"></a>2.2. master 配置</h3><p>如果 master 因为某些原因与一定数量的副本失去联系了，通过修改 master 配置项，可以禁止 client 向故障的 master 写数据。</p>
+<h3 id="2-2-1-问题"><a href="#2-2-1-问题" class="headerlink" title="2.2.1. 问题"></a>2.2.1. 问题</h3><p>按照上述的 sentinel 部署方案，下面三个机器，任何一个机器出现问题，只要两个 sentinel 能相互链接，故障转移是正常的。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs text">       +----+<br>       | M1 |<br>       | S1 |<br>       +----+<br>          |<br>+----+    |    +----+<br>| R2 |----+----| R3 |<br>| S2 |         | S3 |<br>+----+         +----+<br><br>Configuration: quorum &#x3D; 2<br></code></pre></td></tr></table></figure>
+
+<p>假如 M1 机器与其它机器断开链接了，S2 和 S3 两个 sentinel 能相互链接，sentinel 能正常进行故障转移，sentinel leader 将 R2 提升为新的 master 角色 [M2]。但是客户端 C1 仍然能读写 M1，这样仍然会出现问题，所以我们不得不对 M1 进行限制。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs text">         +----+<br>         | M1 |<br>         | S1 | &lt;- C1 (writes will be lost)<br>         +----+<br>            |<br>            &#x2F;<br>            &#x2F;<br>+------+    |    +----+<br>| [M2] |----+----| R3 |<br>| S2   |         | S3 |<br>+------+         +----+<br></code></pre></td></tr></table></figure>
+
+
+<h3 id="2-2-2、解决方案"><a href="#2-2-2、解决方案" class="headerlink" title="2.2.2、解决方案"></a>2.2.2、解决方案</h3><p>限制 M1 比较简单的方案，通过修改 redis 配置 <code>redis.conf</code>，检查 master 节点与其它副本的联系。当 master 发现它的副本下线或者通信超时的总数量小于阈值时，那么禁止 master 进行写数据。</p>
+<blockquote>
+<p>但是这个方案也不是完美的，<code>min-slaves-to-write</code> 依赖于副本的链接个数，如果 slave 个数设置不合理，那么集群很难故障转移成功。</p>
+</blockquote>
+<h3 id="2-2-2-1-配置"><a href="#2-2-2-1-配置" class="headerlink" title="2.2.2.1. 配置"></a>2.2.2.1. 配置</h3><ul>
+<li>redis.conf</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs text"># master 须要有至少 x 个副本连接。<br>min-slaves-to-write x<br># 数据复制和同步的延迟不能超过 x 秒。<br>min-slaves-max-lag x<br></code></pre></td></tr></table></figure>
+
+<p><strong>注意：高版本 redis 已经修改这个两个选项</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs text"># min-replicas-to-write x<br># min-replicas-max-lag x<br></code></pre></td></tr></table></figure>
+
+<h3 id="2-2-2-2-源码实现流程"><a href="#2-2-2-2-源码实现流程" class="headerlink" title="2.2.2.2. 源码实现流程"></a>2.2.2.2. 源码实现流程</h3><ul>
+<li>时钟定期检查副本链接健康情况。</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> run_with_period(_ms_) <span class="hljs-meta-keyword">if</span> ((_ms_ &lt;= 1000/server.hz) || !(server.cronloops%((_ms_)/(1000/server.hz))))</span><br><br><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">serverCron</span><span class="hljs-params">(struct aeEventLoop *eventLoop, <span class="hljs-keyword">long</span> <span class="hljs-keyword">long</span> id, <span class="hljs-keyword">void</span> *clientData)</span> </span>&#123;<br>  run_with_period(<span class="hljs-number">1000</span>) replicationCron();<br>&#125;<br><br><span class="hljs-comment">/* Replication cron function, called 1 time per second. */</span><br><span class="hljs-comment">// 复制周期执行的函数，每秒调用1次。</span><br><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">replicationCron</span><span class="hljs-params">(<span class="hljs-keyword">void</span>)</span> </span>&#123;<br>    <span class="hljs-comment">// 更新延迟至 lag 小于 min-slaves-max-lag 的从服务器数量</span><br>    refreshGoodSlavesCount();<br>&#125;<br><br><span class="hljs-comment">/* This function counts the number of slaves with lag &lt;= min-slaves-max-lag.</span><br><span class="hljs-comment"> * If the option is active, the server will prevent writes if there are not</span><br><span class="hljs-comment"> * enough connected slaves with the specified lag (or less). */</span><br><span class="hljs-comment">// 更新延迟至 lag 小 于min-slaves-max-lag 的从服务器数量</span><br><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">refreshGoodSlavesCount</span><span class="hljs-params">(<span class="hljs-keyword">void</span>)</span> </span>&#123;<br>    listIter li;<br>    listNode *ln;<br>    <span class="hljs-keyword">int</span> good = <span class="hljs-number">0</span>;<br><br>    <span class="hljs-comment">// 没设置限制则返回。</span><br>    <span class="hljs-keyword">if</span> (!server.repl_min_slaves_to_write ||<br>        !server.repl_min_slaves_max_lag) <span class="hljs-keyword">return</span>;<br><br>    listRewind(server.slaves,&amp;li);<br>    <span class="hljs-comment">// 遍历所有的从节点 client。</span><br>    <span class="hljs-keyword">while</span>((ln = listNext(&amp;li))) &#123;<br>        client *slave = ln-&gt;value;<br>        <span class="hljs-comment">// 计算延迟值</span><br>        <span class="hljs-keyword">time_t</span> lag = server.unixtime - slave-&gt;repl_ack_time;<br><br>        <span class="hljs-comment">// 计数小于延迟限制的个数。</span><br>        <span class="hljs-keyword">if</span> (slave-&gt;replstate == SLAVE_STATE_ONLINE &amp;&amp;<br>            lag &lt;= server.repl_min_slaves_max_lag) good++;<br>    &#125;<br>    server.repl_good_slaves_count = good;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>超出配置范围，master 禁止写命令。</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">processCommand</span><span class="hljs-params">(client *c)</span> </span>&#123;<br>    ...<br>    <span class="hljs-comment">/* Don't accept write commands if there are not enough good slaves and</span><br><span class="hljs-comment">     * user configured the min-slaves-to-write option. */</span><br>    <span class="hljs-keyword">if</span> (server.masterhost == <span class="hljs-literal">NULL</span> &amp;&amp;<br>        server.repl_min_slaves_to_write &amp;&amp;<br>        server.repl_min_slaves_max_lag &amp;&amp;<br>        c-&gt;cmd-&gt;flags &amp; CMD_WRITE &amp;&amp;<br>        server.repl_good_slaves_count &lt; server.repl_min_slaves_to_write)<br>    &#123;<br>        flagTransaction(c);<br>        addReply(c, shared.noreplicaserr);<br>        <span class="hljs-keyword">return</span> C_OK;<br>    &#125;<br>    ...<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="3、小结"><a href="#3、小结" class="headerlink" title="3、小结"></a>3、小结</h2><ul>
+<li>redis 脑裂主要表现为：同一个 redis 集群，原来的 master，经过故障转移后，出现多个 master。</li>
+<li>解决方案主要通过 sentinel 哨兵的配置和 redis 的配置去解决问题。</li>
+<li>上述方案也是有不足的地方，例如 redis 配置限制可能会受到副本个数的影响，所以具体设置，要看具体的业务场景。主要是怎么通过比较小的代价去解决问题，或者降低出现问题的概率。</li>
+<li>redis 虽然已经发布了 gossip 协议的无中心集群，sentinel 哨兵模式还是比较常用的，我们不建议直接使用 sentinel，可以考虑使用 codis。</li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Redis/" class="category-chain-item">Redis</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Redis/" class="print-no-link">#Redis</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>05-Redis 多机之2 - 哨兵 脑裂</div>
+      <div>https://flepeng.github.io/042-Redis-41-核心概念-05-Redis-多机之2-哨兵-脑裂/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年1月1日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/042-Redis-41-%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5-04-Redis-%E5%8D%95%E7%BA%BF%E7%A8%8B-or-%E5%A4%9A%E7%BA%BF%E7%A8%8B/" title="04-Redis 单线程 or 多线程">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">04-Redis 单线程 or 多线程</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/042-Redis-41-%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5-05-Redis-%E5%A4%9A%E6%9C%BA%E4%B9%8B1-%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6/" title="05-Redis 多机之1 - 主从复制">
+                        <span class="hidden-mobile">05-Redis 多机之1 - 主从复制</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

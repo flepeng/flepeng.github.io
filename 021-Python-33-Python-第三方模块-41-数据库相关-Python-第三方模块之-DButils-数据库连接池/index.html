@@ -1,0 +1,807 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="使用pymysql来连接数据库时，单线程应用完全没有问题，但如果涉及到多线程应用那么就需要加锁，一旦加锁那么连接势必就会排队等待，当请求比较多时，性能就会降低了。所以我们需要使用 DButils 模块  DBUtils是Python的一个用于实现数据库连接池的模块。并允许对非线程安全的数据库接口进行线程安全包装。DBUtils来自Webware for Python。 DBUtils提供两种外部接">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Python 第三方模块之 DButils - 数据库连接池">
+<meta property="og:url" content="https://flepeng.github.io/021-Python-33-Python-%E7%AC%AC%E4%B8%89%E6%96%B9%E6%A8%A1%E5%9D%97-41-%E6%95%B0%E6%8D%AE%E5%BA%93%E7%9B%B8%E5%85%B3-Python-%E7%AC%AC%E4%B8%89%E6%96%B9%E6%A8%A1%E5%9D%97%E4%B9%8B-DButils-%E6%95%B0%E6%8D%AE%E5%BA%93%E8%BF%9E%E6%8E%A5%E6%B1%A0/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="使用pymysql来连接数据库时，单线程应用完全没有问题，但如果涉及到多线程应用那么就需要加锁，一旦加锁那么连接势必就会排队等待，当请求比较多时，性能就会降低了。所以我们需要使用 DButils 模块  DBUtils是Python的一个用于实现数据库连接池的模块。并允许对非线程安全的数据库接口进行线程安全包装。DBUtils来自Webware for Python。 DBUtils提供两种外部接">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2016-08-02T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.335Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="Python 第三方模块">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>Python 第三方模块之 DButils - 数据库连接池 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Python 第三方模块之 DButils - 数据库连接池"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2016-08-03 00:00" pubdate>
+          2016年8月3日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          18 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Python 第三方模块之 DButils - 数据库连接池</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>使用pymysql来连接数据库时，单线程应用完全没有问题，但如果涉及到多线程应用那么就需要加锁，一旦加锁那么连接势必就会排队等待，当请求比较多时，性能就会降低了。所以我们需要使用 <code>DButils</code> 模块 </p>
+<p>DBUtils是Python的一个用于实现数据库连接池的模块。并允许对非线程安全的数据库接口进行线程安全包装。DBUtils来自Webware for Python。</p>
+<p>DBUtils提供两种外部接口： </p>
+<ul>
+<li>PersistentDB ：提供线程专用的数据库连接，并自动管理连接。 </li>
+<li>PooledDB ：提供线程间可共享的数据库连接，并自动管理连接。</li>
+</ul>
+<h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs cmake"><span class="hljs-comment"># DBUtils </span><br>pip <span class="hljs-keyword">install</span> DBUtils <br><br><span class="hljs-comment"># pymysql </span><br>pip <span class="hljs-keyword">install</span> pymysql/MySQLdb<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="连接模式"><a href="#连接模式" class="headerlink" title="连接模式"></a>连接模式</h2><p>DButils 连接池有两种连接模式：</p>
+<ul>
+<li><p>模式一：为每个线程创建一个连接，线程即使调用了close方法，也不会关闭，只是把连接重新放到连接池，供自己线程再次使用。当线程终止时，连接自动关闭。</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs routeros">POOL = PersistentDB(<br>    <span class="hljs-attribute">creator</span>=pymysql,   # 使用链接数据库的模块,需要符合PEP249协议, 如MySQLdb, mysql.connector等<br>    <span class="hljs-attribute">closeable</span>=<span class="hljs-literal">False</span>,   # 如果为<span class="hljs-literal">False</span>时， conn.close() 实际上被忽略，供下次使用，在线程关闭时，才会自动关闭链接。<br>                       # 如果为<span class="hljs-literal">True</span>时， conn.close()则关闭链接，那么再次调用pool.connection时就会报错，因为已经真的关闭了连接（pool.steady_connection()可以获取一个新的链接）<br>                   <br>    <span class="hljs-attribute">threadlocal</span>=None,  # 本线程独享值得对象，用于保存链接对象，如果链接对象被重置<br>    <span class="hljs-attribute">host</span>=<span class="hljs-string">'127.0.0.1'</span>,<br>    <span class="hljs-attribute">port</span>=3306,  # 必须为int 类型<br>    <span class="hljs-attribute">user</span>=<span class="hljs-string">'root'</span>,<br>    <span class="hljs-attribute">password</span>=<span class="hljs-string">'123'</span>,<br>    <span class="hljs-attribute">database</span>=<span class="hljs-string">'pooldb'</span>,<br>    <span class="hljs-attribute">charset</span>=<span class="hljs-string">'utf8'</span><br>)<br><br>def func():<br>    conn = POOL.connection(<span class="hljs-attribute">shareable</span>=<span class="hljs-literal">False</span>)<br>    cursor = conn.cursor()<br>    cursor.execute(<span class="hljs-string">'select * from tb1'</span>)<br>    result = cursor.fetchall()<br>    cursor.close()<br>    conn.close()<br><br>func()<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>模式二：创建一批连接到连接池，供所有线程共享使用。<br>PS：由于pymysql、MySQLdb等threadsafety值为1，所以该模式连接池中的线程会被所有线程共享。</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><code class="hljs routeros">import time<br>import pymysql<br>import threading<br><span class="hljs-keyword">from</span> DBUtils.PooledDB import PooledDB, SharedDBConnection<br>POOL = PooledDB(<br>    <span class="hljs-attribute">creator</span>=pymysql,   # 使用链接数据库的模块<br>    <span class="hljs-attribute">host</span>=<span class="hljs-string">'127.0.0.1'</span>,<br>    <span class="hljs-attribute">port</span>=3306,<br>    <span class="hljs-attribute">user</span>=<span class="hljs-string">'root'</span>,<br>    <span class="hljs-attribute">password</span>=<span class="hljs-string">'123'</span>,<br>    <span class="hljs-attribute">database</span>=<span class="hljs-string">'pooldb'</span>,  # python2 是 db<br>    <span class="hljs-attribute">charset</span>=<span class="hljs-string">'utf8'</span><br>)<br><br><br>def func():<br>    # 检测当前正在运行连接数的是否小于最大链接数，如果不小于则：等待或报raise TooManyConnections异常<br>    # 否则 ，则优先去初始化时创建的链接中获取链接 SteadyDBConnection。<br>    # 然后将SteadyDBConnection对象封装到PooledDedicatedDBConnection中并返回。<br>    # 如果最开始创建的链接没有链接，则去创建一个SteadyDBConnection对象，再封装到PooledDedicatedDBConnection中并返回。<br>    # 一旦关闭链接后，连接就返回到连接池让后续线程继续使用。<br>    conn = POOL.connection()<br><br>    # <span class="hljs-builtin-name">print</span>(th, <span class="hljs-string">'链接被拿走了'</span>, conn1._con)<br>    # <span class="hljs-builtin-name">print</span>(th, <span class="hljs-string">'池子里目前有'</span>, pool._idle_cache, <span class="hljs-string">'\r\n'</span>)<br><br>    cursor = conn.cursor()<br>    cursor.execute(<span class="hljs-string">'select * from tb1'</span>)<br>    result = cursor.fetchall()<br>    conn.close()<br><br>func()<br></code></pre></td></tr></table></figure></li>
+</ul>
+<h2 id="参数"><a href="#参数" class="headerlink" title="参数"></a>参数</h2><figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs routeros">POOL = PersistentDB(<br>    <span class="hljs-attribute">maxconnections</span>=6,  # 连接池允许的最大连接数，0和None表示不限制连接数,需要符合PEP249协议, 如MySQLdb, mysql.connector等<br>    <span class="hljs-attribute">mincached</span>=2,       # 初始化时，链接池中至少创建的空闲的链接，0表示不创建<br>    <span class="hljs-attribute">maxcached</span>=5,       # 链接池中最多闲置的链接，0和None不限制<br>    <span class="hljs-attribute">maxshared</span>=3,       # 链接池中最多共享的链接数量，0和None表示全部共享。PS: 无用，因为pymysql和MySQLdb等模块的 threadsafety都为1，所有值无论设置为多少，_maxcached永远为0，所以永远是所有链接都共享。<br>    <span class="hljs-attribute">blocking</span>=<span class="hljs-literal">True</span>,     # 连接池中如果没有可用连接后，是否阻塞等待。<span class="hljs-literal">True</span>，等待；<span class="hljs-literal">False</span>，不等待然后报错<br>    <span class="hljs-attribute">maxusage</span>=None,     # 一个链接最多被重复使用的次数，None表示无限制<br>    setsession=[],     # 开始会话前执行的命令列表。如：[<span class="hljs-string">"set datestyle to ..."</span>, <span class="hljs-string">"set time zone ..."</span>]<br>    <span class="hljs-attribute">ping</span>=0,            #<span class="hljs-built_in"> ping </span>MySQL服务端，检查是否服务可用。<br>                       # 0 = None = never, 从来不检查<br>                       # 1 =<span class="hljs-built_in"> default </span>= whenever it is requested, 默认值，从连接池中拿出来时检查<br>                       # 2 = when a cursor is created,  当游标cursor创建时<br>                       # 4 = when a query is executed,  当调用excute方法时<br>                       # 7 = always  上面的几种情况<br>                       # 连接池对象有个空闲连接列表的属性，当服务端与数据库端没有什么数据发送时，此时中的空闲连接若长时间没有向数据发送数据，如果该连接被防火墙干掉，然而此时<br>                       # 客户端中的连接池中的空闲连接并不知道自己异常，当再次发送数据时，会连接重试最后大概15分钟后报错超时。所以上面的集中参数都没有考虑到，若要解决这个问题<br>                       # 我们需要定时向数据发送数据。<br>                       <br>    <span class="hljs-attribute">reset</span>=<span class="hljs-literal">True</span>,        # 连接归还给pool时，是否进行重置<br>    <span class="hljs-attribute">host</span>=<span class="hljs-string">'127.0.0.1'</span>,<br>    <span class="hljs-attribute">port</span>=3306,         # 必须为int 类型<br>    <span class="hljs-attribute">user</span>=<span class="hljs-string">'root'</span>,<br>    <span class="hljs-attribute">password</span>=<span class="hljs-string">'123'</span>,<br>    <span class="hljs-attribute">database</span>=<span class="hljs-string">'pooldb'</span>,<br>    <span class="hljs-attribute">charset</span>=<span class="hljs-string">'utf8'</span><br>)<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h2><h3 id="config-py"><a href="#config-py" class="headerlink" title="config.py"></a>config.py</h3><figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><code class="hljs ini"><span class="hljs-comment">#-*- coding: UTF-8 -*-</span><br><br><span class="hljs-comment">#TEST数据库信息</span><br><span class="hljs-attr">DB_TEST_HOST</span>=<span class="hljs-string">"192.168.88.6"</span><span class="hljs-comment">;</span><br><span class="hljs-attr">DB_TEST_PORT</span>=<span class="hljs-number">3306</span><span class="hljs-comment">;</span><br><span class="hljs-attr">DB_TEST_DBNAME</span>=<span class="hljs-string">"asterisk"</span><span class="hljs-comment">;</span><br><span class="hljs-attr">DB_TEST_USER</span>=<span class="hljs-string">"root"</span><span class="hljs-comment">;</span><br><span class="hljs-attr">DB_TEST_PASSWORD</span>=<span class="hljs-string">"kalamodo"</span><span class="hljs-comment">;</span><br><br><br><span class="hljs-comment">#数据库连接编码</span><br><span class="hljs-attr">DB_CHARSET</span>=<span class="hljs-string">"utf8"</span><span class="hljs-comment">;</span><br><br><span class="hljs-comment">#mincached : 启动时开启的闲置连接数量(缺省值 0 开始时不创建连接)</span><br><span class="hljs-attr">DB_MIN_CACHED</span>=<span class="hljs-number">10</span><span class="hljs-comment">;</span><br><br><span class="hljs-comment">#maxcached : 连接池中允许的闲置的最多连接数量(缺省值 0 代表不闲置连接池大小)</span><br><span class="hljs-attr">DB_MAX_CACHED</span>=<span class="hljs-number">10</span><span class="hljs-comment">;</span><br><br><span class="hljs-comment">#maxshared : 共享连接数允许的最大数量(缺省值 0 代表所有连接都是专用的)如果达到了最大数量,被请求为共享的连接将会被共享使用</span><br><span class="hljs-attr">DB_MAX_SHARED</span>=<span class="hljs-number">20</span><span class="hljs-comment">;</span><br><br><span class="hljs-comment">#maxconnecyions : 创建连接池的最大数量(缺省值 0 代表不限制)</span><br><span class="hljs-attr">DB_MAX_CONNECYIONS</span>=<span class="hljs-number">100</span><span class="hljs-comment">;</span><br><br><span class="hljs-comment">#blocking : 设置在连接池达到最大数量时的行为(缺省值 0 或 False 代表返回一个错误&lt;toMany......&gt;; 其他代表阻塞直到连接数减少,连接被分配)</span><br><span class="hljs-attr">DB_BLOCKING</span>=<span class="hljs-literal">True</span><span class="hljs-comment">;</span><br><br><span class="hljs-comment">#maxusage : 单个连接的最大允许复用次数(缺省值 0 或 False 代表不限制的复用).当达到最大数时,连接会自动重新连接(关闭和重新打开)</span><br><span class="hljs-attr">DB_MAX_USAGE</span>=<span class="hljs-number">0</span><span class="hljs-comment">;</span><br><br><span class="hljs-comment">#setsession : 一个可选的SQL命令列表用于准备每个会话，如["set datestyle to german", ...]</span><br><span class="hljs-attr">DB_SET_SESSION</span>=None<span class="hljs-comment">;</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="MySQLPool"><a href="#MySQLPool" class="headerlink" title="MySQLPool"></a>MySQLPool</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> pymysql<br><span class="hljs-keyword">from</span> dbutils.pooled_db <span class="hljs-keyword">import</span> PooledDB<br><br><span class="hljs-keyword">from</span> sem.utils.config <span class="hljs-keyword">import</span> conf<br><br><span class="hljs-keyword">from</span> sem.utils.log <span class="hljs-keyword">import</span> logger<br><br><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MySQLPoolLocal</span><span class="hljs-params">(object)</span>:</span><br>    __pool = <span class="hljs-literal">None</span><br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span><span class="hljs-params">(self)</span>:</span><br>        <span class="hljs-comment"># self.conn = self.__get_conn()</span><br>        <span class="hljs-comment"># self.cursor = self.conn.cursor()</span><br>        <span class="hljs-keyword">pass</span><br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__get_conn</span><span class="hljs-params">(self)</span>:</span><br>        <span class="hljs-keyword">if</span> self.__pool <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:<br>            self.__pool = PooledDB(<br>                creator=pymysql,  <span class="hljs-comment"># 使用链接数据库的模块,需要符合PEP249协议, 如MySQLdb, mysql.connector等</span><br>                mincached=<span class="hljs-number">10</span>,     <span class="hljs-comment"># 最小缓存的连接数, pool初始化时将会预先建立mincached个数的连接(缺省值 0 开始时不创建连接)</span><br>                maxcached=<span class="hljs-number">10</span>,     <span class="hljs-comment"># 连接池中允许的闲置的最多连接数量(缺省值 0 代表不闲置连接池大小)</span><br>                maxshared=<span class="hljs-number">0</span>,      <span class="hljs-comment"># 当连接数达到maxshared后，开始复用连接(0表示连接不进行复用)。该参数受数据库驱动的threadsafety参数影响(缺省值 0 代表所有连接都是专用的)</span><br>                maxconnections=<span class="hljs-number">100</span>,  <span class="hljs-comment"># 连接数上限, 0为不设上限，每当连接达到这个数时，将会阻塞或是抛出异常。shared机制下，不受该参数影响(缺省值 0 代表不限制)</span><br>                blocking=<span class="hljs-literal">True</span>,    <span class="hljs-comment"># 设置在连接池达到最大数量时的行为(缺省值 0 或 False 代表抛出异常; 其他代表阻塞直到连接数减少,连接被分配)</span><br>                maxusage=<span class="hljs-number">0</span>,       <span class="hljs-comment"># 单个连接的最大允许复用次数(缺省值 0 或 False 代表不限制的复用).当达到最大数时,连接会自动重新连接(关闭和重新打开)</span><br>                host=conf.MYSQL_HOST,<br>                port=<span class="hljs-number">3306</span>,<br>                user=conf.MYSQL_USER,<br>                passwd=conf.MYSQL_PASSWD,<br>                db=conf.MYSQL_DB,<br>                use_unicode=<span class="hljs-literal">True</span>,  <span class="hljs-comment"># 是否使用 unicode 编码</span><br>                charset=<span class="hljs-string">'utf8'</span><br>            )<br>        <span class="hljs-comment"># 每次需要数据库连接就是用connection（）函数获取连接</span><br>        <span class="hljs-keyword">return</span> self.__pool.connection()<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get_conn</span><span class="hljs-params">(self, cursor_dict=False)</span>:</span><br>        <span class="hljs-string">"""</span><br><span class="hljs-string">        连接池中取出一个连接</span><br><span class="hljs-string">        :return: </span><br><span class="hljs-string">        """</span><br>        <span class="hljs-keyword">try</span>:<br>            conn = self.__get_conn()<br>            <span class="hljs-keyword">if</span> cursor_dict:<br>                cursor = conn.cursor(cursor=pymysql.cursors.DictCursor)<br>            <span class="hljs-keyword">else</span>:<br>                cursor = conn.cursor()<br>            <span class="hljs-keyword">return</span> cursor, conn<br>        <span class="hljs-keyword">except</span>:<br>            logger.exception(<span class="hljs-string">"get db connect error"</span>)<br>            <span class="hljs-keyword">return</span> <span class="hljs-string">""</span>, <span class="hljs-string">""</span><br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__exit__</span><span class="hljs-params">(self, type, value, trace)</span>:</span><br>        self.cursor.close()<br>        self.conn.close()<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">close</span><span class="hljs-params">(self)</span>:</span><br>        <span class="hljs-string">"""</span><br><span class="hljs-string">        关闭连接,归还给连接池</span><br><span class="hljs-string">        :return:</span><br><span class="hljs-string">        """</span><br>        self.cursor.close()<br>        self.conn.close()<br><br><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MySQLPool</span><span class="hljs-params">(object)</span>:</span><br>    mysql = <span class="hljs-literal">None</span><br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span><span class="hljs-params">(self, mysql_pool_obj=MySQLPoolLocal)</span>:</span><br>        self.db = mysql_pool_obj()<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__new__</span><span class="hljs-params">(cls, *args, **kwargs)</span>:</span><br>        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> hasattr(cls, <span class="hljs-string">'inst'</span>):<br>            cls.inst = super(MySQLPool, cls).__new__(cls, *args, **kwargs)<br>        <span class="hljs-keyword">return</span> cls.inst<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">select_all</span><span class="hljs-params">(self, sql=<span class="hljs-string">''</span>, param=<span class="hljs-params">()</span>, cursor_dict=False)</span>:</span><br>        <span class="hljs-string">"""</span><br><span class="hljs-string">        查询全部</span><br><span class="hljs-string">        :param sql:</span><br><span class="hljs-string">        :param param:</span><br><span class="hljs-string">        :return:</span><br><span class="hljs-string">        """</span><br>        cursor, conn = self.db.get_conn(cursor_dict=cursor_dict)<br>        <span class="hljs-keyword">try</span>:<br>            cursor.execute(sql, param)<br>            res = cursor.fetchall()<br>            self.close(cursor, conn)<br>            print(res)<br>            <span class="hljs-keyword">return</span> res<br>        <span class="hljs-keyword">except</span> Exception <span class="hljs-keyword">as</span> e:<br>            logger.exception(<span class="hljs-string">"select_all except"</span>)<br>            self.close(cursor, conn)<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">None</span><br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">select_one</span><span class="hljs-params">(self, sql=<span class="hljs-string">''</span>, param=<span class="hljs-params">()</span>)</span>:</span><br>        <span class="hljs-string">"""</span><br><span class="hljs-string">        查询一条</span><br><span class="hljs-string">        :param sql:</span><br><span class="hljs-string">        :param param:</span><br><span class="hljs-string">        :return:</span><br><span class="hljs-string">        """</span><br>        cursor, conn = self.db.get_conn()<br>        <span class="hljs-keyword">try</span>:<br>            cursor.execute(sql, param)<br>            res = cursor.fetchone()<br>            self.close(cursor, conn)<br>            <span class="hljs-keyword">return</span> res<br>        <span class="hljs-keyword">except</span> Exception <span class="hljs-keyword">as</span> e:<br>            logger.exception(<span class="hljs-string">"select_one except"</span>)<br>            self.close(cursor, conn)<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">None</span><br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">select</span><span class="hljs-params">(self, sql=<span class="hljs-string">''</span>, param=<span class="hljs-params">()</span>, cursor_dict=False)</span>:</span><br>        <span class="hljs-keyword">return</span> self.select_all(sql, param, cursor_dict=cursor_dict)<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">insert</span><span class="hljs-params">(self, sql=<span class="hljs-string">''</span>, param=<span class="hljs-params">()</span>)</span>:</span><br>        <span class="hljs-string">"""</span><br><span class="hljs-string">        增加</span><br><span class="hljs-string">        :param sql:</span><br><span class="hljs-string">        :param param:</span><br><span class="hljs-string">        :return:</span><br><span class="hljs-string">        """</span><br><br>        <span class="hljs-keyword">return</span> self.execute(sql, param)<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">insert_many</span><span class="hljs-params">(self, sql=<span class="hljs-string">''</span>, param=<span class="hljs-params">()</span>)</span>:</span><br>        <span class="hljs-string">"""</span><br><span class="hljs-string">        增加多行</span><br><span class="hljs-string">        :param sql: </span><br><span class="hljs-string">        :param param: </span><br><span class="hljs-string">        :return: </span><br><span class="hljs-string">        """</span><br>        <span class="hljs-keyword">return</span> self.execute(sql, param)<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">delete</span><span class="hljs-params">(self, sql=<span class="hljs-string">''</span>, param=<span class="hljs-params">()</span>)</span>:</span><br>        <span class="hljs-string">"""</span><br><span class="hljs-string">        删除</span><br><span class="hljs-string">        :param sql:</span><br><span class="hljs-string">        :param param:</span><br><span class="hljs-string">        :return:</span><br><span class="hljs-string">        """</span><br>        <span class="hljs-keyword">return</span> self.execute(sql, param)<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">update</span><span class="hljs-params">(self, sql=<span class="hljs-string">''</span>, param=<span class="hljs-params">()</span>)</span>:</span><br>        <span class="hljs-string">"""</span><br><span class="hljs-string">        更新</span><br><span class="hljs-string">        :param sql:</span><br><span class="hljs-string">        :param param:</span><br><span class="hljs-string">        :return:</span><br><span class="hljs-string">        """</span><br>        <span class="hljs-keyword">return</span> self.execute(sql, param)<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">execute</span><span class="hljs-params">(self, sql=<span class="hljs-string">''</span>, param=<span class="hljs-params">()</span>, )</span>:</span><br>        cursor, conn = self.db.get_conn()<br><br>        <span class="hljs-keyword">try</span>:<br>            <span class="hljs-keyword">if</span> param:<br>                cursor.execute(sql, param)<br>            <span class="hljs-keyword">else</span>:<br>                cursor.execute(sql)<br>            _id = cursor.lastrowid<br>            conn.commit()<br>            self.close(cursor, conn)<br>            <span class="hljs-comment"># 防止表中没有id返回0</span><br>            <span class="hljs-keyword">if</span> _id == <span class="hljs-number">0</span>:<br>                <span class="hljs-keyword">return</span> <span class="hljs-literal">True</span><br>            <span class="hljs-keyword">return</span> _id<br>        <span class="hljs-keyword">except</span> Exception <span class="hljs-keyword">as</span> e:<br>            logger.exception(<span class="hljs-string">"error"</span>)<br>            <span class="hljs-keyword">if</span> conn: conn.rollback()<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">False</span><br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">execute_many</span><span class="hljs-params">(self, list=[])</span>:</span><br>        <span class="hljs-string">"""</span><br><span class="hljs-string">        执行多条命令</span><br><span class="hljs-string">        :param list:</span><br><span class="hljs-string">        :return:</span><br><span class="hljs-string">        """</span><br>        cursor, conn = self.db.get_conn()<br>        <span class="hljs-keyword">try</span>:<br>            <span class="hljs-keyword">for</span> order <span class="hljs-keyword">in</span> list:<br>                sql = order[<span class="hljs-string">'sql'</span>]<br>                param = order[<span class="hljs-string">'param'</span>]<br>                <span class="hljs-keyword">if</span> param:<br>                    cursor.execute(sql, param)<br>                <span class="hljs-keyword">else</span>:<br>                    cursor.execute(sql)<br>            conn.commit()<br>            self.close(cursor, conn)<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">True</span><br>        <span class="hljs-keyword">except</span> Exception <span class="hljs-keyword">as</span> e:<br>            logger.exception(<span class="hljs-string">"error"</span>)<br>            conn.rollback()<br>            self.close(cursor, conn)<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">False</span><br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">close</span><span class="hljs-params">(self, cursor, conn)</span>:</span><br>        cursor <span class="hljs-keyword">and</span> cursor.close()<br>        conn <span class="hljs-keyword">and</span> conn.close()<br><br><br>mysql_pool = MySQLPool()<br></code></pre></td></tr></table></figure>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Python/" class="category-chain-item">Python</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/Python/Python-%E7%AC%AC%E4%B8%89%E6%96%B9%E6%A8%A1%E5%9D%97/" class="category-chain-item">Python 第三方模块</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Python/" class="print-no-link">#Python</a>
+      
+        <a href="/tags/Python-%E7%AC%AC%E4%B8%89%E6%96%B9%E6%A8%A1%E5%9D%97/" class="print-no-link">#Python 第三方模块</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Python 第三方模块之 DButils - 数据库连接池</div>
+      <div>https://flepeng.github.io/021-Python-33-Python-第三方模块-41-数据库相关-Python-第三方模块之-DButils-数据库连接池/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2016年8月3日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/021-Python-33-Python-%E7%AC%AC%E4%B8%89%E6%96%B9%E6%A8%A1%E5%9D%97-35-%E5%8A%A0%E8%A7%A3%E5%AF%86-Python-%E7%AC%AC%E4%B8%89%E6%96%B9%E6%A8%A1%E5%9D%97%E4%B9%8B-cryptography-%E5%8A%A0%E5%AF%86%E8%A7%A3%E5%AF%86/" title="Python 第三方模块之 cryptography - 加密解密">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Python 第三方模块之 cryptography - 加密解密</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/021-Python-33-Python-%E7%AC%AC%E4%B8%89%E6%96%B9%E6%A8%A1%E5%9D%97-35-%E5%8A%A0%E8%A7%A3%E5%AF%86-Python-%E7%AC%AC%E4%B8%89%E6%96%B9%E6%A8%A1%E5%9D%97%E4%B9%8B-rsa-%E5%8A%A0%E5%AF%86%E8%A7%A3%E5%AF%86/" title="Python 第三方模块之 rsa - 加密解密">
+                        <span class="hidden-mobile">Python 第三方模块之 rsa - 加密解密</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

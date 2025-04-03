@@ -1,0 +1,916 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="本章适用于以下问题：  可能导致 Redis 阻塞的情况，这些情况也是影响 Redis 性能的关键因素 Redis 变慢了，怎么排查 Redis 延迟突然增大，如何进行排查  使用了复杂的命令、O(n) 命令Redis 中的大部分命令都是 O(1) 时间复杂度，但也有少部分 O(n) 时间复杂度的命令，例如：  KEYS *：会返回所有符合规则的 key。 HGETALL：会返回一个 Hash 中">
+<meta property="og:type" content="article">
+<meta property="og:title" content="04-Redis 场景 常见阻塞原因">
+<meta property="og:url" content="https://flepeng.github.io/interview-41-%E6%95%B0%E6%8D%AE%E5%BA%93-41-Redis-04-Redis-%E5%9C%BA%E6%99%AF-%E5%B8%B8%E8%A7%81%E9%98%BB%E5%A1%9E%E5%8E%9F%E5%9B%A0/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="本章适用于以下问题：  可能导致 Redis 阻塞的情况，这些情况也是影响 Redis 性能的关键因素 Redis 变慢了，怎么排查 Redis 延迟突然增大，如何进行排查  使用了复杂的命令、O(n) 命令Redis 中的大部分命令都是 O(1) 时间复杂度，但也有少部分 O(n) 时间复杂度的命令，例如：  KEYS *：会返回所有符合规则的 key。 HGETALL：会返回一个 Hash 中">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://oss.javaguide.cn/github/javaguide/database/redis/redis-aof-write-log-disc.png">
+<meta property="article:published_time" content="2020-08-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.489Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="面试">
+<meta property="article:tag" content="Redis">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://oss.javaguide.cn/github/javaguide/database/redis/redis-aof-write-log-disc.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>04-Redis 场景 常见阻塞原因 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="04-Redis 场景 常见阻塞原因"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2020-08-08 00:00" pubdate>
+          2020年8月8日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          5.7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          48 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">04-Redis 场景 常见阻塞原因</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>本章适用于以下问题：</p>
+<ul>
+<li>可能导致 Redis 阻塞的情况，这些情况也是影响 Redis 性能的关键因素</li>
+<li>Redis 变慢了，怎么排查</li>
+<li>Redis 延迟突然增大，如何进行排查</li>
+</ul>
+<h2 id="使用了复杂的命令、O-n-命令"><a href="#使用了复杂的命令、O-n-命令" class="headerlink" title="使用了复杂的命令、O(n) 命令"></a>使用了复杂的命令、O(n) 命令</h2><p>Redis 中的大部分命令都是 O(1) 时间复杂度，但也有少部分 O(n) 时间复杂度的命令，例如：</p>
+<ul>
+<li><code>KEYS *</code>：会返回所有符合规则的 key。</li>
+<li><code>HGETALL</code>：会返回一个 Hash 中所有的键值对。</li>
+<li><code>LRANGE</code>：会返回 List 中指定范围内的元素。</li>
+<li><code>SMEMBERS</code>：返回 Set 中的所有元素。</li>
+<li><code>SINTER</code>&#x2F;<code>SUNION</code>&#x2F;<code>SDIFF</code>：计算多个 Set 的交集&#x2F;并集&#x2F;差集。</li>
+</ul>
+<p>由于这些命令时间复杂度是 O(n)，有时候也会全表扫描，随着 n 的增大，执行耗时也会越长，从而导致客户端阻塞。不过， 这些命令并不是一定不能使用，但是需要明确 N 的值。另外，有遍历的需求可以使用 <code>HSCAN</code>、<code>SSCAN</code>、<code>ZSCAN</code> 代替。</p>
+<p>除了这些 <code>O(n)</code> 时间复杂度的命令可能会导致阻塞之外， 还有一些时间复杂度可能在 <code>O(N)</code> 以上的命令，例如：</p>
+<ul>
+<li><code>ZRANGE</code>&#x2F;<code>ZREVRANGE</code>：返回指定 Sorted Set 中指定排名范围内的所有元素。时间复杂度为 <code>O(log(n)+m)</code>，n 为所有元素的数量， m 为返回的元素数量，当 m 和 n 相当大时，<code>O(n)</code> 的时间复杂度更小。</li>
+<li><code>ZREMRANGEBYRANK</code>&#x2F;<code>ZREMRANGEBYSCORE</code>：移除 Sorted Set 中指定排名范围&#x2F;指定 score 范围内的所有元素。时间复杂度为 <code>O(log(n)+m)</code>，n 为所有元素的数量， m 被删除元素的数量，当 m 和 n 相当大时，O(n) 的时间复杂度更小。</li>
+<li>……</li>
+</ul>
+<p>首先建议查看一下 Redis 的慢日志，Redis 提供了慢日志命令的统计功能。</p>
+<p>设置 Redis 的慢日志阈值，只有超过阈值的命令才会被记录，这里的单位是微妙，例如设置慢日志的阈值为5毫秒，同时设置只保留最近 1000 条慢日志记录：</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs routeros"><span class="hljs-comment"># 命令执行超过5毫秒记录慢日志</span><br>CONFIG <span class="hljs-builtin-name">SET</span> slowlog-log-slower-than 5000<br><span class="hljs-comment"># 只保留最近1000条慢日志</span><br>CONFIG <span class="hljs-builtin-name">SET</span> slowlog-max-len 1000<br></code></pre></td></tr></table></figure>
+
+<p>然后执行 <code>SLOWLOG get 5</code> 查询最近5条慢日志：</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs angelscript"><span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span>&gt; SLOWLOG <span class="hljs-keyword">get</span> <span class="hljs-number">5</span><br><span class="hljs-number">1</span>) <span class="hljs-number">1</span>) (<span class="hljs-built_in">int</span>eger) <span class="hljs-number">32693</span>       # 慢日志ID<br>   <span class="hljs-number">2</span>) (<span class="hljs-built_in">int</span>eger) <span class="hljs-number">1593763337</span>  # 执行时间<br>   <span class="hljs-number">3</span>) (<span class="hljs-built_in">int</span>eger) <span class="hljs-number">5299</span>        # 执行耗时(微妙)<br>   <span class="hljs-number">4</span>) <span class="hljs-number">1</span>) <span class="hljs-string">"LRANGE"</span>           # 具体执行的命令和参数<br>      <span class="hljs-number">2</span>) <span class="hljs-string">"user_list_2000"</span><br>      <span class="hljs-number">3</span>) <span class="hljs-string">"0"</span><br>      <span class="hljs-number">4</span>) <span class="hljs-string">"-1"</span><br>...<br></code></pre></td></tr></table></figure>
+
+<p>解决方案就是，不使用这些复杂度较高的命令，并且一次不要获取太多的数据，每次尽量操作少量的数据，让 Redis 可以及时处理返回。</p>
+<h2 id="SAVE-创建-RDB-快照"><a href="#SAVE-创建-RDB-快照" class="headerlink" title="SAVE 创建 RDB 快照"></a>SAVE 创建 RDB 快照</h2><p>Redis 提供了两个命令来生成 RDB 快照文件：</p>
+<ul>
+<li><code>save</code>: 同步保存操作，会阻塞 Redis 主线程；</li>
+<li><code>bgsave</code>: fork 出一个子进程，子进程执行，不会阻塞 Redis 主线程，默认选项。</li>
+</ul>
+<p>默认情况下，Redis 默认配置会使用 <code>bgsave</code> 命令。如果手动使用 <code>save</code> 命令生成 RDB 快照文件的话，就会阻塞主线程。</p>
+<p>如果你的 Redis 开启了自动生成 RDB 和 AOF重写 功能，那么有可能在后台生成 RDB 和 AOF重写 时导致 Redis 的访问延迟增大，而等这些任务执行完毕后，延迟情况消失。</p>
+<p>遇到这种情况，一般就是执行生成 RDB 和 AOF重写 任务导致的。</p>
+<p>生成 RDB 和 AOF 都需要父进程 fork 出一个子进程进行数据的持久化，在 fork 执行过程中，父进程需要拷贝内存页表给子进程，如果整个实例内存占用很大，那么需要拷贝的内存页表会比较耗时，此过程会消耗大量的 CPU 资源，在完成 fork 之前，整个实例会被阻塞住，无法处理任何请求，如果此时 CPU 资源紧张，那么 fork 的时间会更长，甚至达到秒级。这会严重影响 Redis 的性能。</p>
+<p>我们可以执行 info 命令，查看最后一次 fork 执行的耗时 <code>latest_fork_usec</code>，单位微秒。这个时间就是整个实例阻塞无法处理请求的时间。</p>
+<p>除了因为备份的原因生成 RDB 之外，在主从节点第一次建立数据同步时，主节点也会生成 RDB 文件给从节点进行一次全量同步，这时也会对 Redis 产生性能影响。</p>
+<p>要想避免这种情况，我们需要规划好数据备份的周期，建议在从节点上执行备份，而且最好放在低峰期执行。如果对于丢失数据不敏感的业务，那么不建议开启 AOF 和 AOF重写 功能。</p>
+<p>另外，fork 的耗时也与系统有关，如果把 Redis 部署在虚拟机上，那么这个时间也会增大。所以使用 Redis 时建议部署在物理机上，降低 fork 的影响。</p>
+<h2 id="AOF"><a href="#AOF" class="headerlink" title="AOF"></a>AOF</h2><h3 id="AOF-日志记录阻塞"><a href="#AOF-日志记录阻塞" class="headerlink" title="AOF 日志记录阻塞"></a>AOF 日志记录阻塞</h3><p>Redis AOF 持久化机制是在执行完命令之后再记录日志，这和关系型数据库（如 MySQL）通常都是执行命令之前记录日志（方便故障恢复）不同。</p>
+<p><img src="https://oss.javaguide.cn/github/javaguide/database/redis/redis-aof-write-log-disc.png" srcset="/img/loading.gif" lazyload alt="AOF 记录日志过程"></p>
+<p><strong>为什么是在执行完命令之后记录日志呢？</strong></p>
+<ul>
+<li>避免额外的检查开销，AOF 记录日志不会对命令进行语法检查；</li>
+<li>在命令执行完之后再记录，不会阻塞当前的命令执行。</li>
+</ul>
+<p>这样也带来了风险（我在前面介绍 AOF 持久化的时候也提到过）：</p>
+<ul>
+<li>如果刚执行完命令 Redis 就宕机会导致对应的修改丢失；</li>
+<li><strong>可能会阻塞后续其他命令的执行（AOF 记录日志是在 Redis 主线程中进行的）</strong>。</li>
+</ul>
+<h3 id="AOF-刷盘阻塞"><a href="#AOF-刷盘阻塞" class="headerlink" title="AOF 刷盘阻塞"></a>AOF 刷盘阻塞</h3><p>开启 AOF 持久化后每执行一条会更改 Redis 中的数据的命令，Redis 就会将该命令写入到 AOF 缓冲区 <code>server.aof_buf</code> 中，然后再根据 <code>appendfsync</code> 配置来决定何时将其同步到硬盘中的 AOF 文件。</p>
+<p>在 Redis 的配置文件中存在三种不同的 AOF 持久化方式（<code>fsync</code>策略），它们分别是：</p>
+<ol>
+<li><code>appendfsync always</code>：主线程调用 <code>write</code> 执行写操作后，后台线程（<code>aof_fsync</code> 线程）立即会调用 <code>fsync</code> 函数同步 AOF 文件（刷盘），<code>fsync</code> 完成后线程返回，这样会严重降低 Redis 的性能（<code>write</code> + <code>fsync</code>）。</li>
+<li><code>appendfsync everysec</code>：主线程调用 <code>write</code> 执行写操作后立即返回，由后台线程（<code>aof_fsync</code> 线程）每秒钟调用 <code>fsync</code> 函数（系统调用）同步一次 AOF 文件（<code>write</code>+<code>fsync</code>，<code>fsync</code>间隔为 1 秒）</li>
+<li><code>appendfsync no</code>：主线程调用 <code>write</code> 执行写操作后立即返回，让操作系统决定何时进行同步，Linux 下一般为 30 秒一次（<code>write</code>但不<code>fsync</code>，<code>fsync</code> 的时机由操作系统决定）。</li>
+</ol>
+<p>当后台线程（<code>aof_fsync</code> 线程）调用 <code>fsync</code> 函数同步 AOF 文件时，需要等待，直到写入完成。当磁盘压力太大的时候，会导致 <code>fsync</code> 操作发生阻塞，主线程调用 <code>write</code> 函数时也会被阻塞。<code>fsync</code> 完成后，主线程执行 <code>write</code> 才能成功返回。</p>
+<p>当然，对于有些业务场景，对丢失数据并不敏感，也可以不开启 AOF。</p>
+<h3 id="AOF-重写阻塞"><a href="#AOF-重写阻塞" class="headerlink" title="AOF 重写阻塞"></a>AOF 重写阻塞</h3><ol>
+<li>fork 出一条子线程来将文件重写，在执行 <code>BGREWRITEAOF</code> 命令时，Redis 服务器会维护一个 AOF 重写缓冲区，该缓冲区会在子线程创建新 AOF 文件期间，记录服务器执行的所有写命令。</li>
+<li>当子线程完成创建新 AOF 文件的工作之后，服务器会将重写缓冲区中的所有内容追加到新 AOF 文件的末尾，使得新的 AOF 文件保存的数据库状态与现有的数据库状态一致。</li>
+<li>最后，服务器用新的 AOF 文件替换旧的 AOF 文件，以此来完成 AOF 文件重写操作。</li>
+</ol>
+<p>阻塞就是出现在第 2 步的过程中，将缓冲区中新数据写到新文件的过程中会产生<strong>阻塞</strong>。</p>
+<p>相关阅读：<a href="https://cloud.tencent.com/developer/article/1633077" target="_blank" rel="noopener">Redis AOF 重写阻塞问题分析</a>。</p>
+<h2 id="大-Key"><a href="#大-Key" class="headerlink" title="大 Key"></a>大 Key</h2><p>如果查询慢日志发现，并不是复杂度较高的命令导致的，例如都是 <code>SET、DELETE</code> 操作出现在慢日志记录中，那么你就要怀疑是否存在 Redis 写入了大 key 的情况。</p>
+<p>如果一个 key 对应的 value 所占用的内存比较大，那这个 key 就可以看作是 bigkey。具体多大才算大呢？有一个不是特别精确的参考标准：</p>
+<ul>
+<li>string 类型的 value 超过 1MB</li>
+<li>复合类型（列表、哈希、集合、有序集合等）的 value 包含的元素超过 5000 个（对于复合类型的 value 来说，不一定包含的元素越多，占用的内存就越多）。</li>
+</ul>
+<p>大 key 造成的阻塞问题如下：</p>
+<ul>
+<li>客户端超时阻塞：由于 Redis 执行命令是单线程处理，然后在操作大 key 时会比较耗时，那么就会阻塞 Redis，从客户端这一视角看，就是很久很久都没有响应。</li>
+<li>引发网络阻塞：每次获取大 key 产生的网络流量较大，如果一个 key 的大小是 1 MB，每秒访问量为 1000，那么每秒会产生 1000MB 的流量，这对于普通千兆网卡的服务器来说是灾难性的。</li>
+<li>阻塞工作线程：如果使用 del 删除大 key 时，会阻塞工作线程，这样就没办法处理后续的命令。</li>
+</ul>
+<h3 id="查找大-key"><a href="#查找大-key" class="headerlink" title="查找大 key"></a>查找大 key</h3><p>当我们在使用 Redis 自带的 <code>--bigkeys</code> 参数查找大 key 时，最好选择在从节点上执行该命令，因为主节点上执行时，会<strong>阻塞</strong>主节点。</p>
+<figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs stylus">redis-cli -h <span class="hljs-variable">$host</span> -<span class="hljs-selector-tag">p</span> <span class="hljs-variable">$port</span> --bigkeys -<span class="hljs-selector-tag">i</span> <span class="hljs-number">0.01</span><br></code></pre></td></tr></table></figure>
+
+<p>需要注意的是当我们在线上实例进行大 key 扫描时，Redis 的 QPS 会突增，为了降低扫描过程中对 Redis 的影响，我们需要控制扫描的频率，使用 <code>-i</code> 参数控制即可，它表示扫描过程中每次扫描的时间间隔，单位是秒。</p>
+<p>这个命令的原理是：Redis 在内部执行 scan 命令，遍历所有 key，然后针对不同类型的 key 执行 <code>strlen、llen、hlen、scard、zcard</code> 来获取字符串的长度以及容器类型(<code>list/dict/set/zset</code>)的元素个数。</p>
+<ul>
+<li>我们还可以使用 SCAN 命令来查找大 key；</li>
+<li>通过分析 RDB 文件来找出 big key，这种方案的前提是 Redis 采用的是 RDB 持久化。网上有现成的工具：<ul>
+<li>redis-rdb-tools：Python 语言写的用来分析 Redis 的 RDB 快照文件用的工具</li>
+<li>rdb_bigkeys：Go 语言写的用来分析 Redis 的 RDB 快照文件用的工具，性能更好。</li>
+</ul>
+</li>
+</ul>
+<h3 id="删除大-key"><a href="#删除大-key" class="headerlink" title="删除大 key"></a>删除大 key</h3><p>删除操作的本质是要释放键值对占用的内存空间。</p>
+<p>释放内存只是第一步，为了更加高效地管理内存空间，在应用程序释放内存时，<strong>操作系统需要把释放掉的内存块插入一个空闲内存块的链表</strong>，以便后续进行管理和再分配。这个过程本身需要一定时间，而且会<strong>阻塞</strong>当前释放内存的应用程序。</p>
+<p>所以，如果一下子释放了大量内存，空闲内存块链表操作时间就会增加，相应地就会造成 Redis 主线程的阻塞，如果主线程发生了阻塞，其他所有请求可能都会超时，超时越来越多，会造成 Redis 连接耗尽，产生各种异常。</p>
+<p>删除大 key 时建议采用分批次删除和异步删除的方式进行。</p>
+<h2 id="清空数据库"><a href="#清空数据库" class="headerlink" title="清空数据库"></a>清空数据库</h2><p>清空数据库和上面 bigkey 删除也是同样道理，<code>flushdb</code>、<code>flushall</code> 也涉及到删除和释放所有的键值对，也是 Redis 的阻塞点。</p>
+<h2 id="集群扩容"><a href="#集群扩容" class="headerlink" title="集群扩容"></a>集群扩容</h2><p>Redis 集群可以进行节点的动态扩容缩容，这一过程目前还处于半自动状态，需要人工介入。</p>
+<p>在扩缩容的时候，需要进行数据迁移。而 Redis 为了保证迁移的一致性，迁移所有操作都是同步操作。</p>
+<p>执行迁移时，两端的 Redis 均会进入时长不等的阻塞状态，对于小 Key，该时间可以忽略不计，但如果一旦 Key 的内存使用过大，严重的时候会触发集群内的故障转移，造成不必要的切换。</p>
+<h2 id="Swap（内存交换）"><a href="#Swap（内存交换）" class="headerlink" title="Swap（内存交换）"></a>Swap（内存交换）</h2><p><strong>什么是 Swap？</strong> Swap 直译过来是交换的意思，Linux 中的 Swap 常被称为内存交换或者交换分区。类似于 Windows 中的虚拟内存，就是当内存不足的时候，把一部分硬盘空间虚拟成内存使用，从而解决内存容量不足的情况。因此，Swap 分区的作用就是牺牲硬盘，增加内存，解决 VPS 内存不够用或者爆满的问题。</p>
+<p>Swap 对于 Redis 来说是非常致命的，Redis 保证高性能的一个重要前提是所有的数据在内存中。如果操作系统把 Redis 使用的部分内存换出硬盘，由于内存与硬盘的读写速度差几个数量级，会导致发生交换后的 Redis 性能急剧下降。</p>
+<p>识别 Redis 发生 Swap 的检查方法如下：</p>
+<p>1、查询 Redis 进程号</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">redis-cli -p 6383 info server | grep process_id<br>process_id: 4476<br></code></pre></td></tr></table></figure>
+
+<p>2、根据进程号查询内存交换信息</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs bash">cat /proc/4476/smaps | grep Swap<br>Swap: 0kB<br>Swap: 0kB<br>Swap: 4kB<br>Swap: 0kB<br>Swap: 0kB<br>.....<br></code></pre></td></tr></table></figure>
+
+<p>如果交换量都是 0KB 或者个别的是 4KB，则正常。</p>
+<p>预防内存交换的方法：</p>
+<ul>
+<li>保证机器充足的可用内存</li>
+<li>确保所有 Redis 实例设置最大可用内存(maxmemory)，防止极端情况 Redis 内存不可控的增长</li>
+<li>降低系统使用 swap 优先级，如<code>echo 10 &gt; /proc/sys/vm/swappiness</code></li>
+</ul>
+<h2 id="CPU-竞争"><a href="#CPU-竞争" class="headerlink" title="CPU 竞争"></a>CPU 竞争</h2><p>Redis 是典型的 CPU 密集型应用，不建议和其他多核 CPU 密集型服务部署在一起。当其他进程过度消耗 CPU 时，将严重影响 Redis 的吞吐量。</p>
+<p>可以通过 <code>redis-cli --stat</code> 获取当前 Redis 使用情况。通过 <code>top</code> 命令获取进程对 CPU 的利用率等信息 通过 <code>info commandstats</code> 统计信息分析出命令不合理开销时间，查看是否是因为高算法复杂度或者过度的内存优化问题。</p>
+<h2 id="集中过期"><a href="#集中过期" class="headerlink" title="集中过期"></a>集中过期</h2><p>有时你会发现，平时在使用 Redis 时没有延时比较大的情况，但在某个时间点突然出现一波延时，而且报慢的时间点很有规律，例如某个整点，或者间隔多久就会发生一次。</p>
+<p>如果出现这种情况，就需要考虑是否存在大量 key 集中过期的情况。如果有大量的 key 在某个固定时间点集中过期，在这个时间点访问 Redis 时，就有可能导致延迟增加。</p>
+<p>Redis 的过期策略采用主动过期+懒惰过期两种策略：</p>
+<p><strong>主动过期：</strong> Redis 内部维护一个定时任务，默认每隔 100 毫秒会从过期字典中随机取出 20 个 key，删除过期的 key，如果过期 key 的比例超过了 25%，则继续获取 20 个 key，删除过期的 key，循环往复，直到过期 key 的比例下降到 25% 或者这次任务的执行耗时超过了 25 毫秒，才会退出循环。<br><strong>懒惰过期：</strong> 只有当访问某个 key 时，才判断这个 key 是否已过期，如果已经过期，则从实例中删除。</p>
+<p>注意，Redis 的主动过期的定时任务，也是在 Redis 主线程中执行的，也就是说如果在执行主动过期的过程中，出现了需要大量删除过期 key 的情况，那么在业务访问时，必须等这个过期任务执行结束，才可以处理业务请求。此时就会出现，业务访问延时增大的问题，最大延迟为 25 毫秒。</p>
+<p>而且这个访问延迟的情况，不会记录在慢日志里。慢日志中只记录真正执行某个命令的耗时，Redis 主动过期策略执行在操作命令之前，如果操作命令耗时达不到慢日志阈值，它是不会计算在慢日志统计中的，但我们的业务却感到了延迟增大。</p>
+<p>此时你需要检查你的业务，是否真的存在集中过期的代码，一般集中过期使用的命令是 expireat 或 pexpireat 命令，在代码中搜索这个关键字就可以了。</p>
+<p>如果你的业务确实需要集中过期掉某些 key，又不想导致 Redis 发生抖动，有什么优化方案？</p>
+<p>解决方案是，在集中过期时增加一个随机时间，把这些需要过期的 key 的时间打散即可。伪代码可以这么写：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs plain"># 在过期时间点之后的5分钟内随机过期掉<br>redis.expireat(key, expire_time + random(300))<br></code></pre></td></tr></table></figure>
+
+<p>这样 Redis 在处理过期时，不会因为集中删除 key 导致压力过大，阻塞主线程。</p>
+<p>另外，除了业务使用需要注意此问题之外，还可以通过运维手段来及时发现这种情况。</p>
+<p>做法是我们需要把 Redis 的各项运行数据监控起来，执行 info 可以拿到所有的运行数据，在这里我们需要重点关注 <code>expired_keys</code> 这一项，它代表整个实例到目前为止，累计删除过期 key 的数量。</p>
+<p>我们需要对这个指标监控，当在很短时间内这个指标出现突增时，需要及时报警出来，然后与业务报慢的时间点对比分析，确认时间是否一致，如果一致，则可以认为确实是因为这个原因导致的延迟增大。</p>
+<h2 id="实例内存达到上限"><a href="#实例内存达到上限" class="headerlink" title="实例内存达到上限"></a>实例内存达到上限</h2><p>有时我们把 Redis 当做纯缓存使用，就会给实例设置一个内存上限 maxmemory，然后开启 LRU 淘汰策略。</p>
+<p>当实例的内存达到了 maxmemory 后，你会发现之后的每次写入新的数据，有可能变慢了。</p>
+<p>导致变慢的原因是，当 Redis 内存达到 maxmemory 后，每次写入新的数据之前，必须先踢出一部分数据，让内存维持在 maxmemory 之下。</p>
+<p>这个踢出旧数据的逻辑也是需要消耗时间的，而具体耗时的长短，要取决于配置的淘汰策略：</p>
+<ul>
+<li>allkeys-lru：不管 key 是否设置了过期，淘汰最近最少访问 的key。</li>
+<li>volatile-lru：只淘汰最近最少访问并设置过期的 key。</li>
+<li>allkeys-random：不管 key 是否设置了过期，随机淘汰。</li>
+<li>volatile-random：只随机淘汰有设置过期的 key。</li>
+<li>allkeys-ttl：不管key是否设置了过期，淘汰即将过期的 key。</li>
+<li>noeviction：不淘汰任何 key，满容后再写入直接报错。</li>
+<li>allkeys-lfu：不管 key 是否设置了过期，淘汰访问频率最低的 key（4.0+支持）。</li>
+<li>volatile-lfu：只淘汰访问频率最低的过期 key（4.0+支持）。</li>
+</ul>
+<p>具体使用哪种策略，需要根据业务场景来决定。</p>
+<p>我们最常使用的一般是 allkeys-lru 或 volatile-lru 策略，它们的处理逻辑是，每次从实例中随机取出一批 key（可配置），然后淘汰一个最少访问的 key，之后把剩下的 key 暂存到一个池子中，继续随机取出一批 key，并与之前池子中的 key 比较，再淘汰一个最少访问的 key。以此循环，直到内存降到 maxmemory 之下。</p>
+<p>如果使用的是 allkeys-random 或 volatile-random 策略，那么就会快很多，因为是随机淘汰，那么就少了比较 key 访问频率时间的消耗了，随机拿出一批 key 后直接淘汰即可，因此这个策略要比上面的LRU策略执行快一些。</p>
+<p>但以上这些逻辑都是在访问 Redis 时，真正命令执行之前执行的，也就是它会影响我们访问 Redis 时执行的命令。</p>
+<p>另外，如果此时 Redis 实例中有存储大 key，那么在淘汰大 key 释放内存时，这个耗时会更加久，延迟更大，这需要我们格外注意。</p>
+<p>如果你的业务访问量非常大，并且必须设置 maxmemory 限制实例的内存上限，同时面临淘汰 key 导致延迟增大的的情况，要想缓解这种情况，除了上面说的避免存储大 key、使用随机淘汰策略之外，也可以考虑拆分实例的方法来缓解，拆分实例可以把一个实例淘汰 key 的压力分摊到多个实例上，可以在一定程度降低延迟。</p>
+<h2 id="绑定-CPU"><a href="#绑定-CPU" class="headerlink" title="绑定 CPU"></a>绑定 CPU</h2><p>很多时候，我们在部署服务时，为了提高性能，降低程序在使用多个 CPU 时上下文切换的性能损耗，一般会采用进程绑定 CPU 的操作。</p>
+<p>但在使用 Redis 时，我们不建议这么干，原因如下。</p>
+<p>绑定 CPU 的 Redis，在进行数据持久化时，fork 出的子进程，子进程会继承父进程的 CPU 使用偏好，而此时子进程会消耗大量的 CPU 资源进行数据持久化，子进程会与主进程发生 CPU 争抢，这也会导致主进程的 CPU 资源不足访问延迟增大。</p>
+<p>所以在部署 Redis 进程时，如果需要开启 RD B和 AOF重写 机制，一定不能进行 CPU 绑定操作！</p>
+<h2 id="网卡负载过高"><a href="#网卡负载过高" class="headerlink" title="网卡负载过高"></a>网卡负载过高</h2><p>如果以上产生性能问题的场景，你都规避掉了，而且 Redis 也稳定运行了很长时间，但在某个时间点之后开始，访问 Redis 开始变慢了，而且一直持续到现在，这种情况是什么原因导致的？</p>
+<p>之前我们就遇到这种问题，特点就是从某个时间点之后就开始变慢，并且一直持续。这时你需要检查一下机器的网卡流量，是否存在网卡流量被跑满的情况。</p>
+<p>网卡负载过高，在网络层和 TCP 层就会出现数据发送延迟、数据丢包等情况。Redis 的高性能除了内存之外，就在于网络IO，请求量突增会导致网卡负载变高。</p>
+<p>如果出现这种情况，你需要排查这个机器上的哪个 Redis 实例的流量过大占满了网络带宽，然后确认流量突增是否属于业务正常情况，如果属于那就需要及时扩容或迁移实例，避免这个机器的其他实例受到影响。</p>
+<p>运维层面，我们需要对机器的各项指标增加监控，包括网络流量，在达到阈值时提前报警，及时与业务确认并扩容。</p>
+<h2 id="网络问题"><a href="#网络问题" class="headerlink" title="网络问题"></a>网络问题</h2><p>连接拒绝、网络延迟，网卡软中断等网络问题也可能会导致 Redis 阻塞。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
+<li>Redis 阻塞的 6 大类场景分析与总结：<a href="https://mp.weixin.qq.com/s/eaZCEtTjTuEmXfUubVHjew" target="_blank" rel="noopener">https://mp.weixin.qq.com/s/eaZCEtTjTuEmXfUubVHjew</a></li>
+<li>Redis 开发与运维笔记-Redis 的噩梦-阻塞：<a href="https://mp.weixin.qq.com/s/TDbpz9oLH6ifVv6ewqgSgA" target="_blank" rel="noopener">https://mp.weixin.qq.com/s/TDbpz9oLH6ifVv6ewqgSgA</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E9%9D%A2%E8%AF%95/" class="print-no-link">#面试</a>
+      
+        <a href="/tags/Redis/" class="print-no-link">#Redis</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>04-Redis 场景 常见阻塞原因</div>
+      <div>https://flepeng.github.io/interview-41-数据库-41-Redis-04-Redis-场景-常见阻塞原因/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2020年8月8日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

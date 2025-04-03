@@ -1,0 +1,942 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="简介jstat是JDK自带的一个轻量级小工具。它位于java的bin目录下，主要利用JVM内建的指令对Java应用程序的资源和性能进行实时的命令行的监控，包括了对Heap size和垃圾回收状况的监控。 jstat命令可以查看堆内存各部分的使用量，以及加载类的数量。 语法1234567891011121314151617181920212223242526272829303132333435363">
+<meta property="og:type" content="article">
+<meta property="og:title" content="命令 jstat 查看堆内存使用情况">
+<meta property="og:url" content="https://flepeng.github.io/021-Java-42-JVM-%E5%91%BD%E4%BB%A4-jstat-%E6%9F%A5%E7%9C%8B%E5%A0%86%E5%86%85%E5%AD%98%E4%BD%BF%E7%94%A8%E6%83%85%E5%86%B5/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="简介jstat是JDK自带的一个轻量级小工具。它位于java的bin目录下，主要利用JVM内建的指令对Java应用程序的资源和性能进行实时的命令行的监控，包括了对Heap size和垃圾回收状况的监控。 jstat命令可以查看堆内存各部分的使用量，以及加载类的数量。 语法1234567891011121314151617181920212223242526272829303132333435363">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2024-04-18T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.313Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="Java">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>命令 jstat 查看堆内存使用情况 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="命令 jstat 查看堆内存使用情况"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-04-19 00:00" pubdate>
+          2024年4月19日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          23 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">命令 jstat 查看堆内存使用情况</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h1><p>jstat是JDK自带的一个轻量级小工具。它位于java的bin目录下，主要利用JVM内建的指令对Java应用程序的资源和性能进行实时的命令行的监控，包括了对Heap size和垃圾回收状况的监控。</p>
+<p>jstat命令可以查看堆内存各部分的使用量，以及加载类的数量。</p>
+<h1 id="语法"><a href="#语法" class="headerlink" title="语法"></a>语法</h1><figure class="highlight pf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><code class="hljs pf">jstat [-命令选项] [vmid] [间隔时间/毫秒] [查询次数]<br><br>[lepeng@centos ~]<span class="hljs-comment"># jstat -help</span><br>Usage: jstat -help|-options<br>       jstat -<span class="hljs-variable">&lt;option&gt;</span> [-t] [-h<span class="hljs-variable">&lt;lines&gt;</span>] <span class="hljs-variable">&lt;vmid&gt;</span> [<span class="hljs-variable">&lt;interval&gt;</span> [<span class="hljs-variable">&lt;count&gt;</span>]]<br>Definitions:<br>    <span class="hljs-variable">&lt;option&gt;</span>      An option reported by the -options option<br>    <span class="hljs-variable">&lt;vmid&gt;</span>        Virtual Machine Identifier. A vmid takes the following form:<br>    <span class="hljs-variable">&lt;lvmid&gt;</span>[@<span class="hljs-variable">&lt;hostname&gt;</span>[:<span class="hljs-variable">&lt;port&gt;</span>]]<br>                Where <span class="hljs-variable">&lt;lvmid&gt;</span> is the local vm identifier <span class="hljs-keyword">for</span> the target<br>                Java virtual machine, typically a process id; <span class="hljs-variable">&lt;hostname&gt;</span> is<br>                the name of the host running the target Java virtual machine;<br>                and <span class="hljs-variable">&lt;port&gt;</span> is the <span class="hljs-keyword">port</span> number <span class="hljs-keyword">for</span> the rmiregistry <span class="hljs-keyword">on</span> the<br>                target host. See the jvmstat documentation <span class="hljs-keyword">for</span> a more complete<br>                description of the Virtual Machine Identifier.<br>    <span class="hljs-variable">&lt;lines&gt;</span>       Number of samples between header lines.<br>    <span class="hljs-variable">&lt;interval&gt;</span>    Sampling interval. The following forms are allowed:<br>    <span class="hljs-variable">&lt;n&gt;</span>[<span class="hljs-string">"ms"</span>|<span class="hljs-string">"s"</span>]<br>                Where <span class="hljs-variable">&lt;n&gt;</span> is an integer and the suffix specifies the units as<br>                milliseconds(<span class="hljs-string">"ms"</span>) or seconds(<span class="hljs-string">"s"</span>). The <span class="hljs-keyword">default</span> units are <span class="hljs-string">"ms"</span>.<br>    <span class="hljs-variable">&lt;count&gt;</span>       Number of samples <span class="hljs-keyword">to</span> take before terminating.<br>    -J<span class="hljs-variable">&lt;flag&gt;</span>      Pass <span class="hljs-variable">&lt;flag&gt;</span> directly <span class="hljs-keyword">to</span> the runtime system.<br><br>说明：<br>    option：参数选项<br>    -t：可以在打印的列加上Timestamp列，用于显示系统运行的时间<br>    -h：可以在周期性数据输出的时候，指定输出多少行以后输出一次表头<br>    vmid：Virtual Machine ID（ 进程的 pid）<br>    interval：执行每次的间隔时间，单位为毫秒<br>    count：用于指定输出多少次记录，缺省则会一直打印<br><br>option 可以从下面参数中选择<br>jstat -options<br>    -class 用于查看类加载情况的统计<br>    -compiler 用于查看HotSpot中即时编译器编译情况的统计<br>    -gc 用于查看JVM中堆的垃圾收集情况的统计<br>    -gccapacity 用于查看新生代、老生代及持久代的存储容量情况<br>    -gcmetacapacity 显示metaspace的大小<br>    -gcnew 用于查看新生代垃圾收集的情况<br>    -gcnewcapacity 用于查看新生代存储容量的情况<br>    -gcold 用于查看老生代及持久代垃圾收集的情况<br>    -gcoldcapacity 用于查看老生代的容量<br>    -gcutil 显示垃圾收集信息<br>    -gccause 显示垃圾回收的相关信息（通-gcutil）,同时显示最后一次仅当前正在发生的垃圾收集的原因<br>    -printcompilation 输出JIT编译的方法信息<br></code></pre></td></tr></table></figure>
+
+
+<h1 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h1><h2 id="class-查看class加载统计"><a href="#class-查看class加载统计" class="headerlink" title="-class 查看class加载统计"></a><code>-class</code> 查看class加载统计</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">[lepeng@centos ~]<span class="hljs-comment"># jstat -class 4219</span><br>Loaded  Bytes  Unloaded  Bytes     Time<br> 3800  7339.7  409       783.0     6.35<br></code></pre></td></tr></table></figure>
+
+<p>说明：</p>
+<ul>
+<li>Loaded：加载class的数量</li>
+<li>Bytes：所占用空间大小</li>
+<li>Unloaded：未加载数量</li>
+<li>Bytes：未加载占用空间</li>
+<li>Time：时间</li>
+</ul>
+<h2 id="compiler-查看编译统计："><a href="#compiler-查看编译统计：" class="headerlink" title="-compiler 查看编译统计："></a><code>-compiler</code> 查看编译统计：</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">[lepeng@centos ~]<span class="hljs-comment"># jstat ‐compiler 6219</span><br>Compiled Failed Invalid Time FailedType FailedMethod<br>    2376      1       0 8.04          1       org/apache/tomcat/util/IntrospectionUtils setProperty<br></code></pre></td></tr></table></figure>
+<p>说明：</p>
+<ul>
+<li>Compiled：编译数量。</li>
+<li>Failed：失败数量</li>
+<li>Invalid：不可用数量</li>
+<li>Time：时间</li>
+<li>FailedType：失败类型</li>
+<li>FailedMethod：失败的方法</li>
+</ul>
+<h2 id="gc-垃圾回收统计"><a href="#gc-垃圾回收统计" class="headerlink" title="-gc 垃圾回收统计"></a><code>-gc</code> 垃圾回收统计</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs bash">[lepeng@centos ~]<span class="hljs-comment"># jstat -gc 21180</span><br> S0C    S1C    S0U    S1U      EC       EU        OC         OU       MC     MU    CCSC   CCSU   YGC     YGCT    FGC    FGCT     GCT<br>28160.0 30208.0 0.0 0.0 260096.0 163920.6 115712.0 27193.7 21248.0 18539.6 2560.0 2053.2 6 0.096 1 0.057 0.153<br><br><span class="hljs-comment"># 也可以指定打印的间隔和次数，每1秒中打印一次，共打印5次</span><br>[lepeng@centos ~]<span class="hljs-comment">#stat -gc 21180 1000 3</span><br> S0C    S1C    S0U    S1U      EC       EU        OC         OU       MC     MU    CCSC   CCSU   YGC     YGCT    FGC    FGCT     GCT<br>28160.0 30208.0 0.0 0.0 260096.0 171724.8 115712.0 27193.7 21248.0 18539.6 2560.0 2053.2 6 0.096 1 0.057 0.153<br>28160.0 30208.0 0.0 0.0 260096.0 172592.0 115712.0 27193.7 21248.0 18539.6 2560.0 2053.2 6 0.096 1 0.057 0.153<br>28160.0 30208.0 0.0 0.0 260096.0 172592.0 115712.0 27193.7 21248.0 18539.6 2560.0 2053.2 6 0.096 1 0.057 0.153<br></code></pre></td></tr></table></figure>
+
+<p>说明：</p>
+<ul>
+<li>S0C：第一个Survivor区的大小（KB）</li>
+<li>S1C：第二个Survivor区的大小（KB）</li>
+<li>S0U：第一个Survivor区的使用大小（KB）</li>
+<li>S1U：第二个Survivor区的使用大小（KB）</li>
+<li>EC：Eden区的大小（KB）</li>
+<li>EU：Eden区的使用大小（KB）</li>
+<li>OC：Old 区大小（KB）</li>
+<li>OU：Old使用大小（KB）</li>
+<li>MC：方法区大小（KB）</li>
+<li>MU：方法区使用大小（KB）</li>
+<li>CCSC：压缩类空间大小（KB）</li>
+<li>CCSU：压缩类空间使用大小（KB）</li>
+<li>YGC：年轻代垃圾回收次数</li>
+<li>YGCT：年轻代垃圾回收消耗时间</li>
+<li>FGC：老年代垃圾回收次数</li>
+<li>FGCT：老年代垃圾回收消耗时间</li>
+<li>GCT：垃圾回收消耗总时间</li>
+</ul>
+<h2 id="gccapacity-堆内存统计"><a href="#gccapacity-堆内存统计" class="headerlink" title="-gccapacity ### 堆内存统计"></a><code>-gccapacity</code> ### 堆内存统计</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs bash">[lepeng@centos ~]<span class="hljs-comment"># jstat -gccapacity 3346   # 用于查看新生代、老生代及持久代的存储容量情况</span><br>NGCMN    NGCMX     NGC     S0C   S1C       EC      OGCMN      OGCMX       OGC         OC       MCMN     MCMX      MC     CCSMN    CCSMX     CCSC    YGC    FGC<br>1280.0 83264.0 1280.0 128.0 128.0 1024.0 15104.0 166592.0 15104.0 15104.0 0.0 1056768.0 8448.0 0.0 1048576.0 1024.0 7 0<br><br>[lepeng@centos ~]<span class="hljs-comment"># jstat -gccapacity -h5 3346 1000   #-h5：每5行显示一次表头 1000：每1秒钟显示一次，单位为毫秒</span><br>NGCMN    NGCMX     NGC     S0C   S1C       EC      OGCMN      OGCMX       OGC         OC       MCMN     MCMX      MC     CCSMN    CCSMX     CCSC    YGC    FGC<br>1280.0 83264.0 1280.0 128.0 128.0 1024.0 15104.0 166592.0 15104.0 15104.0 0.0 1056768.0 8448.0 0.0 1048576.0 1024.0 7 0<br>1280.0 83264.0 1280.0 128.0 128.0 1024.0 15104.0 166592.0 15104.0 15104.0 0.0 1056768.0 8448.0 0.0 1048576.0 1024.0 7 0<br>1280.0 83264.0 1280.0 128.0 128.0 1024.0 15104.0 166592.0 15104.0 15104.0 0.0 1056768.0 8448.0 0.0 1048576.0 1024.0 7 0<br>1280.0 83264.0 1280.0 128.0 128.0 1024.0 15104.0 166592.0 15104.0 15104.0 0.0 1056768.0 8448.0 0.0 1048576.0 1024.0 7 0<br>1280.0 83264.0 1280.0 128.0 128.0 1024.0 15104.0 166592.0 15104.0 15104.0 0.0 1056768.0 8448.0 0.0 1048576.0 1024.0 7 0<br>NGCMN    NGCMX     NGC     S0C   S1C       EC      OGCMN      OGCMX       OGC         OC       MCMN     MCMX      MC     CCSMN    CCSMX     CCSC    YGC    FGC<br>1280.0 83264.0 1280.0 128.0 128.0 1024.0 15104.0 166592.0 15104.0 15104.0 0.0 1056768.0 8448.0 0.0 1048576.0 1024.0 7 0<br>1280.0 83264.0 1280.0 128.0 128.0 1024.0 15104.0 166592.0 15104.0 15104.0 0.0 1056768.0 8448.0 0.0 1048576.0 1024.0 7 0<br>1280.0 83264.0 1280.0 128.0 128.0 1024.0 15104.0 166592.0 15104.0 15104.0 0.0 1056768.0 8448.0 0.0 1048576.0 1024.0 7 0<br>1280.0 83264.0 1280.0 128.0 128.0 1024.0 15104.0 166592.0 15104.0 15104.0 0.0 1056768.0 8448.0 0.0 1048576.0 1024.0 7 0<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>NGCMN：年轻代(young)中初始化(最小)的大小(字节)</li>
+<li>NGCMX：年轻代(young)的最大容量 (字节)</li>
+<li>NGC：年轻代(young)中当前的容量 (字节)</li>
+<li>S0C：年轻代中第一个survivor（幸存区）的容量 (字节)</li>
+<li>S1C：年轻代中第二个survivor（幸存区）的容量 (字节)</li>
+<li>EC：年轻代中Eden（伊甸园）的容量 (字节)</li>
+<li>OGCMN：old代中初始化(最小)的大小 (字节)</li>
+<li>OGCMX：old代的最大容量(字节)</li>
+<li>OGC：old代当前新生成的容量 (字节)</li>
+<li>OC：Old代的容量 (字节)</li>
+<li>MCMN：metaspace(元空间)中初始化(最小)的大小 (字节)</li>
+<li>MCMX：metaspace(元空间)的最大容量 (字节)</li>
+<li>MC：metaspace(元空间)当前新生成的容量 (字节)</li>
+<li>CCSMN：最小压缩类空间大小</li>
+<li>CCSMX：最大压缩类空间大小</li>
+<li>CCSC：当前压缩类空间大小</li>
+<li>YGC：从应用程序启动到采样时年轻代中gc次数</li>
+<li>FGC：从应用程序启动到采样时old代(全gc)gc次数</li>
+</ul>
+<h2 id="gcmetacapacity-元数据空间统计"><a href="#gcmetacapacity-元数据空间统计" class="headerlink" title="-gcmetacapacity 元数据空间统计"></a><code>-gcmetacapacity</code> 元数据空间统计</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs plain">[lepeng@centos ~]# jstat -gcmetacapacity 3346    # 显示元数据空间的大小<br>MCMN MCMX MC CCSMN CCSMX CCSC YGC FGC FGCT GCT<br>0.0 1056768.0 8448.0 0.0 1048576.0 1024.0 8 0 0.000 0.020<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>MCMN：最小元数据容量</li>
+<li>MCMX：最大元数据容量</li>
+<li>MC：当前元数据空间大小</li>
+<li>CCSMN：最小压缩类空间大小</li>
+<li>CCSMX：最大压缩类空间大小</li>
+<li>CCSC：当前压缩类空间大小</li>
+<li>YGC：从应用程序启动到采样时年轻代中gc次数</li>
+<li>FGC：从应用程序启动到采样时old代(全gc)gc次数</li>
+<li>FGCT：从应用程序启动到采样时old代(全gc)gc所用时间(s)</li>
+<li>GCT：从应用程序启动到采样时gc用的总时间(s)</li>
+</ul>
+<h2 id="gcnew-新生代垃圾回收统计"><a href="#gcnew-新生代垃圾回收统计" class="headerlink" title="-gcnew 新生代垃圾回收统计"></a><code>-gcnew</code> 新生代垃圾回收统计</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">[lepeng@centos ~]<span class="hljs-comment"># jstat -gcnew 3346    # 用于查看新生代垃圾收集的情况</span><br>S0C S1C S0U S1U TT MTT DSS EC EU YGC YGCT<br>128.0 128.0 67.8 0.0 1 15 64.0 1024.0 362.2 8 0.020<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>S0C：年轻代中第一个survivor（幸存区）的容量 (字节)</li>
+<li>S1C：年轻代中第二个survivor（幸存区）的容量 (字节)</li>
+<li>S0U：年轻代中第一个survivor（幸存区）目前已使用空间 (字节)</li>
+<li>S1U：年轻代中第二个survivor（幸存区）目前已使用空间 (字节)</li>
+<li>TT：持有次数限制</li>
+<li>MTT：最大持有次数限制</li>
+<li>DSS：期望的幸存区大小</li>
+<li>EC：年轻代中Eden（伊甸园）的容量 (字节)</li>
+<li>EU：年轻代中Eden（伊甸园）目前已使用空间 (字节)</li>
+<li>YGC：从应用程序启动到采样时年轻代中gc次数</li>
+<li>YGCT：从应用程序启动到采样时年轻代中gc所用时间(s)</li>
+</ul>
+<h2 id="gcnewcapacity-新生代内存统计"><a href="#gcnewcapacity-新生代内存统计" class="headerlink" title="-gcnewcapacity 新生代内存统计"></a><code>-gcnewcapacity</code> 新生代内存统计</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">[lepeng@centos ~]<span class="hljs-comment"># jstat -gcnewcapacity 3346    # 用于查看新生代存储容量的情况</span><br>NGCMN NGCMX NGC S0CMX S0C S1CMX S1C ECMX EC YGC FGC<br>1280.0 83264.0 1280.0 8320.0 128.0 8320.0 128.0 66624.0 1024.0 8 0<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>NGCMN：年轻代(young)中初始化(最小)的大小(字节)</li>
+<li>NGCMX：年轻代(young)的最大容量 (字节)</li>
+<li>NGC：年轻代(young)中当前的容量 (字节)</li>
+<li>S0CMX：年轻代中第一个survivor（幸存区）的最大容量 (字节)</li>
+<li>S0C：年轻代中第一个survivor（幸存区）的容量 (字节)</li>
+<li>S1CMX：年轻代中第二个survivor（幸存区）的最大容量 (字节)</li>
+<li>S1C：年轻代中第二个survivor（幸存区）的容量 (字节)</li>
+<li>ECMX：年轻代中Eden（伊甸园）的最大容量 (字节)</li>
+<li>EC：年轻代中Eden（伊甸园）的容量 (字节)</li>
+<li>YGC：从应用程序启动到采样时年轻代中gc次数</li>
+<li>FGC：从应用程序启动到采样时old代(全gc)gc次数</li>
+</ul>
+<h2 id="gcold-老年代垃圾回收统计"><a href="#gcold-老年代垃圾回收统计" class="headerlink" title="-gcold 老年代垃圾回收统计"></a><code>-gcold</code> 老年代垃圾回收统计</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs plain">[lepeng@centos ~]# jstat -gcold 3346  # 用于查看老年代及持久代垃圾收集的情况<br>MC MU CCSC CCSU OC OU YGC FGC FGCT GCT<br>8448.0 8227.5 1024.0 1003.7 15104.0 2102.2 8 0 0.000 0.020<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>MC：metaspace(元空间)的容量 (字节)</li>
+<li>MU：metaspace(元空间)目前已使用空间 (字节)</li>
+<li>CCSC：压缩类空间大小</li>
+<li>CCSU：压缩类空间使用大小</li>
+<li>OC：Old代的容量 (字节)</li>
+<li>OU：Old代目前已使用空间 (字节)</li>
+<li>YGC：从应用程序启动到采样时年轻代中gc次数</li>
+<li>FGC：从应用程序启动到采样时old代(全gc)gc次数</li>
+<li>FGCT：从应用程序启动到采样时old代(全gc)gc所用时间(s)</li>
+<li>GCT：从应用程序启动到采样时gc用的总时间(s)</li>
+</ul>
+<h2 id="gcoldcapacity-老年代内存统计"><a href="#gcoldcapacity-老年代内存统计" class="headerlink" title="-gcoldcapacity 老年代内存统计"></a><code>-gcoldcapacity</code> 老年代内存统计</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">[lepeng@centos ~]<span class="hljs-comment"># jstat -gcoldcapacity 3346 #用于查看老年代的容量</span><br>OGCMN OGCMX OGC OC YGC FGC FGCT GCT<br>15104.0 166592.0 15104.0 15104.0 8 0 0.000 0.020<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>OGCMN：old代中初始化(最小)的大小 (字节)</li>
+<li>OGCMX：old代的最大容量(字节)</li>
+<li>OGC：old代当前新生成的容量 (字节)</li>
+<li>OC：Old代的容量 (字节)</li>
+<li>YGC：从应用程序启动到采样时年轻代中gc次数</li>
+<li>FGC：从应用程序启动到采样时old代(全gc)gc次数</li>
+<li>FGCT：从应用程序启动到采样时old代(全gc)gc所用时间(s)</li>
+<li>GCT：从应用程序启动到采样时gc用的总时间(s)</li>
+</ul>
+<h2 id="gcutil-垃圾回收统计"><a href="#gcutil-垃圾回收统计" class="headerlink" title="-gcutil 垃圾回收统计"></a><code>-gcutil</code> 垃圾回收统计</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">[lepeng@centos ~]<span class="hljs-comment"># jstat -gcutil 3346   # 显示垃圾收集信息</span><br>S0 S1 E O M CCS YGC YGCT FGC FGCT GCT<br>52.97 0.00 42.10 13.92 97.39 98.02 8 0.020 0 0.000 0.020<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>S0：年轻代中第一个survivor（幸存区）已使用的占当前容量百分比</li>
+<li>S1：年轻代中第二个survivor（幸存区）已使用的占当前容量百分比</li>
+<li>E：年轻代中Eden（伊甸园）已使用的占当前容量百分比</li>
+<li>O：old代已使用的占当前容量百分比</li>
+<li>M：元数据区已使用的占当前容量百分比</li>
+<li>CCS：压缩类空间已使用的占当前容量百分比</li>
+<li>YGC ：从应用程序启动到采样时年轻代中gc次数</li>
+<li>YGCT ：从应用程序启动到采样时年轻代中gc所用时间(s)</li>
+<li>FGC ：从应用程序启动到采样时old代(全gc)gc次数</li>
+<li>FGCT ：从应用程序启动到采样时old代(全gc)gc所用时间(s)</li>
+<li>GCT：从应用程序启动到采样时gc用的总时间(s)</li>
+</ul>
+<h2 id="gccause-显示垃圾回收的相关信息"><a href="#gccause-显示垃圾回收的相关信息" class="headerlink" title="-gccause 显示垃圾回收的相关信息"></a><code>-gccause</code> 显示垃圾回收的相关信息</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs plain">[lepeng@centos ~]# jstat -gccause 3346      # 显示垃圾回收的相关信息（同-gcutil）,同时显示最后一次或当前正在发生的垃圾回收的诱因<br>S0 S1 E O M CCS YGC YGCT FGC FGCT GCT LGCC GCC<br>52.97 0.00 46.09 13.92 97.39 98.02 8 0.020 0 0.000 0.020 Allocation Failure No GC<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>LGCC：最后一次GC原因</li>
+<li>GCC：当前GC原因（No GC 为当前没有执行GC）</li>
+</ul>
+<h2 id="printcompilation-JVM编译方法统计"><a href="#printcompilation-JVM编译方法统计" class="headerlink" title="-printcompilation JVM编译方法统计"></a><code>-printcompilation</code> JVM编译方法统计</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">[lepeng@centos ~]<span class="hljs-comment"># jstat -printcompilation 3346     # 输出JIT编译的方法信息</span><br>Compiled Size Type Method<br>421 60 1 sun/nio/ch/Util<span class="hljs-variable">$2</span> clear<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>Compiled：编译任务的数目</li>
+<li>Size：方法生成的字节码的大小</li>
+<li>Type：编译类型</li>
+<li>Method：类名和方法名用来标识编译的方法。类名使用&#x2F;做为一个命名空间分隔符。方法名是给定类中的方法。上述格式是由-XX:+PrintComplation选项进行设置的</li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Java/" class="category-chain-item">Java</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Java/" class="print-no-link">#Java</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>命令 jstat 查看堆内存使用情况</div>
+      <div>https://flepeng.github.io/021-Java-42-JVM-命令-jstat-查看堆内存使用情况/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年4月19日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/021-Java-42-JVM-%E5%91%BD%E4%BB%A4-jstack-%E6%9F%A5%E7%9C%8B%E7%BA%BF%E7%A8%8B%E4%BD%BF%E7%94%A8%E6%83%85%E5%86%B5/" title="命令 jstack 查看线程使用情况">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">命令 jstack 查看线程使用情况</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/021-Java-42-JVM-%E5%B7%A5%E5%85%B7-MAT-%E5%AF%B9-dump-%E6%96%87%E4%BB%B6%E8%BF%9B%E8%A1%8C%E5%88%86%E6%9E%90/" title="工具 MAT 对 dump 文件进行分析">
+                        <span class="hidden-mobile">工具 MAT 对 dump 文件进行分析</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

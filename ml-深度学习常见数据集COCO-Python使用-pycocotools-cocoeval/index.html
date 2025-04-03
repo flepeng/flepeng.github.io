@@ -1,0 +1,828 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="首先了解下cocoeval .py的构成吧。 Params类：对于COCO格式的数据检测，我们主要分为不同的IoU阈值，不同的面积范围，单张图片的最大检测数量。在这些不同的参数下，会得到不同的AP与AR。 所以在这个类中，我们需要指定这些参数的数值范围，具体可看下面贴出的代码。 标准的即IoU阈值设置为从0.5-0.95 间隔0.05，一共10个阈值 AR的阈值为0-1 间隔0.01 ，一共101">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深度学习常见数据集COCO Python使用 pycocotools.cocoeval">
+<meta property="og:url" content="https://flepeng.github.io/ml-%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E5%B8%B8%E8%A7%81%E6%95%B0%E6%8D%AE%E9%9B%86COCO-Python%E4%BD%BF%E7%94%A8-pycocotools-cocoeval/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="首先了解下cocoeval .py的构成吧。 Params类：对于COCO格式的数据检测，我们主要分为不同的IoU阈值，不同的面积范围，单张图片的最大检测数量。在这些不同的参数下，会得到不同的AP与AR。 所以在这个类中，我们需要指定这些参数的数值范围，具体可看下面贴出的代码。 标准的即IoU阈值设置为从0.5-0.95 间隔0.05，一共10个阈值 AR的阈值为0-1 间隔0.01 ，一共101">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-06-28T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.494Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="深度学习">
+<meta property="article:tag" content="Python">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>深度学习常见数据集COCO Python使用 pycocotools.cocoeval - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="深度学习常见数据集COCO Python使用 pycocotools.cocoeval"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-06-29 00:00" pubdate>
+          2021年6月29日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          5.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          46 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">深度学习常见数据集COCO Python使用 pycocotools.cocoeval</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>首先了解下cocoeval .py的构成吧。</p>
+<h3 id="Params类："><a href="#Params类：" class="headerlink" title="Params类："></a>Params类：</h3><p>对于COCO格式的数据检测，我们主要分为不同的IoU阈值，不同的面积范围，单张图片的最大检测数量。在这些不同的参数下，会得到不同的AP与AR。</p>
+<p>所以在这个类中，我们需要指定这些参数的数值范围，具体可看下面贴出的代码。</p>
+<p>标准的即IoU阈值设置为从0.5-0.95 间隔0.05，一共10个阈值</p>
+<p>AR的阈值为0-1 间隔0.01 ，一共101个阈值</p>
+<p>面积范围为 small(0<del>32) medium(32</del>96) large(96~10**5)</p>
+<p>检测最大数，按照置信度分数排序后选择最大检测数范围内的det结果。</p>
+<h3 id="COCOeval类："><a href="#COCOeval类：" class="headerlink" title="COCOeval类："></a>COCOeval类：</h3><p>创建COCOeval这个类的时候，我们需要传入两个COCO 类别的instance，</p>
+<ul>
+<li>一个是gt对应的COCO</li>
+<li>一个是det对应的COCO</li>
+</ul>
+<p>OK，COCOeval类有三个方法是我们在det中会用到的，分别为evaluate，accumulate，summarize</p>
+<ul>
+<li><p>evaluate的作用就是得到单张图片在特定类别，特定面积阈值内，特定最大检测数下的所有阈值检测结果。</p>
+</li>
+<li><p>accumulate是对这些单张图片的结果进行积累计算。</p>
+</li>
+<li><p>summarize会根据传入IoU阈值、面积阈值、最大检测数这些参数返回对应的mAp与mAR。</p>
+</li>
+</ul>
+<h3 id="一个整体的流程："><a href="#一个整体的流程：" class="headerlink" title="一个整体的流程："></a>一个整体的流程：</h3><figure class="highlight xquery"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs xquery">首先我们创建COCOeval类，传入<span class="hljs-literal">gt</span>和det对应的两个COCO类，COCOeval类的构造函数会把<span class="hljs-literal">gt</span>中对应的img<span class="hljs-built_in"> id</span>与 cat<span class="hljs-built_in"> id</span>添加至类变量中。<br><br>然后我们调用这个<span class="hljs-keyword">instance</span>的evaluate方法，在这个方法里调用_prepare方法，会生成<span class="hljs-literal">gt</span>与dt的字典列表，用[img_id,cat_id]作<span class="hljs-built_in">为key</span>，<span class="hljs-keyword">value</span>即为这个指定图片指定类别对应的所有ann信息，是一个list形式。根据这两个字典列表，我们可以生成iou计算，iou计算也以[img_id,cat_id]作<span class="hljs-built_in">为key</span>，<span class="hljs-keyword">value</span>是一个M*N维的ndarry矩阵，m为dt的个数，n为<span class="hljs-literal">gt</span>的个数。<br><br>然后将会调用evaluateImg这个方法，这个方法传入固定的img_id,cat_id,aRng,maxDet,我们可以得到对应的img在特定类别，特定面积阈值，特定最大检测数下的检测结果，（对于面积阈值来说，如果ann对应的bbox超过了就设置为ignore，对于最大检测数，按照置信度排序后取出前最大检测数个即可）把这个检测结果按照K，A，M的顺序堆叠，可以得到self.evalImgs这个list，这个list包含了所有图片在所有IoU阈值，面积阈值，最大检测数下的所有检测结果。<br><br>继续调用<span class="hljs-keyword">instance</span>的accumulate方法，可以根据上述得到的self.evalImgs返回所有图片在不同IoU阈值、不同AR、不同类别、不同面积阈值、不同最大检测数下的Ap与AR，以numpy数组的返回，即precision(T,R,K,A,M) recall(T,K,A,M)。<br><br>继续调用<span class="hljs-keyword">instance</span>的summarize方法，会根据传入的具体的IoU阈值，面积阈值，最大检测数的值返回上述precision和recall中对应维的检测结果，我们就可以自定义形式返回我们想要的各种参数下的AP与AR啦。<br><br>上面说的可能比较简单而且隐晦，下面贴注释过的源码，建议跟着上面说的顺序看一下以便理解。<br></code></pre></td></tr></table></figure>
+
+<h2 id="调用"><a href="#调用" class="headerlink" title="调用"></a>调用</h2><h3 id="方式一，计算map"><a href="#方式一，计算map" class="headerlink" title="方式一，计算map"></a>方式一，计算map</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs plain"># running evaluation<br>cocoEval &#x3D; COCOeval(cocoGt,cocoDt,annType)<br>cocoEval.evaluate()<br>cocoEval.accumulate()<br>cocoEval.summarize()<br></code></pre></td></tr></table></figure>
+
+<h3 id="方式一，计算-precision"><a href="#方式一，计算-precision" class="headerlink" title="方式一，计算 precision"></a>方式一，计算 precision</h3><p>coco_eval.eval[‘precision’]是一个5维的数组。</p>
+<figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs stylus">self<span class="hljs-selector-class">.eval</span> = &#123;<br>    <span class="hljs-string">'params'</span>: <span class="hljs-selector-tag">p</span>,<br>    <span class="hljs-string">'counts'</span>: [T, R, K, A, M],<br>    <span class="hljs-string">'date'</span>: datetime<span class="hljs-selector-class">.datetime</span>.now().strftime(<span class="hljs-string">'%Y-%m-%d %H:%M:%S'</span>),<br>    <span class="hljs-string">'precision'</span>: precision,<br>    <span class="hljs-string">'recall'</span>:   recall,<br>    <span class="hljs-string">'scores'</span>: scores,<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs ini"><span class="hljs-attr">T</span>           = len(p.iouThrs)<br><span class="hljs-attr">R</span>           = len(p.recThrs)<br><span class="hljs-attr">K</span>           = len(p.catIds) if p.useCats else <span class="hljs-number">1</span><br><span class="hljs-attr">A</span>           = len(p.areaRng)<br><span class="hljs-attr">M</span>           = len(p.maxDets)<br><span class="hljs-attr">precision</span>   = -np.<span class="hljs-literal">on</span>es((T,R,K,A,M)) <span class="hljs-comment"># -1 for the precision of absent categories</span><br><span class="hljs-attr">recall</span>      = -np.<span class="hljs-literal">on</span>es((T,K,A,M))<br><span class="hljs-attr">scores</span>      = -np.<span class="hljs-literal">on</span>es((T,R,K,A,M))<br></code></pre></td></tr></table></figure>
+
+<p>precision 五维：</p>
+<ul>
+<li>第一维T：IoU的10个阈值，从0.5到0.95间隔0.05。</li>
+<li>第二维R：101个recall 阈值，从0到101</li>
+<li>第三维K：类别，如果是想展示第一类的结果就设为0</li>
+<li>第四维A：area 目标的大小范围 （all，small, medium, large）</li>
+<li>第五维M：maxDets 单张图像中最多检测框的数量 三种 1,10,100</li>
+</ul>
+<p>所以, coco_eval.eval[‘precision’][0, :, 0, 0, 2] 所表示的就是当IoU&#x3D;0.5时，从0到100的101个recall对应的101个precision的值。</p>
+<h3 id="源码加注释"><a href="#源码加注释" class="headerlink" title="源码加注释"></a>源码加注释</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br><span class="line">251</span><br><span class="line">252</span><br><span class="line">253</span><br><span class="line">254</span><br><span class="line">255</span><br><span class="line">256</span><br><span class="line">257</span><br><span class="line">258</span><br><span class="line">259</span><br><span class="line">260</span><br><span class="line">261</span><br><span class="line">262</span><br><span class="line">263</span><br><span class="line">264</span><br><span class="line">265</span><br><span class="line">266</span><br><span class="line">267</span><br><span class="line">268</span><br><span class="line">269</span><br><span class="line">270</span><br><span class="line">271</span><br><span class="line">272</span><br><span class="line">273</span><br><span class="line">274</span><br><span class="line">275</span><br><span class="line">276</span><br><span class="line">277</span><br><span class="line">278</span><br><span class="line">279</span><br><span class="line">280</span><br><span class="line">281</span><br><span class="line">282</span><br><span class="line">283</span><br><span class="line">284</span><br><span class="line">285</span><br><span class="line">286</span><br><span class="line">287</span><br><span class="line">288</span><br><span class="line">289</span><br><span class="line">290</span><br><span class="line">291</span><br><span class="line">292</span><br><span class="line">293</span><br><span class="line">294</span><br><span class="line">295</span><br><span class="line">296</span><br><span class="line">297</span><br><span class="line">298</span><br><span class="line">299</span><br><span class="line">300</span><br><span class="line">301</span><br><span class="line">302</span><br><span class="line">303</span><br><span class="line">304</span><br><span class="line">305</span><br><span class="line">306</span><br><span class="line">307</span><br><span class="line">308</span><br><span class="line">309</span><br><span class="line">310</span><br><span class="line">311</span><br><span class="line">312</span><br><span class="line">313</span><br><span class="line">314</span><br><span class="line">315</span><br><span class="line">316</span><br><span class="line">317</span><br><span class="line">318</span><br><span class="line">319</span><br><span class="line">320</span><br><span class="line">321</span><br><span class="line">322</span><br><span class="line">323</span><br><span class="line">324</span><br><span class="line">325</span><br><span class="line">326</span><br><span class="line">327</span><br><span class="line">328</span><br><span class="line">329</span><br><span class="line">330</span><br><span class="line">331</span><br><span class="line">332</span><br><span class="line">333</span><br><span class="line">334</span><br><span class="line">335</span><br><span class="line">336</span><br><span class="line">337</span><br><span class="line">338</span><br><span class="line">339</span><br><span class="line">340</span><br><span class="line">341</span><br><span class="line">342</span><br><span class="line">343</span><br><span class="line">344</span><br><span class="line">345</span><br><span class="line">346</span><br><span class="line">347</span><br><span class="line">348</span><br><span class="line">349</span><br><span class="line">350</span><br><span class="line">351</span><br><span class="line">352</span><br><span class="line">353</span><br><span class="line">354</span><br><span class="line">355</span><br><span class="line">356</span><br><span class="line">357</span><br><span class="line">358</span><br><span class="line">359</span><br><span class="line">360</span><br><span class="line">361</span><br><span class="line">362</span><br><span class="line">363</span><br><span class="line">364</span><br><span class="line">365</span><br><span class="line">366</span><br><span class="line">367</span><br><span class="line">368</span><br><span class="line">369</span><br><span class="line">370</span><br><span class="line">371</span><br><span class="line">372</span><br><span class="line">373</span><br><span class="line">374</span><br><span class="line">375</span><br><span class="line">376</span><br><span class="line">377</span><br><span class="line">378</span><br><span class="line">379</span><br><span class="line">380</span><br><span class="line">381</span><br><span class="line">382</span><br><span class="line">383</span><br><span class="line">384</span><br><span class="line">385</span><br><span class="line">386</span><br><span class="line">387</span><br><span class="line">388</span><br><span class="line">389</span><br><span class="line">390</span><br><span class="line">391</span><br><span class="line">392</span><br><span class="line">393</span><br><span class="line">394</span><br><span class="line">395</span><br><span class="line">396</span><br><span class="line">397</span><br><span class="line">398</span><br><span class="line">399</span><br><span class="line">400</span><br><span class="line">401</span><br><span class="line">402</span><br><span class="line">403</span><br><span class="line">404</span><br><span class="line">405</span><br><span class="line">406</span><br><span class="line">407</span><br><span class="line">408</span><br><span class="line">409</span><br><span class="line">410</span><br><span class="line">411</span><br><span class="line">412</span><br><span class="line">413</span><br><span class="line">414</span><br><span class="line">415</span><br><span class="line">416</span><br><span class="line">417</span><br><span class="line">418</span><br><span class="line">419</span><br><span class="line">420</span><br><span class="line">421</span><br><span class="line">422</span><br><span class="line">423</span><br><span class="line">424</span><br><span class="line">425</span><br><span class="line">426</span><br><span class="line">427</span><br><span class="line">428</span><br><span class="line">429</span><br><span class="line">430</span><br><span class="line">431</span><br><span class="line">432</span><br><span class="line">433</span><br><span class="line">434</span><br><span class="line">435</span><br><span class="line">436</span><br><span class="line">437</span><br><span class="line">438</span><br><span class="line">439</span><br><span class="line">440</span><br><span class="line">441</span><br><span class="line">442</span><br><span class="line">443</span><br><span class="line">444</span><br><span class="line">445</span><br><span class="line">446</span><br><span class="line">447</span><br><span class="line">448</span><br><span class="line">449</span><br><span class="line">450</span><br><span class="line">451</span><br><span class="line">452</span><br><span class="line">453</span><br><span class="line">454</span><br><span class="line">455</span><br><span class="line">456</span><br><span class="line">457</span><br><span class="line">458</span><br><span class="line">459</span><br><span class="line">460</span><br><span class="line">461</span><br><span class="line">462</span><br><span class="line">463</span><br><span class="line">464</span><br><span class="line">465</span><br><span class="line">466</span><br><span class="line">467</span><br><span class="line">468</span><br><span class="line">469</span><br><span class="line">470</span><br><span class="line">471</span><br><span class="line">472</span><br><span class="line">473</span><br><span class="line">474</span><br><span class="line">475</span><br><span class="line">476</span><br><span class="line">477</span><br><span class="line">478</span><br><span class="line">479</span><br><span class="line">480</span><br><span class="line">481</span><br><span class="line">482</span><br><span class="line">483</span><br><span class="line">484</span><br><span class="line">485</span><br><span class="line">486</span><br><span class="line">487</span><br><span class="line">488</span><br><span class="line">489</span><br><span class="line">490</span><br><span class="line">491</span><br><span class="line">492</span><br><span class="line">493</span><br><span class="line">494</span><br><span class="line">495</span><br><span class="line">496</span><br><span class="line">497</span><br><span class="line">498</span><br><span class="line">499</span><br><span class="line">500</span><br><span class="line">501</span><br><span class="line">502</span><br><span class="line">503</span><br><span class="line">504</span><br><span class="line">505</span><br><span class="line">506</span><br><span class="line">507</span><br><span class="line">508</span><br><span class="line">509</span><br><span class="line">510</span><br><span class="line">511</span><br><span class="line">512</span><br><span class="line">513</span><br><span class="line">514</span><br><span class="line">515</span><br><span class="line">516</span><br><span class="line">517</span><br><span class="line">518</span><br><span class="line">519</span><br><span class="line">520</span><br><span class="line">521</span><br><span class="line">522</span><br><span class="line">523</span><br><span class="line">524</span><br><span class="line">525</span><br><span class="line">526</span><br><span class="line">527</span><br><span class="line">528</span><br><span class="line">529</span><br><span class="line">530</span><br><span class="line">531</span><br><span class="line">532</span><br><span class="line">533</span><br><span class="line">534</span><br><span class="line">535</span><br><span class="line">536</span><br><span class="line">537</span><br><span class="line">538</span><br><span class="line">539</span><br><span class="line">540</span><br><span class="line">541</span><br><span class="line">542</span><br><span class="line">543</span><br><span class="line">544</span><br><span class="line">545</span><br><span class="line">546</span><br><span class="line">547</span><br><span class="line">548</span><br><span class="line">549</span><br><span class="line">550</span><br><span class="line">551</span><br><span class="line">552</span><br><span class="line">553</span><br><span class="line">554</span><br><span class="line">555</span><br><span class="line">556</span><br><span class="line">557</span><br><span class="line">558</span><br><span class="line">559</span><br><span class="line">560</span><br><span class="line">561</span><br><span class="line">562</span><br><span class="line">563</span><br><span class="line">564</span><br><span class="line">565</span><br><span class="line">566</span><br><span class="line">567</span><br><span class="line">568</span><br><span class="line">569</span><br><span class="line">570</span><br><span class="line">571</span><br><span class="line">572</span><br><span class="line">573</span><br><span class="line">574</span><br><span class="line">575</span><br><span class="line">576</span><br><span class="line">577</span><br><span class="line">578</span><br><span class="line">579</span><br><span class="line">580</span><br><span class="line">581</span><br><span class="line">582</span><br><span class="line">583</span><br><span class="line">584</span><br><span class="line">585</span><br><span class="line">586</span><br><span class="line">587</span><br><span class="line">588</span><br><span class="line">589</span><br><span class="line">590</span><br><span class="line">591</span><br><span class="line">592</span><br></pre></td><td class="code"><pre><code class="hljs plain">import numpy as np<br>import datetime<br>import time<br>from collections import defaultdict<br>from . import mask as maskUtils<br>import copy<br> <br>class COCOeval:<br>    # Interface for evaluating detection on the Microsoft COCO dataset.<br>    #<br>    # The usage for CocoEval is as follows:<br>    #  cocoGt&#x3D;..., cocoDt&#x3D;...       # load dataset and results<br>    #  E &#x3D; CocoEval(cocoGt,cocoDt); # initialize CocoEval object<br>    #  E.params.recThrs &#x3D; ...;      # set parameters as desired<br>    #  E.evaluate();                # run per image evaluation<br>    #  E.accumulate();              # accumulate per image results<br>    #  E.summarize();               # display summary metrics of results<br>    # For example usage see evalDemo.m and http:&#x2F;&#x2F;mscoco.org&#x2F;.<br>    #<br>    # The evaluation parameters are as follows (defaults in brackets):<br>    #  imgIds     - [all] N img ids to use for evaluation<br>    #  catIds     - [all] K cat ids to use for evaluation<br>    #  iouThrs    - [.5:.05:.95] T&#x3D;10 IoU thresholds for evaluation<br>    #  recThrs    - [0:.01:1] R&#x3D;101 recall thresholds for evaluation<br>    #  areaRng    - [...] A&#x3D;4 object area ranges for evaluation<br>    #  maxDets    - [1 10 100] M&#x3D;3 thresholds on max detections per image<br>    #  iouType    - [&#39;segm&#39;] set iouType to &#39;segm&#39;, &#39;bbox&#39; or &#39;keypoints&#39;<br>    #  iouType replaced the now DEPRECATED useSegm parameter.<br>    #  useCats    - [1] if true use category labels for evaluation<br>    # Note: if useCats&#x3D;0 category labels are ignored as in proposal scoring.<br>    # Note: multiple areaRngs [Ax2] and maxDets [Mx1] can be specified.<br>    #<br>    # evaluate(): evaluates detections on every image and every category and<br>    # concats the results into the &quot;evalImgs&quot; with fields:<br>    #  dtIds      - [1xD] id for each of the D detections (dt)<br>    #  gtIds      - [1xG] id for each of the G ground truths (gt)<br>    #  dtMatches  - [TxD] matching gt id at each IoU or 0<br>    #  gtMatches  - [TxG] matching dt id at each IoU or 0<br>    #  dtScores   - [1xD] confidence of each dt<br>    #  gtIgnore   - [1xG] ignore flag for each gt<br>    #  dtIgnore   - [TxD] ignore flag for each dt at each IoU<br>    #<br>    # accumulate(): accumulates the per-image, per-category evaluation<br>    # results in &quot;evalImgs&quot; into the dictionary &quot;eval&quot; with fields:<br>    #  params     - parameters used for evaluation<br>    #  date       - date evaluation was performed<br>    #  counts     - [T,R,K,A,M] parameter dimensions (see above)<br>    #  precision  - [TxRxKxAxM] precision for every evaluation setting<br>    #  recall     - [TxKxAxM] max recall for every evaluation setting<br>    # Note: precision and recall&#x3D;&#x3D;-1 for settings with no gt objects.<br>    #<br>    # See also coco, mask, pycocoDemo, pycocoEvalDemo<br>    #<br>    # Microsoft COCO Toolbox.      version 2.0<br>    # Data, paper, and tutorials available at:  http:&#x2F;&#x2F;mscoco.org&#x2F;<br>    # Code written by Piotr Dollar and Tsung-Yi Lin, 2015.<br>    # Licensed under the Simplified BSD License [see coco&#x2F;license.txt]<br>    def __init__(self, cocoGt&#x3D;None, cocoDt&#x3D;None, iouType&#x3D;&#39;segm&#39;):<br>        &#39;&#39;&#39;<br>        Initialize CocoEval using coco APIs for gt and dt<br>        :param cocoGt: coco object with ground truth annotations<br>        :param cocoDt: coco object with detection results<br>        :return: None<br>        &#39;&#39;&#39;<br>        if not iouType:<br>            print(&#39;iouType not specified. use default iouType segm&#39;)<br>        self.cocoGt   &#x3D; cocoGt              # ground truth COCO API<br>        self.cocoDt   &#x3D; cocoDt              # detections COCO API<br>        self.evalImgs &#x3D; defaultdict(list)   # per-image per-category evaluation results [KxAxI] elements<br>        self.eval     &#x3D; &#123;&#125;                  # accumulated evaluation results<br>        self._gts &#x3D; defaultdict(list)       # gt for evaluation<br>        self._dts &#x3D; defaultdict(list)       # dt for evaluation<br>        self.params &#x3D; Params(iouType&#x3D;iouType) # parameters<br>        self._paramsEval &#x3D; &#123;&#125;               # parameters for evaluation<br>        self.stats &#x3D; []                     # result summarization<br>        self.ious &#x3D; &#123;&#125;                      # ious between all gts and dts<br>        if not cocoGt is None:<br>            # 把GT中所有的img id 与 类别 id 加入 参数dict中<br>            self.params.imgIds &#x3D; sorted(cocoGt.getImgIds())<br>            self.params.catIds &#x3D; sorted(cocoGt.getCatIds())<br> <br> <br>    def _prepare(self):<br>        &#39;&#39;&#39;<br>        Prepare ._gts and ._dts for evaluation based on params<br>        在目标检测中 _.gts 索引Ann的index为 【图片ip， 类别ip】，得到的是一个list数组，如果一张图片的一个类别有多个bbox，<br>        那么list中将会有多个item ._dts同理<br>        :return: None<br>        &#39;&#39;&#39;<br>        def _toMask(anns, coco):<br>            # modify ann[&#39;segmentation&#39;] by reference<br>            for ann in anns:<br>                rle &#x3D; coco.annToRLE(ann)<br>                ann[&#39;segmentation&#39;] &#x3D; rle<br>        p &#x3D; self.params<br>        if p.useCats:<br>            # 获取特定图片，特定类别的注释，主要是清除检测中出现gt中没有的img id，class id<br>            gts&#x3D;self.cocoGt.loadAnns(self.cocoGt.getAnnIds(imgIds&#x3D;p.imgIds, catIds&#x3D;p.catIds))<br>            dts&#x3D;self.cocoDt.loadAnns(self.cocoDt.getAnnIds(imgIds&#x3D;p.imgIds, catIds&#x3D;p.catIds))<br>        else:<br>            gts&#x3D;self.cocoGt.loadAnns(self.cocoGt.getAnnIds(imgIds&#x3D;p.imgIds))<br>            dts&#x3D;self.cocoDt.loadAnns(self.cocoDt.getAnnIds(imgIds&#x3D;p.imgIds))<br> <br>        # convert ground truth to mask if iouType &#x3D;&#x3D; &#39;segm&#39;<br>        if p.iouType &#x3D;&#x3D; &#39;segm&#39;:<br>            _toMask(gts, self.cocoGt)<br>            _toMask(dts, self.cocoDt)<br>        # set ignore flag<br>        for gt in gts:<br>            # 部分比较小的物体，会设置忽略检测 根据json中的注释来定<br>            gt[&#39;ignore&#39;] &#x3D; gt[&#39;ignore&#39;] if &#39;ignore&#39; in gt else 0<br>            gt[&#39;ignore&#39;] &#x3D; &#39;iscrowd&#39; in gt and gt[&#39;iscrowd&#39;]<br>            if p.iouType &#x3D;&#x3D; &#39;keypoints&#39;:<br>                gt[&#39;ignore&#39;] &#x3D; (gt[&#39;num_keypoints&#39;] &#x3D;&#x3D; 0) or gt[&#39;ignore&#39;]<br>        self._gts &#x3D; defaultdict(list)       # gt for evaluation<br>        self._dts &#x3D; defaultdict(list)       # dt for evaluation<br>        # 给对应img，类别 添加对应的bbox信息<br>        for gt in gts:<br>            self._gts[gt[&#39;image_id&#39;], gt[&#39;category_id&#39;]].append(gt)<br>        for dt in dts:<br>            self._dts[dt[&#39;image_id&#39;], dt[&#39;category_id&#39;]].append(dt)<br>        #得到的是每张图片，单个类别的检测结果的集合。<br>        self.evalImgs &#x3D; defaultdict(list)   # per-image per-category evaluation results<br>        self.eval     &#x3D; &#123;&#125;                  # accumulated evaluation results<br> <br>    def evaluate(self):<br>        &#39;&#39;&#39;<br>        Run per image evaluation on given images and store results (a list of dict) in self.evalImgs<br>        :return: None<br>        &#39;&#39;&#39;<br>        tic &#x3D; time.time()<br>        print(&#39;Running per image evaluation...&#39;)<br>        p &#x3D; self.params<br>        # add backward compatibility if useSegm is specified in params<br>        if not p.useSegm is None:<br>            p.iouType &#x3D; &#39;segm&#39; if p.useSegm &#x3D;&#x3D; 1 else &#39;bbox&#39;<br>            print(&#39;useSegm (deprecated) is not None. Running &#123;&#125; evaluation&#39;.format(p.iouType))<br>        print(&#39;Evaluate annotation type *&#123;&#125;*&#39;.format(p.iouType))<br>        # 取出GT中的，img cat id<br>        p.imgIds &#x3D; list(np.unique(p.imgIds))<br>        if p.useCats:<br>            p.catIds &#x3D; list(np.unique(p.catIds))<br>        p.maxDets &#x3D; sorted(p.maxDets)<br>        self.params&#x3D;p<br> <br>        self._prepare()<br>        # loop through images, area range, max detection number<br>        catIds &#x3D; p.catIds if p.useCats else [-1]<br> <br>        if p.iouType &#x3D;&#x3D; &#39;segm&#39; or p.iouType &#x3D;&#x3D; &#39;bbox&#39;:<br>            computeIoU &#x3D; self.computeIoU<br>        elif p.iouType &#x3D;&#x3D; &#39;keypoints&#39;:<br>            computeIoU &#x3D; self.computeOks<br>        # ious返回的是一个【M * N】的ndarry， 其中M是在这个img中，catId下有多少个预测的bbox， N是在这个img，catId下有多少个GT<br>        self.ious &#x3D; &#123;(imgId, catId): computeIoU(imgId, catId) \<br>                        for imgId in p.imgIds<br>                        for catId in catIds&#125;<br> <br>        evaluateImg &#x3D; self.evaluateImg<br>        maxDet &#x3D; p.maxDets[-1]<br>        # self.evalImages 顺序是 K，A，M，I 一共K*A*M*I个单张图片的检测结果，单张图片的特定类别，特定面积范围，特定最大检测个数下的检测结果。<br>        #我们可以按照这个来索引对应的检测结果，在后续accumulate函数中有具体使用。<br>        self.evalImgs &#x3D; [evaluateImg(imgId, catId, areaRng, maxDet)<br>                 for catId in catIds<br>                 for areaRng in p.areaRng<br>                 for imgId in p.imgIds<br>             ]<br>        self._paramsEval &#x3D; copy.deepcopy(self.params)<br>        toc &#x3D; time.time()<br>        print(&#39;DONE (t&#x3D;&#123;:0.2f&#125;s).&#39;.format(toc-tic))<br> <br>    # 这块用cython写的，主要返回的就是 imgId，catId对应的M*N矩阵，每个值都是对应框的IoU值<br>    def computeIoU(self, imgId, catId):<br>        p &#x3D; self.params<br>        if p.useCats:<br>            gt &#x3D; self._gts[imgId,catId]<br>            dt &#x3D; self._dts[imgId,catId]<br>        else:<br>            #把这张图片的所有类别的所有检测结果进行一个数组的合并<br>            gt &#x3D; [_ for cId in p.catIds for _ in self._gts[imgId,cId]]<br>            dt &#x3D; [_ for cId in p.catIds for _ in self._dts[imgId,cId]]<br>        if len(gt) &#x3D;&#x3D; 0 and len(dt) &#x3D;&#x3D;0:<br>            return []<br>        #按照网络预测的置信度score排序<br>        inds &#x3D; np.argsort([-d[&#39;score&#39;] for d in dt], kind&#x3D;&#39;mergesort&#39;)<br>        dt &#x3D; [dt[i] for i in inds]<br>        #把超出最大检测结果的bbox剔除<br>        if len(dt) &gt; p.maxDets[-1]:<br>            dt&#x3D;dt[0:p.maxDets[-1]]<br> <br>        if p.iouType &#x3D;&#x3D; &#39;segm&#39;:<br>            g &#x3D; [g[&#39;segmentation&#39;] for g in gt]<br>            d &#x3D; [d[&#39;segmentation&#39;] for d in dt]<br>        elif p.iouType &#x3D;&#x3D; &#39;bbox&#39;:<br>            g &#x3D; [g[&#39;bbox&#39;] for g in gt]<br>            d &#x3D; [d[&#39;bbox&#39;] for d in dt]<br>        else:<br>            raise Exception(&#39;unknown iouType for iou computation&#39;)<br> <br>        # compute iou between each dt and gt region<br>        iscrowd &#x3D; [int(o[&#39;iscrowd&#39;]) for o in gt]<br>        ious &#x3D; maskUtils.iou(d,g,iscrowd)<br>        return ious<br> <br>    def computeOks(self, imgId, catId):<br>        p &#x3D; self.params<br>        # dimention here should be Nxm<br>        gts &#x3D; self._gts[imgId, catId]<br>        dts &#x3D; self._dts[imgId, catId]<br>        inds &#x3D; np.argsort([-d[&#39;score&#39;] for d in dts], kind&#x3D;&#39;mergesort&#39;)<br>        dts &#x3D; [dts[i] for i in inds]<br>        if len(dts) &gt; p.maxDets[-1]:<br>            dts &#x3D; dts[0:p.maxDets[-1]]<br>        # if len(gts) &#x3D;&#x3D; 0 and len(dts) &#x3D;&#x3D; 0:<br>        if len(gts) &#x3D;&#x3D; 0 or len(dts) &#x3D;&#x3D; 0:<br>            return []<br>        ious &#x3D; np.zeros((len(dts), len(gts)))<br>        sigmas &#x3D; p.kpt_oks_sigmas<br>        vars &#x3D; (sigmas * 2)**2<br>        k &#x3D; len(sigmas)<br>        # compute oks between each detection and ground truth object<br>        for j, gt in enumerate(gts):<br>            # create bounds for ignore regions(double the gt bbox)<br>            g &#x3D; np.array(gt[&#39;keypoints&#39;])<br>            xg &#x3D; g[0::3]; yg &#x3D; g[1::3]; vg &#x3D; g[2::3]<br>            k1 &#x3D; np.count_nonzero(vg &gt; 0)<br>            bb &#x3D; gt[&#39;bbox&#39;]<br>            x0 &#x3D; bb[0] - bb[2]; x1 &#x3D; bb[0] + bb[2] * 2<br>            y0 &#x3D; bb[1] - bb[3]; y1 &#x3D; bb[1] + bb[3] * 2<br>            for i, dt in enumerate(dts):<br>                d &#x3D; np.array(dt[&#39;keypoints&#39;])<br>                xd &#x3D; d[0::3]; yd &#x3D; d[1::3]<br>                if k1&gt;0:<br>                    # measure the per-keypoint distance if keypoints visible<br>                    dx &#x3D; xd - xg<br>                    dy &#x3D; yd - yg<br>                else:<br>                    # measure minimum distance to keypoints in (x0,y0) &amp; (x1,y1)<br>                    z &#x3D; np.zeros((k))<br>                    dx &#x3D; np.max((z, x0-xd),axis&#x3D;0)+np.max((z, xd-x1),axis&#x3D;0)<br>                    dy &#x3D; np.max((z, y0-yd),axis&#x3D;0)+np.max((z, yd-y1),axis&#x3D;0)<br>                e &#x3D; (dx**2 + dy**2) &#x2F; vars &#x2F; (gt[&#39;area&#39;]+np.spacing(1)) &#x2F; 2<br>                if k1 &gt; 0:<br>                    e&#x3D;e[vg &gt; 0]<br>                ious[i, j] &#x3D; np.sum(np.exp(-e)) &#x2F; e.shape[0]<br>        return ious<br> <br>    def evaluateImg(self, imgId, catId, aRng, maxDet):<br>        &#39;&#39;&#39;<br>        perform evaluation for single category and image<br>        计算本张图片，特定类别，特定面积阈值，特定最大检测结果下的result。<br>        :return: dict (single image results)<br>        &#39;&#39;&#39;<br>        p &#x3D; self.params<br>        if p.useCats:<br>            # 本张图片特定类别的所有检测结果与GT<br>            gt &#x3D; self._gts[imgId,catId]<br>            dt &#x3D; self._dts[imgId,catId]<br>        else:<br>            gt &#x3D; [_ for cId in p.catIds for _ in self._gts[imgId,cId]]<br>            dt &#x3D; [_ for cId in p.catIds for _ in self._dts[imgId,cId]]<br>        if len(gt) &#x3D;&#x3D; 0 and len(dt) &#x3D;&#x3D;0:<br>            return None<br> <br>        for g in gt:<br>            #如果不符合特定面积的阈值，就忽略<br>            if g[&#39;ignore&#39;] or (g[&#39;area&#39;]&lt;aRng[0] or g[&#39;area&#39;]&gt;aRng[1]):<br>                g[&#39;_ignore&#39;] &#x3D; 1<br>            else:<br>                g[&#39;_ignore&#39;] &#x3D; 0<br> <br>        # sort dt highest score first, sort gt ignore last<br>        # gtind 前面都是 ignore为0 的gt 后面都是 ignore为1的gt<br>        gtind &#x3D; np.argsort([g[&#39;_ignore&#39;] for g in gt], kind&#x3D;&#39;mergesort&#39;)<br>        #挑出满足我们这个特定area阈值下的所有gt<br>        gt &#x3D; [gt[i] for i in gtind]<br>        dtind &#x3D; np.argsort([-d[&#39;score&#39;] for d in dt], kind&#x3D;&#39;mergesort&#39;)<br>        #按照置信度大小挑出满足这个最大检测个数下的所有dt<br>        dt &#x3D; [dt[i] for i in dtind[0:maxDet]]<br>        iscrowd &#x3D; [int(o[&#39;iscrowd&#39;]) for o in gt]<br>        # load computed ious<br> <br>        #得到满足area阈值的gt与所有dt的iou结果 （M * n（gtind））<br>        ious &#x3D; self.ious[imgId, catId][:, gtind] if len(self.ious[imgId, catId]) &gt; 0 else self.ious[imgId, catId]<br>        #得到我们需要设置的IoU阈值，超过定义为正样本，不符合则为负样本<br>        T &#x3D; len(p.iouThrs)<br>        G &#x3D; len(gt)<br>        D &#x3D; len(dt)<br>        #在每个阈值下的Gt是否得到匹配<br>        gtm  &#x3D; np.zeros((T,G))<br>        #在每个阈值下的Dt是否得到匹配<br>        dtm  &#x3D; np.zeros((T,D))<br>        #所有忽略的gt<br>        gtIg &#x3D; np.array([g[&#39;_ignore&#39;] for g in gt])<br>        #所有忽略的dt<br>        dtIg &#x3D; np.zeros((T,D))<br> <br>        #如果这张图片存在这个类别的gt与dt<br>        if not len(ious)&#x3D;&#x3D;0:<br>            for tind, t in enumerate(p.iouThrs): #IoU index， IoU阈值<br>                #按照置信度大小排序好的前 max_Det个dt<br>                for dind, d in enumerate(dt):<br>                    # 如果m&#x3D; -1 代表这个dt没有得到匹配 m代表dt匹配的最好的gt的下标<br>                    iou &#x3D; min([t,1-1e-10])<br>                    m   &#x3D; -1<br>                    for gind, g in enumerate(gt):<br>                        # 如果这个gt已经被其他置信度更好的dt匹配到了，本轮的dt就不能匹配这个gt了。<br>                        if gtm[tind,gind]&gt;0 and not iscrowd[gind]:<br>                            continue<br>                        # 因为gt已经按照ignore排好序了，前面的为0，于是当我们碰到第一个gt的ignore为1时，判断这个dt是否已经匹配到了<br>                        #其他的gt，如果m&gt;-1证明并且m对应的gt没有被ignore，就直接结束即可，对应的就是这个dt最好的gt。<br>                        if m&gt;-1 and gtIg[m]&#x3D;&#x3D;0 and gtIg[gind]&#x3D;&#x3D;1:<br>                            break<br>                        # 如果计算dt与gt的iou小于目前最佳的IoU，忽略这个gt<br>                        if ious[dind,gind] &lt; iou:<br>                            continue<br>                        # 超过当前最佳的IoU，更新IoU与m的值<br>                        iou&#x3D;ious[dind,gind]<br>                        m&#x3D;gind<br>                    # 如果这个dt没有对应的gt与其匹配，继续dt的下一个循环<br>                    if m &#x3D;&#x3D;-1:<br>                        continue<br>                    # 把当前dt与第m个gt进行匹配，修改dtm与gtm的值，分别一一对应<br>                    dtIg[tind,dind] &#x3D; gtIg[m] # 如果这个dt对应的最佳gt本身就是被ignore的，就把这个dt也设置为ignore。<br>                    dtm[tind,dind]  &#x3D; gt[m][&#39;id&#39;]<br>                    gtm[tind,m]     &#x3D; d[&#39;id&#39;]<br>        # set unmatched detections outside of area range to ignore<br>        a &#x3D; np.array([d[&#39;area&#39;]&lt;aRng[0] or d[&#39;area&#39;]&gt;aRng[1] for d in dt]).reshape((1, len(dt)))<br>        dtIg &#x3D; np.logical_or(dtIg, np.logical_and(dtm&#x3D;&#x3D;0, np.repeat(a,T,0)))<br>        # store results for given image and category<br>        return &#123;<br>                &#39;image_id&#39;:     imgId,<br>                &#39;category_id&#39;:  catId,<br>                &#39;aRng&#39;:         aRng,<br>                &#39;maxDet&#39;:       maxDet,<br>                &#39;dtIds&#39;:        [d[&#39;id&#39;] for d in dt],<br>                &#39;gtIds&#39;:        [g[&#39;id&#39;] for g in gt],<br>                &#39;dtMatches&#39;:    dtm,<br>                &#39;gtMatches&#39;:    gtm,<br>                &#39;dtScores&#39;:     [d[&#39;score&#39;] for d in dt],<br>                &#39;gtIgnore&#39;:     gtIg,<br>                &#39;dtIgnore&#39;:     dtIg,<br>            &#125;<br> <br>    def accumulate(self, p &#x3D; None):<br>        &#39;&#39;&#39;<br>        Accumulate per image evaluation results and store the result in self.eval<br>        :param p: input params for evaluation<br>        :return: None<br>        &#39;&#39;&#39;<br>        print(&#39;Accumulating evaluation results...&#39;)<br>        tic &#x3D; time.time()<br>        if not self.evalImgs:<br>            print(&#39;Please run evaluate() first&#39;)<br>        # allows input customized parameters<br>        if p is None:<br>            p &#x3D; self.params<br>        p.catIds &#x3D; p.catIds if p.useCats &#x3D;&#x3D; 1 else [-1]<br>        T           &#x3D; len(p.iouThrs) # 多少个ioU的阈值<br>        R           &#x3D; len(p.recThrs) #多少个recall的阈值<br>        K           &#x3D; len(p.catIds) if p.useCats else 1 # 多少个类<br>        A           &#x3D; len(p.areaRng)  #多少个面积阈值<br>        M           &#x3D; len(p.maxDets)  #多少个最大检测数<br>        precision   &#x3D; -np.ones((T,R,K,A,M)) # -1 for the precision of absent categories<br>        recall      &#x3D; -np.ones((T,K,A,M))<br>        scores      &#x3D; -np.ones((T,R,K,A,M))<br> <br>        # create dictionary for future indexing<br>        _pe &#x3D; self._paramsEval<br>        catIds &#x3D; _pe.catIds if _pe.useCats else [-1]<br>        setK &#x3D; set(catIds)<br>        setA &#x3D; set(map(tuple, _pe.areaRng))<br>        setM &#x3D; set(_pe.maxDets)<br>        setI &#x3D; set(_pe.imgIds)<br>        # get inds to evaluate<br>        k_list &#x3D; [n for n, k in enumerate(p.catIds)  if k in setK] #对应不重复的K的id list 后续同此<br>        m_list &#x3D; [m for n, m in enumerate(p.maxDets) if m in setM]<br>        a_list &#x3D; [n for n, a in enumerate(map(lambda x: tuple(x), p.areaRng)) if a in setA]<br>        i_list &#x3D; [n for n, i in enumerate(p.imgIds)  if i in setI]<br>        I0 &#x3D; len(_pe.imgIds) #多少个图片<br>        A0 &#x3D; len(_pe.areaRng) #多少个面积阈值<br>        # retrieve E at each category, area range, and max number of detections<br>        # self.evalImgs 索引顺序是 K,A,M,I 所以找到在特定K，A，M下的所有图片，需要按照如下的三维索引<br>        for k, k0 in enumerate(k_list):<br>            Nk &#x3D; k0*A0*I0  # 当前K0前面过了多少图片与面积阈值<br>            for a, a0 in enumerate(a_list):<br>                Na &#x3D; a0*I0 #在当前K0前面过了多少阈值<br>                for m, maxDet in enumerate(m_list):<br>                    #k0，a0下的所有Images<br>                    E &#x3D; [self.evalImgs[Nk + Na + i] for i in i_list]<br>                    E &#x3D; [e for e in E if not e is None]<br>                    if len(E) &#x3D;&#x3D; 0:<br>                        continue<br>                    #k0，a0，maxdet下的所有Images的得分<br>                    dtScores &#x3D; np.concatenate([e[&#39;dtScores&#39;][0:maxDet] for e in E])<br> <br>                    # different sorting method generates slightly different results.<br>                    # mergesort is used to be consistent as Matlab implementation.<br>                    # k0，a0，maxdet下所有Images得分从高到底的索引 inds<br>                    inds &#x3D; np.argsort(-dtScores, kind&#x3D;&#39;mergesort&#39;)<br>                    #按照得分从高到低排序<br>                    dtScoresSorted &#x3D; dtScores[inds]<br>                    # 在当前k0,a0下，每张图片不超过MaxDet的所有det按照ind排序。 dtm[T,sum(Det) in every imges]<br>                    dtm  &#x3D; np.concatenate([e[&#39;dtMatches&#39;][:,0:maxDet] for e in E], axis&#x3D;1)[:,inds]<br>                    dtIg &#x3D; np.concatenate([e[&#39;dtIgnore&#39;][:,0:maxDet]  for e in E], axis&#x3D;1)[:,inds]<br>                    gtIg &#x3D; np.concatenate([e[&#39;gtIgnore&#39;] for e in E])<br>                    #有多少个正样本<br>                    npig &#x3D; np.count_nonzero(gtIg&#x3D;&#x3D;0 )<br>                    if npig &#x3D;&#x3D; 0:<br>                        continue<br>                    # 如果dtm对应的匹配gt不为0，且对应的gt没有被忽略，这个dt就是TP tips:[1,0,1,0,1,0]<br>                    tps &#x3D; np.logical_and(               dtm,  np.logical_not(dtIg) )<br>                    #dtm对应的gt为0， 并且这个dt也没有被忽略，这个dt就是FP  tips:[0,1,0,1,0,1]<br>                    fps &#x3D; np.logical_and(np.logical_not(dtm), np.logical_not(dtIg) )<br> <br>                    # 按照行的方式（每个Iou阈值下）进行匹配到的累加 每个index也就是到这个置信度的时候有多少个tp，有多少个fp<br>                    tp_sum &#x3D; np.cumsum(tps, axis&#x3D;1).astype(dtype&#x3D;np.float)<br>                    fp_sum &#x3D; np.cumsum(fps, axis&#x3D;1).astype(dtype&#x3D;np.float)<br>                    for t, (tp, fp) in enumerate(zip(tp_sum, fp_sum)):<br>                        tp &#x3D; np.array(tp) #得到这个Iou下对应的tp tips:[1,0,2,0,3,0]<br>                        fp &#x3D; np.array(fp) #得到这个IoU下对应的fp tips:[0,1,0,2,0,3]<br>                        nd &#x3D; len(tp) #有多少个tp<br>                        rc &#x3D; tp &#x2F; npig #每个置信度分数下对应的recall 如上述例子 若有3个正样本 则rc&#x3D;[1&#x2F;3,1&#x2F;3,2&#x2F;3,2&#x2F;3,1,1]<br>                        pr &#x3D; tp &#x2F; (fp+tp+np.spacing(1)) #每个阶段对应的精度<br>                        q  &#x3D; np.zeros((R,))<br>                        ss &#x3D; np.zeros((R,))<br> <br>                        if nd:<br>                            recall[t,k,a,m] &#x3D; rc[-1]<br>                        else:<br>                            recall[t,k,a,m] &#x3D; 0<br> <br>                        # numpy is slow without cython optimization for accessing elements<br>                        # use python array gets significant speed improvement<br>                        pr &#x3D; pr.tolist(); q &#x3D; q.tolist()<br> <br>                        #当前i下的最大精度<br>                        for i in range(nd-1, 0, -1):<br>                            if pr[i] &gt; pr[i-1]:<br>                                pr[i-1] &#x3D; pr[i]<br> <br>                        #找到每个recall发生变化的时候的index，与p.recThrs一一对应，最接近其的值的index<br>                        inds &#x3D; np.searchsorted(rc, p.recThrs, side&#x3D;&#39;left&#39;)<br>                        try:<br>                            for ri, pi in enumerate(inds):<br>                                #得到每个recall阈值对应的最大精度，存入q中<br>                                q[ri] &#x3D; pr[pi]<br>                                #得到这个recall值下的得分<br>                                ss[ri] &#x3D; dtScoresSorted[pi]<br>                        except:<br>                            pass<br>                        precision[t,:,k,a,m] &#x3D; np.array(q) # 按照recall的大小存入对应的精度<br>                        scores[t,:,k,a,m] &#x3D; np.array(ss) #存入对应的分数<br>        self.eval &#x3D; &#123;<br>            &#39;params&#39;: p,<br>            &#39;counts&#39;: [T, R, K, A, M],<br>            &#39;date&#39;: datetime.datetime.now().strftime(&#39;%Y-%m-%d %H:%M:%S&#39;),<br>            &#39;precision&#39;: precision,<br>            &#39;recall&#39;:   recall,<br>            &#39;scores&#39;: scores,<br>        &#125;<br>        toc &#x3D; time.time()<br>        print(&#39;DONE (t&#x3D;&#123;:0.2f&#125;s).&#39;.format( toc-tic))<br> <br>    def summarize(self):<br>        &#39;&#39;&#39;<br>        Compute and display summary metrics for evaluation results.<br>        Note this functin can *only* be applied on the default parameter setting<br>        &#39;&#39;&#39;<br>        def _summarize( ap&#x3D;1, iouThr&#x3D;None, areaRng&#x3D;&#39;all&#39;, maxDets&#x3D;100 ):<br>            p &#x3D; self.params<br>            iStr &#x3D; &#39; &#123;:&lt;18&#125; &#123;&#125; @[ IoU&#x3D;&#123;:&lt;9&#125; | area&#x3D;&#123;:&gt;6s&#125; | maxDets&#x3D;&#123;:&gt;3d&#125; ] &#x3D; &#123;:0.3f&#125;&#39;<br>            titleStr &#x3D; &#39;Average Precision&#39; if ap &#x3D;&#x3D; 1 else &#39;Average Recall&#39;<br>            typeStr &#x3D; &#39;(AP)&#39; if ap&#x3D;&#x3D;1 else &#39;(AR)&#39;<br>            iouStr &#x3D; &#39;&#123;:0.2f&#125;:&#123;:0.2f&#125;&#39;.format(p.iouThrs[0], p.iouThrs[-1]) \<br>                if iouThr is None else &#39;&#123;:0.2f&#125;&#39;.format(iouThr)<br>            # 如果是&#39;all&#39; 就是所有尺度， 如果不是就是特定的尺度<br>            aind &#x3D; [i for i, aRng in enumerate(p.areaRngLbl) if aRng &#x3D;&#x3D; areaRng]<br>            mind &#x3D; [i for i, mDet in enumerate(p.maxDets) if mDet &#x3D;&#x3D; maxDets]<br>            # 如果是ap，就从precision中得到对应面积阈值、最大检测数下的精度<br>            if ap &#x3D;&#x3D; 1:<br>                # dimension of precision: [TxRxKxAxM]<br>                s &#x3D; self.eval[&#39;precision&#39;]<br>                # 得到特定IoU下的所有pr<br>                if iouThr is not None:<br>                    t &#x3D; np.where(iouThr &#x3D;&#x3D; p.iouThrs)[0]<br>                    s &#x3D; s[t]<br>                s &#x3D; s[:,:,:,aind,mind]<br> <br>            # 如果是recall，就取出recall的值<br>            else:<br>                # dimension of recall: [TxKxAxM]<br>                s &#x3D; self.eval[&#39;recall&#39;]<br>                if iouThr is not None:<br>                    t &#x3D; np.where(iouThr &#x3D;&#x3D; p.iouThrs)[0]<br>                    s &#x3D; s[t]<br>                s &#x3D; s[:,:,aind,mind]<br>            if len(s[s&gt;-1])&#x3D;&#x3D;0:<br>                mean_s &#x3D; -1<br>            #除去-1 其他的计算平均精度<br>            else:<br>                mean_s &#x3D; np.mean(s[s&gt;-1])<br>            print(iStr.format(titleStr, typeStr, iouStr, areaRng, maxDets, mean_s))<br>            return mean_s<br>        def _summarizeDets():<br>            stats &#x3D; np.zeros((12,))<br>            stats[0] &#x3D; _summarize(1) # all iouThr， 所有recall下，所有面积下， 所有类别，在最大检测数100下的的平均AP<br>            # [1]:IoU阈值为0.5 所有recall下，所有面积下， 所有类别，在最大检测数100下的的平均AP<br>            stats[1] &#x3D; _summarize(1, iouThr&#x3D;.5, maxDets&#x3D;self.params.maxDets[2])<br>            # [2]:IoU阈值为0.75 所有recall下，所有面积下， 所有类别，在最大检测数100下的的平均AP<br>            stats[2] &#x3D; _summarize(1, iouThr&#x3D;.75, maxDets&#x3D;self.params.maxDets[2])<br>            #[3]: all iouThr， 所有recall下，small面积下， 所有类别，在最大检测数100下的的平均AP<br>            stats[3] &#x3D; _summarize(1, areaRng&#x3D;&#39;small&#39;, maxDets&#x3D;self.params.maxDets[2])<br>            #[4]: all iouThr， 所有recall下，medium面积下， 所有类别，在最大检测数100下的的平均AP<br>            stats[4] &#x3D; _summarize(1, areaRng&#x3D;&#39;medium&#39;, maxDets&#x3D;self.params.maxDets[2])<br>            #[5]: all iouThr， 所有recall下，large面积下， 所有类别，在最大检测数100下的的平均AP<br>            stats[5] &#x3D; _summarize(1, areaRng&#x3D;&#39;large&#39;, maxDets&#x3D;self.params.maxDets[2])<br>            #[6]: all iouThr，所有面积下， 所有类别，在最大检测数1下的的平均recall<br>            stats[6] &#x3D; _summarize(0, maxDets&#x3D;self.params.maxDets[0])<br>            #[7]: all iouThr，所有面积下， 所有类别，在最大检测数10下的的平均recall<br>            stats[7] &#x3D; _summarize(0, maxDets&#x3D;self.params.maxDets[1])<br>            # [8]: all iouThr，所有面积下， 所有类别，在最大检测数100下的的平均recall<br>            stats[8] &#x3D; _summarize(0, maxDets&#x3D;self.params.maxDets[2])<br>            #[9]: all iouThr，small面积下， 所有类别，在最大检测数100下的的平均recall<br>            stats[9] &#x3D; _summarize(0, areaRng&#x3D;&#39;small&#39;, maxDets&#x3D;self.params.maxDets[2])<br>            # [10]: all iouThr，medium面积下， 所有类别，在最大检测数100下的的平均recall<br>            stats[10] &#x3D; _summarize(0, areaRng&#x3D;&#39;medium&#39;, maxDets&#x3D;self.params.maxDets[2])<br>            # [11]: all iouThr，large面积下， 所有类别，在最大检测数100下的的平均recall<br>            stats[11] &#x3D; _summarize(0, areaRng&#x3D;&#39;large&#39;, maxDets&#x3D;self.params.maxDets[2])<br>            return stats<br>        def _summarizeKps():<br>            stats &#x3D; np.zeros((10,))<br>            stats[0] &#x3D; _summarize(1, maxDets&#x3D;20)<br>            stats[1] &#x3D; _summarize(1, maxDets&#x3D;20, iouThr&#x3D;.5)<br>            stats[2] &#x3D; _summarize(1, maxDets&#x3D;20, iouThr&#x3D;.75)<br>            stats[3] &#x3D; _summarize(1, maxDets&#x3D;20, areaRng&#x3D;&#39;medium&#39;)<br>            stats[4] &#x3D; _summarize(1, maxDets&#x3D;20, areaRng&#x3D;&#39;large&#39;)<br>            stats[5] &#x3D; _summarize(0, maxDets&#x3D;20)<br>            stats[6] &#x3D; _summarize(0, maxDets&#x3D;20, iouThr&#x3D;.5)<br>            stats[7] &#x3D; _summarize(0, maxDets&#x3D;20, iouThr&#x3D;.75)<br>            stats[8] &#x3D; _summarize(0, maxDets&#x3D;20, areaRng&#x3D;&#39;medium&#39;)<br>            stats[9] &#x3D; _summarize(0, maxDets&#x3D;20, areaRng&#x3D;&#39;large&#39;)<br>            return stats<br>        if not self.eval:<br>            raise Exception(&#39;Please run accumulate() first&#39;)<br>        iouType &#x3D; self.params.iouType<br>        if iouType &#x3D;&#x3D; &#39;segm&#39; or iouType &#x3D;&#x3D; &#39;bbox&#39;:<br>            summarize &#x3D; _summarizeDets<br>        elif iouType &#x3D;&#x3D; &#39;keypoints&#39;:<br>            summarize &#x3D; _summarizeKps<br>        self.stats &#x3D; summarize()<br> <br>    def __str__(self):<br>        self.summarize()<br> <br>class Params:<br>    &#39;&#39;&#39;<br>    Params for coco evaluation api<br>    &#39;&#39;&#39;<br>    def setDetParams(self):<br>        self.imgIds &#x3D; []<br>        self.catIds &#x3D; []<br>        # np.arange causes trouble.  the data point on arange is slightly larger than the true value<br>        self.iouThrs &#x3D; np.linspace(.5, 0.95, int(np.round((0.95 - .5) &#x2F; .05)) + 1, endpoint&#x3D;True)<br>        self.recThrs &#x3D; np.linspace(.0, 1.00, int(np.round((1.00 - .0) &#x2F; .01)) + 1, endpoint&#x3D;True)<br>        self.maxDets &#x3D; [1, 10, 100]<br>        self.areaRng &#x3D; [[0 ** 2, 1e5 ** 2], [0 ** 2, 32 ** 2], [32 ** 2, 96 ** 2], [96 ** 2, 1e5 ** 2]]<br>        self.areaRngLbl &#x3D; [&#39;all&#39;, &#39;small&#39;, &#39;medium&#39;, &#39;large&#39;]<br>        self.useCats &#x3D; 1<br> <br>    def setKpParams(self):<br>        self.imgIds &#x3D; []<br>        self.catIds &#x3D; []<br>        # np.arange causes trouble.  the data point on arange is slightly larger than the true value<br>        self.iouThrs &#x3D; np.linspace(.5, 0.95, int(np.round((0.95 - .5) &#x2F; .05)) + 1, endpoint&#x3D;True)<br>        self.recThrs &#x3D; np.linspace(.0, 1.00, int(np.round((1.00 - .0) &#x2F; .01)) + 1, endpoint&#x3D;True)<br>        self.maxDets &#x3D; [20]<br>        self.areaRng &#x3D; [[0 ** 2, 1e5 ** 2], [32 ** 2, 96 ** 2], [96 ** 2, 1e5 ** 2]]<br>        self.areaRngLbl &#x3D; [&#39;all&#39;, &#39;medium&#39;, &#39;large&#39;]<br>        self.useCats &#x3D; 1<br>        self.kpt_oks_sigmas &#x3D; np.array([.26, .25, .25, .35, .35, .79, .79, .72, .72, .62,.62, 1.07, 1.07, .87, .87, .89, .89])&#x2F;10.0<br> <br>    def __init__(self, iouType&#x3D;&#39;segm&#39;):<br>        if iouType &#x3D;&#x3D; &#39;segm&#39; or iouType &#x3D;&#x3D; &#39;bbox&#39;:<br>            self.setDetParams()<br>        elif iouType &#x3D;&#x3D; &#39;keypoints&#39;:<br>            self.setKpParams()<br>        else:<br>            raise Exception(&#39;iouType not supported&#39;)<br>        self.iouType &#x3D; iouType<br>        # useSegm is deprecated<br>        self.useSegm &#x3D; None<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><a href="https://blog.csdn.net/qq_37541097/article/details/112248194" target="_blank" rel="noopener">https://blog.csdn.net/qq_37541097/article/details/112248194</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" class="category-chain-item">深度学习</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/Python/" class="category-chain-item">Python</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" class="print-no-link">#深度学习</a>
+      
+        <a href="/tags/Python/" class="print-no-link">#Python</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>深度学习常见数据集COCO Python使用 pycocotools.cocoeval</div>
+      <div>https://flepeng.github.io/ml-深度学习常见数据集COCO-Python使用-pycocotools-cocoeval/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年6月29日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/003-Linux-13-%E5%8C%85%E7%AE%A1%E7%90%86-02-apt-get-07-gpg%EF%BC%9Akeyserver-receive-failed%EF%BC%9AServer-indicated-a-failure/" title="07-gpg：keyserver receive failed：Server indicated a failure">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">07-gpg：keyserver receive failed：Server indicated a failure</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/ml-%E8%AF%84%E4%BB%B7%E6%A8%A1%E5%9E%8B%E7%9A%84%E5%8F%82%E6%95%B0-TP%E3%80%81TN%E3%80%81FP%E3%80%81FN/" title="评价模型的参数 TP、TN、FP、FN">
+                        <span class="hidden-mobile">评价模型的参数 TP、TN、FP、FN</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

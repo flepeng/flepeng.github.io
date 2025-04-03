@@ -1,0 +1,1077 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="官网保平安：https:&#x2F;&#x2F;www.mysql.com&#x2F;MySQL 思维导图：https:&#x2F;&#x2F;www.processon.com&#x2F;view&#x2F;link&#x2F;63bc2c8ea82ed9463ba99f38  MySQL 性能怎么优化？MySQL 性能优化是一个系统性工程，涉及多个方面，在面试中不可能面面俱到。因此，建议按照“点-线-面”的思路展开，从核心问题入手，再逐步扩展，展示出你对问题的思考深度和">
+<meta property="og:type" content="article">
+<meta property="og:title" content="03-MySQL 优化">
+<meta property="og:url" content="https://flepeng.github.io/interview-41-%E6%95%B0%E6%8D%AE%E5%BA%93-41-MySQL-03-MySQL-%E4%BC%98%E5%8C%96/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="官网保平安：https:&#x2F;&#x2F;www.mysql.com&#x2F;MySQL 思维导图：https:&#x2F;&#x2F;www.processon.com&#x2F;view&#x2F;link&#x2F;63bc2c8ea82ed9463ba99f38  MySQL 性能怎么优化？MySQL 性能优化是一个系统性工程，涉及多个方面，在面试中不可能面面俱到。因此，建议按照“点-线-面”的思路展开，从核心问题入手，再逐步扩展，展示出你对问题的思考深度和">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://oss.javaguide.cn/github/javaguide/high-performance/read-and-write-separation-and-library-subtable/read-and-write-separation-proxy.png">
+<meta property="og:image" content="https://oss.javaguide.cn/java-guide-blog/78816271d3ab52424bfd5ad3086c1a0f.png">
+<meta property="og:image" content="https://flepeng.github.io/images/read-and-write-separation-and-library-subtable/vertical-slicing-database.png">
+<meta property="og:image" content="https://flepeng.github.io/images/read-and-write-separation-and-library-subtable/horizontal-slicing-database.png">
+<meta property="og:image" content="https://flepeng.github.io/images/read-and-write-separation-and-library-subtable/two-forms-of-sub-table.png">
+<meta property="og:image" content="https://oss.javaguide.cn/github/javaguide/high-performance/shardingsphere-features.png">
+<meta property="article:published_time" content="2020-08-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.488Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="MySQL">
+<meta property="article:tag" content="面试">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://oss.javaguide.cn/github/javaguide/high-performance/read-and-write-separation-and-library-subtable/read-and-write-separation-proxy.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>03-MySQL 优化 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="03-MySQL 优化"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2020-08-08 00:00" pubdate>
+          2020年8月8日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          10k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          87 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">03-MySQL 优化</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <blockquote>
+<p>官网保平安：<a href="https://www.mysql.com/" target="_blank" rel="noopener">https://www.mysql.com/</a><br>MySQL 思维导图：<a href="https://www.processon.com/view/link/63bc2c8ea82ed9463ba99f38" target="_blank" rel="noopener">https://www.processon.com/view/link/63bc2c8ea82ed9463ba99f38</a></p>
+</blockquote>
+<h3 id="MySQL-性能怎么优化？"><a href="#MySQL-性能怎么优化？" class="headerlink" title="MySQL 性能怎么优化？"></a>MySQL 性能怎么优化？</h3><p>MySQL 性能优化是一个系统性工程，涉及多个方面，在面试中不可能面面俱到。因此，建议按照“点-线-面”的思路展开，从核心问题入手，再逐步扩展，展示出你对问题的思考深度和解决能力。</p>
+<p><strong>1. 抓住核心：慢 SQL 定位与分析</strong></p>
+<p>性能优化的第一步永远是找到瓶颈。面试时，建议先从 <strong>慢 SQL 定位和分析</strong> 入手，这不仅能展示你解决问题的思路，还能体现你对数据库性能监控的熟练掌握：</p>
+<ul>
+<li><strong>监控工具：</strong> 介绍常用的慢 SQL 监控工具，如 <strong>MySQL 慢查询日志</strong>、<strong>Performance Schema</strong> 等，说明你对这些工具的熟悉程度以及如何通过它们定位问题。</li>
+<li><strong>EXPLAIN 命令：</strong> 详细说明 <code>EXPLAIN</code> 命令的使用，分析查询计划、索引使用情况，可以结合实际案例展示如何解读分析结果，比如执行顺序、索引使用情况、全表扫描等。</li>
+</ul>
+<p><strong>2. 由点及面：索引、表结构和 SQL 优化</strong></p>
+<p>定位到慢 SQL 后，接下来就要针对具体问题进行优化。 这里可以重点介绍索引、表结构和 SQL 编写规范等方面的优化技巧：</p>
+<ul>
+<li><strong>索引优化：</strong> 这是 MySQL 性能优化的重点，可以介绍索引的创建原则、覆盖索引、最左前缀匹配原则等。如果能结合你项目的实际应用来说明如何选择合适的索引，会更加分一些。</li>
+<li><strong>表结构优化：</strong> 优化表结构设计，包括选择合适的字段类型、避免冗余字段、合理使用范式和反范式设计等等。</li>
+<li><strong>SQL 优化：</strong> 避免使用 <code>SELECT *</code>、尽量使用具体字段、使用连接查询代替子查询、合理使用分页查询、批量操作等，都是 SQL 编写过程中需要注意的细节。</li>
+</ul>
+<p><strong>3. 进阶方案：架构优化</strong></p>
+<p>当面试官对基础优化知识比较满意时，可能会深入探讨一些架构层面的优化方案。以下是一些常见的架构优化策略：</p>
+<ul>
+<li><strong>读写分离：</strong> 将读操作和写操作分离到不同的数据库实例，提升数据库的并发处理能力。</li>
+<li><strong>分库分表：</strong> 将数据分散到多个数据库实例或数据表中，降低单表数据量，提升查询效率。但要权衡其带来的复杂性和维护成本，谨慎使用。</li>
+<li><strong>数据冷热分离</strong>：根据数据的访问频率和业务重要性，将数据分为冷数据和热数据，冷数据一般存储在存储在低成本、低性能的介质中，热数据高性能存储介质中。</li>
+<li><strong>缓存机制：</strong> 使用 Redis 等缓存中间件，将热点数据缓存到内存中，减轻数据库压力。这个非常常用，提升效果非常明显，性价比极高！</li>
+</ul>
+<p><strong>4. 其他优化手段</strong></p>
+<p>除了慢 SQL 定位、索引优化和架构优化，还可以提及一些其他优化手段，展示你对 MySQL 性能调优的全面理解：</p>
+<ul>
+<li><strong>连接池配置：</strong> 配置合理的数据库连接池（如 <strong>连接池大小</strong>、<strong>超时时间</strong> 等），能够有效提升数据库连接的效率，避免频繁的连接开销。</li>
+<li><strong>硬件配置：</strong> 提升硬件性能也是优化的重要手段之一。使用高性能服务器、增加内存、使用 <strong>SSD</strong> 硬盘等硬件升级，都可以有效提升数据库的整体性能。</li>
+</ul>
+<p><strong>5.总结</strong></p>
+<p>在面试中，建议按优先级依次介绍慢 SQL 定位、<a href="./mysql-index.md">索引优化</a>、表结构设计和 <a href="../../high-performance/sql-optimization.md">SQL 优化</a>等内容。架构层面的优化，如<a href="../../high-performance/read-and-write-separation-and-library-subtable.md">读写分离和分库分表</a>、<a href="../../high-performance/data-cold-hot-separation.md">数据冷热分离</a> 应作为最后的手段，除非在特定场景下有明显的性能瓶颈，否则不应轻易使用，因其引入的复杂性会带来额外的维护成本。</p>
+<h1 id="数据库优化方案-★★★"><a href="#数据库优化方案-★★★" class="headerlink" title="数据库优化方案 ★★★"></a>数据库优化方案 ★★★</h1><blockquote>
+<p>详细可参考：<a href="https://blog.csdn.net/fenglepeng/article/details/103400418" target="_blank" rel="noopener">https://blog.csdn.net/fenglepeng/article/details/103400418</a></p>
+</blockquote>
+<p>思路：</p>
+<ul>
+<li><p>第一：优化 SQL 语句和索引。</p>
+</li>
+<li><p>第二：加缓存，如 Memcached、Redis。</p>
+</li>
+<li><p>第三：主从复制或主主复制，读写分离，可以在应用层做，效率高，也可以用三方工具。</p>
+</li>
+<li><p>第四：如果以上都做了还是慢，不要想着去做切分，MySQL 自带分区表，先试试这个，对你的应用是透明的，无需更改代码，但是 SQL 语句是需要针对分区表做优化的，SQL 条件中要带上分区条件的列，从而使查询定位到少量的分区上，否则就会扫描全部分区，另外分区表还有一些坑，在这里就不多说了。</p>
+</li>
+<li><p>第五：如果以上都做了，那就先做垂直拆分，其实就是根据你模块的耦合度，将一个大的系统分为多个小的系统，也就是分布式系统。</p>
+</li>
+<li><p>第六：才是水平切分，针对数据量大的表，这一步最麻烦，最能考验技术水平，要选择一个合理的 sharding key，为了有好的查询效率，表结构也要改动，做一定的冗余，应用也要改，SQL 中尽量带 sharding key，将数据定位到限定的表上去查，而不是扫描全部的表。</p>
+</li>
+</ul>
+<p><strong>优化 SQL</strong></p>
+<ul>
+<li>设计良好的数据库结构，允许部分数据冗余，尽量避免 join 查询，提高效率。</li>
+<li>合适的表字段数据类型和存储引擎，适当的添加索引。</li>
+</ul>
+<p><strong>加缓存</strong></p>
+<ul>
+<li>利用 Redis、Memcache(常用数据放到缓存里，提高取数据速度)。</li>
+<li>缓存可能会造成雪崩、穿透等现象。</li>
+</ul>
+<p><strong>读写分离</strong></p>
+<p>利用数据库的主从分离：主库用于删除、修改、更新；从库用于查询。</p>
+<ul>
+<li>原生 SQL：<code>select * from db.tb</code></li>
+<li>ORM：<code>model.User.object.all().using(&#39;default&#39;)</code></li>
+<li>路由：db router</li>
+</ul>
+<p><strong>分库</strong></p>
+<ul>
+<li>当数据库中的表太多，将某些表分到不同数据库，例如：1W 张表时。</li>
+<li>代价：连表查询跨数据库，代码变多。</li>
+</ul>
+<p><strong>分表</strong></p>
+<ul>
+<li>垂直分表：将一个表按照字段分成多表，每个表存储其中一部分字段。例如：博客+博客详情。</li>
+<li>水平分表：在同一个数据库内，把同一个表的数据按一定规则拆到多个表中。如将某些历史信息，分到另外一张表中，例如：支付宝账单。</li>
+</ul>
+<p>分库分表最常用的组件：<code>Mycat\ShardingSphere</code></p>
+<p>建议：一个表的数据量超过 500W 或者数据文件超过 2G，就要考虑分库分表了。</p>
+<p><strong>数据库分片的两种常见方案：</strong></p>
+<ul>
+<li><strong>客户端代理：</strong> 分片逻辑在应用端，封装在 jar 包中，通过修改或者封装 JDBC 层来实现。当当网的 <strong>Sharding-JDBC</strong> 、阿里的 TDDL 是两种比较常用的实现。</li>
+<li><strong>中间件代理：</strong> 在应用和数据中间加了一个代理层。分片逻辑统一维护在中间件服务中。<strong>Mycat</strong> 、360 的 Atlas、网易的 DDB 等都是这种架构的实现。</li>
+</ul>
+<h2 id="读写分离"><a href="#读写分离" class="headerlink" title="读写分离"></a>读写分离</h2><h3 id="什么是读写分离？"><a href="#什么是读写分离？" class="headerlink" title="什么是读写分离？"></a>什么是读写分离？</h3><p>见名思意，根据读写分离的名字，我们就可以知道：<strong>读写分离主要是为了将对数据库的读写操作分散到不同的数据库节点上。</strong> 这样的话，就能够小幅提升写性能，大幅提升读性能。</p>
+<p>一般情况下，我们都会选择一主多从，也就是一台主数据库负责写，其他的从数据库负责读。主库和从库之间会进行数据同步，以保证从库中数据的准确性。这样的架构实现起来比较简单，并且也符合系统的写少读多的特点。</p>
+<h3 id="如何实现读写分离？"><a href="#如何实现读写分离？" class="headerlink" title="如何实现读写分离？"></a>如何实现读写分离？</h3><p>不论是使用哪一种读写分离具体的实现方案，想要实现读写分离一般包含如下几步：</p>
+<ol>
+<li>部署多台数据库，选择其中的一台作为主数据库，其他的一台或者多台作为从数据库。</li>
+<li>保证主数据库和从数据库之间的数据是实时同步的，这个过程也就是我们常说的<strong>主从复制</strong>。</li>
+<li>系统将写请求交给主数据库处理，读请求交给从数据库处理。</li>
+</ol>
+<p>落实到项目本身的话，常用的方式有两种：</p>
+<p><strong>1. 代理方式</strong></p>
+<p><img src="https://oss.javaguide.cn/github/javaguide/high-performance/read-and-write-separation-and-library-subtable/read-and-write-separation-proxy.png" srcset="/img/loading.gif" lazyload alt="代理方式实现读写分离"></p>
+<p>我们可以在应用和数据中间加了一个代理层。应用程序所有的数据请求都交给代理层处理，代理层负责分离读写请求，将它们路由到对应的数据库中。</p>
+<p>提供类似功能的中间件有 <strong>MySQL Router</strong>（官方， MySQL Proxy 的替代方案）、<strong>Atlas</strong>（基于 MySQL Proxy）、<strong>MaxScale</strong>、<strong>MyCat</strong>。</p>
+<p>关于 MySQL Router 多提一点：在 MySQL 8.2 的版本中，MySQL Router 能自动分辨对数据库读写&#x2F;操作并把这些操作路由到正确的实例上。这是一项有价值的功能，可以优化数据库性能和可扩展性，而无需在应用程序中进行任何更改。具体介绍可以参考官方博客：<a href="https://blogs.oracle.com/mysql/post/mysql-82-transparent-readwrite-splitting" target="_blank" rel="noopener">MySQL 8.2 – transparent read&#x2F;write splitting</a>。</p>
+<p><strong>2. 组件方式</strong></p>
+<p>在这种方式中，我们可以通过引入第三方组件来帮助我们读写请求。</p>
+<p>这也是我比较推荐的一种方式。这种方式目前在各种互联网公司中用的最多的，相关的实际的案例也非常多。如果你要采用这种方式的话，推荐使用 <code>sharding-jdbc</code> ，直接引入 jar 包即可使用，非常方便。同时，也节省了很多运维的成本。</p>
+<p>你可以在 shardingsphere 官方找到 <a href="https://shardingsphere.apache.org/document/legacy/3.x/document/cn/manual/sharding-jdbc/usage/read-write-splitting/" target="_blank" rel="noopener">sharding-jdbc 关于读写分离的操作</a>。</p>
+<h2 id="主从复制"><a href="#主从复制" class="headerlink" title="主从复制"></a>主从复制</h2><h3 id="主从复制原理是什么？"><a href="#主从复制原理是什么？" class="headerlink" title="主从复制原理是什么？"></a>主从复制原理是什么？</h3><p>MySQL binlog(binary log 即二进制日志文件) 主要记录了 MySQL 数据库中数据的所有变化(数据库执行的所有 DDL 和 DML 语句)。因此，我们根据主库的 MySQL binlog 日志就能够将主库的数据同步到从库中。</p>
+<p>更具体和详细的过程是这个样子的（图片来自于：<a href="https://www.toptal.com/mysql/mysql-master-slave-replication-tutorial" target="_blank" rel="noopener">《MySQL Master-Slave Replication on the Same Machine》</a>）：</p>
+<p><img src="https://oss.javaguide.cn/java-guide-blog/78816271d3ab52424bfd5ad3086c1a0f.png" srcset="/img/loading.gif" lazyload alt="MySQL主从复制"></p>
+<ol>
+<li>主库将数据库中数据的变化写入到 binlog</li>
+<li>从库连接主库</li>
+<li>从库会创建一个 I&#x2F;O 线程向主库请求更新的 binlog</li>
+<li>主库会创建一个 binlog dump 线程来发送 binlog ，从库中的 I&#x2F;O 线程负责接收</li>
+<li>从库的 I&#x2F;O 线程将接收的 binlog 写入到 relay log 中。</li>
+<li>从库的 SQL 线程读取 relay log 同步数据到本地（也就是再执行一遍 SQL）。</li>
+</ol>
+<p>你一般看到 binlog 就要想到主从复制。当然，除了主从复制之外，binlog 还能帮助我们实现数据恢复。</p>
+<p>拓展一下：</p>
+<p>阿里开源了一个叫做 canal 的工具。这个工具可以帮助我们实现 MySQL 和其他数据源比如 Elasticsearch 或者另外一台 MySQL 数据库之间的数据同步。很显然，这个工具的底层原理肯定也是依赖 binlog。canal 的原理就是模拟 MySQL 主从复制的过程，解析 binlog 将数据同步到其他的数据源。</p>
+<p>另外，像咱们常用的分布式缓存组件 Redis 也是通过主从复制实现的读写分离。</p>
+<p>🌕 简单总结一下：</p>
+<p><strong>MySQL 主从复制是依赖于 binlog 。另外，常见的一些同步 MySQL 数据到其他数据源的工具（比如 canal）的底层一般也是依赖 binlog 。</strong></p>
+<h3 id="MySQL-的复制原理以及流程（主备同步）"><a href="#MySQL-的复制原理以及流程（主备同步）" class="headerlink" title="MySQL 的复制原理以及流程（主备同步）"></a>MySQL 的复制原理以及流程（主备同步）</h3><p>复制过程中一个服务器充当主服务器，而一个或多个其它服务器充当从服务器。主服务器将更新写入 binlog 文件，并维护文件的一个索引以跟踪日志循环。这些日志由主服务器发送到从服务器。当一个从服务器连接主服务器时，它通知主服务器在日志中读取的最后一次成功更新的位置。从服务器接收从那时起发生的任何更新，然后封锁并等待主服务器通知新的更新。过程如下：</p>
+<ul>
+<li>在 slave 上通过 <code>change master</code> 命令，设置 master 的IP端口用户名密码以及从哪个位置开始请求 binlog 包括文件名和日志偏移量。</li>
+<li>slave 和 master 建立了长链接，master 内部专门线程用于维护了这个长链接。</li>
+<li>在 slave 上执行 <code>start-slave</code> 命令，备库会启动两个线程：<code>io_thread</code> 和 <code>sql_thread</code> 分别负责建立连接和读取中转日志进行解析执行。</li>
+<li>master 提交完事务后，写入 binlog。</li>
+<li>master 创建 dump 线程，推送 binlog 到 slave。</li>
+<li>slave 启动一个 IO 线程读取 master 传过来的 binlog 文件，slave 收到文件写到本地成为中转日志。</li>
+<li>slave 再启动一个 SQL 线程读取中继日志事件并执行，完成同步。</li>
+<li>slave 记录自己的 binlog。</li>
+<li>后来由于多线程复制方案的引入，<code>sql_thread</code> 演化成了多个线程。</li>
+</ul>
+<p>MySQL 主从同步三种模式：</p>
+<ul>
+<li>异步复制。MySQL 默认的同步方式，主库把日志发送给从库后不关心从库是否已经处理。</li>
+<li>全同步复制。后强制同步日志到从库，所有的从库都执行完成后才返回给客户端，但是很显然这个方式的话性能会受到严重影响。</li>
+<li>半同步复制。和全同步不同的是，半同步复制的逻辑是这样，从库写入日志成功后返回 ACK 确认给主库，主库收到至少一个从库的确认就认为写操作完成。</li>
+</ul>
+<h3 id="MySQL-的一主一从和一主多从有什么区别"><a href="#MySQL-的一主一从和一主多从有什么区别" class="headerlink" title="MySQL 的一主一从和一主多从有什么区别"></a>MySQL 的一主一从和一主多从有什么区别</h3><p>在一主一备的双 M 架构里，主备切换只需要把客户端流量切到备库；</p>
+<p>在一主多从架构里，主备切换除了要把客户端流量切到备库外，还需要把从库接到新主库上。</p>
+<h3 id="什么是主从延迟"><a href="#什么是主从延迟" class="headerlink" title="什么是主从延迟"></a>什么是主从延迟</h3><p>主库和备库在执行同一个事务的时候出现时间差的问题，主要原因有：</p>
+<ul>
+<li>有些部署条件下，备库所在机器的性能要比主库性能差。</li>
+<li>备库的 CPU、IO 等压力较大。</li>
+<li>大事务，一个主库上语句执行10分钟，那么这个事务可能会导致从库延迟10分钟。</li>
+</ul>
+<h3 id="如何避免主从延迟？"><a href="#如何避免主从延迟？" class="headerlink" title="如何避免主从延迟？"></a>如何避免主从延迟？</h3><ul>
+<li>强制走主库方案</li>
+<li>sleep 方案</li>
+<li>判断主备无延迟方案</li>
+<li>配合 semi-sync 方案</li>
+<li>等主库位点方案</li>
+<li>GTID 方案。</li>
+<li>实际生产中，先客户端对请求做分类，区分哪些请求可以接受过期读，而哪些请求完全不能接受过期读；然后，对于不能接受过期读的语句，再使用等 GTID 或等位点的方案。</li>
+</ul>
+<h4 id="强制将读请求路由到主库处理"><a href="#强制将读请求路由到主库处理" class="headerlink" title="强制将读请求路由到主库处理"></a>强制将读请求路由到主库处理</h4><p>既然你从库的数据过期了，那我就直接从主库读取嘛！这种方案虽然会增加主库的压力，但是，实现起来比较简单，也是我了解到的使用最多的一种方式。</p>
+<p>比如 <code>Sharding-JDBC</code> 就是采用的这种方案。通过使用 <code>Sharding-JDBC</code> 的 <code>HintManager</code> 分片键值管理器，我们可以强制使用主库。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs java">HintManager hintManager = HintManager.getInstance();<br>hintManager.setMasterRouteOnly();<br><span class="hljs-comment">// 继续JDBC操作</span><br></code></pre></td></tr></table></figure>
+
+<p>对于这种方案，你可以将那些必须获取最新数据的读请求都交给主库处理。</p>
+<h4 id="延迟读取"><a href="#延迟读取" class="headerlink" title="延迟读取"></a>延迟读取</h4><p>还有一些朋友肯定会想既然主从同步存在延迟，那我就在延迟之后读取啊，比如主从同步延迟 0.5s，那我就 1s 之后再读取数据。这样多方便啊！方便是方便，但是也很扯淡。</p>
+<p>不过，如果你是这样设计业务流程就会好很多：对于一些对数据比较敏感的场景，你可以在完成写请求之后，避免立即进行请求操作。比如你支付成功之后，跳转到一个支付成功的页面，当你点击返回之后才返回自己的账户。</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>关于如何避免主从延迟，我们这里介绍了两种方案。实际上，延迟读取这种方案没办法完全避免主从延迟，只能说可以减少出现延迟的概率而已，实际项目中一般不会使用。</p>
+<p>总的来说，要想不出现延迟问题，一般还是要强制将那些必须获取最新数据的读请求都交给主库处理。如果你的项目的大部分业务场景对数据准确性要求不是那么高的话，这种方案还是可以选择的。</p>
+<h3 id="什么情况下会出现主从延迟？如何尽量减少延迟？"><a href="#什么情况下会出现主从延迟？如何尽量减少延迟？" class="headerlink" title="什么情况下会出现主从延迟？如何尽量减少延迟？"></a>什么情况下会出现主从延迟？如何尽量减少延迟？</h3><p>我们在上面的内容中也提到了主从延迟以及避免主从延迟的方法，这里我们再来详细分析一下主从延迟出现的原因以及应该如何尽量减少主从延迟。</p>
+<p>要搞懂什么情况下会出现主从延迟，我们需要先搞懂什么是主从延迟。</p>
+<p>MySQL 主从同步延时是指从库的数据落后于主库的数据，这种情况可能由以下两个原因造成：</p>
+<ol>
+<li>从库 I&#x2F;O 线程接收 binlog 的速度跟不上主库写入 binlog 的速度，导致从库 relay log 的数据滞后于主库 binlog 的数据；</li>
+<li>从库 SQL 线程执行 relay log 的速度跟不上从库 I&#x2F;O 线程接收 binlog 的速度，导致从库的数据滞后于从库 relay log 的数据。</li>
+</ol>
+<p>与主从同步有关的时间点主要有 3 个：</p>
+<ol>
+<li>主库执行完一个事务，写入 binlog，将这个时刻记为 T1；</li>
+<li>从库 I&#x2F;O 线程接收到 binlog 并写入 relay log 的时刻记为 T2；</li>
+<li>从库 SQL 线程读取 relay log 同步数据本地的时刻记为 T3。</li>
+</ol>
+<p>结合我们上面讲到的主从复制原理，可以得出：</p>
+<ul>
+<li>T2 和 T1 的差值反映了从库 I&#x2F;O 线程的性能和网络传输的效率，这个差值越小说明从库 I&#x2F;O 线程的性能和网络传输效率越高。</li>
+<li>T3 和 T2 的差值反映了从库 SQL 线程执行的速度，这个差值越小，说明从库 SQL 线程执行速度越快。</li>
+</ul>
+<p>那什么情况下会出现出从延迟呢？这里列举几种常见的情况：</p>
+<ol>
+<li><strong>从库机器性能比主库差</strong>：从库接收 binlog 并写入 relay log 以及执行 SQL 语句的速度会比较慢（也就是 T2-T1 和 T3-T2 的值会较大），进而导致延迟。解决方法是选择与主库一样规格或更高规格的机器作为从库，或者对从库进行性能优化，比如调整参数、增加缓存、使用 SSD 等。</li>
+<li><strong>从库处理的读请求过多</strong>：从库需要执行主库的所有写操作，同时还要响应读请求，如果读请求过多，会占用从库的 CPU、内存、网络等资源，影响从库的复制效率（也就是 T2-T1 和 T3-T2 的值会较大，和前一种情况类似）。解决方法是引入缓存（推荐）、使用一主多从的架构，将读请求分散到不同的从库，或者使用其他系统来提供查询的能力，比如将 binlog 接入到 Hadoop、Elasticsearch 等系统中。</li>
+<li><strong>大事务</strong>：运行时间比较长，长时间未提交的事务就可以称为大事务。由于大事务执行时间长，并且从库上的大事务会比主库上的大事务花费更多的时间和资源，因此非常容易造成主从延迟。解决办法是避免大批量修改数据，尽量分批进行。类似的情况还有执行时间较长的慢 SQL ，实际项目遇到慢 SQL 应该进行优化。</li>
+<li><strong>从库太多</strong>：主库需要将 binlog 同步到所有的从库，如果从库数量太多，会增加同步的时间和开销（也就是 T2-T1 的值会比较大，但这里是因为主库同步压力大导致的）。解决方案是减少从库的数量，或者将从库分为不同的层级，让上层的从库再同步给下层的从库，减少主库的压力。</li>
+<li><strong>网络延迟</strong>：如果主从之间的网络传输速度慢，或者出现丢包、抖动等问题，那么就会影响 binlog 的传输效率，导致从库延迟。解决方法是优化网络环境，比如提升带宽、降低延迟、增加稳定性等。</li>
+<li><strong>单线程复制</strong>：MySQL5.5 及之前，只支持单线程复制。为了优化复制性能，MySQL 5.6 引入了 <strong>多线程复制</strong>，MySQL 5.7 还进一步完善了多线程复制。</li>
+<li><strong>复制模式</strong>：MySQL 默认的复制是异步的，必然会存在延迟问题。全同步复制不存在延迟问题，但性能太差了。半同步复制是一种折中方案，相对于异步复制，半同步复制提高了数据的安全性，减少了主从延迟（还是有一定程度的延迟）。MySQL 5.5 开始，MySQL 以插件的形式支持 <strong>semi-sync 半同步复制</strong>。并且，MySQL 5.7 引入了 <strong>增强半同步复制</strong> 。</li>
+</ol>
+<p><a href="https://time.geekbang.org/column/intro/100020801?code=ieY8HeRSlDsFbuRtggbBQGxdTh-1jMASqEIeqzHAKrI=" target="_blank" rel="noopener">《MySQL 实战 45 讲》</a>这个专栏中的<a href="https://time.geekbang.org/column/article/77636" target="_blank" rel="noopener">读写分离有哪些坑？</a>这篇文章也有对主从延迟解决方案这一话题进行探讨，感兴趣的可以阅读学习一下。</p>
+<h2 id="分库分表"><a href="#分库分表" class="headerlink" title="分库分表"></a>分库分表</h2><p>读写分离主要应对的是数据库读并发，没有解决数据库存储问题。试想一下：<strong>如果 MySQL 一张表的数据量过大怎么办?</strong></p>
+<p>换言之，<strong>我们该如何解决 MySQL 的存储压力呢？</strong></p>
+<p>答案之一就是 <strong>分库分表</strong>。</p>
+<h3 id="什么是分库？"><a href="#什么是分库？" class="headerlink" title="什么是分库？"></a>什么是分库？</h3><p><strong>分库</strong> 就是将数据库中的数据分散到不同的数据库上，可以垂直分库，也可以水平分库。</p>
+<p><strong>垂直分库</strong> 就是把单一数据库按照业务进行划分，不同的业务使用不同的数据库，进而将一个数据库的压力分担到多个数据库。</p>
+<p>举个例子：说你将数据库中的用户表、订单表和商品表分别单独拆分为用户数据库、订单数据库和商品数据库。</p>
+<p><img src="/./images/read-and-write-separation-and-library-subtable/vertical-slicing-database.png" srcset="/img/loading.gif" lazyload alt="垂直分库"></p>
+<p><strong>水平分库</strong> 是把同一个表按一定规则拆分到不同的数据库中，每个库可以位于不同的服务器上，这样就实现了水平扩展，解决了单表的存储和性能瓶颈的问题。</p>
+<p>举个例子：订单表数据量太大，你对订单表进行了水平切分（水平分表），然后将切分后的 2 张订单表分别放在两个不同的数据库。</p>
+<p><img src="/./images/read-and-write-separation-and-library-subtable/horizontal-slicing-database.png" srcset="/img/loading.gif" lazyload alt="水平分库"></p>
+<h3 id="什么是分表？"><a href="#什么是分表？" class="headerlink" title="什么是分表？"></a>什么是分表？</h3><p><strong>分表</strong> 就是对单表的数据进行拆分，可以是垂直拆分，也可以是水平拆分。</p>
+<p><strong>垂直分表</strong> 是对数据表列的拆分，把一张列比较多的表拆分为多张表。</p>
+<p>举个例子：我们可以将用户信息表中的一些列单独抽出来作为一个表。</p>
+<p><strong>水平分表</strong> 是对数据表行的拆分，把一张行比较多的表拆分为多张表，可以解决单一表数据量过大的问题。</p>
+<p>举个例子：我们可以将用户信息表拆分成多个用户信息表，这样就可以避免单一表数据量过大对性能造成影响。</p>
+<p>水平拆分只能解决单表数据量大的问题，为了提升性能，我们通常会选择将拆分后的多张表放在不同的数据库中。也就是说，水平分表通常和水平分库同时出现。</p>
+<p><img src="/./images/read-and-write-separation-and-library-subtable/two-forms-of-sub-table.png" srcset="/img/loading.gif" lazyload alt="分表"></p>
+<h3 id="什么情况下需要分库分表？"><a href="#什么情况下需要分库分表？" class="headerlink" title="什么情况下需要分库分表？"></a>什么情况下需要分库分表？</h3><p>遇到下面几种场景可以考虑分库分表：</p>
+<ul>
+<li>单表的数据达到千万级别以上，数据库读写速度比较缓慢。</li>
+<li>数据库中的数据占用的空间越来越大，备份时间越来越长。</li>
+<li>应用的并发量太大（应该优先考虑其他性能优化方法，而非分库分表）。</li>
+</ul>
+<p>不过，分库分表的成本太高，如非必要尽量不要采用。而且，并不一定是单表千万级数据量就要分表，毕竟每张表包含的字段不同，它们在不错的性能下能够存放的数据量也不同，还是要具体情况具体分析。</p>
+<p>之前看过一篇文章分析 “<a href="https://juejin.cn/post/7165689453124517896" target="_blank" rel="noopener">InnoDB 中高度为 3 的 B+ 树最多可以存多少数据</a>”，写的挺不错，感兴趣的可以看看。</p>
+<h3 id="常见的分片算法有哪些？"><a href="#常见的分片算法有哪些？" class="headerlink" title="常见的分片算法有哪些？"></a>常见的分片算法有哪些？</h3><p>分片算法主要解决了数据被水平分片之后，数据究竟该存放在哪个表的问题。</p>
+<p>常见的分片算法有：</p>
+<ul>
+<li><strong>哈希分片</strong>：求指定分片键的哈希，然后根据哈希值确定数据应被放置在哪个表中。哈希分片比较适合随机读写的场景，不太适合经常需要范围查询的场景。哈希分片可以使每个表的数据分布相对均匀，但对动态伸缩（例如新增一个表或者库）不友好。</li>
+<li><strong>范围分片</strong>：按照特定的范围区间（比如时间区间、ID 区间）来分配数据，比如 将 <code>id</code> 为 <code>1~299999</code> 的记录分到第一个表， <code>300000~599999</code> 的分到第二个表。范围分片适合需要经常进行范围查找且数据分布均匀的场景，不太适合随机读写的场景（数据未被分散，容易出现热点数据的问题）。</li>
+<li><strong>映射表分片</strong>：使用一个单独的表（称为映射表）来存储分片键和分片位置的对应关系。映射表分片策略可以支持任何类型的分片算法，如哈希分片、范围分片等。映射表分片策略是可以灵活地调整分片规则，不需要修改应用程序代码或重新分布数据。不过，这种方式需要维护额外的表，还增加了查询的开销和复杂度。</li>
+<li><strong>一致性哈希分片</strong>：将哈希空间组织成一个环形结构，将分片键和节点（数据库或表）都映射到这个环上，然后根据顺时针的规则确定数据或请求应该分配到哪个节点上，解决了传统哈希对动态伸缩不友好的问题。</li>
+<li><strong>地理位置分片</strong>：很多 NewSQL 数据库都支持地理位置分片算法，也就是根据地理位置（如城市、地域）来分配数据。</li>
+<li><strong>融合算法分片</strong>：灵活组合多种分片算法，比如将哈希分片和范围分片组合。</li>
+<li>……</li>
+</ul>
+<h3 id="分片键如何选择？"><a href="#分片键如何选择？" class="headerlink" title="分片键如何选择？"></a>分片键如何选择？</h3><p>分片键（Sharding Key）是数据分片的关键字段。分片键的选择非常重要，它关系着数据的分布和查询效率。一般来说，分片键应该具备以下特点：</p>
+<ul>
+<li>具有共性，即能够覆盖绝大多数的查询场景，尽量减少单次查询所涉及的分片数量，降低数据库压力；</li>
+<li>具有离散性，即能够将数据均匀地分散到各个分片上，避免数据倾斜和热点问题；</li>
+<li>具有稳定性，即分片键的值不会发生变化，避免数据迁移和一致性问题；</li>
+<li>具有扩展性，即能够支持分片的动态增加和减少，避免数据重新分片的开销。</li>
+</ul>
+<p>实际项目中，分片键很难满足上面提到的所有特点，需要权衡一下。并且，分片键可以是表中多个字段的组合，例如取用户 ID 后四位作为订单 ID 后缀。</p>
+<h3 id="分库分表之后，id-主键如何处理？"><a href="#分库分表之后，id-主键如何处理？" class="headerlink" title="分库分表之后，id 主键如何处理？"></a>分库分表之后，id 主键如何处理？</h3><p>因为要是分成多个表之后，每个表都是从 1 开始累加，这样是不对的，我们需要一个全局唯一的 id 来支持。</p>
+<p>生成全局 id 有下面这几种方式：</p>
+<ul>
+<li><strong>UUID</strong>：不适合作为主键，因为太长了，并且无序不可读，查询效率低。比较适合用于生成唯一的名字的标示比如文件的名字。</li>
+<li><strong>数据库自增 id</strong> : 两台数据库分别设置不同步长，生成不重复 id 的策略来实现高可用。这种方式生成的 id 有序，但是需要独立部署数据库实例，成本高，还会有性能瓶颈。</li>
+<li><strong>利用 redis 生成 id :</strong> 性能比较好，灵活方便，不依赖于数据库。但是，引入了新的组件造成系统更加复杂，可用性降低，编码更加复杂，增加了系统成本。</li>
+<li><strong>Twitter 的 snowflake 算法</strong> ：Github 地址：<a href="https://github.com/twitter-archive/snowflake%E3%80%82" target="_blank" rel="noopener">https://github.com/twitter-archive/snowflake。</a></li>
+<li><strong>美团的 <a href="https://tech.meituan.com/2017/04/21/mt-leaf.html" target="_blank" rel="noopener">Leaf</a> 分布式 ID 生成系统</strong> ：Leaf 是美团开源的分布式 id 生成器，能保证全局唯一性、趋势递增、单调递增、信息安全，里面也提到了几种分布式方案的对比，但也需要依赖关系数据库、Zookeeper 等中间件。感觉还不错。</li>
+</ul>
+<h3 id="雪花算法（SnowFlake）"><a href="#雪花算法（SnowFlake）" class="headerlink" title="雪花算法（SnowFlake）"></a>雪花算法（SnowFlake）</h3><p>雪花算法最早是 Twitter 公司在其内部用于分布式环境下生成唯一ID。在 2014 年开源 scala 语言版本。</p>
+<p>雪花算法的原理就是生成一个的 64 位比特位的 long 类型的唯一ID。</p>
+<ol>
+<li>最高 1 位固定值 0，因为生成的 id 是正整数，如果是 1 就是负数了。</li>
+<li>接下来 41 位存储毫秒级时间戳，<code>2^41/(1000*60*60*24*365)=69</code>，大概可以使用 69 年。</li>
+<li>再接下 10 位存储机器码，包括 5 位 datacenterId 和 5 位 workerId。最多可以部署 <code>2^10=1024</code> 台机器。</li>
+<li>最后 12 位存储序列号。同一毫秒时间戳时，通过这个递增的序列号来区分。即对于同一台机器而言，同一毫秒时间戳下，可以生成 <code>2^12=4096</code> 个不重复 id。</li>
+</ol>
+<h3 id="分库分表会带来什么问题呢？"><a href="#分库分表会带来什么问题呢？" class="headerlink" title="分库分表会带来什么问题呢？"></a>分库分表会带来什么问题呢？</h3><p>记住，你在公司做的任何技术决策，不光是要考虑这个技术能不能满足我们的要求，是否适合当前业务场景，还要重点考虑其带来的成本。</p>
+<p>引入分库分表之后，会给系统带来什么挑战呢？</p>
+<ul>
+<li><strong>join 操作</strong>：同一个数据库中的表分布在了不同的数据库中，导致无法使用 join 操作。这样就导致我们需要手动进行数据的封装，比如你在一个数据库中查询到一个数据之后，再根据这个数据去另外一个数据库中找对应的数据。不过，很多大厂的资深 DBA 都是建议尽量不要使用 join 操作。因为 join 的效率低，并且会对分库分表造成影响。对于需要用到 join 操作的地方，可以采用多次查询业务层进行数据组装的方法。不过，这种方法需要考虑业务上多次查询的事务性的容忍度。</li>
+<li><strong>事务问题</strong>：同一个数据库中的表分布在了不同的数据库中，如果单个操作涉及到多个数据库，那么数据库自带的事务就无法满足我们的要求了。这个时候，我们就需要引入分布式事务了。关于分布式事务常见解决方案总结，网站上也有对应的总结：<a href="https://javaguide.cn/distributed-system/distributed-transaction.html" target="_blank" rel="noopener">https://javaguide.cn/distributed-system/distributed-transaction.html</a> 。</li>
+<li><strong>分布式 ID</strong>：分库之后， 数据遍布在不同服务器上的数据库，数据库的自增主键已经没办法满足生成的主键唯一了。我们如何为不同的数据节点生成全局唯一主键呢？这个时候，我们就需要为我们的系统引入分布式 ID 了。关于分布式 ID 的详细介绍&amp;实现方案总结，可以看我写的这篇文章：<a href="https://javaguide.cn/distributed-system/distributed-id.html" target="_blank" rel="noopener">分布式 ID 介绍&amp;实现方案总结</a>。</li>
+<li><strong>跨库聚合查询问题</strong>：分库分表会导致常规聚合查询操作，如 group by，order by 等变得异常复杂。这是因为这些操作需要在多个分片上进行数据汇总和排序，而不是在单个数据库上进行。为了实现这些操作，需要编写复杂的业务代码，或者使用中间件来协调分片间的通信和数据传输。这样会增加开发和维护的成本，以及影响查询的性能和可扩展性。</li>
+<li>……</li>
+</ul>
+<p>另外，引入分库分表之后，一般需要 DBA 的参与，同时还需要更多的数据库服务器，这些都属于成本。</p>
+<h3 id="分库分表有没有什么比较推荐的方案？"><a href="#分库分表有没有什么比较推荐的方案？" class="headerlink" title="分库分表有没有什么比较推荐的方案？"></a>分库分表有没有什么比较推荐的方案？</h3><p>Apache ShardingSphere 是一款分布式的数据库生态系统，可以将任意数据库转换为分布式数据库，并通过数据分片、弹性伸缩、加密等能力对原有数据库进行增强。</p>
+<p>ShardingSphere 项目（包括 Sharding-JDBC、Sharding-Proxy 和 Sharding-Sidecar）是当当捐入 Apache 的，目前主要由京东数科的一些巨佬维护。</p>
+<p>ShardingSphere 绝对可以说是当前分库分表的首选！ShardingSphere 的功能完善，除了支持读写分离和分库分表，还提供分布式事务、数据库治理、影子库、数据加密和脱敏等功能。</p>
+<p>ShardingSphere 提供的功能如下：</p>
+<p><img src="https://oss.javaguide.cn/github/javaguide/high-performance/shardingsphere-features.png" srcset="/img/loading.gif" lazyload alt="ShardingSphere 提供的功能"></p>
+<p>ShardingSphere 的优势如下（摘自 ShardingSphere 官方文档：<a href="https://shardingsphere.apache.org/document/current/cn/overview/" target="_blank" rel="noopener">https://shardingsphere.apache.org/document/current/cn/overview/</a>）：</p>
+<ul>
+<li>极致性能：驱动程序端历经长年打磨，效率接近原生 JDBC，性能极致。</li>
+<li>生态兼容：代理端支持任何通过 MySQL&#x2F;PostgreSQL 协议的应用访问，驱动程序端可对接任意实现 JDBC 规范的数据库。</li>
+<li>业务零侵入：面对数据库替换场景，ShardingSphere 可满足业务无需改造，实现平滑业务迁移。</li>
+<li>运维低成本：在保留原技术栈不变前提下，对 DBA 学习、管理成本低，交互友好。</li>
+<li>安全稳定：基于成熟数据库底座之上提供增量能力，兼顾安全性及稳定性。</li>
+<li>弹性扩展：具备计算、存储平滑在线扩展能力，可满足业务多变的需求。</li>
+<li>开放生态：通过多层次（内核、功能、生态）插件化能力，为用户提供可定制满足自身特殊需求的独有系统。</li>
+</ul>
+<p>另外，ShardingSphere 的生态体系完善，社区活跃，文档完善，更新和发布比较频繁。</p>
+<p>不过，还是要多提一句：<strong>现在很多公司都是用的类似于 TiDB 这种分布式关系型数据库，不需要我们手动进行分库分表（数据库层面已经帮我们做了），也不需要解决手动分库分表引入的各种问题，直接一步到位，内置很多实用的功能（如无感扩容和缩容、冷热存储分离）！如果公司条件允许的话，个人也是比较推荐这种方式！</strong></p>
+<h3 id="分库分表后，数据怎么迁移呢？"><a href="#分库分表后，数据怎么迁移呢？" class="headerlink" title="分库分表后，数据怎么迁移呢？"></a>分库分表后，数据怎么迁移呢？</h3><p>分库分表之后，我们如何将老库（单库单表）的数据迁移到新库（分库分表后的数据库系统）呢？</p>
+<p>比较简单同时也是非常常用的方案就是<strong>停机迁移</strong>，写个脚本老库的数据写到新库中。比如你在凌晨 2 点，系统使用的人数非常少的时候，挂一个公告说系统要维护升级预计 1 小时。然后，你写一个脚本将老库的数据都同步到新库中。</p>
+<p>如果你不想停机迁移数据的话，也可以考虑<strong>双写方案</strong>。双写方案是针对那种不能停机迁移的场景，实现起来要稍微麻烦一些。具体原理是这样的：</p>
+<ul>
+<li>我们对老库的更新操作（增删改），同时也要写入新库（双写）。如果操作的数据不存在于新库的话，需要插入到新库中。 这样就能保证，咱们新库里的数据是最新的。</li>
+<li>在迁移过程，双写只会让被更新操作过的老库中的数据同步到新库，我们还需要自己写脚本将老库中的数据和新库的数据做比对。如果新库中没有，那咱们就把数据插入到新库。如果新库有，旧库没有，就把新库对应的数据删除（冗余数据清理）。</li>
+<li>重复上一步的操作，直到老库和新库的数据一致为止。</li>
+</ul>
+<p>想要在项目中实施双写还是比较麻烦的，很容易会出现问题。我们可以借助上面提到的数据库同步工具 Canal 做增量数据迁移（还是依赖 binlog，开发和维护成本较低）。</p>
+<h2 id="总结-1"><a href="#总结-1" class="headerlink" title="总结"></a>总结</h2><ul>
+<li>读写分离主要是为了将对数据库的读写操作分散到不同的数据库节点上。这样的话，就能够小幅提升写性能，大幅提升读性能。</li>
+<li>读写分离基于主从复制，MySQL 主从复制是依赖于 binlog 。</li>
+<li><strong>分库</strong> 就是将数据库中的数据分散到不同的数据库上。<strong>分表</strong> 就是对单表的数据进行拆分，可以是垂直拆分，也可以是水平拆分。</li>
+<li>引入分库分表之后，需要系统解决事务、分布式 id、无法 join 操作问题。</li>
+<li>现在很多公司都是用的类似于 TiDB 这种分布式关系型数据库，不需要我们手动进行分库分表（数据库层面已经帮我们做了），也不需要解决手动分库分表引入的各种问题，直接一步到位，内置很多实用的功能（如无感扩容和缩容、冷热存储分离）！如果公司条件允许的话，个人也是比较推荐这种方式！</li>
+<li>如果必须要手动分库分表的话，ShardingSphere 是首选！ShardingSphere 的功能完善，除了支持读写分离和分库分表，还提供分布式事务、数据库治理等功能。另外，ShardingSphere 的生态体系完善，社区活跃，文档完善，更新和发布比较频繁。</li>
+</ul>
+<h2 id="订单表数据量越来越大导致查询缓慢，如何处理"><a href="#订单表数据量越来越大导致查询缓慢，如何处理" class="headerlink" title="订单表数据量越来越大导致查询缓慢，如何处理"></a>订单表数据量越来越大导致查询缓慢，如何处理</h2><p>分库分表。</p>
+<p>由于历史订单使用率并不高，高频的可能只是近期订单，因此将订单表按照时间进行拆分，根据数据量的大小考虑按月分表或按年分表。订单 ID 最好包含时间(如根据雪花算法生成)，此时既能根据订单ID直接获取到订单记录，也能按照时间进行查询。</p>
+<h2 id="原本可以执行得很快的-SQL-语句，执行速度却比预期的慢很多，原因是什么？如何解决？"><a href="#原本可以执行得很快的-SQL-语句，执行速度却比预期的慢很多，原因是什么？如何解决？" class="headerlink" title="原本可以执行得很快的 SQL 语句，执行速度却比预期的慢很多，原因是什么？如何解决？"></a>原本可以执行得很快的 SQL 语句，执行速度却比预期的慢很多，原因是什么？如何解决？</h2><p>从大到小可分为四种情况：</p>
+<ul>
+<li>MySQL 数据库本身被堵住了，比如：系统或网络资源不够。</li>
+<li>SQL 语句被堵住了，比如：表锁，行锁等，导致存储引擎不执行对应的 SQL 语句。</li>
+<li>索引使用不当，没有走索引。</li>
+<li>表中数据的特点导致的，走了索引，但回表次数庞大。</li>
+</ul>
+<p>解决：</p>
+<ul>
+<li>考虑采用 <code>force index</code> 强行选择一个索引。</li>
+<li>考虑修改语句，引导 MySQL 使用我们期望的索引。比如把 <code>order by b limit 1</code>  改成 <code>order by b,a limit 1</code>，语义的逻辑是相同的。</li>
+<li>第三种方法是，在有些场景下可以新建一个更合适的索引，来提供给优化器做选择，或删掉误用的索引。如果确定是索引根本没必要，可以考虑删除索引。</li>
+</ul>
+<h2 id="短时间提高-MySQL-性能的方法"><a href="#短时间提高-MySQL-性能的方法" class="headerlink" title="短时间提高 MySQL 性能的方法"></a>短时间提高 MySQL 性能的方法</h2><ul>
+<li>第一种：处理掉那些占着连接但是不工作的线程。或者再考虑断开事务内空闲太久的连接。<code>kill connection + id</code></li>
+<li>第二种：减少连接过程的消耗。慢查询性能问题在 MySQL 中，会引发性能问题的慢查询，大体有以下三种可能：索引没有设计好；SQL 语句没写好；MySQL 选错了索引（force index）。</li>
+</ul>
+<h2 id="MYSQL-数据库服务器性能分析的方法命令有哪些"><a href="#MYSQL-数据库服务器性能分析的方法命令有哪些" class="headerlink" title="MYSQL 数据库服务器性能分析的方法命令有哪些"></a>MYSQL 数据库服务器性能分析的方法命令有哪些</h2><figure class="highlight maxima"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs maxima"><span class="hljs-built_in">show</span> <span class="hljs-built_in">status</span><br></code></pre></td></tr></table></figure>
+
+
+<h2 id="慢查询是什么，怎么解决"><a href="#慢查询是什么，怎么解决" class="headerlink" title="慢查询是什么，怎么解决"></a>慢查询是什么，怎么解决</h2><p>用慢查询来记录一些执行时间比较长的 SQL 语句。</p>
+<p>我们可以用 explain 命令来查看这些 SQL 语句的执行计划。查看该 SQL 语句有没有使用索引，有没有做全表扫描。</p>
+<p>线上可以开启慢查询，如果不是调优需要的话，一般不建议启动该参数，因为开启慢查询日志会或多或少带来一定的性能影响。慢查询日志支持将日志记录写入文件。</p>
+<h3 id="如何开启慢日志查询"><a href="#如何开启慢日志查询" class="headerlink" title="如何开启慢日志查询"></a>如何开启慢日志查询</h3><p>通过修改配置文件开启</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs ini"><span class="hljs-attr">slow_query_log</span>=<span class="hljs-literal">ON</span>       <span class="hljs-comment"># 是否开启慢日志记录</span><br><span class="hljs-attr">long_query_time</span>=<span class="hljs-number">2</span>       <span class="hljs-comment"># 时间限制，超过此时间，则记录</span><br><span class="hljs-attr">slow_query_log_file</span>=/usr/slow.log  <span class="hljs-comment"># 日志文件</span><br><span class="hljs-attr">long_queries_not_using_indexes</span>=<span class="hljs-literal">ON</span>  <span class="hljs-comment"># 是否记录使用索引的搜索</span><br></code></pre></td></tr></table></figure>
+
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/MySQL/" class="print-no-link">#MySQL</a>
+      
+        <a href="/tags/%E9%9D%A2%E8%AF%95/" class="print-no-link">#面试</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>03-MySQL 优化</div>
+      <div>https://flepeng.github.io/interview-41-数据库-41-MySQL-03-MySQL-优化/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2020年8月8日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

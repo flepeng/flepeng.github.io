@@ -1,0 +1,957 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="MYSQL 优化思路MySQL 存储千亿级的数据，是一项非常大的挑战。MySQL单表可以存储10亿级的数据，但是这个时候性能非常差。很多实验证明，MySQL单表容量在500万左右性能处于最佳状态。 常用的 MySQL 优化顺序是:  第一优化 sql 语句和索引；  第二加缓存 memcached,redis；  第三主从复制或主主复制，读写分离，可以在应用层做，效率高，也可以用三方工具，第三方工">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL 优化思路和案例">
+<meta property="og:url" content="https://flepeng.github.io/042-MySQL-MySQL-%E4%BC%98%E5%8C%96%E6%80%9D%E8%B7%AF%E5%92%8C%E6%A1%88%E4%BE%8B/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="MYSQL 优化思路MySQL 存储千亿级的数据，是一项非常大的挑战。MySQL单表可以存储10亿级的数据，但是这个时候性能非常差。很多实验证明，MySQL单表容量在500万左右性能处于最佳状态。 常用的 MySQL 优化顺序是:  第一优化 sql 语句和索引；  第二加缓存 memcached,redis；  第三主从复制或主主复制，读写分离，可以在应用层做，效率高，也可以用三方工具，第三方工">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flepeng.github.io/img/MySQL/01/1649758791-a361b4aad762ba1349db68eb85725ad1.png">
+<meta property="og:image" content="https://flepeng.github.io/img/MySQL/01/1649758791-e9cb174545870a9015aa64a59d8e9921.png">
+<meta property="og:image" content="https://flepeng.github.io/img/MySQL/01/1649758791-daa6a596838b299f35382d51213c368d.png">
+<meta property="og:image" content="https://flepeng.github.io/img/MySQL/01/1649758791-63ad5888591431a9725edf0dcb227860.png">
+<meta property="og:image" content="https://flepeng.github.io/img/MySQL/01/1649758791-621085903b229205d575d084120c1bc3.png">
+<meta property="article:published_time" content="2021-03-05T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.361Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="MySQL">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://flepeng.github.io/img/MySQL/01/1649758791-a361b4aad762ba1349db68eb85725ad1.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>MySQL 优化思路和案例 - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="MySQL 优化思路和案例"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-03-06 00:00" pubdate>
+          2021年3月6日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          6.2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          52 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">MySQL 优化思路和案例</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="MYSQL-优化思路"><a href="#MYSQL-优化思路" class="headerlink" title="MYSQL 优化思路"></a>MYSQL 优化思路</h2><p>MySQL 存储千亿级的数据，是一项非常大的挑战。MySQL单表可以存储10亿级的数据，但是这个时候性能非常差。很多实验证明，MySQL单表容量在500万左右性能处于最佳状态。</p>
+<p>常用的 MySQL 优化顺序是:</p>
+<ul>
+<li><p>第一优化 sql 语句和索引；</p>
+</li>
+<li><p>第二加缓存 memcached,redis；</p>
+</li>
+<li><p>第三主从复制或主主复制，读写分离，可以在应用层做，效率高，也可以用三方工具，第三方工具推荐360的atlas,其它的要么效率不高，要么没人维护；</p>
+</li>
+<li><p>第四如果以上都做了还是慢，不要想着去做切分，MySQL自带分区表，先试试这个，对你的应用是透明的，无需更改代码,但是sql语句是需要针对分区表做优化的，sql条件中要带上分区条件的列，从而使查询定位到少量的分区上，否则就会扫描全部分区，另外分区表还有一些坑，在这里就不多说了；</p>
+</li>
+<li><p>第五如果以上都做了，那就先做垂直拆分，其实就是根据你模块的耦合度，将一个大的系统分为多个小的系统，也就是分布式系统；</p>
+</li>
+<li><p>第六才是水平切分，针对数据量大的表，这一步最麻烦，最能考验技术水平，要选择一个合理的sharding key,为了有好的查询效率，表结构也要改动，做一定的冗余，应用也要改，sql中尽量带sharding key，将数据定位到限定的表上去查，而不是扫描全部的表；</p>
+</li>
+</ul>
+<p>MySQL 数据库一般都是按照这个步骤去优化的，成本也是由低到高；</p>
+<h2 id="一、查询优化"><a href="#一、查询优化" class="headerlink" title="一、查询优化"></a>一、查询优化</h2><h3 id="1、创建索引"><a href="#1、创建索引" class="headerlink" title="1、创建索引"></a>1、创建索引</h3><p>索引相关的博客：<a href="https://blog.csdn.net/fenglepeng/article/details/103141756" target="_blank" rel="noopener">https://blog.csdn.net/fenglepeng/article/details/103141756</a></p>
+<p>查询优化是最简单也是最常用的优化。对于CRUD操作，read操作是占据了绝大部分的比例，所以read的性能基本上决定了应用的性能。</p>
+<p>对于查询优化最常用的就是创建索引。经过测试，2000万条记录，每条记录200字节两列varchar类型的。不使用索引的时候查询一条记录需要一分钟，创建了索引的时候查询时间可以忽略。但是，当你在已有数据上添加索引的时候，则需要耗费非常大的时间。例如在2000万条记录上创建索引大约花费几十分钟。</p>
+<p>虽然创建索引可以很大程度上优化查询的速度，但是弊端也是很明显的。</p>
+<ul>
+<li>一个是在插入数据的时候，创建索引也需要消耗部分的时间，这就使得插入性能在一定程度上降低；</li>
+<li>一个是数据文件变的更大。在列上创建索引的时候，每条索引的长度是和你创建列的时候制定的长度相同的。比如你创建varchar(100)，当你在该列上创建索引，那么索引的长度则是102字节，因为长度超过64字节则会额外增加2字节记录索引的长度。</li>
+</ul>
+<p><img src="/img/MySQL/01/1649758791-a361b4aad762ba1349db68eb85725ad1.png" srcset="/img/loading.gif" lazyload></p>
+<p>从上图可以看到 YCSB_KEY 这一列(长度100)上有一个名字为index_ycsb_key的索引，每条索引长度都为102，想象一下当数据变的巨大无比的时候，索引的大小也是不可以小觑的。而且从这也可以看出，索引的长度和列类型的长度还不同，比如varchar它是变长的字符类型(<a href="http://blog.csdn.net/zwan0518/article/details/8928822" target="_blank" rel="noopener">请看MySQL数据类型分析</a>)，实际存储长度是是实际字符的大小，但是索引却是你声明的长度的大小。你创建列的时候声明100字节，那么索引长度就是这个字节再加上2，它不管你实际存储是多大。</p>
+<p>除了创建索引需要消耗时间，索引文件体积会变的越来越大之外，创建索引也需要看的你存储数据的特征。当你存储数据很大一部分都是重复记录，那这个时候创建索引是百害而无一利。所以，当很多数据重复的时候，索引带来的查询提升的效果是可以直接忽略的，但是这个时候你还要承受插入数据的时候创建索引带来的性能消耗。</p>
+<h3 id="2、缓存的配置。"><a href="#2、缓存的配置。" class="headerlink" title="2、缓存的配置。"></a>2、缓存的配置。</h3><p>在MySQL中有多种多样的缓存，有的负责缓存查询语句，也有的负责缓存查询数据。这些缓存内容客户端无法操作，是由server端来维护的。它会随着你查询与修改等相应不同操作进行不断更新。通过其配置文件我们可以看到在MySQL中的缓存：</p>
+<p><img src="/img/MySQL/01/1649758791-e9cb174545870a9015aa64a59d8e9921.png" srcset="/img/loading.gif" lazyload></p>
+<p>在这里主要分析query cache，它是主要用来缓存查询数据。当你想使用该cache，必须把query_cache_size大小设置为非0。当设置大小为非0的时候，server就会缓存每次查询返回的结果，到下次相同查询server就直接从缓存获取数据，而不是再执行查询。能缓存的数据量就和你的size大小设置有关，所以当你设置的足够大，数据可以完全缓存到内存，速度就会非常之快。</p>
+<p>但是，query cache也有它的弊端。当你对数据表做任何的更新操作(update&#x2F;insert&#x2F;delete)等操作，server为了保证缓存与数据库的一致性，会强制刷新缓存数据，导致缓存数据全部失效。所以，当一个表格的更新数据表操作非常多的话，query cache是不会起到查询提升的性能，还会影响其他操作的性能。</p>
+<p>大多数的MySQL服务器都开启了查询缓存。这是提高性最有效的方法之一，而且这是被MySQL的数据库引擎处理的。当有很多相同的查询被执行了多次的时候，这些查询结果会被放到一个缓存中，这样后续的相同的查询就不用操作表而直接访问缓存结果了。这里最主要的问题是，对于程序员来说，这个事情是很容易被忽略的。因为，我们某些查询语句会让MySQL不使用缓存。请看下面的示例：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">SELECT</span> username <span class="hljs-keyword">FROM</span> <span class="hljs-keyword">user</span> <span class="hljs-keyword">WHERE</span> signup_date &gt;= <span class="hljs-keyword">CURDATE</span>()<br> <br>// 开启查询缓存<br><span class="hljs-keyword">SELECT</span> username <span class="hljs-keyword">FROM</span> <span class="hljs-keyword">user</span> <span class="hljs-keyword">WHERE</span> signup_date &gt;= <span class="hljs-string">'$today'</span><br></code></pre></td></tr></table></figure>
+
+<p>上面两条SQL语句的差别就是 CURDATE() ，MySQL的查询缓存对这个函数不起作用。所以，像 NOW() 和 RAND() 或是其它的诸如此类的SQL函数都不会开启查询缓存，因为这些函数的返回是会不定的易变的。所以，你所需要的就是用一个变量来代替MySQL的函数，从而开启缓存。</p>
+<h3 id="3、slow-query-log分析。"><a href="#3、slow-query-log分析。" class="headerlink" title="3、slow_query_log分析。"></a>3、slow_query_log分析。</h3><p>其实对于查询性能提升，最重要也是最根本的手段也是slow_query的设置。</p>
+<p><img src="/img/MySQL/01/1649758791-daa6a596838b299f35382d51213c368d.png" srcset="/img/loading.gif" lazyload></p>
+<p>当你设置slow_query_log为on的时候，server端会对每次的查询进行记录，当超过你设置的慢查询时间 (long_query_time)的时候就把该条查询记录到日志。而你对性能进行优化的时候，就可以分析慢查询日志，对慢查询的查询语句进行有目的的优化。可以通过创建各种索引，可以通过分表等操作。</p>
+<h3 id="4、分库分表"><a href="#4、分库分表" class="headerlink" title="4、分库分表"></a>4、分库分表</h3><p>分库分表应该算是查询优化的杀手锏了。上述各种措施在数据量达到一定等级之后，能起到优化的作用已经不明显了。这个时候就必须对数据量进行分流。分流一般有分库与分表两种措施。而分表又有垂直切分与水平切分两种方式。</p>
+<p>对于MySQL，其数据文件是以文件形式存储在磁盘上的。当一个数据文件过大的时候，操作系统对大文件的操作就会比较麻烦与耗时，而且有的操作系统就不支持大文件，所以这个时候就必须分表了。另外对于MySQL常用的存储引擎是Innodb，它的底层数据结构是B+树。当其数据文件过大的时候，B+树就会从层次和节点上比较多，当查询一个节点的时候可能会查询很多层次，而这必定会导致多次IO操作进行装载进内存，肯定会耗时的。除此之外还有Innodb对于B+树的锁机制。对每个节点进行加锁，那么当更改表结构的时候，这时候就会树进行加锁，当表文件大的时候，这可以认为是不可实现的。 </p>
+<p>所以综上我们就必须进行分表与分库的操作。</p>
+<h4 id="分表"><a href="#分表" class="headerlink" title="分表"></a>分表</h4><p>如何进行分库分表，目前互联网上有许多的版本，比较知名的一些方案：阿里的TDDL，DRDS和cobar，京东金融的sharding-jdbc；民间组织的MyCAT；360的Atlas；美团的zebra；其他比如网易，58，京东等公司都有自研的中间件。</p>
+<p>这么多的分库分表中间件方案归总起来，就两类：client模式和proxy模式。</p>
+<h5 id="client模式"><a href="#client模式" class="headerlink" title="client模式"></a>client模式</h5><p><img src="/img/MySQL/01/1649758791-63ad5888591431a9725edf0dcb227860.png" srcset="/img/loading.gif" lazyload></p>
+<h5 id="proxy模式"><a href="#proxy模式" class="headerlink" title="proxy模式"></a>proxy模式</h5><p><img src="/img/MySQL/01/1649758791-621085903b229205d575d084120c1bc3.png" srcset="/img/loading.gif" lazyload></p>
+<p>无论是client模式，还是proxy模式。几个核心的步骤是一样的：SQL解析，重写，路由，执行，结果归并。个人比较倾向于采用client模式，它架构简单，性能损耗也比较小，运维成本低。</p>
+<p>如何对业务类型进行分库分表。分库分表最重要的一步，即sharding column的选取，sharding column选择的好坏将直接决定整个分库分表方案最终是否成功。而sharding column的选取跟业务强相关。在我们的项目场景中，sharding column无疑最好的选择是业务编号。通过业务编号，将客户不同的绑定签约业务保存到不同的表里面去，根据业务编号路由到相应的表中进行查询，达到进一步优化sql的目的。</p>
+<h3 id="5、子查询优化"><a href="#5、子查询优化" class="headerlink" title="5、子查询优化"></a>5、子查询优化</h3><p>在查询中经常会用到子查询，在子查询的时候一般使用in或者exist关键词。针对in和exist在查询的时候当数据量大到一定程度以后，查询执行时间就差别比较大。但是，为了避免此类情况出现，最好的方式是使用join查询。因为在绝大多数情况下，服务器对join的查询优化要远远高于子查询优化。在比较高的版本5.6，MySQL查询会自动把in查询优化成join查询，就不会出现子查询比较慢的问题。有时候也可以采用distinct关键词来限制子查询的数量，但是需要注意的是distinct很多时候会转化为group by，这个时候就会出现一个临时表，就会出现copy数据到临时表的时延。</p>
+<p>更多的子查询优化 <a href="http://dev.mysql.com/doc/refman/5.1/en/optimizing-subqueries.html" target="_blank" rel="noopener">请点击</a>。</p>
+<h1 id="记录一次MySQL两千万数据的大表优化解决过程，提供三种解决方案（转）"><a href="#记录一次MySQL两千万数据的大表优化解决过程，提供三种解决方案（转）" class="headerlink" title="记录一次MySQL两千万数据的大表优化解决过程，提供三种解决方案（转）"></a><a href="https://www.cnblogs.com/ql211lin/p/10471767.html" target="_blank" rel="noopener">记录一次MySQL两千万数据的大表优化解决过程，提供三种解决方案（转）</a></h1><h2 id="问题概述"><a href="#问题概述" class="headerlink" title="问题概述"></a>问题概述</h2><p>使用阿里云rds for MySQL数据库（就是MySQL5.6版本），有个用户上网记录表6个月的数据量近2000万，保留最近一年的数据量达到4000万，查询速度极慢，日常卡死。严重影响业务。</p>
+<h2 id="方案概述"><a href="#方案概述" class="headerlink" title="方案概述"></a>方案概述</h2><p>方案一：优化现有MySQL数据库。优点：不影响现有业务，源程序不需要修改代码，成本最低。缺点：有优化瓶颈，数据量过亿就玩完了。</p>
+<p>方案二：升级数据库类型，换一种100%兼容MySQL的数据库。优点：不影响现有业务，源程序不需要修改代码，你几乎不需要做任何操作就能提升数据库性能，缺点：多花钱</p>
+<p>方案三：一步到位，大数据解决方案，更换newsql&#x2F;nosql数据库。优点：扩展性强，成本低，没有数据容量瓶颈，缺点：需要修改源程序代码</p>
+<p>以上三种方案，按顺序使用即可，数据量在亿级别一下的没必要换nosql，开发成本太高。</p>
+<h2 id="方案一详细说明：优化现有MySQL数据库"><a href="#方案一详细说明：优化现有MySQL数据库" class="headerlink" title="方案一详细说明：优化现有MySQL数据库"></a>方案一详细说明：优化现有MySQL数据库</h2><p>跟阿里云数据库大佬电话沟通 and Google解决方案 and 问群里大佬，总结如下（都是精华）：</p>
+<h3 id="1-数据库设计和表创建时就要考虑性能"><a href="#1-数据库设计和表创建时就要考虑性能" class="headerlink" title="1.数据库设计和表创建时就要考虑性能"></a>1.数据库设计和表创建时就要考虑性能</h3><p>MySQL数据库本身高度灵活，造成性能不足，严重依赖开发人员能力。也就是说开发人员能力高，则MySQL性能高。这也是很多关系型数据库的通病，所以公司的dba通常工资巨高。</p>
+<p><strong>设计表时要注意：</strong></p>
+<ul>
+<li>表字段避免null值出现，null值很难查询优化且占用额外的索引空间，推荐默认数字0代替null。</li>
+<li>尽量使用INT而非BIGINT，如果非负则加上UNSIGNED（这样数值容量会扩大一倍），当然能使用TINYINT、SMALLINT、MEDIUM_INT更好。</li>
+<li>使用枚举或整数代替字符串类型</li>
+<li>尽量使用TIMESTAMP而非DATETIME</li>
+<li>单表不要有太多字段，建议在20以内</li>
+<li>用整型来存IP</li>
+</ul>
+<p><strong>索引</strong></p>
+<ul>
+<li>索引并不是越多越好，要根据查询有针对性的创建，考虑在WHERE和ORDER BY命令上涉及的列建立索引，可根据EXPLAIN来查看是否用了索引还是全表扫描</li>
+<li>应尽量避免在WHERE子句中对字段进行NULL值判断，否则将导致引擎放弃使用索引而进行全表扫描</li>
+<li>值分布很稀少的字段不适合建索引，例如”性别”这种只有两三个值的字段</li>
+<li>字符字段只建前缀索引</li>
+<li>字符字段最好不要做主键</li>
+<li>不用外键，由程序保证约束</li>
+<li>尽量不用UNIQUE，由程序保证约束</li>
+<li>使用多列索引时主意顺序和查询条件保持一致，同时删除不必要的单列索引</li>
+</ul>
+<p><strong>简言之就是使用合适的数据类型，选择合适的索引</strong></p>
+<h3 id="2-sql的编写需要注意优化"><a href="#2-sql的编写需要注意优化" class="headerlink" title="2.sql的编写需要注意优化"></a>2.sql的编写需要注意优化</h3><ul>
+<li>使用limit对查询结果的记录进行限定</li>
+<li>避免select *，将需要查找的字段列出来</li>
+<li>使用连接（join）来代替子查询</li>
+<li>拆分大的delete或insert语句</li>
+<li>可通过开启慢查询日志来找出较慢的SQL</li>
+<li>不做列运算：SELECT id WHERE age + 1 &#x3D; 10，任何对列的操作都将导致表扫描，它包括数据库教程函数、计算表达式等等，查询时要尽可能将操作移至等号右边</li>
+<li>sql语句尽可能简单：一条sql只能在一个cpu运算；大语句拆小语句，减少锁时间；一条大sql可以堵死整个库</li>
+<li>OR改写成IN：OR的效率是n级别，IN的效率是log(n)级别，in的个数建议控制在200以内</li>
+<li>不用函数和触发器，在应用程序实现</li>
+<li>避免%xxx式查询</li>
+<li>少用JOIN</li>
+<li>使用同类型进行比较，比如用’123’和’123’比，123和123比</li>
+<li>尽量避免在WHERE子句中使用!&#x3D;或&lt;&gt;操作符，否则将引擎放弃使用索引而进行全表扫描</li>
+<li>对于连续数值，使用BETWEEN不用IN：SELECT id FROM t WHERE num BETWEEN 1 AND 5</li>
+<li>列表数据不要拿全表，要使用LIMIT来分页，每页数量也不要太大</li>
+</ul>
+<p><strong>引擎</strong></p>
+<p>目前广泛使用的是MyISAM和InnoDB两种引擎：</p>
+<p>MyISAM引擎是MySQL 5.1及之前版本的默认引擎，它的特点是：</p>
+<ul>
+<li>不支持行锁，读取时对需要读到的所有表加锁，写入时则对表加排它锁</li>
+<li>不支持事务</li>
+<li>不支持外键</li>
+<li>不支持崩溃后的安全恢复</li>
+<li>在表有读取查询的同时，支持往表中插入新纪录</li>
+<li>支持BLOB和TEXT的前500个字符索引，支持全文索引</li>
+<li>支持延迟更新索引，极大提升写入性能</li>
+<li>对于不会进行修改的表，支持压缩表，极大减少磁盘空间占用</li>
+</ul>
+<p>InnoDB在MySQL 5.5后成为默认索引，它的特点是：</p>
+<ul>
+<li>支持行锁，采用MVCC来支持高并发</li>
+<li>支持事务</li>
+<li>支持外键</li>
+<li>支持崩溃后的安全恢复</li>
+<li>不支持全文索引</li>
+</ul>
+<p><strong>总体来讲，MyISAM适合SELECT密集型的表，而InnoDB适合INSERT和UPDATE密集型的表</strong></p>
+<p>MyISAM速度可能超快，占用存储空间也小，但是程序要求事务支持，故InnoDB是必须的，故该方案无法执行，放弃！</p>
+<h3 id="3-分区"><a href="#3-分区" class="headerlink" title="3.分区"></a>3.分区</h3><p>MySQL在5.1版引入的分区是一种简单的水平拆分，用户需要在建表的时候加上分区参数，对应用是透明的无需修改代码</p>
+<p>对用户来说，分区表是一个独立的逻辑表，但是底层由多个物理子表组成，实现分区的代码实际上是通过对一组底层表的对象封装，但对SQL层来说是一个完全封装底层的黑盒子。MySQL实现分区的方式也意味着索引也是按照分区的子表定义，没有全局索引</p>
+<p>用户的SQL语句是需要针对分区表做优化，SQL条件中要带上分区条件的列，从而使查询定位到少量的分区上，否则就会扫描全部分区，可以通过EXPLAIN PARTITIONS来查看某条SQL语句会落在那些分区上，从而进行SQL优化，我测试，查询时不带分区条件的列，也会提高速度，故该措施值得一试。</p>
+<p><strong>分区的好处是：</strong></p>
+<ul>
+<li>可以让单表存储更多的数据</li>
+<li>分区表的数据更容易维护，可以通过清楚整个分区批量删除大量数据，也可以增加新的分区来支持新插入的数据。另外，还可以对一个独立分区进行优化、检查、修复等操作</li>
+<li>部分查询能够从查询条件确定只落在少数分区上，速度会很快</li>
+<li>分区表的数据还可以分布在不同的物理设备上，从而搞笑利用多个硬件设备</li>
+<li>可以使用分区表赖避免某些特殊瓶颈，例如InnoDB单个索引的互斥访问、ext3文件系统的inode锁竞争</li>
+<li>可以备份和恢复单个分区</li>
+</ul>
+<p><strong>分区的限制和缺点：</strong></p>
+<ul>
+<li>一个表最多只能有1024个分区</li>
+<li>如果分区字段中有主键或者唯一索引的列，那么所有主键列和唯一索引列都必须包含进来</li>
+<li>分区表无法使用外键约束</li>
+<li>NULL值会使分区过滤无效</li>
+<li>所有分区必须使用相同的存储引擎</li>
+</ul>
+<p><strong>分区的类型：</strong></p>
+<ul>
+<li>RANGE分区：基于属于一个给定连续区间的列值，把多行分配给分区</li>
+<li>LIST分区：类似于按RANGE分区，区别在于LIST分区是基于列值匹配一个离散值集合中的某个值来进行选择</li>
+<li>HASH分区：基于用户定义的表达式的返回值来进行选择的分区，该表达式使用将要插入到表中的这些行的列值进行计算。这个函数可以包含MySQL中有效的、产生非负整数值的任何表达式</li>
+<li>KEY分区：类似于按HASH分区，区别在于KEY分区只支持计算一列或多列，且MySQL服务器提供其自身的哈希函数。必须有一列或多列包含整数值</li>
+</ul>
+<p>我首先根据月份把上网记录表RANGE分区了12份，查询效率提高6倍左右，效果不明显，故：换id为HASH分区，分了64个分区，查询速度提升显著。问题解决！</p>
+<h3 id="4-分表"><a href="#4-分表" class="headerlink" title="4.分表"></a>4.分表</h3><p>分表就是把一张大表，按照如上过程都优化了，还是查询卡死，那就把这个表分成多张表，把一次查询分成多次查询，然后把结果组合返回给用户。</p>
+<p>分表分为垂直拆分和水平拆分，通常以某个字段做拆分项。比如以id字段拆分为100张表： 表名为 tableName_id%100</p>
+<p>但：分表需要修改源程序代码，会给开发带来大量工作，极大的增加了开发成本，故：只适合在开发初期就考虑到了大量数据存在，做好了分表处理，不适合应用上线了再做修改，成本太高！！！而且选择这个方案，都不如选择我提供的第二第三个方案的成本低！故不建议采用。</p>
+<h3 id="5-分库"><a href="#5-分库" class="headerlink" title="5.分库"></a>5.分库</h3><p>把一个数据库分成多个，建议做个读写分离就行了，真正的做分库也会带来大量的开发成本，得不偿失！不推荐使用。</p>
+<h2 id="方案二详细说明：升级数据库，换一个100-兼容MySQL的数据库"><a href="#方案二详细说明：升级数据库，换一个100-兼容MySQL的数据库" class="headerlink" title="方案二详细说明：升级数据库，换一个100%兼容MySQL的数据库"></a>方案二详细说明：升级数据库，换一个100%兼容MySQL的数据库</h2><p>MySQL性能不行，那就换个。为保证源程序代码不修改，保证现有业务平稳迁移，故需要换一个100%兼容MySQL的数据库。</p>
+<p><strong>开源选择</strong></p>
+<p>1.tiDB <a href="https://github.com/pingcap/tidb" target="_blank" rel="noopener">https://github.com/pingcap/tidb</a></p>
+<p>2.Cubrid <a href="https://www.cubrid.org/" target="_blank" rel="noopener">https://www.cubrid.org/</a></p>
+<p>3.开源数据库会带来大量的运维成本且其工业品质和MySQL尚有差距，有很多坑要踩，如果你公司要求必须自建数据库，那么选择该类型产品。</p>
+<p><strong>云数据选择</strong></p>
+<p>阿里云POLARDB</p>
+<p><a href="https://www.aliyun.com/product/polardb?spm=a2c4g.11174283.cloudEssentials.47.7a984b5cS7h4wH" target="_blank" rel="noopener">https://www.aliyun.com/product/polardb?spm=a2c4g.11174283.cloudEssentials.47.7a984b5cS7h4wH</a></p>
+<p>官方介绍语：POLARDB 是阿里云自研的下一代关系型分布式云原生数据库，100%兼容MySQL，存储容量最高可达 100T，性能最高提升至 MySQL 的 6 倍。POLARDB 既融合了商业数据库稳定、可靠、高性能的特征，又具有开源数据库简单、可扩展、持续迭代的优势，而成本只需商用数据库的 1&#x2F;10。</p>
+<p>我开通测试了一下，支持免费MySQL的数据迁移，无操作成本，性能提升在10倍左右，价格跟rds相差不多，是个很好的备选解决方案！</p>
+<p>阿里云OcenanBase</p>
+<p>淘宝使用的，扛得住双十一，性能卓著，但是在公测中，我无法尝试，但值得期待</p>
+<p>阿里云HybridDB for MySQL (原PetaData)</p>
+<p><a href="https://www.aliyun.com/product/petadata?spm=a2c4g.11174283.cloudEssentials.54.7a984b5cS7h4wH" target="_blank" rel="noopener">https://www.aliyun.com/product/petadata?spm=a2c4g.11174283.cloudEssentials.54.7a984b5cS7h4wH</a></p>
+<p>官方介绍：云数据库HybridDB for MySQL （原名PetaData）是同时支持海量数据在线事务（OLTP）和在线分析（OLAP）的HTAP（Hybrid Transaction&#x2F;Analytical Processing）关系型数据库。</p>
+<p>我也测试了一下，是一个olap和oltp兼容的解决方案，但是价格太高，每小时高达10块钱，用来做存储太浪费了，适合存储和分析一起用的业务。</p>
+<p>腾讯云DCDB</p>
+<p><a href="https://cloud.tencent.com/product/dcdb/_for/_tdsql" target="_blank" rel="noopener">https://cloud.tencent.com/product/dcdb\_for\_tdsql</a></p>
+<p>官方介绍：DCDB又名TDSQL，一种兼容MySQL协议和语法，支持自动水平拆分的高性能分布式数据库——即业务显示为完整的逻辑表，数据却均匀的拆分到多个分片中；每个分片默认采用主备架构，提供灾备、恢复、监控、不停机扩容等全套解决方案，适用于TB或PB级的海量数据场景。</p>
+<p>腾讯的我不喜欢用，不多说。原因是出了问题找不到人，线上问题无法解决头疼！但是他价格便宜，适合超小公司，玩玩。</p>
+<h2 id="方案三详细说明：去掉MySQL，换大数据引擎处理数据"><a href="#方案三详细说明：去掉MySQL，换大数据引擎处理数据" class="headerlink" title="方案三详细说明：去掉MySQL，换大数据引擎处理数据"></a>方案三详细说明：去掉MySQL，换大数据引擎处理数据</h2><p>开源解决方案</p>
+<p>hadoop家族。hbase&#x2F;hive怼上就是了。但是有很高的运维成本，一般公司是玩不起的，没十万投入是不会有很好的产出的！</p>
+<p>云解决方案</p>
+<p>这个就比较多了，也是一种未来趋势，大数据由专业的公司提供专业的服务，小公司或个人购买服务，大数据就像水&#x2F;电等公共设施一样，存在于社会的方方面面。国内做的最好的当属阿里云。</p>
+<p>我选择了阿里云的MaxCompute配合DataWorks，使用超级舒服，按量付费，成本极低。</p>
+<p>MaxCompute可以理解为开源的Hive，提供sql&#x2F;mapreduce&#x2F;ai算法&#x2F;python脚本&#x2F;shell脚本等方式操作数据，数据以表格的形式展现，以分布式方式存储，采用定时任务和批处理的方式处理数据。DataWorks提供了一种工作流的方式管理你的数据处理任务和调度监控。</p>
+<p>当然你也可以选择阿里云hbase等其他产品，我这里主要是离线处理，故选择MaxCompute，基本都是图形界面操作，大概写了300行sql，费用不超过100块钱就解决了数据处理问题。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/MySQL/" class="category-chain-item">MySQL</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/MySQL/" class="print-no-link">#MySQL</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>MySQL 优化思路和案例</div>
+      <div>https://flepeng.github.io/042-MySQL-MySQL-优化思路和案例/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年3月6日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/042-MySQL-31-%E5%AD%97%E6%AE%B5-MySQL-%E6%97%B6%E9%97%B4%E7%B1%BB%E5%9E%8B%E4%B9%8B-DATETIME-%E5%92%8C-TIMESTAMP-%E5%8C%BA%E5%88%AB%E5%8F%8A%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF/" title="MySQL 时间类型之 DATETIME 和 TIMESTAMP 区别及使用场景">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">MySQL 时间类型之 DATETIME 和 TIMESTAMP 区别及使用场景</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/042-MySQL-MySQL-%E5%92%8C-MariaDB-%E4%B8%80%E4%BA%9B%E9%99%90%E5%88%B6%E5%92%8CBUG/" title="MySQL 和 MariaDB 一些限制和BUG">
+                        <span class="hidden-mobile">MySQL 和 MariaDB 一些限制和BUG</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

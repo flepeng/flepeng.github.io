@@ -1,0 +1,1056 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2488174175014870" crossorigin="anonymous"></script><!-- google 广告 -->
+  <meta name="google-site-verification" content="40lMg4eqLLbXoDcpN3h-cEnfmselbQ8tUzNvuC0IRIs" /><!-- google 站点认证 -->
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Lepeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="零、一些知识MTU、MSS MTU：一个网络包的最大长度，以太网中一般为 1500 字节。 MSS：除去 IP 和 TCP 头部之后，一个网络包所能容纳的 TCP 数据的最大长度。 RTT(Round-Trip Time)：往返时延。表示从发送端发送数据开始，到发送端收到来自接收端的确认（接收端收到数据后便立即发送确认），总共经历的时延。  拥塞控制目前有非常多的 TCP 的拥塞控制协议，例如：">
+<meta property="og:type" content="article">
+<meta property="og:title" content="40-TCP">
+<meta property="og:url" content="https://flepeng.github.io/010-network-40-%E4%BC%A0%E8%BE%93%E5%B1%82-40-TCP/index.html">
+<meta property="og:site_name" content="Lepeng">
+<meta property="og:description" content="零、一些知识MTU、MSS MTU：一个网络包的最大长度，以太网中一般为 1500 字节。 MSS：除去 IP 和 TCP 头部之后，一个网络包所能容纳的 TCP 数据的最大长度。 RTT(Round-Trip Time)：往返时延。表示从发送端发送数据开始，到发送端收到来自接收端的确认（接收端收到数据后便立即发送确认），总共经历的时延。  拥塞控制目前有非常多的 TCP 的拥塞控制协议，例如：">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/940ed058442240629c97e60c14ecd2de.png">
+<meta property="og:image" content="https://pic4.zhimg.com/80/v2-431747be2423d9c151515df8602766e7_720w.jpg">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/63a50c77d1e148a4a09237d546eaa4bf.png">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/13760182-61c448b249f80e20.png">
+<meta property="article:published_time" content="2021-03-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-04-03T10:25:30.273Z">
+<meta property="article:author" content="Feng Lepeng">
+<meta property="article:tag" content="network">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://img-blog.csdnimg.cn/940ed058442240629c97e60c14ecd2de.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>40-TCP - Lepeng</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"flepeng.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"f3d259b9efd9ce8655c180fd01bf0045","google":{"measurement_id":"G-LFTE4C7W3W"},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?f3d259b9efd9ce8655c180fd01bf0045";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=G-LFTE4C7W3W", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', 'G-LFTE4C7W3W');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Lepeng 的 blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="40-TCP"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-03-08 00:00" pubdate>
+          2021年3月8日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          8.4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          70 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">40-TCP</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="零、一些知识"><a href="#零、一些知识" class="headerlink" title="零、一些知识"></a>零、一些知识</h2><h3 id="MTU、MSS"><a href="#MTU、MSS" class="headerlink" title="MTU、MSS"></a>MTU、MSS</h3><ul>
+<li>MTU：一个网络包的最大长度，以太网中一般为 1500 字节。</li>
+<li>MSS：除去 IP 和 TCP 头部之后，一个网络包所能容纳的 TCP 数据的最大长度。</li>
+<li>RTT(Round-Trip Time)：往返时延。表示从发送端发送数据开始，到发送端收到来自接收端的确认（接收端收到数据后便立即发送确认），总共经历的时延。</li>
+</ul>
+<h3 id="拥塞控制"><a href="#拥塞控制" class="headerlink" title="拥塞控制"></a>拥塞控制</h3><p>目前有非常多的 TCP 的拥塞控制协议，例如：</p>
+<ul>
+<li><p>基于丢包的拥塞控制：将丢包视为出现拥塞，采取缓慢探测的方式，逐渐增大拥塞窗口，当出现丢包时，将拥塞窗口减小，如 Reno、Cubic 等。<br>Reno 被许多教材（例如：《计算机网络——自顶向下的方法》）所介绍，适用于低延时、低带宽的网络，它将拥塞控制的过程分为四个阶段：慢启动、拥塞避免、快重传和快恢复，本文介绍的也是 Reno</p>
+</li>
+<li><p>基于时延的拥塞控制：将时延增加视为出现拥塞，延时增加时增大拥塞窗口，延时减小时减小拥塞窗口，如 Vegas、FastTCP 等。</p>
+</li>
+<li><p>基于链路容量的拥塞控制：实时测量网络带宽和时延，认为网络上报文总量大于带宽时延乘积时出现了拥塞，如 BBR。</p>
+</li>
+<li><p>基于学习的拥塞控制：没有特定的拥塞信号，而是借助评价函数，基于训练数据，使用机器学习的方法形成一个控制策略，如 Remy。</p>
+</li>
+</ul>
+<p>从使用的角度来说，我们应该根据自身的实际情况来选择自己机器的拥塞控制协议（而不是跟风 BBR），同时对于拥塞控制原理的掌握（尤其是掌握 Reno 的控制机理和几个重要阶段）可以加强对于网络发包机制的了解，在排查问题或面对面试的时候有更好的表现。</p>
+<h2 id="一、TCP-Transmission-Control-Protocol-传输控制协议"><a href="#一、TCP-Transmission-Control-Protocol-传输控制协议" class="headerlink" title="一、TCP(Transmission Control Protocol, 传输控制协议)"></a>一、TCP(Transmission Control Protocol, 传输控制协议)</h2><p>TCP 是一种面向连接的、可靠的、基于 IP 的传输层协议。由国际互联网工程任务组(The Internet Engineering Task Force, IETF)的 RFC793 定义。在简化的计算机网络 OSI 模型中，它完成传输层所指定的功能。</p>
+<ol>
+<li><p>什么是面向连接？</p>
+<p>面向连接是相对于另一个传输层协议 UDP(User Datagram Protocol, 用户数据报协议)而言的。TCP 在开始传输数据前要先经历三次握手建立连接，并通过连接一对一发送消息，传输结束后通过四次挥手断开连接。</p>
+<p>而 UDP 是无连接的，发送方在发送数据之前不需要与接收方建立连接，即刻可以传输数据，每个 UDP 数据包都是独立的，相互之间没有关联，因此 UDP 可以一对一、一对多或多对多发送消息。</p>
+</li>
+<li><p>什么是可靠的通信协议？</p>
+<p>是否可靠也是相对于 UDP 而言的。TCP 有下面的机制确保数据的可靠传输，无论网络如何变化，只要不是主机宕机等原因都可以保证一个报文可以到达目标主机。</p>
+<ol>
+<li>三次握手和四次挥手来确保连接可靠。</li>
+<li>为了防止服务器端接收重复的数据和对数据进行排序，TCP 引入了序列号。TCP 给发送的每一个包进行编号，接收方对数据包进行排序，把有序数据传送给应用层。</li>
+<li>校验和确保数据正确和合法性。TCP 将保持它首部和数据的检验和。在发送和接收时都要计算校验和；同时可以使用 MD5 认证对数据进行加密。目的是检测数据在传输过程中的任何变化。如果收到段的检验和有差错，TCP 将丢弃这个报文段和不确认收到此报文段。</li>
+<li>流量控制。</li>
+<li>拥塞控制。包括慢启动、超时重传等。</li>
+</ol>
+<p>相对于 TCP 的可靠传输，UDP 是不可靠的。UDP 数据包的传输过程中不提供确认、重传、流量控制和拥塞控制等机制，因此 UDP 数据包可能丢失、重复、乱序或损坏。</p>
+</li>
+<li><p>什么是面向字节流的？</p>
+<p>TCP 是面向字节流的传输，虽然应用程序和 TCP 的交互是一次一个数据块(大小不等)，但 TCP 把应用程序看成是一连串的无结构的字节流。TCP 有一个缓冲，当应用程序传送的数据块太长，TCP 就可以把它划分短一些再传送。如果应用程序一次只发送一个字节，TCP 也可以等待积累有足够多的字节后再构成报文段发送出去。</p>
+<p>与面向字节流相对的是 UDP 的面向报文。UDP 对应用层交下来的报文，既不合并也不拆分，而是保留这些报文的边界，即应用层交给 UDP 多长的报文，UDP 就照样发送，一次发送一个报文。因此，应用程序必须选择合适大小的报文。若报文太长，则 IP 层需要分片，降低效率。若太短，会使 IP 报文太小。</p>
+</li>
+</ol>
+<p>数据从应用层发下来，会在每一层都会加上头部信息，进行封装，然后再发送到数据接收端。这个基本的流程需要知道，就是每个数据都会经过数据的封装和解封装的过程。</p>
+<h2 id="二、TCP-数据包介绍"><a href="#二、TCP-数据包介绍" class="headerlink" title="二、TCP 数据包介绍"></a>二、TCP 数据包介绍</h2><p>TCP 协议是封装在 IP 数据包中。下图是 TCP 报文数据格式。TCP 首部如果不计选项和填充字段，它通常是 20 个字节。</p>
+<figure class="highlight asciidoc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs asciidoc"><span class="hljs-code"> 0                   1                   2                   3</span><br><span class="hljs-code"> 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1</span><br><span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-+<br>|          Source Port          |       Destination Port        |<br><span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-+<br>|                        Sequence Number                        |<br><span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-+<br>|                    Acknowledgment Number                      |<br><span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-+<br>|  Data |           |U|A|P|R|S|F|                               |<br>| Offset| Reserved  |R|C|S|S|Y|I|            Window             |<br>|(4bit) |  (6bit)   |G|K|H|T|N|N|                               |<br><span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-+<br>|           Checksum            |         Urgent Pointer        |<br><span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-+<br>|                    Options                    |    Padding    |<br><span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-+<br>|                             data                              |<br><span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-<span class="hljs-code">+-+</span>-+<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>源端口和目的端口。<br>各占 2 个字节，这两个值加上 IP 首部中的源端 IP 地址和目的端 IP 地址唯一确定一个 TC P连接。有时一个 IP 地址和一个端口号也称为 socket（插口）。</p>
+</li>
+<li><p>序号(seq)。<br>占 4 个字节，是本报文段所发送的数据项目组第一个字节的序号。在 TCP 传送的数据流中，每一个字节都有一个序号。例如，一报文段的序号为 300，而且数据共 100 字节，则下一个报文段的序号就是 400；序号是 32bit 的无符号数，序号到达 $ 2^32-1 $ 后从 0 开始。</p>
+</li>
+<li><p>确认序号(ack)。<br>占 4 字节，是期望收到对方下次发送的数据的第一个字节的序号，也就是期望收到的下一个报文段的首部中的序号；确认序号应该是上次已成功收到数据字节序号 +1。<br>只有 <code>ACK</code> 标志为1时，确认序号才有效。</p>
+</li>
+<li><p>数据偏移。<br>占 4 比特，表示数据开始的地方离 TCP 段的起始处有多远。实际上也就是TC P段首部的长度。由于首部长度不固定，因此数据偏移字段是必要的。<br>数据偏移以 32 位（也就是4个字节）为长度单位，4 位二进制最大表示 15，因此 TCP 首部的最大长度是 <code>4 * 15 = 60</code> 个字节。</p>
+</li>
+<li><p>保留。<br>6 比特，供以后应用，现在置为0。</p>
+</li>
+<li><p>控制标志（ControlBits）。<br>6 比特，具体的标志位为：URG、ACK、PSH、RST、SYN、FIN。</p>
+<ol>
+<li>URG：当 URG&#x3D;1 时，注解此报文应尽快传送，而不要按本来的列队次序来传送。与“紧急指针”字段共同应用，紧急指针指出在本报文段中的紧急数据的最后一个字节的序号，使接管方可以知道紧急数据共有多长。<br> 例如，已经发送了很长的一个程序在远地的主机上运行。但后来发现了一些问题，需要取消该程序的运行。因此用户从键盘发出中断命令（Control+c）。如果不使用紧急数据，那么这两个字符将存储在接收 TCP 的缓存末尾。只有在所有的数据被处理完毕后这两个字符才被交付接收方的应用进程。这样做就浪费了许多时间。</li>
+<li>ACK：只有当 ACK&#x3D;1 时，确认序号字段才有效。</li>
+<li>PSH：当 PSH&#x3D;1 时，接收方应该尽快将本报文段立即传送给其应用层。</li>
+<li>RST：当 RST&#x3D;1 时，表示出现连接错误，必须释放连接，然后再重建传输连接。复位比特还用来拒绝一个不法的报文段或拒绝打开一个连接。</li>
+<li>SYN：在连接建立时用来同步序号。当 SYN&#x3D;1 而 ACK&#x3D;0 时，表明这是一个连接请求报文段。对方若同意建立连接，则应在相应的报文段中使用 SYN&#x3D;1 和 ACK&#x3D;1</li>
+<li>FIN：用来释放一个连接。当 FIN&#x3D;1 时，表明此报文段的发送方的数据已发送完毕，并要求释放连接。</li>
+</ol>
+</li>
+<li><p>窗口。<br>16 比特，因而窗口大小最大为 65535 字节。窗口指的是发送本报文段的一方的接收窗口（而不是自己的发送窗口）。<br>窗口值告诉对方：从本报文段首部中的确认号算起，接收方目前允许对方发送的数据量。之所以要有这个限制，是因为接收方的数据缓存空间是有限的。总之，窗口值作为接收方让发送方设置其发送窗口的依据。并且窗口值是经常在动态变化着。<br>TCP 通过滑动窗口的概念来进行流量控制。设想在发送端发送数据的速度很快而接收端接收速度却很慢的情况下，为了保证数据不丢失，显然需要进行流量控制，协调好通信双方的工作节奏。</p>
+</li>
+<li><p>检验和。<br>2 字节。检验和覆盖了整个 TCP 报文段：TCP 首部和数据。这是一个强制性的字段，一定是由发端计算和存储，并由收端进行验证。</p>
+</li>
+<li><p>紧急指针。<br>2 字节。只有当 <code>URG</code> 标志置 1 时紧急指针才有效。它指出本报文段中的紧急数据的字节数（紧急数据结束后就是普通数据）。因此，紧急指针指出了紧急数据的末尾在报文段中的位置。当所有紧急数据都处理完时，TCP 就告诉应用程序恢复到正常操作。值得注意的是，即使窗口为零时也可发送紧急数据。</p>
+</li>
+<li><p>选项。<br>长度可变，最长可达40字节。当没有使用“选项”时，TCP的首部长度是 20 字节。</p>
+</li>
+</ul>
+<h2 id="三、TCP-流量控制-滑动窗口协议"><a href="#三、TCP-流量控制-滑动窗口协议" class="headerlink" title="三、TCP 流量控制(滑动窗口协议)"></a>三、TCP 流量控制(滑动窗口协议)</h2><p>TCP 为了解决可靠传输以及包乱序的问题，因此 TCP 需要知道网络实际的带宽或是对端数据处理速度，这样才不会引起网络拥塞和丢包。</p>
+<p>所以，TCP 引入了一些技术和设计来做网络流控，其中滑动窗口为了了解对端的处理速度，拥塞控制是为了了解实际网络的带宽。</p>
+<p>TCP 的滑动窗口主要有两个作用，一是提供 TCP 的可靠性，二是提供 TCP 的流控特性。同时滑动窗口机制还体现了 TCP 面向字节流的设计思路。</p>
+<p>TCP 报文有一个 Window 字段，它代表的是窗口的字节容量，大小 16bit，也就是 TCP 的标准窗口最大为 <code>2^16-1=65535</code> 个字节。这个字段是接收端告诉发送端自己还有多少缓冲区可以接收数据。于是发送端就可以根据这个接收端的处理能力来发送数据，而不会导致接收端处理不过来。</p>
+<p>另外在 TCP 的选项字段中还包含了一个 TCP 窗口扩大因子，option-kind 为 3，option-length 为 3 个字节，option-data 取值范围 0-14。窗口扩大因子用来扩大 TCP 窗口，可把原来 16bit 的窗口，扩大为 31bit。</p>
+<h3 id="滑动窗口基本原理"><a href="#滑动窗口基本原理" class="headerlink" title="滑动窗口基本原理"></a>滑动窗口基本原理</h3><p>对于 TCP 会话的发送方，任何时候在其发送缓存内的数据都可以分为 4 类：</p>
+<ul>
+<li>已经发送并得到对端 ACK 的。</li>
+<li>已经发送但还未收到对端 ACK 的。</li>
+<li>未发送但对端允许发送的。</li>
+<li>未发送且对端不允许发送。</li>
+</ul>
+<p><strong>已经发送但还未收到对端 ACK 的和未发送但对端允许发送的</strong> 这两部分数据称之为发送窗口（中间两部分）。</p>
+<p>对于 TCP 的接收方，在某一时刻在它的接收缓存内存在 3 种：</p>
+<ul>
+<li>已接收。</li>
+<li>未接收准备接收。</li>
+<li>未接收并未准备接收。</li>
+</ul>
+<p>由于 ACK 直接由 TCP 协议栈回复，默认无应用延迟，不存在“已接收未回复 ACK”。其中 <strong>未接收准备接收</strong> 称之为接收窗口。</p>
+<h3 id="发送窗口与接收窗口关系"><a href="#发送窗口与接收窗口关系" class="headerlink" title="发送窗口与接收窗口关系"></a>发送窗口与接收窗口关系</h3><p>TCP 是双工的协议，会话的双方都可以同时接收、发送数据。TCP 会话的双方都各自维护一个 <code>发送窗口</code> 和一个 <code>接收窗口</code>。</p>
+<ul>
+<li>其中各自的 <code>接收窗口</code> 大小取决于应用、系统、硬件的限制（TCP 传输速率不能大于应用的数据处理速率）。</li>
+<li>各自的 <code>发送窗口</code> 则取决于对端通告的 <code>接收窗口</code>，两者相同。</li>
+</ul>
+<h3 id="滑动窗口实现面向流的可靠性"><a href="#滑动窗口实现面向流的可靠性" class="headerlink" title="滑动窗口实现面向流的可靠性"></a>滑动窗口实现面向流的可靠性</h3><p><strong>TCP 的滑动窗口的可靠性也是建立在<code>确认重传</code>基础上的。</strong></p>
+<ul>
+<li>发送窗口只有收到对端对于本端发送窗口内字节的 ACK 确认，才会移动发送窗口的左边界。</li>
+<li>接收窗口只有在前面所有的段都确认的情况下才会移动左边界。当在前面还有字节未接收但收到后面字节的情况下，窗口不会移动，并不对后续字节确认。以此确保对端会对这些数据重传。</li>
+</ul>
+<p>TCP 并不是每一个报文段都会回复 ACK 的，可能会对两个报文段发送一个 ACK，也可能会对多个报文段发送 1 个 ACK【累计ACK】，比如说发送方有 1&#x2F;2&#x2F;3 3 个报文段，先发送了 2&#x2F;3 两个报文段，但是接收方期望收到 1 报文段，这个时候 2&#x2F;3 报文段就只能放在缓存中等待 1 报文段的空洞被填上，如果 1 报文段一直不来，2&#x2F;3 报文段 也将被丢弃，如果 1 报文段来了，那么会发送一个 ACK 对这 3 个报文进行一次确认。</p>
+<h3 id="操作系统缓冲区与滑动窗口的关系"><a href="#操作系统缓冲区与滑动窗口的关系" class="headerlink" title="操作系统缓冲区与滑动窗口的关系"></a>操作系统缓冲区与滑动窗口的关系</h3><p>缓冲区是由系统动态调整的，如果在 CPU 处理缓存数据不及时时，先减少缓存，再收缩窗口，就会出现丢包的现象。</p>
+<p>为了防止这种情况发生，TCP 规定是不允许同时减少缓存又收缩窗口的，而是采用先收缩窗口，过段时间再减少缓存，这样就可以避免了丢包情况。</p>
+<h3 id="关闭窗口-Zero-Window"><a href="#关闭窗口-Zero-Window" class="headerlink" title="关闭窗口(Zero Window)"></a>关闭窗口(Zero Window)</h3><p>TCP 通过让接收方指明希望从发送方接收的数据大小（窗口大小）来进行流量控制。如果接收端处理不过来，就会减少窗口大小，直到窗口变为 0 为止，这就是窗口关闭。</p>
+<p>如果 Window 变成 0 了，TCP 是不是发送端就不发数据了？</p>
+<p>是的，发送端就不发数据了，那你一定还会问，如果发送端不发数据了，接收方一会儿 Window size 可用了，怎么通知发送端呢？</p>
+<p>解决这个问题，TCP 使用了 Zero Window Probe 技术，缩写为 ZWP，也就是说，发送端在窗口变成 0 后，会发 ZWP 的包给接收方，让接收方来 ack 他的 Window 尺寸，一般这个值会设置成 3 次，每次大约 30-60 秒（不同的实现可能会不一样）。如果 3 次过后还是 0 的话，有的 TCP 实现就会发 RST 把链接断了。</p>
+<p>注意：只要有等待的地方都可能出现 DDoS 攻击，Zero Window 也不例外，一些攻击者会在和 HTTP 建好链发完 GET 请求后，就把 Window 设置为 0，然后服务端就只能等待进行 ZWP，于是攻击者会并发大量的这样的请求，把服务器端的资源耗尽。（关于这方面的攻击，大家可以移步看一下Wikipedia的SockStress词条）</p>
+<blockquote>
+<p>Wireshark 中，你可以使用 <code>tcp.analysis.zero_window</code> 来过滤包，然后使用右键菜单里的 follow TCP stream，你可以看到 ZeroWindowProbe 及 ZeroWindowProbeAck 的包。</p>
+</blockquote>
+<h3 id="糊涂窗口综合症"><a href="#糊涂窗口综合症" class="headerlink" title="糊涂窗口综合症"></a>糊涂窗口综合症</h3><p>如果接收方太忙了，来不及取走接收窗口里的数据，那么就会导致发送方的发送窗口越来越小。到最后，如果接收方只有几个字节并告诉发送方现在有几个字节的窗口，而发送方会义无反顾地发送这几个字节，这就是糊涂窗口综合症。</p>
+<p>要知道，我们的 TCP + IP 头有 40 个字节，为了传输那几个字节的数据，要达上这么大的开销，这太不经济了。</p>
+<p>糊涂窗口综合症的现象是可以发生在发送方和接收方：</p>
+<ul>
+<li>接收方可以通告一个小的窗口</li>
+<li>发送方可以发送小数据</li>
+</ul>
+<p>于是，要解决糊涂窗口综合症，就解决上面两个问题就可以了</p>
+<ul>
+<li>让接收方不通告小窗口给发送方</li>
+<li>让发送方避免发送小数据</li>
+</ul>
+<p>怎么让接收方不通告小窗口呢？接收方通常的策略如下:</p>
+<p>当窗口大小小于 <code>min(MSS，缓存空间/2)</code>，就会向发送方通告窗口为 0，也就阻止了发送方再发数据过来。</p>
+<p>等到接收方处理了一些数据后，<code>窗口大小 &gt;= MSS</code> 时，或者接收方缓存空间有一半可以使用，就可以把窗口打开让发送方发送数据过来。</p>
+<p>怎么让发送方避免发送小数据呢？发送方通常的策略:</p>
+<p>使用 Nagle 算法，该算法的思路是延时处理，它满足以下两个条件中的一条才可以发送数据：</p>
+<ul>
+<li><code>窗口大小 &gt;= MSS</code> 或是 <code>数据大小 &gt;= MSS</code></li>
+<li>之前所有包的 ACK 都已接收到</li>
+</ul>
+<p>只要没满足上面条件中的一条，发送方一直在囤积数据，直到满足上面的发送条件。</p>
+<p>另外，Nagle 算法默认是打开的，如果对于一些需要小数据包交互的场景的程序，比如，telnet 或 ssh 这样的交互性比较强的程序，则需要关闭 Nagle 算法。</p>
+<p>可以在 Socket 设置 <code>TCP_NODELAY</code> 选项来关闭这个算法（关闭 Nagle 算法没有全局参数，需要根据每个应用自己的特点来关闭）</p>
+<p><code>setsockopt(sock_fd, IPPROTO_TCP, TCP_NODELAY, (char *)&amp;value, sizeof(int));</code></p>
+<h4 id="延迟确认-delayed-ack"><a href="#延迟确认-delayed-ack" class="headerlink" title="延迟确认(delayed ack)"></a>延迟确认(delayed ack)</h4><p>试想这样一个场景，当我收到了发送端的一个包，然后在极短的时间内又接收到了第二个包，那我是一个个地回复，还是稍微等一下，把两个包的 ACK 合并后一起回复呢？</p>
+<p>延迟确认所做的事情，就是后者，稍稍延迟，然后合并 ACK，最后才回复给发送端。TCP 要求这个延迟的时延必须小于 500ms，一般操作系统实现都不会超过 200ms。</p>
+<p>不过需要主要的是，有一些场景是不能延迟确认的，收到了就要马上回复:</p>
+<ul>
+<li>接收到了大于一个 frame 的报文，且需要调整窗口大小</li>
+<li>TCP 处于 quickack 模式（通过 <code>tcp_in_quickack_mode</code> 设置）</li>
+<li>发现了乱序包</li>
+</ul>
+<h2 id="四、TCP-拥塞控制"><a href="#四、TCP-拥塞控制" class="headerlink" title="四、TCP 拥塞控制"></a>四、TCP 拥塞控制</h2><p>流量控制是避免<code>发送方</code>的数据填满<code>接收方</code>的缓存，但是并不知道网络的中发生了什么。</p>
+<p>在网络出现拥堵时，如果继续发送大量数据包，可能会导致数据包时延、丢失等，这时 TCP 就会重传数据，但是一重传就会导致网络的负担更重，于是会导致更大的延迟以及更多的丢包，这个情况就会进入恶性循环被不断地放大….</p>
+<p>所以，TCP 不能忽略网络上发生的事，它被设计成一个无私的协议，当网络发送拥塞时，TCP 会自我牺牲，降低发送的数据量。</p>
+<p>于是，就有了拥塞控制，控制的目的就是避免<code>发送方</code>的数据填满整个网络。</p>
+<p>为了在<code>发送方</code>调节所要发送数据的量，定义了一个叫做<code>拥塞窗口(congestion window, cwnd)</code>的概念。</p>
+<p>拥塞窗口(cwnd)是发送方维护的一个的状态变量，它会根据网络的拥塞程度动态变化的。</p>
+<p>在TCP中，cwnd 的单位是字节。具体来说，如果 TCP 每次传输都是按照 MSS（Maximum Segment Size）大小来发送数据，那么 cwnd 可以按照数据包个数来理解，但一般会以字节为单位来表示。如果没有特别说明是字节，那么当 cwnd 增加1时，就相当于字节数增加了 1 个 MSS 大小。</p>
+<p>我们在前面提到过发送窗口(swnd)和接收窗口(rwnd)是约等于的关系，那么由于加入了拥塞窗口的概念后，此时发送窗口的值是 <code>swnd = min(cwnd, rwnd)</code>，也就是拥塞窗口和接收窗口中的最小值。</p>
+<p>那拥塞控制有哪些控制算法？下面一一讲解。</p>
+<h3 id="1、慢启动-也叫做指数增长期"><a href="#1、慢启动-也叫做指数增长期" class="headerlink" title="1、慢启动(也叫做指数增长期)"></a>1、慢启动(也叫做指数增长期)</h3><p>TCP在连接过程的三次握手完成后，开始传数据，并不是一开始向网络通道中发送大量的数据包。因为假如网络出现问题，很多这样的大包会积攒在路由器上，很容易导致网络中路由器缓存空间耗尽，从而发生拥塞。</p>
+<p>因此现在的 TCP 协议规定了，新建立的连接只能从一个小尺寸的包开始发送，在发送和数据被对方确认的过程中去计算对方的接收速度，来逐步增加每次发送的数据量（最后到达一个稳定的值，进入高速传输阶段。相应的，慢启动过程中，TCP通道处在低速传输阶段），以避免上述现象的发生。这个策略就是慢启动。</p>
+<p>慢启动的算法记住一个规则：<strong>当发送方每收到一个 ACK，拥塞窗口(cwnd)的大小就会增长，增加的大小就是已确认段的数目。也就是说，每经过一轮 RTT，cwnd 大小翻倍。这种情况一直保持到要么没有收到一些段，要么窗口大小到达预先定义的阈值。如果发生丢失事件，TCP就认为这是网络阻塞，就会采取措施减轻网络拥挤。一旦发生丢失事件或者到达阈值，TCP就会进入线性增长阶段。这时，每经过一个RTT窗口增长一个MSS。</strong></p>
+<p>这里假定拥塞窗口(cwnd)和发送窗口(swnd)相等，下面举个栗子：</p>
+<ul>
+<li>连接建立完成后，一开始初始化 <code>cwnd=1</code>，表示第一轮 RTT 可以传一个 1MSS 大小的数据包。</li>
+<li>当收到第一轮 RTT 的 ACK 确认应答后，<code>cwnd=cwnd+1=2</code>，于是下一轮 RTT 能够发送大小为 2MSS 的数据包。</li>
+<li>当收到第二轮 RTT 的 ACK 确认应答后，<code>cwnd=cwnd+2=4</code>，于是下一轮 RTT 能够发送大小为 4MSS 的数据包。</li>
+<li>当收到第三轮 RTT 的 ACK 确认应答后，<code>cwnd=cwnd+4=8</code>，所以下一轮 RTT 能够发送大小为 8MSS 的数据包。</li>
+</ul>
+<p>可以看出慢启动算法，发包的个数是指数性的增长。那慢启动涨到什么时候是个头呢？</p>
+<p>有一个叫慢启动门限 <code>ssthresh(slow start threshold)</code> 状态变量。</p>
+<ul>
+<li>当 <code>cwnd &lt; ssthresh</code> 时，使用慢启动算法。</li>
+<li>当 <code>cwnd &gt;= ssthresh</code> 时，就会使用<code>拥塞避免算法</code></li>
+</ul>
+<blockquote>
+<p>Linux 3.0 后采用了 Google 的论文<a href="http://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/36640.pdf" target="_blank" rel="noopener">《An Argument for Increasing TCP’s Initial Congestion Window》</a>的建议, 值可能不一样了，有兴趣的小伙伴可以自己去看源码。</p>
+</blockquote>
+<p>思考一个慢启动引起的性能问题？</p>
+<p>在海量用户高并发访问的大型网站后台，有一些基本的系统维护需求。比如迁移海量小文件，就是从一些机器拷贝海量小碎文件到另一些机器。慢启动为什么会对拷贝海量小文件的需求造成重大性能损失？</p>
+<p>假设我们对每个文件都采用独立的TCP连接来传输（循环使用scp拷贝就是这个例子的实际场景，很常见的用法）。那么工作过程应该是，每传输一个文件建立一个连接，然后连接处于慢启动阶段，如果小文件很多，这样传输过程所用的TCP包的总量就会很多。</p>
+<p>假设传输一个小文件，我们可能需要2至3个小包，而在一个已经完成慢启动的TCP通道中（TCP通道已进入在高速传输阶段），我们传输这个文件可能只需要1个大包。</p>
+<p>那么网络拷贝文件的时间基本上全部消耗都在网络传输的过程中（发数据过去等对端ACK，ACK确认之后继续再发，这样的数据来回交互相比较本机的文件读写非常耗时间），撇开三次握手和四次握手那些包，如果文件的数量足够大，这个总时间就会被放大到需求难以忍受的地步。</p>
+<p>因此，在迁移海量小文件的需求下，我们不能使用“对每个文件都采用独立的TCP连接来传输（循环使用scp拷贝）“这样的策略，它会使每个文件的传输都处于在一个独立TCP的慢启动阶段。</p>
+<p>如何避免慢启动，进而提升性能？</p>
+<p>很简单，尽量把大量小文件放在一个TCP连接中排队传输。起初的一两个文件处于慢启动过程传输，后续的文件传输全部处于高速通道中传输，用这样的方式来减少发包的数目，进而降低时间消耗。同样，实际上这种传输策略带来的性能提升的功劳不仅仅归于避免慢启动，事实上也避免了大量的3次握手和四次握手，这个对海量小文件传输的性能消耗也非常致命。</p>
+<h3 id="2、拥塞避免"><a href="#2、拥塞避免" class="headerlink" title="2、拥塞避免"></a>2、拥塞避免</h3><p>前面说道，当拥塞窗口(cwnd)超过慢启动门限(ssthresh)就会进入拥塞避免算法。一般来说 ssthresh 的大小是 65535 字节。</p>
+<p>拥塞避免：拥塞窗口(cwnd)的值不再指数级往上升，开始加法增加。此时当窗口中所有的报文段都被确认时（也就是一个 RTT），拥塞窗口(cwnd) 的大小加1，拥塞窗口(cwnd)的值就随着RTT开始线性增加，这样就可以避免增长过快导致网络拥塞，慢慢的增加调整到网络的最佳值。这样显然慢多了。</p>
+<p>当网络出现拥塞，也就是会发生数据包重传，重传机制主要有两种：</p>
+<ul>
+<li>超时重传</li>
+<li>快速重传</li>
+</ul>
+<p>这两种使用的拥塞发送算法是不同的，接下来分别来说说。</p>
+<h3 id="3、超时重传"><a href="#3、超时重传" class="headerlink" title="3、超时重传"></a>3、超时重传</h3><p><img src="https://img-blog.csdnimg.cn/940ed058442240629c97e60c14ecd2de.png" srcset="/img/loading.gif" lazyload></p>
+<p>当发生了超时重传，就会使用拥塞发生算法。这个时候，慢启动门限(ssthresh)和拥塞窗口(cwnd)的值会发生变化：</p>
+<ol>
+<li><code>ssthresh = cwnd/2</code> ssthresh 降低为拥塞窗口(cwnd)值的一半。</li>
+<li><code>cwnd = 1</code> cwnd 重新设置为1。</li>
+<li>重新进入慢启动过程。</li>
+</ol>
+<p><img src="https://pic4.zhimg.com/80/v2-431747be2423d9c151515df8602766e7_720w.jpg" srcset="/img/loading.gif" lazyload></p>
+<p>慢启动是会突然减少数据流的。这真是一旦超时重传，马上回到解放前。但是这种方式太激进了，反应也很强烈，会造成网络卡顿。</p>
+<p>还有更好的方式：快速重传。</p>
+<h3 id="4、快速重传"><a href="#4、快速重传" class="headerlink" title="4、快速重传"></a>4、快速重传</h3><p><img src="https://img-blog.csdnimg.cn/63a50c77d1e148a4a09237d546eaa4bf.png" srcset="/img/loading.gif" lazyload></p>
+<p>快速重传：TCP引入了一种叫Fast Retransmit的算法，不以时间驱动，而以数据驱动重传。当接收方发现丢了一个中间包的时候，发送三次前一个包的 ACK，于是发送端就会快速地重传，不必等待超时再重传。</p>
+<p>TCP 认为这种情况不严重，因为大部分没丢，只丢了一小部分，则发送端 ssthresh 和 cwnd 变化如下：</p>
+<ol>
+<li><code>ssthresh = cwnd/2</code>，也就是设置为原来的一半。</li>
+<li><code>cwnd = ssthresh/2</code>。</li>
+<li>进入快速恢复算法。</li>
+</ol>
+<h3 id="5、快速恢复"><a href="#5、快速恢复" class="headerlink" title="5、快速恢复"></a>5、快速恢复</h3><p>快速重传和快速恢复算法一般同时使用，快速恢复算法是认为，你还能收到 3 个重复 ACK 说明网络也不那么糟糕，所以没有必要像 RTO 超时那么强烈。</p>
+<p>正如前面所说，进入快速恢复之前，cwnd 和 ssthresh 已被更新了：</p>
+<ol>
+<li><code>ssthresh = cwnd/2</code>，也就是设置为原来的一半。</li>
+<li><code>cwnd = ssthresh/2</code>。</li>
+</ol>
+<p>然后，进入快速恢复算法如下：</p>
+<ol>
+<li>当收到3个重复的报文段时，重新计算拥塞窗口 <code>cwnd = ssthresh + 3</code>（3 的意思是确认有 3 个数据包被收到了），然后立即重传丢失的数据包。</li>
+<li>如果收到重复的 ACK，那么 cwnd 增加 1。</li>
+<li>如果收到新数据的 ACK 后，把 cwnd 设置为第一步中的 ssthresh 的值，原因是该 ACK 确认了新的数据，说明从重复 ACK 时的数据都已收到，该恢复过程已经结束，可以回到恢复之前的状态了，也即再次进入拥塞避免状态。</li>
+</ol>
+<p>也就是没有像「超时重传」一夜回到解放前，而是还在比较高的值，后续呈线性增长。</p>
+<h3 id="6、总结"><a href="#6、总结" class="headerlink" title="6、总结"></a>6、总结</h3><p>拥塞控制有两种，一种是超时重传后进入到慢开始阶段，一种是收到3个重复确认报文后开始的快恢复阶段。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/13760182-61c448b249f80e20.png" srcset="/img/loading.gif" lazyload></p>
+<p>过程说明：</p>
+<ol>
+<li>首先进行慢开始算法，cwnd 指数增长</li>
+<li>一直增长到 <code>cwnd &gt;= ssthreesh</code>，也就是达到了慢开始门限阈值，开始进行拥塞避免算法</li>
+<li>拥塞避免算法是 <code>cwnd+1</code></li>
+<li>当发生超时重传时 <code>ssthresh = cwnd/2, cwnd = 1</code></li>
+<li>此时继续进行慢开始算法，指数增长</li>
+<li>cwnd 达到 ssthreesh 后开始拥塞避免算法，<code>cwnd = cwnd+1</code></li>
+<li>当 <code>cwnd = 16</code> 时，收到3个重复确认，此时就需要进行快重传</li>
+<li>快重传就是 <code>ssthresh = cwnd/2 = 16/2 = 8</code>，而 <code>cwnd = ssthresh</code></li>
+<li>在这个基础上继续开始快恢复。这里的快恢复直接就开始了拥塞避免算法</li>
+</ol>
+<h2 id="五、三次握手"><a href="#五、三次握手" class="headerlink" title="五、三次握手"></a>五、三次握手</h2><p>（客户端）<code>1</code>号包：我能和你建立连接吗？</p>
+<ul>
+<li><code>seq=0</code>，表示这是一个新的开始</li>
+<li>没有<code>ack</code>，因为还没有建立连接，也就不存在我收到了对方多少的数据的说法</li>
+<li><code>Len=0</code>，表示我没有传输数据，就是一个想要建立连接的<code>tcp</code>包而已。</li>
+<li>标志位<code>SYN=1</code></li>
+</ul>
+<p>（服务端）<code>2</code>号包：我收到了，我们能进行连接，快来玩吧。</p>
+<ul>
+<li><code>seq=0</code></li>
+<li><code>ack=1</code>，暗示了两点，第一表示我收到了你刚才的那个<code>seq=0</code>的连接请求，另外告诉对方接下来请从<code>seq=1</code>开始给我传输数据</li>
+<li><code>Len=0</code>，表示同样没有传输数据。</li>
+<li>标志位<code>SYN=1,ACK=1</code></li>
+</ul>
+<p>（客户端）<code>3</code>号包：好的，那我们就连接吧。</p>
+<ul>
+<li><code>seq=1</code>，响应上面的包，我真的从<code>seq=1</code>开始传输哦</li>
+<li><code>ack=1</code>，表示我收到了你的<code>seq=0</code>同意连接，下面你也请从<code>seq=1</code>给我传输数据吧</li>
+<li><code>Len=0</code></li>
+<li>标志位<code>ACK=1</code></li>
+</ul>
+<p>好了，三次握手愉快的结束，建立起来了连接。总结一下三次握手的过程：</p>
+<ul>
+<li>起始包的<code>seq</code>都等于<code>0</code></li>
+<li>三次握手中的<code>ack=对方上一个的seq+1</code></li>
+<li><code>seq</code>等于对方上次的<code>ack</code>号</li>
+</ul>
+<h2 id="四次挥手"><a href="#四次挥手" class="headerlink" title="四次挥手"></a>四次挥手</h2><p>由于 TCP 连接是全双工的，因此每个方向都必须单独进行关闭。这原则是当一方完成它的数据发送任务后就能发送一个FIN来终止这个方向的连接。收到一个 FIN 只意味着这一方向上没有数据流动，一个 TCP 连接在收到一个 FIN 后仍能发送数据。首先进行关闭的一方将执行主动关闭，而另一方执行被动关闭。</p>
+<ol>
+<li>第一次挥手：Client 发送数据包 <code>FIN=1, seq=x</code> 到 Server，进入 <code>FIN_WAIT_1</code> 状态，这表示没有数据要发送给 Server 了。</li>
+<li>第二次挥手：Server 收到 <code>FIN=1, seq=x</code> 之后，发送 <code>ACK=1, ack=x+1</code> 到 Client，进入 <code>CLOSE_WAIT</code> 状态。此时客户端已经没有要发送的数据了，但仍可以接受服务器发来的数据。<br>        Client 收到 <code>ACK=1, ack=x+1</code> 之后进入 <code>FIN_WAIT_2</code> 状态 </li>
+<li>第三次挥手：Server 发送数据包 <code>FIN=1, seq=y</code> 到 Client，进入 <code>LAST_ACK</code> 状态；</li>
+<li>第四次挥手：Client 收到服务器的 <code>FIN=1, seq=y</code> 后，进入 <code>TIME_WAIT</code> 状态，接着发送 <code>ACK=1，ack=x+1</code> 到 Server；<br>        Server 收到后，确认 <code>ack</code> 后，变为 <code>CLOSED</code> 状态，不再向客户端发送数据。<br>        客户端等待 <code>2*MSL</code>（报文段最长寿命）时间后，也进入 <code>CLOSED</code> 状态。完成四次挥手。</li>
+</ol>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://www.jianshu.com/p/d4471f53d8aa" target="_blank" rel="noopener">https://www.jianshu.com/p/d4471f53d8aa</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/144273871" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/144273871</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/133307545" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/133307545</a></li>
+<li><a href="https://blog.csdn.net/weixin_70730532/article/details/126542558" target="_blank" rel="noopener">https://blog.csdn.net/weixin_70730532/article/details/126542558</a></li>
+<li><a href="https://blog.csdn.net/xiao666wang/article/details/107876281" target="_blank" rel="noopener">https://blog.csdn.net/xiao666wang/article/details/107876281</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/network/" class="category-chain-item">network</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/network/" class="print-no-link">#network</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>40-TCP</div>
+      <div>https://flepeng.github.io/010-network-40-传输层-40-TCP/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Lepeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年3月8日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/010-network-40-%E4%BC%A0%E8%BE%93%E5%B1%82-40-TCP-%E7%8A%B6%E6%80%81%E6%B5%81%E8%BD%AC%E5%9B%BE/" title="40-TCP 状态流转图">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">40-TCP 状态流转图</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/010-network-40-%E4%BC%A0%E8%BE%93%E5%B1%82-41-ARQ/" title="41-ARQ">
+                        <span class="hidden-mobile">41-ARQ</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"flepeng/hexo-blog-comment","repo-id":"R_kgDOL0qaig","category":"Announcements","category-id":"DIC_kwDOL0qais4CfBIv","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>
